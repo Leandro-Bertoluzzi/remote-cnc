@@ -1,0 +1,5 @@
+name: cnc-admin
+channels:
+  - defaults
+dependencies:
+  - pyqt
