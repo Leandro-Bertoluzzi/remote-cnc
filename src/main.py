@@ -1,21 +1,15 @@
-from PyQt5.QtWidgets import QApplication, QDialog, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QApplication
+from views.MainMenu import MainMenu
+from MainWindow import MainWindow
 from utils.config import suppressQtWarnings
-
-class MainMenu(QDialog):
-    def __init__(self, parent=None):
-        super(MainMenu, self).__init__(parent)
-
-        layout = QVBoxLayout()
-        layout.addWidget(QPushButton('Top'))
-        layout.addWidget(QPushButton('Bottom'))
-        self.setLayout(layout)
-        self.setWindowTitle("Example")
 
 if __name__ == '__main__':
     suppressQtWarnings()
     import sys
 
     app = QApplication(sys.argv)
-    gallery = MainMenu()
-    gallery.show()
+    mainWindow = MainWindow()
+    entryPoint = MainMenu()
+    mainWindow.setCentralWidget(entryPoint)
+    mainWindow.show()
     sys.exit(app.exec())
