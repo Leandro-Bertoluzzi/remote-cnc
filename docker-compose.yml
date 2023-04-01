@@ -1,0 +1,33 @@
+version: "3.8"
+  
+services:
+  mysql:
+    image: mysql:5.7
+    networks:
+      - backend
+    env_file:
+      - mysql/.env
+    volumes:
+      - mysql-datavolume:/var/lib/mysql
+    container_name: cnc-admin-mysql
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:4.7
+    depends_on:
+      - mysql
+    networks:
+      - backend
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=cnc-admin-mysql
+      - PMA_PORT=3306
+    volumes:
+      - /sessions
+    container_name: cnc-admin-phpmyadmin
+  
+networks:
+  backend:
+
+volumes:
+  mysql-datavolume:
