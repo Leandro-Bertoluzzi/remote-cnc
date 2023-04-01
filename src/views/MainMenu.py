@@ -1,15 +1,16 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from components.MenuButton import MenuButton
 
 class MainMenu(QWidget):
     def __init__(self, parent=None):
         super(MainMenu, self).__init__(parent)
 
         layout = QVBoxLayout()
-        layout.addWidget(QPushButton('Ver cola de ejecución'))
-        layout.addWidget(QPushButton('Monitorizar equipo'))
-        layout.addWidget(QPushButton('Administrar archivos'))
-        layout.addWidget(QPushButton('Control manual y calibración'))
-        layout.addWidget(QPushButton('Administrar solicitudes'))
-        layout.addWidget(QPushButton('Administrar usuarios'))
-        layout.addWidget(QPushButton('Administrar herramientas'))
+        layout.addWidget(MenuButton('Ver cola de ejecución'))
+        layout.addWidget(MenuButton('Monitorizar equipo'))
+        layout.addWidget(MenuButton('Administrar archivos'))
+        layout.addWidget(MenuButton('Control manual y calibración'))
+        layout.addWidget(MenuButton('Administrar solicitudes'))
+        layout.addWidget(MenuButton('Administrar usuarios'))
+        layout.addWidget(MenuButton('Administrar herramientas'))
         self.setLayout(layout)
