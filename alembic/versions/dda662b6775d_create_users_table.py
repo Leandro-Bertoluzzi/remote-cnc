@@ -16,14 +16,14 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     op.create_table(
-        'user',
+        'users',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('user_name', sa.String(50), nullable=False),
         sa.Column('user_pass', sa.String(50), nullable=False),
         sa.Column('user_role', sa.Enum('user', 'admin', name='role'), nullable=False)
     )
 
-def downgrade():
-    op.drop_table('account')
+def downgrade() -> None:
+    op.drop_table('users')
