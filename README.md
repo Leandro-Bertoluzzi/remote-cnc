@@ -48,6 +48,8 @@ The following tools were used in this project:
 - [Python](https://www.python.org/)
 - [PyQt](https://wiki.python.org/moin/PyQt)
 - [Mysql](https://www.mysql.com/)
+- [SQLAlchemy](https://www.sqlalchemy.org/) and [Alembic](https://alembic.sqlalchemy.org/en/latest/)
+- [Docker](https://www.docker.com/)
 
 ## :white_check_mark: Requirements ##
 
@@ -57,13 +59,34 @@ The following tools were used in this project:
 # Clone this project
 $ git clone https://github.com/Leandro-Bertoluzzi/cnc-admin
 
-# Access
+# 1. Access the repository
 $ cd cnc-admin
+
+# 2. Set up your Python environment
+# Option 1: If you use Conda
+conda env create -f environment.yml
+conda activate cnc-admin
+
+# Option 2: If you use venv and pip
+$ pip install -r requirements.txt
+# Activate your environment according to your OS:
+# https://docs.python.org/3/tutorial/venv.html
+
+# 3. [optional] Run Docker to start the DB and PHPMyAdmin
+$ docker-compose up
+
+# 4. Run DB migrations
+$ alembic upgrade head
+
+# 5. Start the app
+$ python src/main.py
 ```
 
 ## :memo: License ##
 
 This project is under license from MIT. For more details, see the [LICENSE](LICENSE.md) file.
+
+## :writing_hand: Authors ##
 
 Made with :heart: by <a href="https://github.com/Leandro-Bertoluzzi" target="_blank">Leandro Bertoluzzi</a> and Martín Sellart.
 
