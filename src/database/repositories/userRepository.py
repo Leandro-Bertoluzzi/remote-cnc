@@ -34,3 +34,18 @@ def createUser(name, email, password, role):
 
     # Close session
     session.close()
+
+def getAllUsers():
+    # Create a new session
+    session = Session()
+
+    # Get data from DB
+    try:
+        users = session.query(User).all()
+    except SQLAlchemyError as e:
+        print(e)
+
+    # Close session
+    session.close()
+
+    return users
