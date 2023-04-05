@@ -6,3 +6,4 @@ dependencies:
   - sqlalchemy
   - alembic
   - pymysql
+  - bcrypt
