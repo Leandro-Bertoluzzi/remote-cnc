@@ -40,6 +40,7 @@ def getAllUsers():
     session = Session()
 
     # Get data from DB
+    users = []
     try:
         users = session.query(User).all()
     except SQLAlchemyError as e:
