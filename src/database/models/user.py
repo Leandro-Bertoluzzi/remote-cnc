@@ -19,4 +19,4 @@ class User(Base):
         self.role = role
 
     def __repr__(self):
-        return f"<User {self.name}, email: {self.email}, role: {self.role}>"
+        return f"<User: {self.name}, email: {self.email}, role: {self.role}>"

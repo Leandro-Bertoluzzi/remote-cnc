@@ -49,3 +49,34 @@ def getAllUsers():
     session.close()
 
     return users
+
+def updateUser(id, name, email, password, role):
+    # Create a new session
+    session = Session()
+
+    # Validates the input
+    if role not in VALID_ROLES:
+        print(f'ERROR: Role {role} is not valid')
+        return
+
+    # Get user from DB
+    try:
+        user = session.query(User).get(id)
+    except SQLAlchemyError as e:
+        print(e)
+        return
+
+    # Update the user's info
+    user.name = name
+    user.email = email
+    user.role = role
+
+    # Commit changes in DB
+    try:
+        session.commit()
+        print('The user was successfully updated!')
+    except SQLAlchemyError as e:
+        print(e)
+
+    # Close session
+    session.close()
