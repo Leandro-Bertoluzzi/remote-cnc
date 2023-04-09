@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox
 from PyQt5.QtCore import Qt
 from components.MenuButton import MenuButton
 from components.UserCard import UserCard
+from components.UserDataDialog import UserDataDialog
 from database.repositories.userRepository import createUser, getAllUsers
 
 class UsersView(QWidget):
@@ -21,4 +22,7 @@ class UsersView(QWidget):
         self.setLayout(layout)
 
     def create_user(self):
-        createUser("Leandro Bertoluzzi", "leajb10@gmail.com", "Magno066", "admin")
+        userDialog = UserDataDialog()
+        if userDialog.exec():
+            name, email, password, role = userDialog.getInputs()
+            createUser(name, email, password, role)

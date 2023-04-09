@@ -27,10 +27,9 @@ def createUser(name, email, password, role):
     # Commit changes in DB
     try:
         session.commit()
+        print('The user was successfully created!')
     except SQLAlchemyError as e:
         print(e)
-
-    print('The user was successfully created!')
 
     # Close session
     session.close()
