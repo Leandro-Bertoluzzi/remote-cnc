@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QLabel
 from PyQt5.QtCore import Qt
 from components.MenuButton import MenuButton
 from components.UserCard import UserCard
@@ -14,9 +14,9 @@ class UsersView(QWidget):
 
         users = getAllUsers()
         if not users:
-            layout.addWidget(UserCard('There are no users'))
+            layout.addWidget(QLabel('There are no users'))
         for user in users:
-            layout.addWidget(UserCard(f'User {user.id}: {user.name}'))
+            layout.addWidget(UserCard(user=user))
         
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)

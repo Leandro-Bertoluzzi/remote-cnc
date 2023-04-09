@@ -26,6 +26,7 @@ class UserDataDialog(QDialog):
         
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
+        self.setWindowTitle('Crear usuario')
     
     def getInputs(self):
         return (self.name.text(), self.email.text(), self.password.text(), self.role.currentText())

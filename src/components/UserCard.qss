@@ -1,0 +1,12 @@
+QLabel {
+    background-color: #cccccc;
+    border-radius: 10px;
+    color: #2e1c1c;
+    font-size: 14px;
+    min-width: 20em;
+    max-width: 28em;
+    padding: 6px;
+}
+QLabel:hover {
+    background-color: #aaaaaa;
+}
