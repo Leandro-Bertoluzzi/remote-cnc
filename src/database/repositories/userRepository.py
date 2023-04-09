@@ -80,3 +80,27 @@ def updateUser(id, name, email, password, role):
 
     # Close session
     session.close()
+
+def removeUser(id):
+    # Create a new session
+    session = Session()
+
+    # Get user from DB
+    try:
+        user = session.query(User).get(id)
+    except SQLAlchemyError as e:
+        print(e)
+        return
+
+    # Remove the user
+    session.delete(user)
+
+    # Commit changes in DB
+    try:
+        session.commit()
+        print('The user was successfully removed!')
+    except SQLAlchemyError as e:
+        print(e)
+
+    # Close session
+    session.close()
