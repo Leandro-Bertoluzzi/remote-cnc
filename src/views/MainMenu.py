@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox
 from PyQt5.QtCore import Qt
 from components.MenuButton import MenuButton
+from views.UsersView import UsersView
 
 class MainMenu(QWidget):
-    def __init__(self, parent=None, onChangeViewToUsers=None):
+    def __init__(self, parent=None, onChangeView=None):
         super(MainMenu, self).__init__(parent)
 
         layout = QVBoxLayout()
@@ -12,7 +13,7 @@ class MainMenu(QWidget):
         layout.addWidget(MenuButton('Administrar archivos'))
         layout.addWidget(MenuButton('Control manual y calibración'))
         layout.addWidget(MenuButton('Administrar tareas'))
-        layout.addWidget(MenuButton('Administrar usuarios', onChangeViewToUsers))
+        layout.addWidget(MenuButton('Administrar usuarios', onChangeView, UsersView, self))
         layout.addWidget(MenuButton('Administrar herramientas'))
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
