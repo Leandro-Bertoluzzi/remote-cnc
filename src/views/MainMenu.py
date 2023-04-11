@@ -4,7 +4,7 @@ from components.MenuButton import MenuButton
 from views.UsersView import UsersView
 
 class MainMenu(QWidget):
-    def __init__(self, parent=None, onChangeView=None):
+    def __init__(self, parent=None):
         super(MainMenu, self).__init__(parent)
 
         layout = QVBoxLayout()
@@ -13,7 +13,7 @@ class MainMenu(QWidget):
         layout.addWidget(MenuButton('Administrar archivos'))
         layout.addWidget(MenuButton('Control manual y calibración'))
         layout.addWidget(MenuButton('Administrar tareas'))
-        layout.addWidget(MenuButton('Administrar usuarios', onChangeView, UsersView, self))
+        layout.addWidget(MenuButton('Administrar usuarios', None, UsersView, self))
         layout.addWidget(MenuButton('Administrar herramientas'))
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
@@ -22,3 +22,6 @@ class MainMenu(QWidget):
         alert = QMessageBox()
         alert.setText('You clicked the button!')
         alert.exec()
+    
+    def redirectToView(self, view):
+        self.parent().changeView(view)

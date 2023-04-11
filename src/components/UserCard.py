@@ -32,6 +32,7 @@ class UserCard(QWidget):
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
             updateUser(self.user.id, name, email, password, role)
+            self.parent().refreshLayout()
     
     def removeUser(self):
         confirmation = QMessageBox()
@@ -42,3 +43,4 @@ class UserCard(QWidget):
 
         if confirmation.exec() == QMessageBox.Yes:
             removeUser(self.user.id)
+            self.parent().refreshLayout()

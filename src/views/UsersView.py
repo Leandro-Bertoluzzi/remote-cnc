@@ -9,20 +9,28 @@ class UsersView(QWidget):
     def __init__(self, parent=None):
         super(UsersView, self).__init__(parent)
 
-        layout = QVBoxLayout()
-        layout.addWidget(MenuButton('Crear usuario', self.create_user))
-
-        users = getAllUsers()
-        if not users:
-            layout.addWidget(QLabel('There are no users'))
-        for user in users:
-            layout.addWidget(UserCard(user=user))
+        self.layout = QVBoxLayout()
+        self.refreshLayout()
         
-        layout.setAlignment(Qt.AlignCenter)
-        self.setLayout(layout)
+        self.layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(self.layout)
 
     def create_user(self):
         userDialog = UserDataDialog()
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
             createUser(name, email, password, role)
+            self.refreshLayout()
+
+    def refreshLayout(self):
+        while self.layout.count():
+            child = self.layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        self.layout.addWidget(MenuButton('Crear usuario', self.create_user))
+
+        users = getAllUsers()
+        for user in users:
+            self.layout.addWidget(UserCard(user, self))
+        self.update()
