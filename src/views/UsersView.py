@@ -15,7 +15,7 @@ class UsersView(QWidget):
         self.layout.setAlignment(Qt.AlignCenter)
         self.setLayout(self.layout)
 
-    def create_user(self):
+    def createUser(self):
         userDialog = UserDataDialog()
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
@@ -28,9 +28,10 @@ class UsersView(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
-        self.layout.addWidget(MenuButton('Crear usuario', self.create_user))
+        self.layout.addWidget(MenuButton('Crear usuario', self.createUser))
 
         users = getAllUsers()
         for user in users:
             self.layout.addWidget(UserCard(user, self))
+        self.layout.addWidget(MenuButton('Volver al menú', self.parent().backToMenu))
         self.update()

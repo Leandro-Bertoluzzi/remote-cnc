@@ -10,5 +10,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("CNC admin")
 
     def changeView(self, widget):
-        self.centralWidget = widget
+        self.centralWidget = widget(self)
+        self.setCentralWidget(self.centralWidget)
+    
+    def backToMenu(self):
+        self.centralWidget = MainMenu(self)
         self.setCentralWidget(self.centralWidget)

@@ -8,7 +8,7 @@ class MenuButton(QPushButton):
         self.setText(text)
 
         if goToView:
-            self.view = goToView()
+            self.view = goToView
             self.clicked.connect(self.redirectToView)
         if onClick:
             self.clicked.connect(onClick)
