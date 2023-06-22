@@ -12,5 +12,5 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda visuali
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | Entre las opciones del producto, selecciona la opción "vista previa". |  |
+| 1      | Entre las opciones del archivo, selecciona la opción "vista previa". |  |
 | 2      |  | Muestra al usuario una vista previa del proyecto finalizado. |

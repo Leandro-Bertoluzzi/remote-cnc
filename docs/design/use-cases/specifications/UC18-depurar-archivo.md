@@ -12,7 +12,7 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda d
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | Entre las opciones del producto, selecciona la opción "depurar". |  |
+| 1      | Entre las opciones del archivo, selecciona la opción "depurar". |  |
 | 2      |  | Muestra al usuario la vista de depuración de archivo, con el código en un editor con capacidad de colocar breakpoints y ejecutar línea por línea. |
 | 3      | Sobre una de las líneas del código, selecciona la opción de "ejecutar" comando |  |
 | 4      |  | Deshabilita los controles, muestra un ícono de carga y notifica al servidor. |
