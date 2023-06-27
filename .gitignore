@@ -4,3 +4,6 @@ __pycache__/
 # Environments
 .env
 venv/
+
+# Test related files
+.coverage

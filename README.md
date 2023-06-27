@@ -82,6 +82,18 @@ $ alembic upgrade head
 $ python src/main.py
 ```
 
+## :wrench: Running tests ##
+
+```bash
+$ pytest -s
+```
+
+If you want to update the coverage report (available in /htmlcov):
+
+```bash
+$ pytest -s --cov=src --cov-report=html
+```
+
 ## :memo: License ##
 
 This project is under license from MIT. For more details, see the [LICENSE](LICENSE.md) file.

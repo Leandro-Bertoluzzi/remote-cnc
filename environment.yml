@@ -7,3 +7,5 @@ dependencies:
   - alembic
   - pymysql
   - bcrypt
+  - pytest
+  - pytest-cov
