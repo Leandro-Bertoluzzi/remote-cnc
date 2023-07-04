@@ -9,3 +9,5 @@ dependencies:
   - bcrypt
   - pytest
   - pytest-cov
+  - pytest-qt
+  - pytest-mock
