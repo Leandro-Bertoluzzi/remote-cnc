@@ -12,7 +12,7 @@ class UserDataDialog(QDialog):
         self.password.setEchoMode(QLineEdit.Password)
         self.role = QComboBox(self)
         self.role.addItems(VALID_ROLES)
-        
+
         if userInfo:
             self.name.setText(userInfo.name)
             self.email.setText(userInfo.email)
@@ -20,7 +20,7 @@ class UserDataDialog(QDialog):
             self.role.setCurrentIndex(VALID_ROLES.index(userInfo.role))
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
-        
+
         layout = QFormLayout(self)
         layout.addRow('Nombre', self.name)
         layout.addRow('Correo electrónico', self.email)
@@ -30,10 +30,10 @@ class UserDataDialog(QDialog):
 
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
-        
+
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
         self.setWindowTitle('Crear usuario' if not userInfo else 'Actualizar usuario')
-    
+
     def getInputs(self):
         return (self.name.text(), self.email.text(), self.password.text(), self.role.currentText())

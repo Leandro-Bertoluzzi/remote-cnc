@@ -12,7 +12,7 @@ class MainWindow(QMainWindow):
     def changeView(self, widget):
         self.centralWidget = widget(self)
         self.setCentralWidget(self.centralWidget)
-    
+
     def backToMenu(self):
         self.centralWidget = MainMenu(self)
         self.setCentralWidget(self.centralWidget)

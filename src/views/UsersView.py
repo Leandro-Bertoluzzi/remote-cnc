@@ -11,7 +11,7 @@ class UsersView(QWidget):
 
         self.layout = QVBoxLayout()
         self.refreshLayout()
-        
+
         self.layout.setAlignment(Qt.AlignCenter)
         self.setLayout(self.layout)
 

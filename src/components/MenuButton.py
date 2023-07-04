@@ -16,6 +16,6 @@ class MenuButton(QPushButton):
         stylesheet = getFileNameInFolder(__file__, "MenuButton.qss")
         with open(stylesheet,"r") as styles:
             self.setStyleSheet(styles.read())
-    
+
     def redirectToView(self):
         self.parent().redirectToView(self.view)
