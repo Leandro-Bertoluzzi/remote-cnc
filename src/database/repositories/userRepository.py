@@ -1,6 +1,6 @@
 import bcrypt
 from sqlalchemy.exc import SQLAlchemyError
-from database.base import Session, Base
+from database.base import Session
 from database.models.user import User, VALID_ROLES
 
 def createUser(name, email, password, role):
@@ -50,7 +50,7 @@ def getAllUsers():
 
     return users
 
-def updateUser(id, name, email, password, role):
+def updateUser(id, name, email, role):
     # Create a new session
     session = Session()
 

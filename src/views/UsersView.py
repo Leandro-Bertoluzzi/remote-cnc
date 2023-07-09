@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.MenuButton import MenuButton
 from components.UserCard import UserCard
