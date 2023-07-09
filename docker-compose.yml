@@ -1,5 +1,5 @@
 version: "3.8"
-  
+
 services:
   mysql:
     image: mysql:5.7
@@ -12,7 +12,7 @@ services:
     volumes:
       - mysql-datavolume:/var/lib/mysql
     container_name: cnc-admin-mysql
-  
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:4.7
     depends_on:
@@ -22,12 +22,31 @@ services:
     ports:
       - "8080:80"
     environment:
-      - PMA_HOST=cnc-admin-mysql
+      - PMA_HOST=mysql
       - PMA_PORT=3306
     volumes:
       - /sessions
     container_name: cnc-admin-phpmyadmin
-  
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
+    depends_on:
+      - redis
+    env_file:
+      - worker/.env
+    volumes:
+      - ./worker:/usr/src/app
+    container_name: cnc-admin-worker
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - 6379:6379
+    container_name: cnc-admin-redis
+
 networks:
   backend:
 

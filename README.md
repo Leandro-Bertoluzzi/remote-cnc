@@ -12,14 +12,14 @@
 
 <!-- Status -->
 
-<h4 align="center"> 
+<h4 align="center">
 	🚧 CNC manager 🚀 Under construction...  🚧
-</h4> 
+</h4>
 
 <hr>
 
 <p align="center">
-  <a href="#dart-about">About</a> &#xa0; | &#xa0; 
+  <a href="#dart-about">About</a> &#xa0; | &#xa0;
   <a href="#sparkles-features">Features</a> &#xa0; | &#xa0;
   <a href="#rocket-technologies">Technologies</a> &#xa0; | &#xa0;
   <a href="#white_check_mark-requirements">Requirements</a> &#xa0; | &#xa0;
@@ -53,11 +53,13 @@ The following tools were used in this project:
 
 ## :white_check_mark: Requirements ##
 
+Before starting :checkered_flag:, you need to have [Python](https://www.python.org/) installed.
+
 ## :checkered_flag: Starting ##
 
 ```bash
 # Clone this project
-$ git clone https://github.com/Leandro-Bertoluzzi/cnc-admin
+$ git clone --recurse-submodules https://github.com/Leandro-Bertoluzzi/cnc-admin
 
 # 1. Access the repository
 $ cd cnc-admin
@@ -72,13 +74,17 @@ $ pip install -r requirements.txt
 # Activate your environment according to your OS:
 # https://docs.python.org/3/tutorial/venv.html
 
-# 3. [optional] Run Docker to start the DB and PHPMyAdmin
+# 3. Copy and (optionally) configure the .env file
+cp .env.example .env
+
+# 4. Run Docker to start the DB, PHPMyAdmin, the
+# CNC worker (Celery) and its Message broker (Redis)
 $ docker-compose up
 
-# 4. Run DB migrations
+# 5. If you are starting a new DB, run DB migrations
 $ alembic upgrade head
 
-# 5. Start the app
+# 6. Start the app
 $ python src/main.py
 ```
 
