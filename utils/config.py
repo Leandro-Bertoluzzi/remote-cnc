@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from os import environ
 
 def suppressQtWarnings():
@@ -5,3 +6,6 @@ def suppressQtWarnings():
     environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     environ["QT_SCREEN_SCALE_FACTORS"] = "1"
     environ["QT_SCALE_FACTOR"] = "1"
+
+def loadEnvironmentVariables():
+    load_dotenv()
