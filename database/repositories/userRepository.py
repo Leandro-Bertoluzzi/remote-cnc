@@ -1,4 +1,3 @@
-import bcrypt
 from sqlalchemy.exc import SQLAlchemyError
 from database.base import Session
 from database.models.user import User, VALID_ROLES
@@ -9,17 +8,15 @@ def createUser(name, email, password, role):
 
     # Validates the input
     if role not in VALID_ROLES:
-        print(f'ERROR: Role {role} is not valid')
-        return
+        raise Exception(f'ERROR: Role {role} is not valid')
 
-    # --- Encrypt password ---
-    # Adding the salt to password
-    salt = bcrypt.gensalt()
-    # Hashing the password
-    hashedPassword = bcrypt.hashpw(password.encode('utf-8'), salt)
+    # Checks the use doesn't exist in DB
+    user = session.query(User).filter_by(email=email).first()
+    if user:
+        raise Exception(f'There is already a user registered with the email {email}')
 
     # Create the user
-    newUser = User(name, email, hashedPassword, role)
+    newUser = User(name, email, password, role)
 
     # Persist data in DB
     session.add(newUser)
@@ -29,10 +26,12 @@ def createUser(name, email, password, role):
         session.commit()
         print('The user was successfully created!')
     except SQLAlchemyError as e:
-        print(e)
+        raise Exception(f'Error creating the user in the DB: {e}')
 
     # Close session
     session.close()
+
+    return
 
 def getAllUsers():
     # Create a new session
@@ -43,7 +42,7 @@ def getAllUsers():
     try:
         users = session.query(User).all()
     except SQLAlchemyError as e:
-        print(e)
+        raise Exception(f'Error retrieving users from the DB: {e}')
 
     # Close session
     session.close()
@@ -56,15 +55,16 @@ def updateUser(id, name, email, role):
 
     # Validates the input
     if role not in VALID_ROLES:
-        print(f'ERROR: Role {role} is not valid')
-        return
+        raise Exception(f'ERROR: Role {role} is not valid')
 
     # Get user from DB
     try:
         user = session.query(User).get(id)
     except SQLAlchemyError as e:
-        print(e)
-        return
+        raise Exception(f'Error looking for user in the DB: {e}')
+
+    if not user:
+        raise Exception(f'User with ID {id} was not found')
 
     # Update the user's info
     user.name = name
@@ -76,7 +76,7 @@ def updateUser(id, name, email, role):
         session.commit()
         print('The user was successfully updated!')
     except SQLAlchemyError as e:
-        print(e)
+        raise Exception(f'Error updating the user in the DB: {e}')
 
     # Close session
     session.close()
@@ -89,8 +89,10 @@ def removeUser(id):
     try:
         user = session.query(User).get(id)
     except SQLAlchemyError as e:
-        print(e)
-        return
+        raise Exception(f'Error looking for user in the DB: {e}')
+
+    if not user:
+        raise Exception(f'User with ID {id} was not found')
 
     # Remove the user
     session.delete(user)
@@ -100,7 +102,7 @@ def removeUser(id):
         session.commit()
         print('The user was successfully removed!')
     except SQLAlchemyError as e:
-        print(e)
+        raise Exception(f'Error removing the user from the DB: {e}')
 
     # Close session
     session.close()
