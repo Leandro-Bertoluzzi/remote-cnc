@@ -1,5 +1,5 @@
 import os
-from utils.config import suppressQtWarnings
+from config import suppressQtWarnings
 
 def test_suppressQtWarnings():
     # Check environment variables before
