@@ -1,7 +1,6 @@
 from MainWindow import MainWindow
 from views.MainMenu import MainMenu
 from views.UsersView import UsersView
-from database.models.user import User
 
 class TestMainWindow:
     def test_main_window_init(self, qtbot):

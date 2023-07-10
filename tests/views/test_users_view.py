@@ -7,7 +7,6 @@ from components.UserCard import UserCard
 from components.UserDataDialog import UserDataDialog
 from views.UsersView import UsersView
 from database.models.user import User
-from database.repositories.userRepository import getAllUsers
 
 class TestUsersView:
     @pytest.fixture(autouse=True)

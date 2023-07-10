@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from components.UserCard import UserCard
 from components.UserDataDialog import UserDataDialog
 from database.models.user import User
-from database.repositories.userRepository import updateUser, removeUser
 from views.UsersView import UsersView
 
 class TestUserCard:

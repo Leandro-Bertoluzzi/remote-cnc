@@ -12,7 +12,7 @@ class TestUserDataDialog:
         assert dialog.layout() is not None
 
     @pytest.mark.parametrize("user_info", [None, userInfo])
-    def test_user_data_dialog_init(self, qtbot, user_info):
+    def test_user_data_dialog_init_widgets(self, qtbot, user_info):
         dialog = UserDataDialog(userInfo=user_info)
         qtbot.addWidget(dialog)
 

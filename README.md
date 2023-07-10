@@ -85,7 +85,7 @@ $ docker-compose up
 $ alembic upgrade head
 
 # 6. Start the app
-$ python src/main.py
+$ python main.py
 ```
 
 ## :wrench: Running tests ##
@@ -97,7 +97,7 @@ $ pytest -s
 If you want to update the coverage report (available in /htmlcov):
 
 ```bash
-$ pytest -s --cov=src --cov-report=html
+$ pytest -s --cov=. --cov-report=html
 ```
 
 ## :memo: License ##
