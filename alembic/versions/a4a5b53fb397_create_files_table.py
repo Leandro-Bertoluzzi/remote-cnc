@@ -7,6 +7,7 @@ Create Date: 2023-04-02 18:03:14.045945
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import func
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,9 @@ def upgrade() -> None:
         'files',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('user_id', sa.Integer),
+        sa.Column('file_name', sa.String(150), nullable=False),
         sa.Column('file_path', sa.String(150), nullable=False),
+        sa.Column('created_at', sa.DateTime, nullable=False, server_default=func.now()),
     )
     op.create_foreign_key(
         "fk_user_id",

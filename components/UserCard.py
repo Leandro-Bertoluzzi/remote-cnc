@@ -26,14 +26,14 @@ class UserCard(QWidget):
         stylesheet = getFileNameInFolder(__file__, "UserCard.qss")
         with open(stylesheet,"r") as styles:
             self.setStyleSheet(styles.read())
-    
+
     def updateUser(self):
         userDialog = UserDataDialog(self.user)
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
-            updateUser(self.user.id, name, email, password, role)
+            updateUser(self.user.id, name, email, role)
             self.parent().refreshLayout()
-    
+
     def removeUser(self):
         confirmation = QMessageBox()
         confirmation.setIcon(QMessageBox.Question)

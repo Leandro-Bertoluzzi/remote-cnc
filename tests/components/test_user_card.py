@@ -13,6 +13,7 @@ class TestUserCard:
         mocker.patch.object(UsersView, 'refreshLayout')
 
         self.parent = UsersView()
+        self.user.id = 1
         self.card = UserCard(self.user, parent=self.parent)
         qtbot.addWidget(self.card)
 
@@ -34,6 +35,8 @@ class TestUserCard:
 
         # Validate DB calls
         mock_update_user.call_count == 1
+        update_user_params = {'id': 1, 'name': 'Updated Name', 'email': 'updated@email.com', 'role': 'admin'}
+        mock_update_user.assert_called_with(*update_user_params.values())
 
     def test_user_card_remove_user(self, qtbot, mocker):
         # Mock confirmation dialog methods
