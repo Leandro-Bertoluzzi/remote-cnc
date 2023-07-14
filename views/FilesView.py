@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from components.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
+from config import USER_ID
 from database.repositories.fileRepository import createFile, getAllFilesFromUser
 
 class FilesView(QWidget):
@@ -19,7 +20,7 @@ class FilesView(QWidget):
         fileDialog = FileDataDialog()
         if fileDialog.exec():
             name = fileDialog.getInputs()
-            createFile(2, name, name)
+            createFile(USER_ID, name, name)
             self.refreshLayout()
 
     def refreshLayout(self):
@@ -30,7 +31,7 @@ class FilesView(QWidget):
 
         self.layout.addWidget(MenuButton('Subir archivo', self.createFile))
 
-        files = getAllFilesFromUser(2)
+        files = getAllFilesFromUser(USER_ID)
         for file in files:
             self.layout.addWidget(FileCard(file, self))
         self.layout.addWidget(MenuButton('Volver al menú', self.parent().backToMenu))
