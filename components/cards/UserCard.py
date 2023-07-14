@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
 from utils.files import getFileNameInFolder
-from components.UserDataDialog import UserDataDialog
+from components.dialogs.UserDataDialog import UserDataDialog
 from database.repositories.userRepository import updateUser, removeUser
 
 class UserCard(QWidget):
@@ -10,7 +10,7 @@ class UserCard(QWidget):
 
         self.user = user
 
-        userDescription = QLabel(f'User {user.id}: {user.name}')
+        userDescription = QLabel(f'Usuario {user.id}: {user.name}')
         editUserBtn = QPushButton("Editar")
         editUserBtn.clicked.connect(self.updateUser)
         removeUserBtn = QPushButton("Borrar")
@@ -23,7 +23,7 @@ class UserCard(QWidget):
         layout.setAlignment(Qt.AlignLeft)
         self.setLayout(layout)
 
-        stylesheet = getFileNameInFolder(__file__, "UserCard.qss")
+        stylesheet = getFileNameInFolder(__file__, "Card.qss")
         with open(stylesheet,"r") as styles:
             self.setStyleSheet(styles.read())
 

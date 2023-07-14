@@ -60,6 +60,9 @@ def getAllTasksFromUser(user_id: int, status: str):
         raise Exception(f'Error retrieving tasks from the DB: {e}')
 
     if not status or status == 'all':
+        if not user:
+            raise Exception(f'User with ID {user_id} not found')
+
         for task in user.tasks:
             print(f'## Task: {task.name}')
             print(f'Owner: {task.user.name}')

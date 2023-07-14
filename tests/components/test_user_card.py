@@ -1,7 +1,7 @@
 import pytest
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-from components.UserCard import UserCard
-from components.UserDataDialog import UserDataDialog
+from components.cards.UserCard import UserCard
+from components.dialogs.UserDataDialog import UserDataDialog
 from database.models.user import User
 from views.UsersView import UsersView
 
@@ -28,7 +28,7 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_user = mocker.patch('components.UserCard.updateUser')
+        mock_update_user = mocker.patch('components.cards.UserCard.updateUser')
 
         # Call the updateUser method
         self.card.updateUser()
@@ -43,7 +43,7 @@ class TestUserCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
         # Mock DB method
-        mock_remove_user = mocker.patch('components.UserCard.removeUser')
+        mock_remove_user = mocker.patch('components.cards.UserCard.removeUser')
 
         # Call the removeUser method
         self.card.removeUser()

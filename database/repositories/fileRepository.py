@@ -36,6 +36,9 @@ def getAllFilesFromUser(user_id):
     except SQLAlchemyError as e:
         raise Exception(f'Error looking for user in the DB: {e}')
 
+    if not user:
+        raise Exception(f'User with ID {user_id} not found')
+
     for file in user.files:
             print(f'> {file.user}')
     print('----')
@@ -77,6 +80,9 @@ def getFileById(id):
     if not file:
         raise Exception(f'File with ID {id} was not found')
 
+    # Close session
+    session.close()
+
     return file
 
 def updateFile(id, userId, fileName, fileNameSaved):
@@ -84,7 +90,13 @@ def updateFile(id, userId, fileName, fileNameSaved):
     session = Session()
 
     # Get file from DB
-    file = getFileById(id)
+    try:
+        file = session.query(File).get(id)
+    except SQLAlchemyError as e:
+        raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
+
+    if not file:
+        raise Exception(f'File with ID {id} was not found')
 
     # Update the file's info
     file.user_id = userId
@@ -106,7 +118,13 @@ def removeFile(id):
     session = Session()
 
     # Get file from DB
-    file = getFileById(id)
+    try:
+        file = session.query(File).get(id)
+    except SQLAlchemyError as e:
+        raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
+
+    if not file:
+        raise Exception(f'File with ID {id} was not found')
 
     # Remove the file
     session.delete(file)

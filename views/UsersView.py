@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.MenuButton import MenuButton
-from components.UserCard import UserCard
-from components.UserDataDialog import UserDataDialog
+from components.cards.UserCard import UserCard
+from components.dialogs.UserDataDialog import UserDataDialog
 from database.repositories.userRepository import createUser, getAllUsers
 
 class UsersView(QWidget):
