@@ -31,7 +31,7 @@ class User(Base):
 
     def validatePassword(self, testPassword: str):
         """Compares a given password with the actual one"""
-        return bcrypt.checkpw(testPassword.encode('utf-8'), self.password.encode('utf-8'))
+        return bcrypt.checkpw(testPassword.encode('utf-8'), self.password)
 
     def __repr__(self):
         return f"<User: {self.name}, email: {self.email}, role: {self.role}>"

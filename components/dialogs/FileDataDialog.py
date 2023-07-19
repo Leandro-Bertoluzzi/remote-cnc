@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QComboBox
+from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox
 from PyQt5.QtCore import Qt
 
 class FileDataDialog(QDialog):

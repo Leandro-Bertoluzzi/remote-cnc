@@ -22,3 +22,12 @@ def test_user(mocker):
     assert user.role == 'user'
 
     assert user.__repr__() == '<User: John Doe, email: test@testing.com, role: user>'
+
+def test_user_validate_password(mocker):
+    password = '1234'
+
+    # Instantiate user
+    user = User('John Doe', 'test@testing.com', password, 'user')
+
+    assert user.validatePassword('1234') == True
+    assert user.validatePassword('INCORRECT-PASSWORD') == False

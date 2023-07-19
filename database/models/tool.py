@@ -21,11 +21,3 @@ class Tool(Base):
 
     def __repr__(self):
         return f"<Tool: {self.name}, description: {self.description}, added at: {self.added_at}>"
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "added_at": self.added_at
-        }

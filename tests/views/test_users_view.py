@@ -32,7 +32,7 @@ class TestUsersView:
         assert self.count_widgets_with_type(MenuButton) == 2
         assert self.count_widgets_with_type(UserCard) == 3
 
-    def test_users_view_refresh_layout(self, qtbot, mocker):
+    def test_users_view_refresh_layout(self, qtbot):
         # We remove a user
         self.users_list.pop()
 
