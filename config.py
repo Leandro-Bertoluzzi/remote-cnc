@@ -10,6 +10,7 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 DB_NAME = os.environ.get('DB_NAME')
 USER_ID = os.environ.get('USER_ID')
+FILES_FOLDER_PATH = './' + os.environ.get('FILES_FOLDER')
 CELERY_BROKER_URL = './' + os.environ.get('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
 

@@ -5,6 +5,7 @@ from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
 from database.repositories.fileRepository import createFile, getAllFilesFromUser
+from utils.files import saveFile
 
 class FilesView(QWidget):
     def __init__(self, parent=None):
@@ -19,8 +20,20 @@ class FilesView(QWidget):
     def createFile(self):
         fileDialog = FileDataDialog()
         if fileDialog.exec():
-            name = fileDialog.getInputs()
-            createFile(USER_ID, name, name)
+            name, path = fileDialog.getInputs()
+
+            # Save file in the file system
+            try:
+                generatedName = saveFile(USER_ID, path, name)
+            except Exception as error:
+                print('Error: ', error)
+
+            # Create an entry for the file in the DB
+            try:
+                createFile(USER_ID, name, generatedName)
+            except Exception as error:
+                print('Error: ', error)
+
             self.refreshLayout()
 
     def refreshLayout(self):
