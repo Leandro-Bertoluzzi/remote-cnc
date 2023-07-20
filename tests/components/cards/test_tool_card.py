@@ -34,7 +34,7 @@ class TestToolCard:
         self.card.updateTool()
 
         # Validate DB calls
-        mock_update_tool.call_count == 1
+        assert mock_update_tool.call_count == 1
         update_tool_params = {
             'id': 1,
             'name': 'Updated tool',
@@ -42,9 +42,16 @@ class TestToolCard:
         }
         mock_update_tool.assert_called_with(*update_tool_params.values())
 
-    def test_tool_card_remove_tool(self, qtbot, mocker):
+    @pytest.mark.parametrize(
+            "msgBoxResponse,expectedMethodCalls",
+            [
+                (QMessageBox.Yes, 1),
+                (QMessageBox.Cancel, 0)
+            ]
+        )
+    def test_tool_card_remove_tool(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
         mock_remove_tool = mocker.patch('components.cards.ToolCard.removeTool')
@@ -53,4 +60,4 @@ class TestToolCard:
         self.card.removeTool()
 
         # Validate DB calls
-        mock_remove_tool.call_count == 1
+        assert mock_remove_tool.call_count == expectedMethodCalls

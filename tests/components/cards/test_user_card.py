@@ -34,13 +34,20 @@ class TestUserCard:
         self.card.updateUser()
 
         # Validate DB calls
-        mock_update_user.call_count == 1
+        assert mock_update_user.call_count == 1
         update_user_params = {'id': 1, 'name': 'Updated Name', 'email': 'updated@email.com', 'role': 'admin'}
         mock_update_user.assert_called_with(*update_user_params.values())
 
-    def test_user_card_remove_user(self, qtbot, mocker):
+    @pytest.mark.parametrize(
+            "msgBoxResponse,expectedMethodCalls",
+            [
+                (QMessageBox.Yes, 1),
+                (QMessageBox.Cancel, 0)
+            ]
+        )
+    def test_user_card_remove_user(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
         mock_remove_user = mocker.patch('components.cards.UserCard.removeUser')
@@ -49,4 +56,4 @@ class TestUserCard:
         self.card.removeUser()
 
         # Validate DB calls
-        mock_remove_user.call_count == 1
+        assert mock_remove_user.call_count == expectedMethodCalls

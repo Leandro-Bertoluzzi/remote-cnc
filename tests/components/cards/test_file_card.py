@@ -23,35 +23,50 @@ class TestFileCard:
 
     def test_file_card_update_file(self, qtbot, mocker):
         # Mock FileDataDialog methods
-        mock_input = 'updated_name.gcode'
+        mock_input = 'updated_name.gcode', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock DB method
+        # Mock FS and DB methods
+        generated_file_name = 'path/to/updated_name_20230720-184800.gcode'
+        mock_rename_file = mocker.patch(
+            'components.cards.FileCard.renameFile',
+            return_value=generated_file_name
+        )
         mock_update_file = mocker.patch('components.cards.FileCard.updateFile')
 
         # Call the updateFile method
         self.card.updateFile()
 
-        # Validate DB calls
-        mock_update_file.call_count == 1
+        # Validate function calls
+        assert mock_rename_file.call_count == 1
+        assert mock_update_file.call_count == 1
         update_file_params = {
             'id': 1,
             'user_id': 1,
             'file_name': 'updated_name.gcode',
-            'file_name_saved': 'updated_name.gcode'
+            'file_name_saved': generated_file_name
         }
         mock_update_file.assert_called_with(*update_file_params.values())
 
-    def test_file_card_remove_file(self, qtbot, mocker):
+    @pytest.mark.parametrize(
+            "msgBoxResponse,expectedMethodCalls",
+            [
+                (QMessageBox.Yes, 1),
+                (QMessageBox.Cancel, 0)
+            ]
+        )
+    def test_file_card_remove_file(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
-        # Mock DB method
+        # Mock FS and DB methods
+        mock_delete_file = mocker.patch('components.cards.FileCard.deleteFile')
         mock_remove_file = mocker.patch('components.cards.FileCard.removeFile')
 
         # Call the removeFile method
         self.card.removeFile()
 
-        # Validate DB calls
-        mock_remove_file.call_count == 1
+        # Validate function calls
+        assert mock_delete_file.call_count == expectedMethodCalls
+        assert mock_remove_file.call_count == expectedMethodCalls

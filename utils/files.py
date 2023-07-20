@@ -53,12 +53,11 @@ def saveFile(userId: int, original_path: str, fileName: str) -> str:
 
     # Check if the file format is a valid one
     if not isAllowedFile(fileName):
-        print('Invalid file format')
         raise Exception(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
     try:
         # If FILES_FOLDER_PATH or the folder for the current user are not present, then create them
-        user_files_folder_path = f'{FILES_FOLDER_PATH}/{userId}'
+        user_files_folder_path = f'{FILES_FOLDER_PATH}\\{userId}'
         if not os.path.isdir(user_files_folder_path):
             os.makedirs(user_files_folder_path)
 
@@ -69,7 +68,7 @@ def saveFile(userId: int, original_path: str, fileName: str) -> str:
     except Exception as error:
         raise Exception('There was an error writing the file in the file system')
 
-    return file_name
+    return file_path
 
 def renameFile(userId: int, filePath: str, newFileName: str) -> str:
     """
@@ -84,19 +83,18 @@ def renameFile(userId: int, filePath: str, newFileName: str) -> str:
 
     # Check if the file format is a valid one
     if not isAllowedFile(newFileName):
-        print('Invalid file format')
         raise Exception(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
     try:
         # Rename the file
-        current_file_path = f'{FILES_FOLDER_PATH}/{filePath}'
+        current_file_path = f'{FILES_FOLDER_PATH}\\{filePath}'
         file_name = createFileName(newFileName)
-        new_file_path = f'{FILES_FOLDER_PATH}/{userId}/{file_name}'
+        new_file_path = f'{FILES_FOLDER_PATH}\\{userId}\\{file_name}'
         os.rename(current_file_path, new_file_path)
     except Exception as error:
-        raise Exception('There was an error writing the file in the file system')
+        raise Exception('There was an error renaming the file in the file system')
 
-    return file_name
+    return new_file_path
 
 def deleteFile(filePath: str) -> None:
     """

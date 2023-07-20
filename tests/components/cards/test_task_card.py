@@ -46,7 +46,7 @@ class TestTaskCard:
         self.card.updateTask()
 
         # Validate DB calls
-        mock_update_task.call_count == 1
+        assert mock_update_task.call_count == 1
         update_task_params = {
             'id': 1,
             'user_id': 1,
@@ -59,9 +59,16 @@ class TestTaskCard:
         }
         mock_update_task.assert_called_with(*update_task_params.values())
 
-    def test_task_card_remove_task(self, qtbot, mocker):
+    @pytest.mark.parametrize(
+            "msgBoxResponse,expectedMethodCalls",
+            [
+                (QMessageBox.Yes, 1),
+                (QMessageBox.Cancel, 0)
+            ]
+        )
+    def test_task_card_remove_task(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
         mock_remove_task = mocker.patch('components.cards.TaskCard.removeTask')
@@ -70,4 +77,4 @@ class TestTaskCard:
         self.card.removeTask()
 
         # Validate DB calls
-        mock_remove_task.call_count == 1
+        assert mock_remove_task.call_count == expectedMethodCalls

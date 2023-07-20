@@ -48,22 +48,29 @@ class TestFilesView:
 
     def test_files_view_create_file(self, qtbot, mocker):
         # Mock FileDataDialog methods
-        mock_inputs = 'example-file-4'
+        mock_input = 'example-file-4', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
-        mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_inputs)
+        mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock DB method
+        # Mock FS and DB methods
         def side_effect_create_file(user_id, file_name, file_path):
-            file_4 = File(user_id=1, file_name='example-file-4', file_path='1/example-file-4')
+            file_4 = File(
+                user_id=1,
+                file_name='example-file-4',
+                file_path='1/example-file-4_20230720-184800.gcode'
+            )
             self.files_list.append(file_4)
             return
 
+        generated_file_name = '1/example-file-4_20230720-184800.gcode'
+        mock_save_file = mocker.patch('views.FilesView.saveFile', return_value=generated_file_name)
         mock_create_file = mocker.patch('views.FilesView.createFile', side_effect=side_effect_create_file)
 
         # Call the createFile method
         self.files_view.createFile()
 
         # Validate DB calls
+        assert mock_save_file.call_count == 1
         assert mock_create_file.call_count == 1
         assert self.mock_get_all_files.call_count == 2
 

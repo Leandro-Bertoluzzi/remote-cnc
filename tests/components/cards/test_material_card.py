@@ -34,7 +34,7 @@ class TestMaterialCard:
         self.card.updateMaterial()
 
         # Validate DB calls
-        mock_update_material.call_count == 1
+        assert mock_update_material.call_count == 1
         update_material_params = {
             'id': 1,
             'name': 'Updated material',
@@ -42,9 +42,16 @@ class TestMaterialCard:
         }
         mock_update_material.assert_called_with(*update_material_params.values())
 
-    def test_material_card_remove_material(self, qtbot, mocker):
+    @pytest.mark.parametrize(
+            "msgBoxResponse,expectedMethodCalls",
+            [
+                (QMessageBox.Yes, 1),
+                (QMessageBox.Cancel, 0)
+            ]
+        )
+    def test_material_card_remove_material(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
         mock_remove_material = mocker.patch('components.cards.MaterialCard.removeMaterial')
@@ -53,4 +60,4 @@ class TestMaterialCard:
         self.card.removeMaterial()
 
         # Validate DB calls
-        mock_remove_material.call_count == 1
+        assert mock_remove_material.call_count == expectedMethodCalls
