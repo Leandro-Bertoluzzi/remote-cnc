@@ -35,17 +35,17 @@ class TestInventoryView:
         self.inventory_view = InventoryView(parent=self.parent)
         qtbot.addWidget(self.inventory_view)
 
-    def test_inventory_view_init(self, qtbot):
+    def test_inventory_view_init(self, helpers):
         # Validate DB calls
         self.mock_get_all_tools.assert_called_once()
         self.mock_get_all_materials.assert_called_once()
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 3
-        assert self.count_widgets_with_type(ToolCard) == 3
-        assert self.count_widgets_with_type(MaterialCard) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 3
 
-    def test_inventory_view_refresh_layout(self, qtbot):
+    def test_inventory_view_refresh_layout(self, helpers):
         # We remove a tool
         self.tools_list.pop()
         # We remove a material
@@ -58,11 +58,11 @@ class TestInventoryView:
         assert self.mock_get_all_tools.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 3
-        assert self.count_widgets_with_type(ToolCard) == 2
-        assert self.count_widgets_with_type(MaterialCard) == 2
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 2
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 2
 
-    def test_inventory_view_create_tool(self, qtbot, mocker):
+    def test_inventory_view_create_tool(self, mocker, helpers):
         # Mock ToolDataDialog methods
         mock_inputs = 'Example tool 4', 'It is the fourth tool'
         mocker.patch.object(ToolDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -84,11 +84,11 @@ class TestInventoryView:
         assert self.mock_get_all_tools.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 3
-        assert self.count_widgets_with_type(ToolCard) == 4
-        assert self.count_widgets_with_type(MaterialCard) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 4
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 3
 
-    def test_inventory_view_create_material(self, qtbot, mocker):
+    def test_inventory_view_create_material(self, mocker, helpers):
         # Mock MaterialDataDialog methods
         mock_inputs = 'Example material 4', 'It is the fourth material'
         mocker.patch.object(MaterialDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -110,15 +110,6 @@ class TestInventoryView:
         assert self.mock_get_all_materials.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 3
-        assert self.count_widgets_with_type(ToolCard) == 3
-        assert self.count_widgets_with_type(MaterialCard) == 4
-
-    # Helper method
-    def count_widgets_with_type(self, widgetType):
-        count = 0
-        for i in range(self.inventory_view.layout.count()):
-            widget = self.inventory_view.layout.itemAt(i).widget()
-            if isinstance(widget, widgetType):
-                count = count + 1
-        return count
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 3
+        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 4

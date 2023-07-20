@@ -24,15 +24,15 @@ class TestUsersView:
         self.users_view = UsersView(parent=self.parent)
         qtbot.addWidget(self.users_view)
 
-    def test_users_view_init(self, qtbot):
+    def test_users_view_init(self, helpers):
         # Validate DB calls
         self.mock_get_all_users.assert_called_once()
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(UserCard) == 3
+        assert helpers.count_widgets_with_type(self.users_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.users_view.layout, UserCard) == 3
 
-    def test_users_view_refresh_layout(self, qtbot):
+    def test_users_view_refresh_layout(self, helpers):
         # We remove a user
         self.users_list.pop()
 
@@ -43,10 +43,10 @@ class TestUsersView:
         assert self.mock_get_all_users.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(UserCard) == 2
+        assert helpers.count_widgets_with_type(self.users_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.users_view.layout, UserCard) == 2
 
-    def test_users_view_create_user(self, qtbot, mocker):
+    def test_users_view_create_user(self, mocker, helpers):
         # Mock UserDataDialog methods
         mock_inputs = 'John 4', 'test4@testing.com', '1234', 'user'
         mocker.patch.object(UserDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -68,14 +68,5 @@ class TestUsersView:
         assert self.mock_get_all_users.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(UserCard) == 4
-
-    # Helper method
-    def count_widgets_with_type(self, widgetType):
-        count = 0
-        for i in range(self.users_view.layout.count()):
-            widget = self.users_view.layout.itemAt(i).widget()
-            if isinstance(widget, widgetType):
-                count = count + 1
-        return count
+        assert helpers.count_widgets_with_type(self.users_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.users_view.layout, UserCard) == 4

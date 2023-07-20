@@ -24,15 +24,15 @@ class TestFilesView:
         self.files_view = FilesView(parent=self.parent)
         qtbot.addWidget(self.files_view)
 
-    def test_files_view_init(self, qtbot):
+    def test_files_view_init(self, helpers):
         # Validate DB calls
         self.mock_get_all_files.assert_called_once()
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(FileCard) == 3
+        assert helpers.count_widgets_with_type(self.files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.files_view.layout, FileCard) == 3
 
-    def test_files_view_refresh_layout(self, qtbot):
+    def test_files_view_refresh_layout(self, helpers):
         # We remove a file
         self.files_list.pop()
 
@@ -43,10 +43,10 @@ class TestFilesView:
         assert self.mock_get_all_files.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(FileCard) == 2
+        assert helpers.count_widgets_with_type(self.files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.files_view.layout, FileCard) == 2
 
-    def test_files_view_create_file(self, qtbot, mocker):
+    def test_files_view_create_file(self, mocker, helpers):
         # Mock FileDataDialog methods
         mock_input = 'example-file-4', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -75,14 +75,5 @@ class TestFilesView:
         assert self.mock_get_all_files.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(FileCard) == 4
-
-    # Helper method
-    def count_widgets_with_type(self, widgetType):
-        count = 0
-        for i in range(self.files_view.layout.count()):
-            widget = self.files_view.layout.itemAt(i).widget()
-            if isinstance(widget, widgetType):
-                count = count + 1
-        return count
+        assert helpers.count_widgets_with_type(self.files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.files_view.layout, FileCard) == 4

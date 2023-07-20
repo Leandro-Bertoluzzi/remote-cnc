@@ -48,15 +48,15 @@ class TestTasksView:
         self.tasks_view = TasksView(parent=self.parent)
         qtbot.addWidget(self.tasks_view)
 
-    def test_tasks_view_init(self, qtbot):
+    def test_tasks_view_init(self, helpers):
         # Validate DB calls
         self.mock_get_all_tasks.assert_called_once()
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(TaskCard) == 3
+        assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.tasks_view.layout, TaskCard) == 3
 
-    def test_tasks_view_refresh_layout(self, qtbot):
+    def test_tasks_view_refresh_layout(self, helpers):
         # We remove a task
         self.tasks_list.pop()
 
@@ -67,10 +67,10 @@ class TestTasksView:
         assert self.mock_get_all_tasks.call_count == 2
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(TaskCard) == 2
+        assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.tasks_view.layout, TaskCard) == 2
 
-    def test_tasks_view_create_task(self, qtbot, mocker):
+    def test_tasks_view_create_task(self, mocker, helpers):
         # Mock TaskDataDialog methods
         mock_inputs = 2, 3, 4, 'Example task 4', 'Just a simple description'
         mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
@@ -114,14 +114,5 @@ class TestTasksView:
         assert mock_add_task_in_queue.call_count == 1
 
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 2
-        assert self.count_widgets_with_type(TaskCard) == 4
-
-    # Helper method
-    def count_widgets_with_type(self, widgetType):
-        count = 0
-        for i in range(self.tasks_view.layout.count()):
-            widget = self.tasks_view.layout.itemAt(i).widget()
-            if isinstance(widget, widgetType):
-                count = count + 1
-        return count
+        assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(self.tasks_view.layout, TaskCard) == 4

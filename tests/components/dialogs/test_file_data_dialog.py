@@ -14,7 +14,7 @@ class TestFileDataDialog:
         assert dialog.layout() is not None
 
     @pytest.mark.parametrize("file_info", [None, fileInfo])
-    def test_file_data_dialog_init_widgets(self, qtbot, file_info):
+    def test_file_data_dialog_init_widgets(self, qtbot, helpers, file_info):
         dialog = FileDataDialog(fileInfo=file_info)
         qtbot.addWidget(dialog)
 
@@ -28,7 +28,7 @@ class TestFileDataDialog:
         assert dialog.name.isEnabled() == expectedNameEnabled
         assert dialog.buttonBox.isEnabled() == expectedButtonBoxEnabled
         assert dialog.windowTitle() == expectedWindowTitle
-        assert self.count_widgets_with_type(dialog.layout(), QPushButton) == buttonsCount
+        assert helpers.count_widgets_with_type(dialog.layout(), QPushButton) == buttonsCount
 
     def test_file_data_dialog_get_inputs_new_file(self, qtbot, mocker):
         dialog = FileDataDialog()
@@ -61,12 +61,3 @@ class TestFileDataDialog:
         dialog.name.setText('updated_name.gcode')
 
         assert dialog.getInputs() == ('updated_name.gcode', '')
-
-    # Helper method
-    def count_widgets_with_type(self, layout, widgetType):
-        count = 0
-        for i in range(layout.count()):
-            widget = layout.itemAt(i).widget()
-            if isinstance(widget, widgetType):
-                count = count + 1
-        return count

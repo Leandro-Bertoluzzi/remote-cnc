@@ -11,9 +11,9 @@ class TestMainMenu:
         self.main_menu = MainMenu(parent=self.parent)
         qtbot.addWidget(self.main_menu)
 
-    def test_main_menu_init(self):
+    def test_main_menu_init(self, helpers):
         # Validate amount of each type of widget
-        assert self.count_widgets_with_type(MenuButton) == 7
+        assert helpers.count_widgets_with_type(self.main_menu.layout(), MenuButton) == 7
 
     def test_main_menu_redirects_to_view(self, mocker):
         # Mock parent's method
@@ -24,12 +24,3 @@ class TestMainMenu:
 
         # Validate amount of each type of widget
         assert mock_main_window_changes_view.call_count == 1
-
-    # Helper method
-    def count_widgets_with_type(self, widgetType):
-        count = 0
-        for i in range(self.main_menu.layout().count()):
-            widget = self.main_menu.layout().itemAt(i).widget()
-            if isinstance(widget, widgetType):
-                count = count + 1
-        return count
