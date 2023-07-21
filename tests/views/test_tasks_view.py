@@ -5,7 +5,6 @@ from MainWindow import MainWindow
 from components.MenuButton import MenuButton
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from config import USER_ID
 from views.TasksView import TasksView
 from database.models.task import Task
 
@@ -13,21 +12,21 @@ class TestTasksView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
         task_1 = Task(
-            user_id=USER_ID,
+            user_id=1,
             file_id=1,
             tool_id=1,
             material_id=1,
             name='Example task 1'
         )
         task_2 = Task(
-            user_id=USER_ID,
+            user_id=1,
             file_id=1,
             tool_id=1,
             material_id=1,
             name='Example task 2'
         )
         task_3 = Task(
-            user_id=USER_ID,
+            user_id=1,
             file_id=1,
             tool_id=1,
             material_id=1,
@@ -80,7 +79,7 @@ class TestTasksView:
         # Mock DB method
         def side_effect_create_task(user_id, file_id, tool_id, material_id, name, note):
             task_4 = Task(
-                user_id=USER_ID,
+                user_id=1,
                 file_id=2,
                 tool_id=3,
                 material_id=4,
@@ -100,7 +99,7 @@ class TestTasksView:
         # Validate DB calls
         assert mock_create_task.call_count == 1
         create_task_params = {
-            'user_id': USER_ID,
+            'user_id': 1,
             'file_id': 2,
             'tool_id': 3,
             'material_id': 4,

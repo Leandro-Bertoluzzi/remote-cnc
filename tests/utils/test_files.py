@@ -2,48 +2,48 @@ import os
 import pytest
 import shutil
 import time
-from config import FILES_FOLDER_PATH
+
 from utils.files import isAllowedFile, getFileNameInFolder, createFileName, saveFile, renameFile, deleteFile
 
 @pytest.mark.parametrize(
-        "file_name,expected",
+        'file_name,expected',
         [
-            ("path\\to\\files\\file.txt", True),
-            ("path\\to\\files\\file.gcode", True),
-            ("path\\to\\files\\file.nc", True),
-            ("path\\to\\files\\file.TXT", True),
-            ("path\\to\\files\\file.GCODE", True),
-            ("path\\to\\files\\file.NC", True),
-            ("path\\to\\files\\file.py", False),
-            ("path\\to\\files\\file", False),
-            ("", False)
+            ('path\\to\\files\\file.txt', True),
+            ('path\\to\\files\\file.gcode', True),
+            ('path\\to\\files\\file.nc', True),
+            ('path\\to\\files\\file.TXT', True),
+            ('path\\to\\files\\file.GCODE', True),
+            ('path\\to\\files\\file.NC', True),
+            ('path\\to\\files\\file.py', False),
+            ('path\\to\\files\\file', False),
+            ('', False)
         ]
     )
 def test_isAllowedFile(file_name, expected):
     assert isAllowedFile(file_name) == expected
 
 def test_getFileNameInFolder():
-    current = "path\\to\\files\\current.py"
-    searched = "searched.txt"
-    expected = "path\\to\\files\\searched.txt"
+    current = 'path\\to\\files\\current.py'
+    searched = 'searched.txt'
+    expected = 'path\\to\\files\\searched.txt'
     assert getFileNameInFolder(current, searched) == expected
 
 def test_createFileName(mocker):
     mock_timestamp = mocker.patch.object(time, 'strftime', return_value='20230720-192900')
-    file_name = "path\\to\\file.gcode"
-    expected = "path\\to\\file_20230720-192900.gcode"
+    file_name = 'path\\to\\file.gcode'
+    expected = 'path\\to\\file_20230720-192900.gcode'
 
     # Assertions
     assert createFileName(file_name) == expected
     assert mock_timestamp.call_count == 1
 
-@pytest.mark.parametrize("user_folder_exists", [True, False])
+@pytest.mark.parametrize('user_folder_exists', [True, False])
 def test_saveFile(mocker, user_folder_exists):
     mocker.patch.object(time, 'strftime', return_value='20230720-192900')
-    original_path = "path\\to\\file.gcode"
-    file_name = "file.gcode"
+    original_path = 'path\\to\\file.gcode'
+    file_name = 'file.gcode'
     user_id = 1
-    expected = f"{FILES_FOLDER_PATH}\\1\\file_20230720-192900.gcode"
+    expected = './files_folder\\1\\file_20230720-192900.gcode'
 
     # Mock folder creation
     mocker.patch.object(os.path, 'isdir', return_value=user_folder_exists)
@@ -62,8 +62,8 @@ def test_saveFile(mocker, user_folder_exists):
     assert mock_copy_file.call_count == 1
 
 def test_saveFile_with_invalid_name(mocker):
-    original_path = "path\\to\\file.gcode"
-    file_name = "file.invalid"
+    original_path = 'path\\to\\file.gcode'
+    file_name = 'file.invalid'
     user_id = 1
 
     # Mock folder creation
@@ -82,8 +82,8 @@ def test_saveFile_with_invalid_name(mocker):
     assert mock_copy_file.call_count == 0
 
 def test_saveFile_with_os_error(mocker):
-    original_path = "path\\to\\file.gcode"
-    file_name = "file.gcode"
+    original_path = 'path\\to\\file.gcode'
+    file_name = 'file.gcode'
     user_id = 1
 
     # Mock file copy and simulate exception
@@ -95,11 +95,14 @@ def test_saveFile_with_os_error(mocker):
     assert str(error.value) == 'There was an error writing the file in the file system'
 
 def test_renameFile(mocker):
-    mocker.patch.object(time, 'strftime', return_value='20230720-192900')
-    file_path = f"{FILES_FOLDER_PATH}\\1\\file_20220610-192900.gcode"
-    new_file_name = "file-updated.gcode"
+    # Set variables
+    file_path = './files_folder\\1\\file_20220610-192900.gcode'
+    new_file_name = 'file-updated.gcode'
     user_id = 1
-    expected = f"{FILES_FOLDER_PATH}\\1\\file-updated_20230720-192900.gcode"
+    expected = './files_folder\\1\\file-updated_20230720-192900.gcode'
+
+    # Mock file update
+    mocker.patch.object(time, 'strftime', return_value='20230720-192900')
 
     # Mock file update
     mock_rename_file = mocker.patch.object(os, 'rename')
@@ -112,8 +115,8 @@ def test_renameFile(mocker):
     assert mock_rename_file.call_count == 1
 
 def test_renameFile_with_invalid_name(mocker):
-    file_path = f"{FILES_FOLDER_PATH}\\1\\file_20220610-192900.gcode"
-    new_file_name = "file-updated.invalid"
+    file_path = 'files_folder\\1\\file_20220610-192900.gcode'
+    new_file_name = 'file-updated.invalid'
     user_id = 1
 
     # Mock file update
@@ -128,8 +131,8 @@ def test_renameFile_with_invalid_name(mocker):
     assert mock_rename_file.call_count == 0
 
 def test_renameFile_with_os_error(mocker):
-    file_path = f"{FILES_FOLDER_PATH}\\1\\file_20220610-192900.gcode"
-    new_file_name = "file-updated.gcode"
+    file_path = 'files_folder\\1\\file_20220610-192900.gcode'
+    new_file_name = 'file-updated.gcode'
     user_id = 1
 
     # Mock file update and simulate exception
@@ -141,7 +144,7 @@ def test_renameFile_with_os_error(mocker):
     assert str(error.value) == 'There was an error renaming the file in the file system'
 
 def test_deleteFile(mocker):
-    file_path = "1\\file_20230720-192900.gcode"
+    file_path = '1\\file_20230720-192900.gcode'
 
     # Mock file removal
     mock_remove_file = mocker.patch.object(os, 'remove')

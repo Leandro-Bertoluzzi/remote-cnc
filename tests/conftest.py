@@ -1,5 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QLayout
+import os
 import pytest
+
+# Set environment variables for tests
+os.environ['FILES_FOLDER'] = 'files_folder'
+os.environ['USER_ID'] = '1'
 
 class Helpers:
     @staticmethod
