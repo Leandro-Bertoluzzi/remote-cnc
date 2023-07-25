@@ -9,5 +9,8 @@ RUN pip install --upgrade pip
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
-# copy project
-COPY . .
+# copy necessary files
+COPY ./worker/tasks.py .
+COPY ./config.py .
+COPY ./utils ./utils
+COPY ./database ./database

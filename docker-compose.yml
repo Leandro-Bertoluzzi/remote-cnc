@@ -30,25 +30,37 @@ services:
 
   worker:
     build:
-      context: ./worker
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./worker/Dockerfile
     command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
     depends_on:
       - redis
+      - mysql
     env_file:
-      - worker/.env
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DB_HOST=mysql
+    networks:
+      - backend
+      - message-broker
     volumes:
-      - ./worker:/usr/src/app
+      - ./worker/logs:/usr/src/app/logs
+      - ./${FILES_FOLDER}:/usr/src/app/${FILES_FOLDER}
     container_name: cnc-admin-worker
 
   redis:
     image: redis:6-alpine
+    networks:
+      - message-broker
     ports:
       - 6379:6379
     container_name: cnc-admin-redis
 
 networks:
   backend:
+  message-broker:
 
 volumes:
   mysql-datavolume:

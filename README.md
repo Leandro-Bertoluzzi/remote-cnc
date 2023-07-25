@@ -63,7 +63,7 @@ Before starting :checkered_flag:, you need to have [Python](https://www.python.o
 
 ```bash
 # Clone this project
-$ git clone --recurse-submodules https://github.com/Leandro-Bertoluzzi/cnc-admin
+$ git clone https://github.com/Leandro-Bertoluzzi/cnc-admin
 
 # 1. Access the repository
 $ cd cnc-admin

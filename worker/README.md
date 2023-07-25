@@ -21,15 +21,15 @@ conda env create -f environment.yml
 conda activate cnc-task-manager
 
 # Option 2: If you use venv and pip
-$ pip install -r requirements.txt
 $ python -m venv env
-$ source tutorial-env/bin/activate
+$ source env/bin/activate
+$ pip install -r requirements.txt
 
 # Start the Redis server, you can achieve this with Docker:
 $ docker run -d -p 6379:6379 redis
 
 # Start Celery's worker server
-$ celery --app tasks worker --loglevel=INFO
+$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
 ```
 
 - Windows:
@@ -41,23 +41,15 @@ conda env create -f environment-windows.yml
 conda activate cnc-task-manager
 
 # Option 2: If you use venv and pip
-$ pip install -r requirements-windows.txt
 $ python -m venv env
-# run the script: env\Scripts\activate.bat
+$ .\env\Scripts\activate
+$ pip install -r requirements-windows.txt
 
 # Start the Redis server
 $ docker run -d -p 6379:6379 redis
 
 # Start Celery's worker server
-$ celery --app tasks worker --loglevel=INFO --pool=gevent
+$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
 You can see an explanation on how to run Celery 4+ on Windows here: [link](https://distributedpython.com/posts/two-ways-to-make-celery-4-run-on-windows/).
-
-- Docker compose:
-
-Optionally, you can use the docker-compose.yml file to start both the Redis MQ and the Celery worker, in which case you'll have to run:
-
-```bash
-$ docker-compose up
-```

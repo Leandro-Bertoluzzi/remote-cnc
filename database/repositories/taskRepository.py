@@ -1,7 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 from database.base import Session
 from database.models.task import Task
-from database.models.user import User
 from datetime import datetime
 
 def createTask(
@@ -45,49 +44,17 @@ def createTask(
 
     return
 
-def getAllTasksFromUser(user_id: int, status: str):
+def getAllTasksFromUser(user_id: int, status: str = 'all'):
     # Create a new session
     session = Session()
 
     # Get data from DB
     tasks = []
     try:
-        if not status or status == 'all':
-            user = session.query(User).get(user_id)
+        if status == 'all':
+            tasks = session.query(Task).filter_by(user_id=user_id).all()
         else:
-            tasks = session.query(Task).filter_by(status=status, user_id=user_id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error retrieving tasks from the DB: {e}')
-
-    if not status or status == 'all':
-        if not user:
-            raise Exception(f'User with ID {user_id} not found')
-
-        for task in user.tasks:
-            print(f'## Task: {task.name}')
-            print(f'Owner: {task.user.name}')
-            print(f'File: {task.file.file_name}')
-            print(f'Tool: {task.tool.name}')
-            print(f'Material: {task.material.name}')
-            print(f'Admin: {"" if not task.admin else task.admin.name}')
-        tasks = user.tasks
-
-    # Close session
-    session.close()
-
-    return tasks
-
-def getAllTasks(status: str):
-    # Create a new session
-    session = Session()
-
-    # Get data from DB
-    tasks = []
-    try:
-        if not status or status == 'all':
-            tasks = session.query(Task).all()
-        else:
-            tasks = session.query(Task).filter_by(status=status)
+            tasks = session.query(Task).filter_by(status=status, user_id=user_id).all()
     except SQLAlchemyError as e:
         raise Exception(f'Error retrieving tasks from the DB: {e}')
 
@@ -103,6 +70,55 @@ def getAllTasks(status: str):
     session.close()
 
     return tasks
+
+def getAllTasks(status: str = 'all'):
+    # Create a new session
+    session = Session()
+
+    # Get data from DB
+    tasks = []
+    try:
+        if status == 'all':
+            tasks = session.query(Task).order_by(Task.priority.asc()).all()
+        else:
+            tasks = session.query(Task).filter_by(status=status).order_by(Task.priority.asc()).all()
+    except SQLAlchemyError as e:
+        raise Exception(f'Error retrieving tasks from the DB: {e}')
+
+    for task in tasks:
+        print(f'## Task: {task.name}')
+        print(f'Owner: {task.user.name}')
+        print(f'File: {task.file.file_name}')
+        print(f'Tool: {task.tool.name}')
+        print(f'Material: {task.material.name}')
+        print(f'Admin: {"" if not task.admin else task.admin.name}')
+
+    # Close session
+    session.close()
+
+    return tasks
+
+def getNextTask():
+    # Create a new session
+    session = Session()
+
+    # Get data from DB
+    try:
+        task = session.query(Task).filter_by(status='on_hold').order_by(Task.priority.desc()).first()
+    except SQLAlchemyError as e:
+        raise Exception(f'Error retrieving tasks from the DB: {e}')
+
+    print(f'## Task: {task.name}')
+    print(f'Owner: {task.user.name}')
+    print(f'File: {task.file.file_name}, {task.file.file_path}')
+    print(f'Tool: {task.tool.name}')
+    print(f'Material: {task.material.name}')
+    print(f'Admin: {"" if not task.admin else task.admin.name}')
+
+    # Close session
+    session.close()
+
+    return task
 
 def updateTask(
     id,
@@ -208,3 +224,20 @@ def removeTask(id):
 
     # Close session
     session.close()
+
+def areThereTasksInStatus(status: str) -> bool:
+    # Create a new session
+    session = Session()
+
+    tasks = session.query(Task).filter_by(status=status).all()
+
+    # Close session
+    session.close()
+
+    return not not tasks
+
+def areTherePendingTasks() -> bool:
+    return areThereTasksInStatus('on_hold')
+
+def areThereTasksInProgress() -> bool:
+    return areThereTasksInStatus('in_progress')
