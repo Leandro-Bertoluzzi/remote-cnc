@@ -1,2 +1,2 @@
 [run]
-omit = **/__init__.py, **/main.py, tests/**, worker/**
+omit = **/__init__.py, **/main.py, tests/**

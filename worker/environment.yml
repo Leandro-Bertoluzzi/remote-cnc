@@ -1,0 +1,9 @@
+name: cnc-task-manager
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python-dotenv
+  - pip
+  - pip:
+    - "celery[redis]"

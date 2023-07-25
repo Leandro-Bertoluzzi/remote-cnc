@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  worker:
+    build: .
+    command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:6-alpine
+    ports:
+        - 6379:6379

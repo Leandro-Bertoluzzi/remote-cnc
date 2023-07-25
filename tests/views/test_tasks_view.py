@@ -91,7 +91,7 @@ class TestTasksView:
 
         # Mock and keep track of function calls
         mock_create_task = mocker.patch('views.TasksView.createTask', side_effect=side_effect_create_task)
-        mock_add_task_in_queue = mocker.patch('views.TasksView.addTask.delay')
+        mock_add_task_in_queue = mocker.patch('views.TasksView.executeTask.delay')
 
         # Call the createTask method
         self.tasks_view.createTask()
