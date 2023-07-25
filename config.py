@@ -13,6 +13,8 @@ USER_ID = int(os.environ.get('USER_ID'))
 FILES_FOLDER_PATH = './' + os.environ.get('FILES_FOLDER')
 CELERY_BROKER_URL = './' + os.environ.get('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
+SERIAL_PORT = os.environ.get('SERIAL_PORT')
+SERIAL_BAUDRATE = os.environ.get('SERIAL_BAUDRATE')
 
 # Generate global variables
 SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{DB_USER}:{DB_PASS}@localhost:{DB_PORT}/{DB_NAME}'

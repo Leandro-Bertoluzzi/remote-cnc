@@ -9,6 +9,7 @@ dependencies:
   - pymysql
   - bcrypt
   - pip
+  - pyserial
   - pytest
   - pytest-cov
   - python-dotenv
