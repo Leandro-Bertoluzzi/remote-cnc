@@ -16,5 +16,6 @@ dependencies:
   - pytest-mock
   - python-dotenv
   - sqlalchemy
+  - watchdog
   - pip:
     - "celery[redis]"

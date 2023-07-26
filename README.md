@@ -120,6 +120,10 @@ $ docker run -d -p 6379:6379 redis
 $ cd worker
 
 # Start Celery's worker server
+# Option 1: With auto-reload
+$ watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
+
+# Option 2: Static (in case you won't make changes to the worker)
 $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
