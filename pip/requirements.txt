@@ -4,10 +4,6 @@ celery==5.3.1
 PyMySQL==1.0.2
 PyQt5==5.15.7
 pyserial==3.5
-pytest==7.1.2
-pytest-cov==4.1.0
-pytest-mock==3.11.1
-pytest-qt==4.2.0
 python-dotenv==1.0.0
 redis==4.6.0
 SQLAlchemy==1.4.39

@@ -1,0 +1,15 @@
+name: cnc-admin
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - alembic
+  - bcrypt
+  - pip
+  - pymysql
+  - pyqt
+  - pyserial
+  - python-dotenv
+  - sqlalchemy
+  - pip:
+    - "celery[redis]"

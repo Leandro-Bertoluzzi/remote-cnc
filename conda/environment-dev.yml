@@ -1,19 +1,19 @@
-name: cnc-admin
+name: cnc-admin-dev
 channels:
   - defaults
   - conda-forge
 dependencies:
-  - pyqt
-  - sqlalchemy
   - alembic
-  - pymysql
   - bcrypt
   - pip
+  - pymysql
+  - pyqt
   - pyserial
   - pytest
   - pytest-cov
-  - python-dotenv
   - pytest-qt
   - pytest-mock
+  - python-dotenv
+  - sqlalchemy
   - pip:
     - "celery[redis]"

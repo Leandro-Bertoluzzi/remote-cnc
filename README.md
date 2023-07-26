@@ -59,7 +59,7 @@ The following tools were used in this project:
 
 Before starting :checkered_flag:, you need to have [Python](https://www.python.org/) installed.
 
-## :checkered_flag: Starting ##
+## :checkered_flag: Development ##
 
 ```bash
 # Clone this project
@@ -70,13 +70,14 @@ $ cd cnc-admin
 
 # 2. Set up your Python environment
 # Option 1: If you use Conda
-conda env create -f environment.yml
-conda activate cnc-admin
+conda env create -f conda/environment-dev.yml
+conda activate cnc-admin-dev
 
 # Option 2: If you use venv and pip
-$ pip install -r requirements.txt
+$ python -m venv env-dev
 # Activate your environment according to your OS:
 # https://docs.python.org/3/tutorial/venv.html
+$ pip install -r pip/requirements-dev.txt
 
 # 3. Copy and (optionally) configure the .env file
 cp .env.example .env
@@ -90,6 +91,33 @@ $ alembic upgrade head
 
 # 6. Start the app
 $ python main.py
+```
+
+If you are developing on Windows, the docker-compose file won't work since ***devices*** is not able to map Windows ports to Linux containers. Options are:
+1. Use a virtual machine with a Linux distribution.
+2. In step 4, remove the service `worker` from the file `docker-compose.yaml` before running `docker-compose up`.
+3. Don't use docker-compose at all and start MySQL and Redis the common way, or with `docker run` (see [Deployment](#deployment) section for more information).
+
+In either cases 2 and 3, you will need to start the CNC worker by following the steps:
+```bash
+# Set up your Python environment
+# Option 1: If you use Conda
+conda env create -f conda/environment-dev-windows.yml
+conda activate cnc-admin-dev
+
+# Option 2: If you use venv and pip
+$ python -m venv env-dev
+$ .\env\Scripts\activate
+$ pip install -r pip/requirements-dev-windows.txt
+
+# (optional) Start the MySQL server with Docker
+$ docker run -d -p 3306:3306 --env-file=mysql/.env mysql:5.7
+
+# (optional) Start the Redis server with Docker
+$ docker run -d -p 6379:6379 redis
+
+# Start Celery's worker server
+$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
 ## :wrench: Running tests ##
