@@ -21,7 +21,6 @@ class SerialService:
         #time.sleep(2)
         startMessage = self.interface.readline().decode('utf-8').strip()
         # TODO: Add validation for the startup message
-        print('Start message from Arduino: ', startMessage)
 
         return
 
@@ -30,10 +29,9 @@ class SerialService:
         message = code.strip() + '\n'
         # Send G-code line to GRBL
         self.interface.write(message.encode('utf-8'))
-        print('Message sent to Arduino: ', message.encode('utf-8'))
         # Wait for GRBL response with carriage return
         grbl_out = self.interface.readline().strip()
-        print('Response from Arduino: ', grbl_out)
+        # TODO: Add validation for the response message
 
         return "OK"
 

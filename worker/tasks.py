@@ -46,7 +46,6 @@ def executeTask() -> bool:
         with open(file_path, "r") as file:
             for line in file:
                 serial.streamLine(line)
-                print(line)
 
         # 5. When the file finishes, mark it as 'finished' in the DB and check if there is a queued task in DB. If there is none, close the connection and return
         updateTaskStatus(task.id, 'finished', USER_ID)

@@ -89,8 +89,8 @@ $ docker-compose up
 # 5. If you are starting a new DB, run DB migrations
 $ alembic upgrade head
 
-# 6. Start the app
-$ python main.py
+# 6. Start the app with auto-reload
+$ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
 ```
 
 If you are developing on Windows, the docker-compose file won't work since ***devices*** is not able to map Windows ports to Linux containers. Options are:
