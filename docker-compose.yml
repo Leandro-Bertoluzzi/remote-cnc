@@ -36,6 +36,8 @@ services:
     depends_on:
       - redis
       - mysql
+    devices:
+      - ${SERIAL_PORT}:${SERIAL_PORT}
     env_file:
       - .env
     environment:

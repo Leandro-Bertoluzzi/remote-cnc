@@ -17,8 +17,9 @@ sys.path.append(parent_dir)
 ###########################################################
 
 from celery import Celery
-from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, FILES_FOLDER_PATH
+from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
 from database.repositories.taskRepository import getNextTask, areTherePendingTasks, areThereTasksInProgress, updateTaskStatus
+from utils.serial import SerialService
 
 app = Celery(
     'worker',
@@ -33,7 +34,8 @@ def executeTask() -> bool:
         raise Exception("There is a task currently in progress, please wait until finished")
 
     # 2. Instantiate a SerialService object and start communication with Arduino
-    # TO DO
+    serial = SerialService()
+    serial.startConnection(SERIAL_PORT, SERIAL_BAUDRATE)
 
     while areTherePendingTasks():
         # 3. Get the file for the next task in the queue
@@ -43,6 +45,7 @@ def executeTask() -> bool:
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
         with open(file_path, "r") as file:
             for line in file:
+                serial.streamLine(line)
                 print(line)
 
         # 5. When the file finishes, mark it as 'finished' in the DB and check if there is a queued task in DB. If there is none, close the connection and return
