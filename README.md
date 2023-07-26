@@ -116,6 +116,9 @@ $ docker run -d -p 3306:3306 --env-file=mysql/.env mysql:5.7
 # (optional) Start the Redis server with Docker
 $ docker run -d -p 6379:6379 redis
 
+# Move to worker folder
+$ cd worker
+
 # Start Celery's worker server
 $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```

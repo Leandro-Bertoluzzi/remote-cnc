@@ -1,3 +1,21 @@
+###########################################################
+###### Allow importing modules from parent directory ######
+###########################################################
+
+import sys
+import os
+
+# Get the current directory of the tasks.py file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Get the parent directory (one level up)
+parent_dir = os.path.dirname(current_dir)
+
+# Add the parent directory to sys.path
+sys.path.append(parent_dir)
+
+###########################################################
+
 from celery import Celery
 from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, FILES_FOLDER_PATH
 from database.repositories.taskRepository import getNextTask, areTherePendingTasks, areThereTasksInProgress, updateTaskStatus
@@ -20,7 +38,7 @@ def executeTask() -> bool:
     while areTherePendingTasks():
         # 3. Get the file for the next task in the queue
         task = getNextTask()
-        file_path = f'{FILES_FOLDER_PATH}/{task.file.file_path}'
+        file_path = f'../{FILES_FOLDER_PATH}/{task.file.file_path}'
 
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
         with open(file_path, "r") as file:
