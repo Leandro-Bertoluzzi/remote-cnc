@@ -12,7 +12,7 @@ def serial_service():
 @pytest.mark.parametrize("open_port", [True, False])
 def test_start_connection(serial_service, mocker, open_port: bool):
     # Input values for the startConnection method
-    port = "COM1"
+    port = "COMx"
     baudrate = 9600
     timeout = 1
 

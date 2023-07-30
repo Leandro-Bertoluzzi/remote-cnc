@@ -17,11 +17,11 @@ class TestUserCard:
         self.card = UserCard(self.user, parent=self.parent)
         qtbot.addWidget(self.card)
 
-    def test_user_card_init(self, qtbot):
+    def test_user_card_init(self):
         assert self.card.user == self.user
-        assert self.card.layout() is not None
+        assert self.card.layout is not None
 
-    def test_user_card_update_user(self, qtbot, mocker):
+    def test_user_card_update_user(self, mocker):
         # Mock UserDataDialog methods
         mock_input = 'Updated Name', 'updated@email.com', 'updatedpassword', 'admin'
         mocker.patch.object(UserDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -45,7 +45,7 @@ class TestUserCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_user_card_remove_user(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_user_card_remove_user(self, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 

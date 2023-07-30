@@ -17,11 +17,11 @@ class TestToolCard:
         self.card = ToolCard(self.tool, parent=self.parent)
         qtbot.addWidget(self.card)
 
-    def test_tool_card_init(self, qtbot):
+    def test_tool_card_init(self):
         assert self.card.tool == self.tool
-        assert self.card.layout() is not None
+        assert self.card.layout is not None
 
-    def test_tool_card_update_tool(self, qtbot, mocker):
+    def test_tool_card_update_tool(self, mocker):
         # Mock ToolDataDialog methods
         mock_input = 'Updated tool', 'Updated description'
         mocker.patch.object(ToolDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -49,7 +49,7 @@ class TestToolCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_tool_card_remove_tool(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_tool_card_remove_tool(self, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 

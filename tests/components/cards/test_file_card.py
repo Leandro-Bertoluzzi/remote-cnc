@@ -17,11 +17,11 @@ class TestFileCard:
         self.card = FileCard(self.file, parent=self.parent)
         qtbot.addWidget(self.card)
 
-    def test_file_card_init(self, qtbot):
+    def test_file_card_init(self):
         assert self.card.file == self.file
-        assert self.card.layout() is not None
+        assert self.card.layout is not None
 
-    def test_file_card_update_file(self, qtbot, mocker):
+    def test_file_card_update_file(self, mocker):
         # Mock FileDataDialog methods
         mock_input = 'updated_name.gcode', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -56,7 +56,7 @@ class TestFileCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_file_card_remove_file(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_file_card_remove_file(self, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 

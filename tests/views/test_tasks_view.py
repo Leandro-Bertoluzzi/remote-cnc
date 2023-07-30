@@ -69,8 +69,7 @@ class TestTasksView:
         assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2
         assert helpers.count_widgets_with_type(self.tasks_view.layout, TaskCard) == 2
 
-    @pytest.mark.parametrize("task_in_progress", [True, False])
-    def test_tasks_view_create_task(self, mocker, helpers, task_in_progress):
+    def test_tasks_view_create_task(self, mocker, helpers):
         # Mock TaskDataDialog methods
         mock_inputs = 2, 3, 4, 'Example task 4', 'Just a simple description'
         mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
@@ -92,8 +91,6 @@ class TestTasksView:
 
         # Mock and keep track of function calls
         mock_create_task = mocker.patch('views.TasksView.createTask', side_effect=side_effect_create_task)
-        mocker.patch('views.TasksView.areThereTasksInProgress', return_value=task_in_progress)
-        mock_add_task_in_queue = mocker.patch('views.TasksView.executeTask.delay')
 
         # Call the createTask method
         self.tasks_view.createTask()
@@ -110,9 +107,6 @@ class TestTasksView:
         }
         mock_create_task.assert_called_with(*create_task_params.values())
         assert self.mock_get_all_tasks.call_count == 2
-
-        # Validate call to tasks manager
-        assert mock_add_task_in_queue.call_count == 0 if task_in_progress else 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2

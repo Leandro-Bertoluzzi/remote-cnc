@@ -17,11 +17,11 @@ class TestMaterialCard:
         self.card = MaterialCard(self.material, parent=self.parent)
         qtbot.addWidget(self.card)
 
-    def test_material_card_init(self, qtbot):
+    def test_material_card_init(self):
         assert self.card.material == self.material
-        assert self.card.layout() is not None
+        assert self.card.layout is not None
 
-    def test_material_card_update_material(self, qtbot, mocker):
+    def test_material_card_update_material(self, mocker):
         # Mock MaterialDataDialog methods
         mock_input = 'Updated material', 'Updated description'
         mocker.patch.object(MaterialDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -49,7 +49,7 @@ class TestMaterialCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_material_card_remove_material(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_material_card_remove_material(self, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 

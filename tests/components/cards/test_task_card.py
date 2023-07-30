@@ -28,11 +28,11 @@ class TestTaskCard:
         self.card = TaskCard(self.task, parent=self.parent)
         qtbot.addWidget(self.card)
 
-    def test_task_card_init(self, qtbot):
+    def test_task_card_init(self):
         assert self.card.task == self.task
-        assert self.card.layout() is not None
+        assert self.card.layout is not None
 
-    def test_task_card_update_task(self, qtbot, mocker):
+    def test_task_card_update_task(self, mocker):
         # Mock TaskDataDialog methods
         mock_input = 2, 3, 4, 'Updated task', 'Just a simple description'
         mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
@@ -66,7 +66,7 @@ class TestTaskCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_task_card_remove_task(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_task_card_remove_task(self, mocker, msgBoxResponse, expectedMethodCalls):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
