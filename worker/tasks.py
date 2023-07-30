@@ -18,6 +18,7 @@ sys.path.append(parent_dir)
 
 from celery import Celery
 from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
+from database.models.task import TASK_FINISHED_STATUS
 from database.repositories.taskRepository import getNextTask, areTherePendingTasks, areThereTasksInProgress, updateTaskStatus
 from utils.serial import SerialService
 
@@ -48,7 +49,7 @@ def executeTask() -> bool:
                 serial.streamLine(line)
 
         # 5. When the file finishes, mark it as 'finished' in the DB and check if there is a queued task in DB. If there is none, close the connection and return
-        updateTaskStatus(task.id, 'finished', USER_ID)
+        updateTaskStatus(task.id, TASK_FINISHED_STATUS, USER_ID)
         # 6. If there is a pending task, go to step 3 and repeat
 
     return True

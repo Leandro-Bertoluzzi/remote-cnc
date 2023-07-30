@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
 from utils.files import getFileNameInFolder
 from components.dialogs.TaskDataDialog import TaskDataDialog
@@ -14,7 +14,7 @@ class TaskCard(QWidget):
         self.tools = tools
         self.materials = materials
 
-        taskDescription = QLabel(f'Tarea {task.id}: {task.name}')
+        taskDescription = QLabel(f'Tarea {task.id}: {task.name}\nEstado: {task.status}')
         editTaskBtn = QPushButton("Editar")
         editTaskBtn.clicked.connect(self.updateTask)
         removeTaskBtn = QPushButton("Borrar")
@@ -22,8 +22,12 @@ class TaskCard(QWidget):
 
         layout = QHBoxLayout()
         layout.addWidget(taskDescription)
-        layout.addWidget(editTaskBtn)
-        layout.addWidget(removeTaskBtn)
+
+        btnLayout = QVBoxLayout()
+        btnLayout.addWidget(editTaskBtn)
+        btnLayout.addWidget(removeTaskBtn)
+
+        layout.addLayout(btnLayout)
         layout.setAlignment(Qt.AlignLeft)
         self.setLayout(layout)
 

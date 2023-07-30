@@ -6,9 +6,8 @@ from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
 from database.repositories.fileRepository import getAllFilesFromUser
 from database.repositories.materialRepository import getAllMaterials
-from database.repositories.taskRepository import createTask, getAllTasksFromUser, areThereTasksInProgress
+from database.repositories.taskRepository import createTask, getAllTasksFromUser
 from database.repositories.toolRepository import getAllTools
-from worker.tasks import executeTask
 
 class TasksView(QWidget):
     def __init__(self, parent=None):
@@ -29,9 +28,6 @@ class TasksView(QWidget):
         if taskDialog.exec():
             file_id, tool_id, material_id, name, note = taskDialog.getInputs()
             createTask(USER_ID, file_id, tool_id, material_id, name, note)
-
-            if not areThereTasksInProgress():
-                executeTask.delay()
             self.refreshLayout()
 
     def refreshLayout(self):

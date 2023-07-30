@@ -4,19 +4,26 @@ from database.base import Base
 from datetime import datetime
 
 # Enum values
+TASK_PENDING_APPROVAL_STATUS = 'pending_approval'
+TASK_ON_HOLD_STATUS = 'on_hold'
+TASK_IN_PROGRESS_STATUS = 'in_progress'
+TASK_FINISHED_STATUS = 'finished'
+TASK_REJECTED_STATUS = 'rejected'
+TASK_CANCELLED_STATUS = 'cancelled'
+
 VALID_STATUSES = [
-    'pending_approval',
-    'on_hold',
-    'in_progress',
-    'finished',
-    'rejected',
-    'cancelled'
+    TASK_PENDING_APPROVAL_STATUS,
+    TASK_ON_HOLD_STATUS,
+    TASK_IN_PROGRESS_STATUS,
+    TASK_FINISHED_STATUS,
+    TASK_REJECTED_STATUS,
+    TASK_CANCELLED_STATUS
 ]
 
 # Constants
-TASK_EMPTY_NOTE=''
-TASK_DEFAULT_PRIORITY=0
-TASK_INITIAL_STATUS='pending_approval'
+TASK_EMPTY_NOTE = ''
+TASK_DEFAULT_PRIORITY = 0
+TASK_INITIAL_STATUS = TASK_PENDING_APPROVAL_STATUS
 
 class Task(Base):
     __tablename__ = 'tasks'
