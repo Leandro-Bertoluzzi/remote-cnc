@@ -1,32 +1,25 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
-from utils.files import getFileNameInFolder
+from PyQt5.QtWidgets import QPushButton, QMessageBox
+from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
 from database.repositories.fileRepository import updateFile, removeFile
 from utils.files import renameFile, deleteFile
 
-class FileCard(QWidget):
+class FileCard(Card):
     def __init__(self, file, parent=None):
         super(FileCard, self).__init__(parent)
 
         self.file = file
 
-        fileDescription = QLabel(f'Archivo {file.id}: {file.file_name}')
+        description = f'Archivo {file.id}: {file.file_name}'
         editFileBtn = QPushButton("Editar")
         editFileBtn.clicked.connect(self.updateFile)
         removeFileBtn = QPushButton("Borrar")
         removeFileBtn.clicked.connect(self.removeFile)
 
-        layout = QHBoxLayout()
-        layout.addWidget(fileDescription)
-        layout.addWidget(editFileBtn)
-        layout.addWidget(removeFileBtn)
-        layout.setAlignment(Qt.AlignLeft)
-        self.setLayout(layout)
 
-        stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet,"r") as styles:
-            self.setStyleSheet(styles.read())
+        self.setDescription(description)
+        self.addButton(editFileBtn)
+        self.addButton(removeFileBtn)
 
     def updateFile(self):
         fileDialog = FileDataDialog(self.file)

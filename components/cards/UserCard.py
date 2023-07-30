@@ -1,31 +1,23 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
-from utils.files import getFileNameInFolder
+from PyQt5.QtWidgets import QPushButton, QMessageBox
+from components.cards.Card import Card
 from components.dialogs.UserDataDialog import UserDataDialog
 from database.repositories.userRepository import updateUser, removeUser
 
-class UserCard(QWidget):
+class UserCard(Card):
     def __init__(self, user, parent=None):
         super(UserCard, self).__init__(parent)
 
         self.user = user
 
-        userDescription = QLabel(f'Usuario {user.id}: {user.name}')
+        description = f'Usuario {user.id}: {user.name}'
         editUserBtn = QPushButton("Editar")
         editUserBtn.clicked.connect(self.updateUser)
         removeUserBtn = QPushButton("Borrar")
         removeUserBtn.clicked.connect(self.removeUser)
 
-        layout = QHBoxLayout()
-        layout.addWidget(userDescription)
-        layout.addWidget(editUserBtn)
-        layout.addWidget(removeUserBtn)
-        layout.setAlignment(Qt.AlignLeft)
-        self.setLayout(layout)
-
-        stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet,"r") as styles:
-            self.setStyleSheet(styles.read())
+        self.setDescription(description)
+        self.addButton(editUserBtn)
+        self.addButton(removeUserBtn)
 
     def updateUser(self):
         userDialog = UserDataDialog(self.user)

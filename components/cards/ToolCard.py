@@ -1,31 +1,23 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
-from utils.files import getFileNameInFolder
+from PyQt5.QtWidgets import QPushButton, QMessageBox
+from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from database.repositories.toolRepository import updateTool, removeTool
 
-class ToolCard(QWidget):
+class ToolCard(Card):
     def __init__(self, tool, parent=None):
         super(ToolCard, self).__init__(parent)
 
         self.tool = tool
 
-        toolDescription = QLabel(f'Tarea {tool.id}: {tool.name}')
+        description = f'Tarea {tool.id}: {tool.name}'
         editToolBtn = QPushButton("Editar")
         editToolBtn.clicked.connect(self.updateTool)
         removeToolBtn = QPushButton("Borrar")
         removeToolBtn.clicked.connect(self.removeTool)
 
-        layout = QHBoxLayout()
-        layout.addWidget(toolDescription)
-        layout.addWidget(editToolBtn)
-        layout.addWidget(removeToolBtn)
-        layout.setAlignment(Qt.AlignLeft)
-        self.setLayout(layout)
-
-        stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet,"r") as styles:
-            self.setStyleSheet(styles.read())
+        self.setDescription(description)
+        self.addButton(editToolBtn)
+        self.addButton(removeToolBtn)
 
     def updateTool(self):
         toolDialog = ToolDataDialog(toolInfo=self.tool)

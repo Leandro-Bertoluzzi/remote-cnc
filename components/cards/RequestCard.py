@@ -1,33 +1,25 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QPushButton, QMessageBox
 from config import USER_ID
+from components.cards.Card import Card
 from database.repositories.taskRepository import updateTaskStatus, areThereTasksInProgress
 from database.models.task import TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS
-from utils.files import getFileNameInFolder
 from worker.tasks import executeTask
 
-class RequestCard(QWidget):
+class RequestCard(Card):
     def __init__(self, task, parent=None):
         super(RequestCard, self).__init__(parent)
 
         self.task = task
 
-        taskDescription = QLabel(f'Tarea {task.id}: {task.name}')
+        description = f'Tarea {task.id}: {task.name}'
         approveTaskBtn = QPushButton("Aprobar")
         approveTaskBtn.clicked.connect(self.approveTask)
         rejectTaskBtn = QPushButton("Rechazar")
         rejectTaskBtn.clicked.connect(self.rejectTask)
 
-        layout = QHBoxLayout()
-        layout.addWidget(taskDescription)
-        layout.addWidget(approveTaskBtn)
-        layout.addWidget(rejectTaskBtn)
-        layout.setAlignment(Qt.AlignLeft)
-        self.setLayout(layout)
-
-        stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet,"r") as styles:
-            self.setStyleSheet(styles.read())
+        self.setDescription(description)
+        self.addButton(approveTaskBtn)
+        self.addButton(rejectTaskBtn)
 
     def approveTask(self):
         confirmation = QMessageBox()

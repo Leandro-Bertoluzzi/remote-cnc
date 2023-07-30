@@ -1,31 +1,23 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
-from utils.files import getFileNameInFolder
+from PyQt5.QtWidgets import QPushButton, QMessageBox
+from components.cards.Card import Card
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from database.repositories.materialRepository import updateMaterial, removeMaterial
 
-class MaterialCard(QWidget):
+class MaterialCard(Card):
     def __init__(self, material, parent=None):
         super(MaterialCard, self).__init__(parent)
 
         self.material = material
 
-        materialDescription = QLabel(f'Tarea {material.id}: {material.name}')
+        description = f'Tarea {material.id}: {material.name}'
         editMaterialBtn = QPushButton("Editar")
         editMaterialBtn.clicked.connect(self.updateMaterial)
         removeMaterialBtn = QPushButton("Borrar")
         removeMaterialBtn.clicked.connect(self.removeMaterial)
 
-        layout = QHBoxLayout()
-        layout.addWidget(materialDescription)
-        layout.addWidget(editMaterialBtn)
-        layout.addWidget(removeMaterialBtn)
-        layout.setAlignment(Qt.AlignLeft)
-        self.setLayout(layout)
-
-        stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet,"r") as styles:
-            self.setStyleSheet(styles.read())
+        self.setDescription(description)
+        self.addButton(editMaterialBtn)
+        self.addButton(removeMaterialBtn)
 
     def updateMaterial(self):
         materialDialog = MaterialDataDialog(materialInfo=self.material)

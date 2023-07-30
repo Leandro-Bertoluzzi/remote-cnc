@@ -1,11 +1,10 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
-from utils.files import getFileNameInFolder
+from PyQt5.QtWidgets import QPushButton, QMessageBox
+from components.cards.Card import Card
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from database.repositories.taskRepository import updateTask, removeTask
 from database.models.task import TASK_DEFAULT_PRIORITY
 
-class TaskCard(QWidget):
+class TaskCard(Card):
     def __init__(self, task, files=[], tools=[], materials=[], parent=None):
         super(TaskCard, self).__init__(parent)
 
@@ -14,26 +13,15 @@ class TaskCard(QWidget):
         self.tools = tools
         self.materials = materials
 
-        taskDescription = QLabel(f'Tarea {task.id}: {task.name}\nEstado: {task.status}')
+        description = f'Tarea {task.id}: {task.name}\nEstado: {task.status}'
         editTaskBtn = QPushButton("Editar")
         editTaskBtn.clicked.connect(self.updateTask)
         removeTaskBtn = QPushButton("Borrar")
         removeTaskBtn.clicked.connect(self.removeTask)
 
-        layout = QHBoxLayout()
-        layout.addWidget(taskDescription)
-
-        btnLayout = QVBoxLayout()
-        btnLayout.addWidget(editTaskBtn)
-        btnLayout.addWidget(removeTaskBtn)
-
-        layout.addLayout(btnLayout)
-        layout.setAlignment(Qt.AlignLeft)
-        self.setLayout(layout)
-
-        stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet,"r") as styles:
-            self.setStyleSheet(styles.read())
+        self.setDescription(description)
+        self.addButton(editTaskBtn)
+        self.addButton(removeTaskBtn)
 
     def updateTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
