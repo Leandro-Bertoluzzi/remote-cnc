@@ -1,8 +1,9 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from config import USER_ID
 from components.cards.Card import Card
+from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
 from database.repositories.taskRepository import updateTaskStatus, areThereTasksInProgress
-from database.models.task import TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS
+from database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from worker.tasks import executeTask
 
 class RequestCard(Card):
@@ -29,18 +30,14 @@ class RequestCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            updateTaskStatus(self.task.id, TASK_ON_HOLD_STATUS, USER_ID)
+            updateTaskStatus(self.task.id, TASK_APPROVED_STATUS, USER_ID)
             if not areThereTasksInProgress():
                 executeTask.delay()
             self.parent().refreshLayout()
 
     def rejectTask(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Realmente desea rechazar la solicitud?')
-        confirmation.setWindowTitle('Rechazar solicitud')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
-
-        if confirmation.exec() == QMessageBox.Yes:
-            updateTaskStatus(self.task.id, TASK_REJECTED_STATUS, USER_ID)
+        rejectDialog = TaskCancelDialog(origin=FROM_REJECT)
+        if rejectDialog.exec():
+            reject_reason = rejectDialog.getInput()
+            updateTaskStatus(self.task.id, TASK_REJECTED_STATUS, USER_ID, reject_reason)
             self.parent().refreshLayout()

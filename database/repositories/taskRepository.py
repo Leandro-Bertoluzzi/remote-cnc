@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 from database.base import Session
-from database.models.task import Task
+from database.models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_IN_PROGRESS_STATUS, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS
 from datetime import datetime
 
 def createTask(
@@ -104,7 +104,7 @@ def getNextTask():
 
     # Get data from DB
     try:
-        task = session.query(Task).filter_by(status='on_hold').order_by(Task.priority.desc()).first()
+        task = session.query(Task).filter_by(status=TASK_ON_HOLD_STATUS).order_by(Task.priority.desc()).first()
     except SQLAlchemyError as e:
         raise Exception(f'Error retrieving tasks from the DB: {e}')
 
@@ -173,8 +173,8 @@ def updateTaskStatus(id, status, admin_id=None, cancellation_reason=""):
     if not task:
         raise Exception(f'Task with ID {id} was not found for this user')
 
-    approved = task.status == 'pending_approval' and status == 'on_hold'
-    rejected = task.status == 'pending_approval' and status == 'rejected'
+    approved = task.status == TASK_PENDING_APPROVAL_STATUS and status == TASK_APPROVED_STATUS
+    rejected = task.status == TASK_PENDING_APPROVAL_STATUS and status == TASK_REJECTED_STATUS
 
     task.status = status
     task.status_updated_at = datetime.now()
@@ -182,11 +182,11 @@ def updateTaskStatus(id, status, admin_id=None, cancellation_reason=""):
     if approved or rejected:
         task.admin_id = admin_id
 
-    if status == 'pending_approval':
+    if status == TASK_PENDING_APPROVAL_STATUS:
         task.admin_id = None
         task.status_updated_at = None
 
-    if status == 'cancelled':
+    if status == TASK_CANCELLED_STATUS or rejected:
         task.cancellation_reason = cancellation_reason
 
     # Commit changes in DB
@@ -237,7 +237,7 @@ def areThereTasksInStatus(status: str) -> bool:
     return not not tasks
 
 def areTherePendingTasks() -> bool:
-    return areThereTasksInStatus('on_hold')
+    return areThereTasksInStatus(TASK_ON_HOLD_STATUS)
 
 def areThereTasksInProgress() -> bool:
-    return areThereTasksInStatus('in_progress')
+    return areThereTasksInStatus(TASK_IN_PROGRESS_STATUS)

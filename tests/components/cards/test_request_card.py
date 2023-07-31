@@ -1,7 +1,8 @@
 import pytest
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.RequestCard import RequestCard
-from database.models.task import Task, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS
+from components.dialogs.TaskCancelDialog import TaskCancelDialog
+from database.models.task import Task, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from views.RequestsView import RequestsView
 
 class TestRequestCard:
@@ -51,7 +52,7 @@ class TestRequestCard:
         if expected_task_updated:
             update_task_params = {
                 'id': 1,
-                'status': TASK_ON_HOLD_STATUS,
+                'status': TASK_APPROVED_STATUS,
                 'admin_id': 1,
             }
             mock_update_task_status.assert_called_with(*update_task_params.values())
@@ -61,17 +62,19 @@ class TestRequestCard:
         assert mock_add_task_in_queue.call_count == (1 if expected_call_to_worker else 0)
 
     @pytest.mark.parametrize(
-            "msgBoxResponse,expected_task_updated",
+            "dialogResponse,expected_task_updated",
             [
-                (QMessageBox.Yes, True),
-                (QMessageBox.Cancel, False)
+                (QDialog.Accepted, True),
+                (QDialog.Rejected, False)
             ]
         )
-    def test_request_card_reject_task(self, mocker, msgBoxResponse, expected_task_updated):
+    def test_request_card_reject_task(self, mocker, dialogResponse, expected_task_updated):
         # Mock DB methods
         mock_update_task_status = mocker.patch('components.cards.RequestCard.updateTaskStatus')
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
+        # Mock TaskCancelDialog methods
+        mock_input = 'A valid cancellation reason'
+        mocker.patch.object(TaskCancelDialog, 'exec', return_value=dialogResponse)
+        mocker.patch.object(TaskCancelDialog, 'getInput', return_value=mock_input)
 
         # Call the rejectTask method
         self.card.rejectTask()
@@ -83,5 +86,6 @@ class TestRequestCard:
                 'id': 1,
                 'status': TASK_REJECTED_STATUS,
                 'admin_id': 1,
+                'cancellation_reason': 'A valid cancellation reason',
             }
             mock_update_task_status.assert_called_with(*update_task_params.values())
