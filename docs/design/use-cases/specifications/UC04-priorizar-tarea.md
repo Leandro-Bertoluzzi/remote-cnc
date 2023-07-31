@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC04 |
 | **Actores**      | Administrador |
-| **Precondición**   | El usuario está autenticado y tiene permisos de administrador.<br />Hay tareas en espera y/o pendientes de aprobación. |
+| **Precondición**   | Hay tareas en espera y/o pendientes de aprobación. |
 | **Resultado**   | El usuario cambia el orden de ejecución de tareas en espera. |
 
 **Resumen:**
@@ -12,9 +12,9 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda c
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En el menú principal, selecciona la opción de "ver cola de ejecución". |  |
-| 2      |  | Solicita al servidor las tareas en cola y en progreso para el equipo. |
+| 1      | En el menú principal, selecciona la opción de "Administrar tareas". |  |
+| 2      |  | Solicita a la DB las tareas en cola y en progreso para el equipo. |
 | 3      |  | Muestra al usuario el listado de tareas pendientes de aprobación, en cola de espera y en progreso. |
 | 4      | Seleccionar con el cursor y arrastra la tarea correspondiente. |  |
 | 5      | Suelta la tarea en la nueva ubicación deseada. |  |
-| 6      |  | Muestra un mensaje de éxito/error al mover la tarea. |
+| 6      |  | Actualiza en la DB y muestra un mensaje de éxito. |

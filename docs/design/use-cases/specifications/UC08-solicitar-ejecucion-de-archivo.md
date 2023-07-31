@@ -2,11 +2,11 @@
 | :---        | :---        |
 | **Identificador**      | UC08 |
 | **Actores**      | Usuario |
-| **Precondición**   | El usuario está autenticado y tiene acceso al sistema. |
-| **Resultado**   | El usuario puede solicitar la ejecución de un archivo en el listado de archivos almacenados. |
+| **Precondición**   | -- |
+| **Resultado**   | El usuario puede solicitar la ejecución de un archivo en el listado de archivos disponibles. |
 
 **Resumen:**
-Este caso de uso describe los pasos necesarios para que el usuario pueda solicitar la ejecución de uno de los archivos almacenados en el servidor.
+Este caso de uso describe los pasos necesarios para que el usuario pueda solicitar la ejecución de uno de los archivos disponibles.
 
 **Curso normal (básico):**
 
@@ -16,7 +16,7 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda solicit
 | 2      | Cliquea "solicitar ejecución". |  |
 | 3      |  | Despliega una ventana de registro de solicitud. |
 | 4      | Completa con un comentario y acepta. |  |
-| 5      |  | Notifica al servidor y muestra una notificación de éxito. |
+| 5      |  | Actualiza la DB y muestra una notificación de éxito. |
 
 **Curso alternativo (eliminar archivo después de usar):**
 

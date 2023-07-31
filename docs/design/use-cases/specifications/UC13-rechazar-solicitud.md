@@ -2,11 +2,11 @@
 | :---        | :---        |
 | **Identificador**      | UC13 |
 | **Actores**      | Administrador |
-| **Precondición**   | El usuario está autenticado y tiene permisos de administrador.<br />Hay al menos una solicitud de ejecución de un usuario. |
+| **Precondición**   | Hay al menos una solicitud de ejecución de un usuario. |
 | **Resultado**   | El usuario puede ver un listado de las solicitudes y rechazarlas. |
 
 **Resumen:**
-Este caso de uso describe los pasos necesarios para que un administrador pueda ver un listado de las solicitudes de ejecución de los usuarios y rechazarlas.
+Este caso de uso describe los pasos necesarios para que un administrador pueda ver un listado de las solicitudes de ejecución (tareas en estado "pendiente de aprobación") de los usuarios y rechazarlas.
 
 **Curso normal (básico):**
 
@@ -16,4 +16,5 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda v
 | 2      | Cliquea el botón de "Rechazar". |  |
 | 3      |  | Muestra el formulario de cancelación de solicitud. |
 | 4      | Completa la razón de cancelación y presiona el botón de "Aceptar". |  |
-| 5      |  | Notifica al servidor y muestra una notificación de éxito. |
+| 5      |  | Actualiza la DB y muestra una notificación de éxito. |
+| 6      |  | Quita la tarea rechazada del listado de solicitudes. |

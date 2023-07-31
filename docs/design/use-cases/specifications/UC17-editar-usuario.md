@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC17 |
 | **Actores**      | Administrador |
-| **Precondición**   | El usuario está autenticado y tiene permisos de administrador.<br />Hay al menos un usuario. |
+| **Precondición**   | Hay al menos un usuario. |
 | **Resultado**   | El usuario puede editar un usuario. |
 
 **Resumen:**
@@ -16,4 +16,4 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda e
 | 2      | Cliquea el botón "Editar". |  |
 | 3      |  | Despliega un formulario. |
 | 4      | Completa con la información actualizada del usuario y presiona "Aceptar". |  |
-| 5      |  | Notifica al servidor y muestra una notificación de éxito. |
+| 5      |  | Actualiza la DB y muestra una notificación de éxito. |

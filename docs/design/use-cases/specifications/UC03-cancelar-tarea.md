@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC03 |
 | **Actores**      | Usuario |
-| **Precondición**   | El usuario está autenticado y tiene acceso al sistema.<br />Hay tareas en espera y/o pendientes de aprobación. |
+| **Precondición**   | Hay tareas en espera y/o pendientes de aprobación. |
 | **Resultado**   | El usuario quita una tarea de la cola de ejecución. |
 
 **Resumen:**
@@ -12,14 +12,13 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda cancela
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En el menú principal, selecciona la opción de "ver cola de ejecución". |  |
-| 2      |  | Solicita al servidor las tareas en cola y en progreso para el equipo. |
+| 1      | En el menú principal, selecciona la opción de "Administrar tareas". |  |
+| 2      |  | Solicita a la DB las tareas en cola y en progreso para el equipo. |
 | 3      |  | Muestra al usuario el listado de tareas pendientes de aprobación, en cola de espera y en progreso. |
 | 4      | Cliquea el botón "Cancelar" en la tarea correspondiente. |  |
-| 5      |  | Muestra al usuario un mensaje solicitando una confirmación de la cancelación. |
-| 6      | Cliquea "Aceptar". |  |
-| 7      |  | Envía al servidor la solicitud de cancelación. |
-| 8      |  | Muestra un mensaje de éxito/error en la cancelación. |
+| 5      |  | Muestra el formulario de cancelación de solicitud. |
+| 6      | Completa la razón de cancelación y cliquea "Aceptar". |  |
+| 7      |  | Actualiza la DB y muestra un mensaje de éxito. |
 
 **Curso alternativo (el usuario se retracta):**
 

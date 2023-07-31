@@ -1,24 +1,24 @@
-| **Caso de uso**      | **Almacenar nuevo archivo en servidor** |
+| **Caso de uso**      | **Almacenar nuevo archivo** |
 | :---        | :---        |
 | **Identificador**      | UC07 |
 | **Actores**      | Usuario |
-| **Precondición**   | El usuario está autenticado y tiene acceso al sistema. |
-| **Resultado**   | El usuario puede agregar un archivo al listado de archivos almacenados. |
+| **Precondición**   | -- |
+| **Resultado**   | El usuario puede agregar un archivo al listado de archivos disponibles. |
 
 **Resumen:**
-Este caso de uso describe los pasos necesarios para que el usuario pueda agregar un archivo al listado de los archivos almacenados en el servidor.
+Este caso de uso describe los pasos necesarios para que el usuario pueda agregar un archivo al listado de los archivos disponibles.
 
 **Curso normal (básico):**
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
 | 1      | En la vista de "archivos", cliquea el botón "Nuevo". |  |
-| 2      |  | Muestra un modal con opciones para cargar desde el equipo, desde una URL, etc. |
-| 3      | Selecciona el método de carga del archivo. |  |
-| 4      | Selecciona el archivo a cargar. |  |
+| 2      |  | Muestra un modal con opciones para cargar el archivo. |
+| 3      | Selecciona el archivo a cargar. |  |
+| 4      | (opcional) Elige un nuevo nombre de archivo. |  |
 | 5      | Presiona el botón "Aceptar". |  |
-| 6      |  | Inicia la pantalla de carga y envía al servidor el archivo. |
-| 7      |  | Muestra el mensaje de éxito/error de carga del archivo. |
+| 6      |  | Inicia la pantalla de carga y envía el archivo al sistema de archivos y la DB. |
+| 7      |  | Muestra el mensaje de éxito. |
 | 8      | Ve el nuevo archivo en el listado de archivos. |  |
 
 **Curso alternativo (archivo inválido):**

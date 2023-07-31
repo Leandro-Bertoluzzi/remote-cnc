@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC09 |
 | **Actores**      | Usuario |
-| **Precondición**   | El usuario está autenticado y tiene acceso al sistema.<br />El usuario tiene seleccionado un archivo. |
+| **Precondición**   | El usuario tiene seleccionado un archivo. |
 | **Resultado**   | El usuario visualiza una simulación del resultado de la ejecución del archivo. |
 
 **Resumen:**
