@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from database.models.file import File
@@ -21,10 +21,17 @@ class TestFileCard:
         assert self.card.file == self.file
         assert self.card.layout is not None
 
-    def test_file_card_update_file(self, mocker):
+    @pytest.mark.parametrize(
+            "dialogResponse,expected_updated",
+            [
+                (QDialog.Accepted, True),
+                (QDialog.Rejected, False)
+            ]
+        )
+    def test_file_card_update_file(self, mocker, dialogResponse, expected_updated):
         # Mock FileDataDialog methods
         mock_input = 'updated_name.gcode', 'path/to/file.gcode'
-        mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
+        mocker.patch.object(FileDataDialog, 'exec', return_value=dialogResponse)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock FS and DB methods
@@ -39,15 +46,17 @@ class TestFileCard:
         self.card.updateFile()
 
         # Validate function calls
-        assert mock_rename_file.call_count == 1
-        assert mock_update_file.call_count == 1
-        update_file_params = {
-            'id': 1,
-            'user_id': 1,
-            'file_name': 'updated_name.gcode',
-            'file_name_saved': generated_file_name
-        }
-        mock_update_file.assert_called_with(*update_file_params.values())
+        assert mock_rename_file.call_count == (1 if expected_updated else 0)
+        assert mock_update_file.call_count == (1 if expected_updated else 0)
+
+        if expected_updated:
+            update_file_params = {
+                'id': 1,
+                'user_id': 1,
+                'file_name': 'updated_name.gcode',
+                'file_name_saved': generated_file_name
+            }
+            mock_update_file.assert_called_with(*update_file_params.values())
 
     @pytest.mark.parametrize(
             "msgBoxResponse,expectedMethodCalls",

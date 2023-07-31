@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
 from database.models.user import User
@@ -21,10 +21,17 @@ class TestUserCard:
         assert self.card.user == self.user
         assert self.card.layout is not None
 
-    def test_user_card_update_user(self, mocker):
+    @pytest.mark.parametrize(
+            "dialogResponse,expected_updated",
+            [
+                (QDialog.Accepted, True),
+                (QDialog.Rejected, False)
+            ]
+        )
+    def test_user_card_update_user(self, mocker, dialogResponse, expected_updated):
         # Mock UserDataDialog methods
         mock_input = 'Updated Name', 'updated@email.com', 'updatedpassword', 'admin'
-        mocker.patch.object(UserDataDialog, 'exec', return_value=QDialogButtonBox.Save)
+        mocker.patch.object(UserDataDialog, 'exec', return_value=dialogResponse)
         mocker.patch.object(UserDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
@@ -34,9 +41,11 @@ class TestUserCard:
         self.card.updateUser()
 
         # Validate DB calls
-        assert mock_update_user.call_count == 1
-        update_user_params = {'id': 1, 'name': 'Updated Name', 'email': 'updated@email.com', 'role': 'admin'}
-        mock_update_user.assert_called_with(*update_user_params.values())
+        assert mock_update_user.call_count == (1 if expected_updated else 0)
+
+        if expected_updated:
+            update_user_params = {'id': 1, 'name': 'Updated Name', 'email': 'updated@email.com', 'role': 'admin'}
+            mock_update_user.assert_called_with(*update_user_params.values())
 
     @pytest.mark.parametrize(
             "msgBoxResponse,expectedMethodCalls",

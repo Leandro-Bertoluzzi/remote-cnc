@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from database.models.tool import Tool
@@ -21,10 +21,17 @@ class TestToolCard:
         assert self.card.tool == self.tool
         assert self.card.layout is not None
 
-    def test_tool_card_update_tool(self, mocker):
+    @pytest.mark.parametrize(
+            "dialogResponse,expected_updated",
+            [
+                (QDialog.Accepted, True),
+                (QDialog.Rejected, False)
+            ]
+        )
+    def test_tool_card_update_tool(self, mocker, dialogResponse, expected_updated):
         # Mock ToolDataDialog methods
         mock_input = 'Updated tool', 'Updated description'
-        mocker.patch.object(ToolDataDialog, 'exec', return_value=QDialogButtonBox.Save)
+        mocker.patch.object(ToolDataDialog, 'exec', return_value=dialogResponse)
         mocker.patch.object(ToolDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
@@ -34,13 +41,15 @@ class TestToolCard:
         self.card.updateTool()
 
         # Validate DB calls
-        assert mock_update_tool.call_count == 1
-        update_tool_params = {
-            'id': 1,
-            'name': 'Updated tool',
-            'description': 'Updated description'
-        }
-        mock_update_tool.assert_called_with(*update_tool_params.values())
+        assert mock_update_tool.call_count == (1 if expected_updated else 0)
+
+        if expected_updated:
+            update_tool_params = {
+                'id': 1,
+                'name': 'Updated tool',
+                'description': 'Updated description'
+            }
+            mock_update_tool.assert_called_with(*update_tool_params.values())
 
     @pytest.mark.parametrize(
             "msgBoxResponse,expectedMethodCalls",

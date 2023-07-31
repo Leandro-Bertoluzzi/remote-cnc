@@ -28,14 +28,14 @@ class TestRequestCard:
         assert self.card.layout is not None
 
     @pytest.mark.parametrize(
-            "msgBoxResponse,expected_task_updated",
+            "msgBoxResponse,expected_updated",
             [
                 (QMessageBox.Yes, True),
                 (QMessageBox.Cancel, False)
             ]
         )
     @pytest.mark.parametrize("task_in_progress", [True, False])
-    def test_request_card_approve_task(self, mocker, msgBoxResponse, expected_task_updated, task_in_progress):
+    def test_request_card_approve_task(self, mocker, msgBoxResponse, expected_updated, task_in_progress):
         # Mock DB methods
         mock_update_task_status = mocker.patch('components.cards.RequestCard.updateTaskStatus')
         mocker.patch('components.cards.RequestCard.areThereTasksInProgress', return_value=task_in_progress)
@@ -48,8 +48,8 @@ class TestRequestCard:
         self.card.approveTask()
 
         # Validate DB calls
-        assert mock_update_task_status.call_count == (1 if expected_task_updated else 0)
-        if expected_task_updated:
+        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
+        if expected_updated:
             update_task_params = {
                 'id': 1,
                 'status': TASK_APPROVED_STATUS,
@@ -58,17 +58,17 @@ class TestRequestCard:
             mock_update_task_status.assert_called_with(*update_task_params.values())
 
         # Validate call to tasks manager
-        expected_call_to_worker = expected_task_updated and not task_in_progress
+        expected_call_to_worker = expected_updated and not task_in_progress
         assert mock_add_task_in_queue.call_count == (1 if expected_call_to_worker else 0)
 
     @pytest.mark.parametrize(
-            "dialogResponse,expected_task_updated",
+            "dialogResponse,expected_updated",
             [
                 (QDialog.Accepted, True),
                 (QDialog.Rejected, False)
             ]
         )
-    def test_request_card_reject_task(self, mocker, dialogResponse, expected_task_updated):
+    def test_request_card_reject_task(self, mocker, dialogResponse, expected_updated):
         # Mock DB methods
         mock_update_task_status = mocker.patch('components.cards.RequestCard.updateTaskStatus')
         # Mock TaskCancelDialog methods
@@ -80,8 +80,9 @@ class TestRequestCard:
         self.card.rejectTask()
 
         # Validate DB calls
-        assert mock_update_task_status.call_count == (1 if expected_task_updated else 0)
-        if expected_task_updated:
+        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
+
+        if expected_updated:
             update_task_params = {
                 'id': 1,
                 'status': TASK_REJECTED_STATUS,
