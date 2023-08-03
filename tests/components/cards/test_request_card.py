@@ -37,8 +37,8 @@ class TestRequestCard:
     @pytest.mark.parametrize("task_in_progress", [True, False])
     def test_request_card_approve_task(self, mocker, msgBoxResponse, expected_updated, task_in_progress):
         # Mock DB methods
-        mock_update_task_status = mocker.patch('components.cards.RequestCard.updateTaskStatus')
-        mocker.patch('components.cards.RequestCard.areThereTasksInProgress', return_value=task_in_progress)
+        mock_update_task_status = mocker.patch('components.cards.RequestCard.update_task_status')
+        mocker.patch('components.cards.RequestCard.are_there_tasks_in_progress', return_value=task_in_progress)
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
         # Mock task manager methods
@@ -70,7 +70,7 @@ class TestRequestCard:
         )
     def test_request_card_reject_task(self, mocker, dialogResponse, expected_updated):
         # Mock DB methods
-        mock_update_task_status = mocker.patch('components.cards.RequestCard.updateTaskStatus')
+        mock_update_task_status = mocker.patch('components.cards.RequestCard.update_task_status')
         # Mock TaskCancelDialog methods
         mock_input = 'A valid cancellation reason'
         mocker.patch.object(TaskCancelDialog, 'exec', return_value=dialogResponse)

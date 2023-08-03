@@ -17,7 +17,7 @@ class TestUsersView:
         self.users_list = [user_1, user_2, user_3]
 
         # Patch the getAllUsers method with the mock function
-        self.mock_get_all_users = mocker.patch('views.UsersView.getAllUsers', return_value=self.users_list)
+        self.mock_get_all_users = mocker.patch('views.UsersView.get_all_users', return_value=self.users_list)
 
         # Create an instance of UsersView
         self.parent = MainWindow()
@@ -58,7 +58,7 @@ class TestUsersView:
             self.users_list.append(user_4)
             return
 
-        mock_create_user = mocker.patch('views.UsersView.createUser', side_effect=side_effect_create_user)
+        mock_create_user = mocker.patch('views.UsersView.create_user', side_effect=side_effect_create_user)
 
         # Call the createUser method
         self.users_view.createUser()

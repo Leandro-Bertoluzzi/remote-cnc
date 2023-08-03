@@ -35,7 +35,7 @@ class TestMaterialCard:
         mocker.patch.object(MaterialDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_material = mocker.patch('components.cards.MaterialCard.updateMaterial')
+        mock_update_material = mocker.patch('components.cards.MaterialCard.update_material')
 
         # Call the updateMaterial method
         self.card.updateMaterial()
@@ -63,7 +63,7 @@ class TestMaterialCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_material = mocker.patch('components.cards.MaterialCard.removeMaterial')
+        mock_remove_material = mocker.patch('components.cards.MaterialCard.remove_material')
 
         # Call the removeMaterial method
         self.card.removeMaterial()

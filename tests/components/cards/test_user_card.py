@@ -35,7 +35,7 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_user = mocker.patch('components.cards.UserCard.updateUser')
+        mock_update_user = mocker.patch('components.cards.UserCard.update_user')
 
         # Call the updateUser method
         self.card.updateUser()
@@ -59,7 +59,7 @@ class TestUserCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_user = mocker.patch('components.cards.UserCard.removeUser')
+        mock_remove_user = mocker.patch('components.cards.UserCard.remove_user')
 
         # Call the removeUser method
         self.card.removeUser()

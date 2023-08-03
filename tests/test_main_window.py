@@ -15,8 +15,7 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Test changing view to 'users'
-        mock_get_all_users = mocker.patch('views.UsersView.getAllUsers', return_value=[])
-
+        mocker.patch('views.UsersView.get_all_users')
         window.changeView(UsersView)
         assert type(window.centralWidget) is UsersView
 

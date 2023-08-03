@@ -17,7 +17,7 @@ class TestFilesView:
         self.files_list = [file_1, file_2, file_3]
 
         # Patch the getAllFilesFromUser method with the mock function
-        self.mock_get_all_files = mocker.patch('views.FilesView.getAllFilesFromUser', return_value=self.files_list)
+        self.mock_get_all_files = mocker.patch('views.FilesView.get_all_files_from_user', return_value=self.files_list)
 
         # Create an instance of FilesView
         self.parent = MainWindow()
@@ -64,7 +64,7 @@ class TestFilesView:
 
         generated_file_name = '1/example-file-4_20230720-184800.gcode'
         mock_save_file = mocker.patch('views.FilesView.saveFile', return_value=generated_file_name)
-        mock_create_file = mocker.patch('views.FilesView.createFile', side_effect=side_effect_create_file)
+        mock_create_file = mocker.patch('views.FilesView.create_file', side_effect=side_effect_create_file)
 
         # Call the createFile method
         self.files_view.createFile()

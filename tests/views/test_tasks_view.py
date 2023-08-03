@@ -35,12 +35,12 @@ class TestTasksView:
         self.tasks_list = [task_1, task_2, task_3]
 
         # Patch the DB methods
-        mocker.patch('views.TasksView.getAllFilesFromUser', return_value=[])
-        mocker.patch('views.TasksView.getAllTools', return_value=[])
-        mocker.patch('views.TasksView.getAllMaterials', return_value=[])
+        mocker.patch('views.TasksView.get_all_files_from_user', return_value=[])
+        mocker.patch('views.TasksView.get_all_tools', return_value=[])
+        mocker.patch('views.TasksView.get_all_materials', return_value=[])
 
         # Patch the getAllTasksFromUser method with the mock function
-        self.mock_get_all_tasks = mocker.patch('views.TasksView.getAllTasksFromUser', return_value=self.tasks_list)
+        self.mock_get_all_tasks = mocker.patch('views.TasksView.get_all_tasks_from_user', return_value=self.tasks_list)
 
         # Create an instance of TasksView
         self.parent = MainWindow()
@@ -90,7 +90,7 @@ class TestTasksView:
             return
 
         # Mock and keep track of function calls
-        mock_create_task = mocker.patch('views.TasksView.createTask', side_effect=side_effect_create_task)
+        mock_create_task = mocker.patch('views.TasksView.create_task', side_effect=side_effect_create_task)
 
         # Call the createTask method
         self.tasks_view.createTask()

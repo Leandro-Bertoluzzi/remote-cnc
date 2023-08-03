@@ -19,9 +19,9 @@ class TestTaskCard:
         mocker.patch.object(TasksView, 'refreshLayout')
 
         # Patch the DB methods
-        mocker.patch('views.TasksView.getAllFilesFromUser', return_value=[])
-        mocker.patch('views.TasksView.getAllTools', return_value=[])
-        mocker.patch('views.TasksView.getAllMaterials', return_value=[])
+        mocker.patch('views.TasksView.get_all_files_from_user', return_value=[])
+        mocker.patch('views.TasksView.get_all_tools', return_value=[])
+        mocker.patch('views.TasksView.get_all_materials', return_value=[])
 
         self.parent = TasksView()
         self.task.id = 1
@@ -47,7 +47,7 @@ class TestTaskCard:
         mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_task = mocker.patch('components.cards.TaskCard.updateTask')
+        mock_update_task = mocker.patch('components.cards.TaskCard.update_task')
 
         # Call the updateTask method
         self.card.updateTask()
@@ -80,7 +80,7 @@ class TestTaskCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_task = mocker.patch('components.cards.TaskCard.removeTask')
+        mock_remove_task = mocker.patch('components.cards.TaskCard.remove_task')
 
         # Call the removeTask method
         self.card.removeTask()

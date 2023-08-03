@@ -4,12 +4,12 @@ from worker.tasks import executeTask
 
 def test_execute_tasks(mocker):
     # Mock DB methods
-    mocker.patch('worker.tasks.areThereTasksInProgress', return_value=False)
-    mock_get_next_task = mocker.patch('worker.tasks.getNextTask')
-    mock_update_task_status = mocker.patch('worker.tasks.updateTaskStatus')
+    mocker.patch('worker.tasks.are_there_tasks_in_progress', return_value=False)
+    mock_get_next_task = mocker.patch('worker.tasks.get_next_task')
+    mock_update_task_status = mocker.patch('worker.tasks.update_task_status')
 
     queued_tasks = 2
-    mock_ask_for_pending_tasks = mocker.patch('worker.tasks.areTherePendingTasks', side_effect=[True, True, False])
+    mock_ask_for_pending_tasks = mocker.patch('worker.tasks.are_there_pending_tasks', side_effect=[True, True, False])
 
     # Mock serial port methods
     mock_start_connection = mocker.patch.object(SerialService, 'startConnection')
@@ -32,10 +32,10 @@ def test_execute_tasks(mocker):
 
 def test_no_tasks_to_execute(mocker):
     # Mock DB methods
-    mocker.patch('worker.tasks.areThereTasksInProgress', return_value=False)
-    mock_get_next_task = mocker.patch('worker.tasks.getNextTask')
-    mock_update_task_status = mocker.patch('worker.tasks.updateTaskStatus')
-    mock_ask_for_pending_tasks = mocker.patch('worker.tasks.areTherePendingTasks', return_value=False)
+    mocker.patch('worker.tasks.are_there_tasks_in_progress', return_value=False)
+    mock_get_next_task = mocker.patch('worker.tasks.get_next_task')
+    mock_update_task_status = mocker.patch('worker.tasks.update_task_status')
+    mock_ask_for_pending_tasks = mocker.patch('worker.tasks.are_there_pending_tasks', return_value=False)
 
     # Mock serial port methods
     mock_start_connection = mocker.patch.object(SerialService, 'startConnection')
@@ -54,7 +54,7 @@ def test_no_tasks_to_execute(mocker):
 
 def test_task_in_progress_exception(mocker):
     # Mock DB methods
-    mocker.patch('worker.tasks.areThereTasksInProgress', return_value=True)
+    mocker.patch('worker.tasks.are_there_tasks_in_progress', return_value=True)
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:

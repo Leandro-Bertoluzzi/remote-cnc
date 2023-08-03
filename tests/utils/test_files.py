@@ -43,7 +43,7 @@ def test_saveFile(mocker, user_folder_exists):
     original_path = 'path\\to\\file.gcode'
     file_name = 'file.gcode'
     user_id = 1
-    expected = './files_folder\\1\\file_20230720-192900.gcode'
+    expected = '1\\file_20230720-192900.gcode'
 
     # Mock folder creation
     mocker.patch.object(os.path, 'isdir', return_value=user_folder_exists)
@@ -96,10 +96,10 @@ def test_saveFile_with_os_error(mocker):
 
 def test_renameFile(mocker):
     # Set variables
-    file_path = './files_folder\\1\\file_20220610-192900.gcode'
+    file_path = '1\\file_20220610-192900.gcode'
     new_file_name = 'file-updated.gcode'
     user_id = 1
-    expected = './files_folder\\1\\file-updated_20230720-192900.gcode'
+    expected = '1\\file-updated_20230720-192900.gcode'
 
     # Mock file update
     mocker.patch.object(time, 'strftime', return_value='20230720-192900')
@@ -115,7 +115,7 @@ def test_renameFile(mocker):
     assert mock_rename_file.call_count == 1
 
 def test_renameFile_with_invalid_name(mocker):
-    file_path = 'files_folder\\1\\file_20220610-192900.gcode'
+    file_path = '1\\file_20220610-192900.gcode'
     new_file_name = 'file-updated.invalid'
     user_id = 1
 
@@ -131,7 +131,7 @@ def test_renameFile_with_invalid_name(mocker):
     assert mock_rename_file.call_count == 0
 
 def test_renameFile_with_os_error(mocker):
-    file_path = 'files_folder\\1\\file_20220610-192900.gcode'
+    file_path = '1\\file_20220610-192900.gcode'
     new_file_name = 'file-updated.gcode'
     user_id = 1
 

@@ -35,7 +35,7 @@ class TestToolCard:
         mocker.patch.object(ToolDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_tool = mocker.patch('components.cards.ToolCard.updateTool')
+        mock_update_tool = mocker.patch('components.cards.ToolCard.update_tool')
 
         # Call the updateTool method
         self.card.updateTool()
@@ -63,7 +63,7 @@ class TestToolCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_tool = mocker.patch('components.cards.ToolCard.removeTool')
+        mock_remove_tool = mocker.patch('components.cards.ToolCard.remove_tool')
 
         # Call the removeTool method
         self.card.removeTool()

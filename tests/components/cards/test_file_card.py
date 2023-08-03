@@ -40,7 +40,7 @@ class TestFileCard:
             'components.cards.FileCard.renameFile',
             return_value=generated_file_name
         )
-        mock_update_file = mocker.patch('components.cards.FileCard.updateFile')
+        mock_update_file = mocker.patch('components.cards.FileCard.update_file')
 
         # Call the updateFile method
         self.card.updateFile()
@@ -71,7 +71,7 @@ class TestFileCard:
 
         # Mock FS and DB methods
         mock_delete_file = mocker.patch('components.cards.FileCard.deleteFile')
-        mock_remove_file = mocker.patch('components.cards.FileCard.removeFile')
+        mock_remove_file = mocker.patch('components.cards.FileCard.remove_file')
 
         # Call the removeFile method
         self.card.removeFile()

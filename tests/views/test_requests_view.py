@@ -34,7 +34,7 @@ class TestRequestsView:
         self.tasks_list = [task_1, task_2, task_3]
 
         # Patch the getAllTasksFromUser method with the mock function
-        self.mock_get_all_tasks = mocker.patch('views.RequestsView.getAllTasks', return_value=self.tasks_list)
+        self.mock_get_all_tasks = mocker.patch('views.RequestsView.get_all_tasks', return_value=self.tasks_list)
 
         # Create an instance of RequestsView
         self.parent = MainWindow()

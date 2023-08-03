@@ -20,7 +20,7 @@ class TestInventoryView:
         self.tools_list = [tool_1, tool_2, tool_3]
 
         # Patch the getAllTools method with the mock function
-        self.mock_get_all_tools = mocker.patch('views.InventoryView.getAllTools', return_value=self.tools_list)
+        self.mock_get_all_tools = mocker.patch('views.InventoryView.get_all_tools', return_value=self.tools_list)
 
         material_1 = Material(name='Example material 1', description='It is the first material')
         material_2 = Material(name='Example material 2', description='It is the second material')
@@ -28,7 +28,7 @@ class TestInventoryView:
         self.materials_list = [material_1, material_2, material_3]
 
         # Patch the getAllMaterials method with the mock function
-        self.mock_get_all_materials = mocker.patch('views.InventoryView.getAllMaterials', return_value=self.materials_list)
+        self.mock_get_all_materials = mocker.patch('views.InventoryView.get_all_materials', return_value=self.materials_list)
 
         # Create an instance of InventoryView
         self.parent = MainWindow()
@@ -74,7 +74,7 @@ class TestInventoryView:
             self.tools_list.append(tool_4)
             return
 
-        mock_create_tool = mocker.patch('views.InventoryView.createTool', side_effect=side_effect_create_tool)
+        mock_create_tool = mocker.patch('views.InventoryView.create_tool', side_effect=side_effect_create_tool)
 
         # Call the createTool method
         self.inventory_view.createTool()
@@ -100,7 +100,7 @@ class TestInventoryView:
             self.materials_list.append(material_4)
             return
 
-        mock_create_material = mocker.patch('views.InventoryView.createMaterial', side_effect=side_effect_create_material)
+        mock_create_material = mocker.patch('views.InventoryView.create_material', side_effect=side_effect_create_material)
 
         # Call the createMaterial method
         self.inventory_view.createMaterial()
