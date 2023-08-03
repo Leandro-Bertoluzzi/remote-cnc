@@ -1,4 +1,5 @@
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from database.base import Session
 from database.models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_IN_PROGRESS_STATUS, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS, \
 TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE
@@ -36,24 +37,27 @@ class TaskRepository:
             self.session.rollback()
             raise Exception(f'Error creating the task in the DB: {e}')
 
-    def _get_filtered_tasks(self, user_id: int, status: str):
-        query = self.session.query(Task)
+    def _get_filtered_tasks(
+            self,
+            user_id: int,
+            status: str,
+            order_criterion=Task.priority.asc()
+        ):
+        query = self.session.query(Task).options(
+            joinedload(Task.file),
+            joinedload(Task.tool),
+            joinedload(Task.material),
+            joinedload(Task.user)
+        )
         if user_id:
             query = query.filter_by(user_id=user_id)
         if status != 'all':
             query = query.filter_by(status=status)
-        return query.order_by(Task.priority.asc()).all()
+        return query.order_by(order_criterion).all()
 
     def get_all_tasks_from_user(self, user_id: int, status: str = 'all'):
         try:
             tasks = self._get_filtered_tasks(user_id, status)
-            for task in tasks:
-                print(f'## Task: {task.name}')
-                print(f'Owner: {task.user.name}')
-                print(f'File: {task.file.file_name}')
-                print(f'Tool: {task.tool.name}')
-                print(f'Material: {task.material.name}')
-                print(f'Admin: {"" if not task.admin else task.admin.name}')
             return tasks
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tasks from the DB: {e}')
@@ -61,27 +65,17 @@ class TaskRepository:
     def get_all_tasks(self, status: str = 'all'):
         try:
             tasks = self._get_filtered_tasks(user_id=None, status=status)
-            for task in tasks:
-                print(f'## Task: {task.name}')
-                print(f'Owner: {task.user.name}')
-                print(f'File: {task.file.file_name}')
-                print(f'Tool: {task.tool.name}')
-                print(f'Material: {task.material.name}')
-                print(f'Admin: {"" if not task.admin else task.admin.name}')
             return tasks
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tasks from the DB: {e}')
 
     def get_next_task(self):
         try:
-            task = self.session.query(Task).filter_by(status=TASK_ON_HOLD_STATUS).order_by(Task.priority.desc()).first()
-            if task:
-                print(f'## Task: {task.name}')
-                print(f'Owner: {task.user.name}')
-                print(f'File: {task.file.file_name}, {task.file.file_path}')
-                print(f'Tool: {task.tool.name}')
-                print(f'Material: {task.material.name}')
-                print(f'Admin: {"" if not task.admin else task.admin.name}')
+            task = self._get_filtered_tasks(
+                user_id=None,
+                status=TASK_ON_HOLD_STATUS,
+                order_criterion=Task.priority.desc()
+            ).first()
             return task
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tasks from the DB: {e}')
