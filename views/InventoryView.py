@@ -5,8 +5,7 @@ from components.cards.MaterialCard import MaterialCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from database.repositories.toolRepository import createTool, getAllTools
-from database.repositories.materialRepository import createMaterial, getAllMaterials
+from utils.database import create_tool, get_all_tools, create_material, get_all_materials
 
 class InventoryView(QWidget):
     def __init__(self, parent=None):
@@ -22,14 +21,14 @@ class InventoryView(QWidget):
         toolDialog = ToolDataDialog()
         if toolDialog.exec():
             name, description = toolDialog.getInputs()
-            createTool(name, description)
+            create_tool(name, description)
             self.refreshLayout()
 
     def createMaterial(self):
         materialDialog = MaterialDataDialog()
         if materialDialog.exec():
             name, description = materialDialog.getInputs()
-            createMaterial(name, description)
+            create_material(name, description)
             self.refreshLayout()
 
     def refreshLayout(self):
@@ -43,7 +42,7 @@ class InventoryView(QWidget):
         self.layout.addWidget(QLabel('-- HERRAMIENTAS --'))
         self.layout.addWidget(MenuButton('Agregar herramienta', self.createTool))
 
-        tools = getAllTools()
+        tools = get_all_tools()
         for tool in tools:
             self.layout.addWidget(ToolCard(tool, self))
 
@@ -52,7 +51,7 @@ class InventoryView(QWidget):
         self.layout.addWidget(QLabel('-- MATERIALES --'))
         self.layout.addWidget(MenuButton('Agregar material', self.createMaterial))
 
-        materials = getAllMaterials()
+        materials = get_all_materials()
         for material in materials:
             self.layout.addWidget(MaterialCard(material, self))
 

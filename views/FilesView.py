@@ -4,7 +4,7 @@ from components.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
-from database.repositories.fileRepository import createFile, getAllFilesFromUser
+from utils.database import create_file, get_all_files_from_user
 from utils.files import saveFile
 
 class FilesView(QWidget):
@@ -30,7 +30,7 @@ class FilesView(QWidget):
 
             # Create an entry for the file in the DB
             try:
-                createFile(USER_ID, name, generatedName)
+                create_file(USER_ID, name, generatedName)
             except Exception as error:
                 print('Error: ', error)
 
@@ -44,7 +44,7 @@ class FilesView(QWidget):
 
         self.layout.addWidget(MenuButton('Subir archivo', self.createFile))
 
-        files = getAllFilesFromUser(USER_ID)
+        files = get_all_files_from_user(USER_ID)
         for file in files:
             self.layout.addWidget(FileCard(file, self))
         self.layout.addWidget(MenuButton('Volver al menú', self.parent().backToMenu))

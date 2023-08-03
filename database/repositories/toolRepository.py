@@ -2,93 +2,55 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.base import Session
 from database.models.tool import Tool
 
-def createTool(name, description):
-    # Create a new session
-    session = Session()
+class ToolRepository:
+    def __init__(self, _session=None):
+        self.session = _session or Session()
 
-    # Create the tool
-    newTool = Tool(name, description)
+    def __del__(self):
+        self.close_session()
 
-    # Persist data in DB
-    session.add(newTool)
+    def create_tool(self, name, description):
+        try:
+            new_tool = Tool(name=name, description=description)
+            self.session.add(new_tool)
+            self.session.commit()
+            return new_tool
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error creating the tool in the DB: {e}')
 
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The tool was successfully created!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error creating the tool in the DB: {e}')
+    def get_all_tools(self):
+        try:
+            tools = self.session.query(Tool).all()
+            return tools
+        except SQLAlchemyError as e:
+            raise Exception(f'Error retrieving tools from the DB: {e}')
 
-    # Close session
-    session.close()
+    def update_tool(self, id, name, description):
+        try:
+            tool = self.session.query(Tool).get(id)
+            if not tool:
+                raise Exception(f'Tool with ID {id} was not found')
 
-    return
+            tool.name = name
+            tool.description = description
+            self.session.commit()
+            return tool
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error updating the tool in the DB: {e}')
 
-def getAllTools():
-    # Create a new session
-    session = Session()
+    def remove_tool(self, id):
+        try:
+            tool = self.session.query(Tool).get(id)
+            if not tool:
+                raise Exception(f'Tool with ID {id} was not found')
 
-    # Get data from DB
-    tools = []
-    try:
-        tools = session.query(Tool).all()
-    except SQLAlchemyError as e:
-        raise Exception(f'Error retrieving tools from the DB: {e}')
+            self.session.delete(tool)
+            self.session.commit()
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error removing the tool from the DB: {e}')
 
-    # Close session
-    session.close()
-
-    return tools
-
-def updateTool(id, name, description):
-    # Create a new session
-    session = Session()
-
-    # Get tool from DB
-    try:
-        tool = session.query(Tool).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for tool in the DB: {e}')
-
-    if not tool:
-        raise Exception(f'Tool with ID {id} was not found')
-
-    # Update the tool's info
-    tool.name = name
-    tool.description = description
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The tool was successfully updated!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error updating the tool in the DB: {e}')
-
-    # Close session
-    session.close()
-
-def removeTool(id):
-    # Create a new session
-    session = Session()
-
-    # Get tool from DB
-    try:
-        tool = session.query(Tool).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for tool in the DB: {e}')
-
-    if not tool:
-        raise Exception(f'Tool with ID {id} was not found')
-
-    # Remove the tool
-    session.delete(tool)
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The tool was successfully removed!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error removing the tool from the DB: {e}')
-
-    # Close session
-    session.close()
+    def close_session(self):
+        self.session.close()

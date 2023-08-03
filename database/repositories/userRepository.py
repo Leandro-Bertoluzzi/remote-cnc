@@ -2,107 +2,67 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.base import Session
 from database.models.user import User, VALID_ROLES
 
-def createUser(name, email, password, role):
-    # Create a new session
-    session = Session()
+class UserRepository:
+    def __init__(self, _session=None):
+        self.session = _session or Session()
 
-    # Validates the input
-    if role not in VALID_ROLES:
-        raise Exception(f'ERROR: Role {role} is not valid')
+    def __del__(self):
+        self.close_session()
 
-    # Checks the use doesn't exist in DB
-    user = session.query(User).filter_by(email=email).first()
-    if user:
-        raise Exception(f'There is already a user registered with the email {email}')
+    def create_user(self, name, email, password, role):
+        if role not in VALID_ROLES:
+            raise Exception(f'ERROR: Role {role} is not valid')
 
-    # Create the user
-    newUser = User(name, email, password, role)
+        try:
+            user = self.session.query(User).filter_by(email=email).first()
+            if user:
+                raise Exception(f'There is already a user registered with the email {email}')
 
-    # Persist data in DB
-    session.add(newUser)
+            new_user = User(name, email, password, role)
+            self.session.add(new_user)
+            self.session.commit()
+            return new_user
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error creating the user in the DB: {e}')
 
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The user was successfully created!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error creating the user in the DB: {e}')
+    def get_all_users(self):
+        try:
+            users = self.session.query(User).all()
+            return users
+        except SQLAlchemyError as e:
+            raise Exception(f'Error retrieving users from the DB: {e}')
 
-    # Close session
-    session.close()
+    def update_user(self, id, name, email, role):
+        if role not in VALID_ROLES:
+            raise Exception(f'ERROR: Role {role} is not valid')
 
-    return
+        try:
+            user = self.session.query(User).get(id)
+            if not user:
+                raise Exception(f'User with ID {id} was not found')
 
-def getAllUsers():
-    # Create a new session
-    session = Session()
+            user.name = name
+            user.email = email
+            user.role = role
 
-    # Get data from DB
-    users = []
-    try:
-        users = session.query(User).all()
-    except SQLAlchemyError as e:
-        raise Exception(f'Error retrieving users from the DB: {e}')
+            self.session.commit()
+            return user
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error updating the user in the DB: {e}')
 
-    # Close session
-    session.close()
+    def remove_user(self, id):
+        try:
+            user = self.session.query(User).get(id)
+            if not user:
+                raise Exception(f'User with ID {id} was not found')
 
-    return users
+            self.session.delete(user)
+            self.session.commit()
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error removing the user from the DB: {e}')
 
-def updateUser(id, name, email, role):
-    # Create a new session
-    session = Session()
-
-    # Validates the input
-    if role not in VALID_ROLES:
-        raise Exception(f'ERROR: Role {role} is not valid')
-
-    # Get user from DB
-    try:
-        user = session.query(User).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for user in the DB: {e}')
-
-    if not user:
-        raise Exception(f'User with ID {id} was not found')
-
-    # Update the user's info
-    user.name = name
-    user.email = email
-    user.role = role
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The user was successfully updated!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error updating the user in the DB: {e}')
-
-    # Close session
-    session.close()
-
-def removeUser(id):
-    # Create a new session
-    session = Session()
-
-    # Get user from DB
-    try:
-        user = session.query(User).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for user in the DB: {e}')
-
-    if not user:
-        raise Exception(f'User with ID {id} was not found')
-
-    # Remove the user
-    session.delete(user)
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The user was successfully removed!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error removing the user from the DB: {e}')
-
-    # Close session
-    session.close()
+    def close_session(self):
+        self.session.close()

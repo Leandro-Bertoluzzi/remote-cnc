@@ -61,14 +61,18 @@ def saveFile(userId: int, original_path: str, fileName: str) -> str:
         if not os.path.isdir(user_files_folder_path):
             os.makedirs(user_files_folder_path)
 
-        # Save the file
         file_name = createFileName(fileName)
-        file_path = os.path.join(user_files_folder_path, file_name)
-        shutil.copy(original_path, file_path)
+
+        # Relative path
+        relative_file_path = f'{userId}\\{file_name}'
+
+        # Save the file
+        full_file_path = os.path.join(user_files_folder_path, file_name)
+        shutil.copy(original_path, full_file_path)
     except Exception as error:
         raise Exception('There was an error writing the file in the file system')
 
-    return file_path
+    return relative_file_path
 
 def renameFile(userId: int, filePath: str, newFileName: str) -> str:
     """
@@ -89,8 +93,9 @@ def renameFile(userId: int, filePath: str, newFileName: str) -> str:
         # Rename the file
         current_file_path = f'{FILES_FOLDER_PATH}\\{filePath}'
         file_name = createFileName(newFileName)
-        new_file_path = f'{FILES_FOLDER_PATH}\\{userId}\\{file_name}'
-        os.rename(current_file_path, new_file_path)
+        new_file_path = f'{userId}\\{file_name}'
+        full_file_path = f'{FILES_FOLDER_PATH}\\{new_file_path}'
+        os.rename(current_file_path, full_file_path)
     except Exception as error:
         raise Exception('There was an error renaming the file in the file system')
 

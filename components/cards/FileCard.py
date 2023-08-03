@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
-from database.repositories.fileRepository import updateFile, removeFile
+from utils.database import update_file, remove_file
 from utils.files import renameFile, deleteFile
 
 class FileCard(Card):
@@ -34,7 +34,7 @@ class FileCard(Card):
 
             # Update the entry for the file in the DB
             try:
-                updateFile(self.file.id, self.file.user_id, name, generatedFilename)
+                update_file(self.file.id, self.file.user_id, name, generatedFilename)
             except Exception as error:
                 print('Error: ', error)
 
@@ -56,7 +56,7 @@ class FileCard(Card):
 
             # Remove the entry for the file in the DB
             try:
-                removeFile(self.file.id)
+                remove_file(self.file.id)
             except Exception as error:
                 print('Error: ', error)
 

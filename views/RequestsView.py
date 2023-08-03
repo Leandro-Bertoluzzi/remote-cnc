@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from components.cards.RequestCard import RequestCard
 from components.MenuButton import MenuButton
 from database.models.task import TASK_PENDING_APPROVAL_STATUS
-from database.repositories.taskRepository import getAllTasks
+from utils.database import get_all_tasks
 
 class RequestsView(QWidget):
     def __init__(self, parent=None):
@@ -21,7 +21,7 @@ class RequestsView(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
-        tasks = getAllTasks(status=TASK_PENDING_APPROVAL_STATUS)
+        tasks = get_all_tasks(status=TASK_PENDING_APPROVAL_STATUS)
         for task in tasks:
             self.layout.addWidget(RequestCard(task, parent=self))
 

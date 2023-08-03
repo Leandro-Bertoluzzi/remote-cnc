@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
-from database.repositories.materialRepository import updateMaterial, removeMaterial
+from utils.database import update_material, remove_material
 
 class MaterialCard(Card):
     def __init__(self, material, parent=None):
@@ -23,7 +23,7 @@ class MaterialCard(Card):
         materialDialog = MaterialDataDialog(materialInfo=self.material)
         if materialDialog.exec():
             name, description = materialDialog.getInputs()
-            updateMaterial(self.material.id, name, description)
+            update_material(self.material.id, name, description)
             self.parent().refreshLayout()
 
     def removeMaterial(self):
@@ -34,5 +34,5 @@ class MaterialCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            removeMaterial(self.material.id)
+            remove_material(self.material.id)
             self.parent().refreshLayout()

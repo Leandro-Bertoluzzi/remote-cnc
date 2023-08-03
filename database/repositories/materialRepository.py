@@ -2,93 +2,55 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.base import Session
 from database.models.material import Material
 
-def createMaterial(name, description):
-    # Create a new session
-    session = Session()
+class MaterialRepository:
+    def __init__(self, _session=None):
+        self.session = _session or Session()
 
-    # Create the material
-    newMaterial = Material(name, description)
+    def __del__(self):
+        self.close_session()
 
-    # Persist data in DB
-    session.add(newMaterial)
+    def create_material(self, name, description):
+        try:
+            new_material = Material(name, description)
+            self.session.add(new_material)
+            self.session.commit()
+            return new_material
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error creating the material in the DB: {e}')
 
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The material was successfully created!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error creating the material in the DB: {e}')
+    def get_all_materials(self):
+        try:
+            materials = self.session.query(Material).all()
+            return materials
+        except SQLAlchemyError as e:
+            raise Exception(f'Error retrieving materials from the DB: {e}')
 
-    # Close session
-    session.close()
+    def update_material(self, id, name, description):
+        try:
+            material = self.session.query(Material).get(id)
+            if not material:
+                raise Exception(f'Material with ID {id} was not found')
 
-    return
+            material.name = name
+            material.description = description
+            self.session.commit()
+            return material
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error updating the material in the DB: {e}')
 
-def getAllMaterials():
-    # Create a new session
-    session = Session()
+    def remove_material(self, id):
+        try:
+            material = self.session.query(Material).get(id)
+            if not material:
+                raise Exception(f'Material with ID {id} was not found')
 
-    # Get data from DB
-    materials = []
-    try:
-        materials = session.query(Material).all()
-    except SQLAlchemyError as e:
-        raise Exception(f'Error retrieving materials from the DB: {e}')
+            self.session.delete(material)
+            self.session.commit()
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise Exception(f'Error removing the material from the DB: {e}')
 
-    # Close session
-    session.close()
-
-    return materials
-
-def updateMaterial(id, name, description):
-    # Create a new session
-    session = Session()
-
-    # Get material from DB
-    try:
-        material = session.query(Material).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for material in the DB: {e}')
-
-    if not material:
-        raise Exception(f'Material with ID {id} was not found')
-
-    # Update the material's info
-    material.name = name
-    material.description = description
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The material was successfully updated!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error updating the material in the DB: {e}')
-
-    # Close session
-    session.close()
-
-def removeMaterial(id):
-    # Create a new session
-    session = Session()
-
-    # Get material from DB
-    try:
-        material = session.query(Material).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for material in the DB: {e}')
-
-    if not material:
-        raise Exception(f'Material with ID {id} was not found')
-
-    # Remove the material
-    session.delete(material)
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The material was successfully removed!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error removing the material from the DB: {e}')
-
-    # Close session
-    session.close()
+    def close_session(self):
+        self.session.close()

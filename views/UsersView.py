@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from components.MenuButton import MenuButton
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
-from database.repositories.userRepository import createUser, getAllUsers
+from utils.database import create_user, get_all_users
 
 class UsersView(QWidget):
     def __init__(self, parent=None):
@@ -19,7 +19,7 @@ class UsersView(QWidget):
         userDialog = UserDataDialog()
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
-            createUser(name, email, password, role)
+            create_user(name, email, password, role)
             self.refreshLayout()
 
     def refreshLayout(self):
@@ -30,7 +30,7 @@ class UsersView(QWidget):
 
         self.layout.addWidget(MenuButton('Crear usuario', self.createUser))
 
-        users = getAllUsers()
+        users = get_all_users()
         for user in users:
             self.layout.addWidget(UserCard(user, self))
         self.layout.addWidget(MenuButton('Volver al menú', self.parent().backToMenu))

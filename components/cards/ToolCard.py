@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from database.repositories.toolRepository import updateTool, removeTool
+from utils.database import update_tool, remove_tool
 
 class ToolCard(Card):
     def __init__(self, tool, parent=None):
@@ -23,7 +23,7 @@ class ToolCard(Card):
         toolDialog = ToolDataDialog(toolInfo=self.tool)
         if toolDialog.exec():
             name, description = toolDialog.getInputs()
-            updateTool(self.tool.id, name, description)
+            update_tool(self.tool.id, name, description)
             self.parent().refreshLayout()
 
     def removeTool(self):
@@ -34,5 +34,5 @@ class ToolCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            removeTool(self.tool.id)
+            remove_tool(self.tool.id)
             self.parent().refreshLayout()

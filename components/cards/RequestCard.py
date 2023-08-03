@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QPushButton, QMessageBox
 from config import USER_ID
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
-from database.repositories.taskRepository import updateTaskStatus, areThereTasksInProgress
+from utils.database import update_task_status, are_there_tasks_in_progress
 from database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from worker.tasks import executeTask
 
@@ -30,8 +30,8 @@ class RequestCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            updateTaskStatus(self.task.id, TASK_APPROVED_STATUS, USER_ID)
-            if not areThereTasksInProgress():
+            update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
+            if not are_there_tasks_in_progress():
                 executeTask.delay()
             self.parent().refreshLayout()
 
@@ -39,5 +39,5 @@ class RequestCard(Card):
         rejectDialog = TaskCancelDialog(origin=FROM_REJECT)
         if rejectDialog.exec():
             reject_reason = rejectDialog.getInput()
-            updateTaskStatus(self.task.id, TASK_REJECTED_STATUS, USER_ID, reject_reason)
+            update_task_status(self.task.id, TASK_REJECTED_STATUS, USER_ID, reject_reason)
             self.parent().refreshLayout()

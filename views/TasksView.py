@@ -4,18 +4,15 @@ from components.MenuButton import MenuButton
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
-from database.repositories.fileRepository import getAllFilesFromUser
-from database.repositories.materialRepository import getAllMaterials
-from database.repositories.taskRepository import createTask, getAllTasksFromUser
-from database.repositories.toolRepository import getAllTools
+from utils.database import get_all_tools, get_all_materials, get_all_files_from_user, create_task, get_all_tasks_from_user
 
 class TasksView(QWidget):
     def __init__(self, parent=None):
         super(TasksView, self).__init__(parent)
 
-        self.files = [{'id': file.id, 'name': file.file_name} for file in getAllFilesFromUser(USER_ID)]
-        self.materials = [{'id': material.id, 'name': material.name} for material in getAllMaterials()]
-        self.tools = [{'id': tool.id, 'name': tool.name} for tool in getAllTools()]
+        self.files = [{'id': file.id, 'name': file.file_name} for file in get_all_files_from_user(USER_ID)]
+        self.materials = [{'id': material.id, 'name': material.name} for material in get_all_materials()]
+        self.tools = [{'id': tool.id, 'name': tool.name} for tool in get_all_tools()]
 
         self.layout = QVBoxLayout()
         self.refreshLayout()
@@ -27,7 +24,7 @@ class TasksView(QWidget):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials)
         if taskDialog.exec():
             file_id, tool_id, material_id, name, note = taskDialog.getInputs()
-            createTask(USER_ID, file_id, tool_id, material_id, name, note)
+            create_task(USER_ID, file_id, tool_id, material_id, name, note)
             self.refreshLayout()
 
     def refreshLayout(self):
@@ -38,7 +35,7 @@ class TasksView(QWidget):
 
         self.layout.addWidget(MenuButton('Crear tarea', onClick=self.createTask))
 
-        tasks = getAllTasksFromUser(USER_ID, status='all')
+        tasks = get_all_tasks_from_user(USER_ID, status='all')
         for task in tasks:
             self.layout.addWidget(TaskCard(task, self.files, self.tools, self.materials, parent=self))
 

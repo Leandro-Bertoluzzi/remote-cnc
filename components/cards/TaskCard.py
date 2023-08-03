@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from database.repositories.taskRepository import updateTask, removeTask
+from utils.database import update_task, remove_task
 from database.models.task import TASK_DEFAULT_PRIORITY
 
 class TaskCard(Card):
@@ -27,7 +27,7 @@ class TaskCard(Card):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
         if taskDialog.exec():
             file_id, tool_id, material_id, name, note = taskDialog.getInputs()
-            updateTask(
+            update_task(
                 self.task.id,
                 self.task.user_id,
                 file_id,
@@ -47,5 +47,5 @@ class TaskCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            removeTask(self.task.id)
+            remove_task(self.task.id)
             self.parent().refreshLayout()

@@ -3,138 +3,78 @@ from database.base import Session
 from database.models.file import File
 from database.models.user import User
 
-def createFile(userId, fileName, fileNameSaved):
-    # Create a new session
-    session = Session()
+class FileRepository:
+    def __init__(self, _session=None):
+        self.session = _session or Session()
 
-    # Create the file entry
-    filePath = f'{userId}/{fileNameSaved}'
-    newFile = File(userId, fileName, filePath)
+    def __del__(self):
+        self.close_session()
 
-    # Persist data in DB
-    session.add(newFile)
+    def create_file(self, user_id, file_name, file_name_saved):
+        try:
+            new_file = File(user_id, file_name, file_name_saved)
+            self.session.add(new_file)
+            self.session.commit()
+            return new_file
+        except SQLAlchemyError as e:
+            raise Exception(f'Error creating the file in the DB: {e}')
 
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The file was successfully created!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error creating the file in the DB: {e}')
+    def get_all_files_from_user(self, user_id):
+        try:
+            user = self.session.query(User).get(user_id)
+            if not user:
+                raise Exception(f'User with ID {user_id} not found')
 
-    # Close session
-    session.close()
+            for file in user.files:
+                    print(f'> {file.user}')
+            print('----')
+            return user.files
+        except SQLAlchemyError as e:
+            raise Exception(f'Error looking for user in the DB: {e}')
 
-    return
+    def get_all_files(self):
+        try:
+            files = self.session.query(File).all()
+            for file in files:
+                    print(f'> {file.user}')
+            print('----')
+            return files
+        except SQLAlchemyError as e:
+            raise Exception(f'Error retrieving files from the DB: {e}')
 
-def getAllFilesFromUser(user_id):
-    # Create a new session
-    session = Session()
+    def get_file_by_id(self, id):
+        try:
+            file = self.session.query(File).get(id)
+            if not file:
+                raise Exception(f'File with ID {id} was not found')
+            return file
+        except SQLAlchemyError as e:
+            raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
 
-    # Get data from DB
-    try:
-        user = session.query(User).get(user_id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for user in the DB: {e}')
+    def update_file(self, id, user_id, file_name, file_name_saved):
+        try:
+            file = self.session.query(File).get(id)
+            if not file:
+                raise Exception(f'File with ID {id} was not found')
 
-    if not user:
-        raise Exception(f'User with ID {user_id} not found')
+            file.user_id = user_id
+            file.file_path = file_name_saved
+            file.file_name = file_name
+            self.session.commit()
+            return file
+        except SQLAlchemyError as e:
+            raise Exception(f'Error updating the file in the DB: {e}')
 
-    for file in user.files:
-            print(f'> {file.user}')
-    print('----')
+    def remove_file(self, id):
+        try:
+            file = self.session.query(File).get(id)
+            if not file:
+                raise Exception(f'File with ID {id} was not found')
 
-    # Close session
-    session.close()
+            self.session.delete(file)
+            self.session.commit()
+        except SQLAlchemyError as e:
+            raise Exception(f'Error removing the file from the DB: {e}')
 
-    return user.files
-
-def getAllFiles():
-    # Create a new session
-    session = Session()
-
-    # Get data from DB
-    try:
-        files = session.query(File).all()
-    except SQLAlchemyError as e:
-        raise Exception(f'Error retrieving files from the DB: {e}')
-
-    for file in files:
-            print(f'> {file.user}')
-    print('----')
-
-    # Close session
-    session.close()
-
-    return files
-
-def getFileById(id):
-    # Create a new session
-    session = Session()
-
-    # Get file from DB
-    try:
-        file = session.query(File).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
-
-    if not file:
-        raise Exception(f'File with ID {id} was not found')
-
-    # Close session
-    session.close()
-
-    return file
-
-def updateFile(id, userId, fileName, fileNameSaved):
-    # Create a new session
-    session = Session()
-
-    # Get file from DB
-    try:
-        file = session.query(File).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
-
-    if not file:
-        raise Exception(f'File with ID {id} was not found')
-
-    # Update the file's info
-    file.user_id = userId
-    file.file_path = f'{userId}/{fileNameSaved}'
-    file.file_name = fileName
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The file was successfully updated!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error updating the file in the DB: {e}')
-
-    # Close session
-    session.close()
-
-def removeFile(id):
-    # Create a new session
-    session = Session()
-
-    # Get file from DB
-    try:
-        file = session.query(File).get(id)
-    except SQLAlchemyError as e:
-        raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
-
-    if not file:
-        raise Exception(f'File with ID {id} was not found')
-
-    # Remove the file
-    session.delete(file)
-
-    # Commit changes in DB
-    try:
-        session.commit()
-        print('The file was successfully removed!')
-    except SQLAlchemyError as e:
-        raise Exception(f'Error removing the file from the DB: {e}')
-
-    # Close session
-    session.close()
+    def close_session(self):
+        self.session.close()
