@@ -158,15 +158,5 @@ class TaskRepository:
             self.session.rollback()
             raise Exception(f'Error removing the task from the DB: {e}')
 
-    def are_there_tasks_with_status(self, status: str) -> bool:
-        tasks = self.session.query(Task).filter_by(status=status).all()
-        return bool(tasks)
-
-    def are_there_pending_tasks(self) -> bool:
-        return self.are_there_tasks_with_status(TASK_ON_HOLD_STATUS)
-
-    def are_there_tasks_in_progress(self) -> bool:
-        return self.are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
-
     def close_session(self):
         self.session.close()

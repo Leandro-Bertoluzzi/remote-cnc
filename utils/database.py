@@ -1,4 +1,5 @@
 from database.base import Session
+from database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from database.repositories.fileRepository import FileRepository
 from database.repositories.materialRepository import MaterialRepository
 from database.repositories.taskRepository import TaskRepository
@@ -203,14 +204,11 @@ def remove_task(session, task_id):
 @session_context
 def are_there_tasks_with_status(session, status: str) -> bool:
     task_repository = TaskRepository(session)
-    return task_repository.are_there_tasks_with_status(status)
+    tasks = task_repository.get_all_tasks(status=status)
+    return bool(tasks)
 
-@session_context
-def are_there_pending_tasks(session) -> bool:
-    task_repository = TaskRepository(session)
-    return task_repository.are_there_pending_tasks()
+def are_there_pending_tasks() -> bool:
+    return are_there_tasks_with_status(TASK_APPROVED_STATUS)
 
-@session_context
-def are_there_tasks_in_progress(session) -> bool:
-    task_repository = TaskRepository(session)
-    return task_repository.are_there_tasks_in_progress()
+def are_there_tasks_in_progress() -> bool:
+    return are_there_tasks_with_status(TASK_REJECTED_STATUS)

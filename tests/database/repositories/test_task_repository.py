@@ -116,37 +116,6 @@ class TestTaskRepository:
         tasks_after = task_repository.get_all_tasks()
         assert len(tasks_after) == len(tasks_before) - 1
 
-    def test_are_there_tasks_with_status(self, mocked_session):
-        task_repository = TaskRepository(mocked_session)
-        pending_validation = task_repository.are_there_tasks_with_status(status='pending_approval')
-        on_hold = task_repository.are_there_tasks_with_status(status='on_hold')
-        in_progress = task_repository.are_there_tasks_with_status(status='in_progress')
-        finished = task_repository.are_there_tasks_with_status(status='finished')
-        cancelled = task_repository.are_there_tasks_with_status(status='cancelled')
-        rejected = task_repository.are_there_tasks_with_status(status='rejected')
-
-        # Assertions
-        assert pending_validation == True
-        assert on_hold == True
-        assert in_progress == False
-        assert finished == True
-        assert cancelled == True
-        assert rejected == False
-
-    def test_are_there_pending_tasks(self, mocked_session):
-        task_repository = TaskRepository(mocked_session)
-        pending_validation = task_repository.are_there_pending_tasks()
-
-        # Assertions
-        assert pending_validation == True
-
-    def test_are_there_tasks_in_progress(self, mocked_session):
-        task_repository = TaskRepository(mocked_session)
-        in_progress = task_repository.are_there_tasks_in_progress()
-
-        # Assertions
-        assert in_progress == False
-
     def test_error_create_task_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, 'add', side_effect=SQLAlchemyError('mocked error'))
