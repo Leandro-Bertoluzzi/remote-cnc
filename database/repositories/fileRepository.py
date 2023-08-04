@@ -1,4 +1,5 @@
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from database.base import Session
 from database.models.file import File
 from database.models.user import User
@@ -21,23 +22,18 @@ class FileRepository:
 
     def get_all_files_from_user(self, user_id):
         try:
-            user = self.session.query(User).get(user_id)
+            user = self.session.query(User).options(joinedload(User.files)).get(user_id)
             if not user:
                 raise Exception(f'User with ID {user_id} not found')
 
-            for file in user.files:
-                    print(f'> {file.user}')
-            print('----')
             return user.files
         except SQLAlchemyError as e:
             raise Exception(f'Error looking for user in the DB: {e}')
 
     def get_all_files(self):
         try:
-            files = self.session.query(File).all()
-            for file in files:
-                    print(f'> {file.user}')
-            print('----')
+            files = self.session.query(File).options(joinedload(File.user)).all()
+
             return files
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving files from the DB: {e}')

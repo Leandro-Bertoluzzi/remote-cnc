@@ -2,7 +2,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from database.base import Session
 from database.models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_IN_PROGRESS_STATUS, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS, \
-TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE
+TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, VALID_STATUSES
 from datetime import datetime
 
 class TaskRepository:
@@ -71,12 +71,12 @@ class TaskRepository:
 
     def get_next_task(self):
         try:
-            task = self._get_filtered_tasks(
+            tasks = self._get_filtered_tasks(
                 user_id=None,
                 status=TASK_ON_HOLD_STATUS,
                 order_criterion=Task.priority.desc()
-            ).first()
-            return task
+            )
+            return tasks[0]
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tasks from the DB: {e}')
 
@@ -116,10 +116,13 @@ class TaskRepository:
         admin_id: int = None,
         cancellation_reason: str = "",
     ):
+        if status not in VALID_STATUSES:
+            raise Exception(f'ERROR: Status {status} is not valid')
+
         try:
             task = self.session.query(Task).get(id)
             if not task:
-                raise Exception(f'Task with ID {id} was not found for this user')
+                raise Exception(f'Task with ID {id} was not found')
 
             approved = task.status == TASK_PENDING_APPROVAL_STATUS and status == TASK_APPROVED_STATUS
             rejected = task.status == TASK_PENDING_APPROVAL_STATUS and status == TASK_REJECTED_STATUS
