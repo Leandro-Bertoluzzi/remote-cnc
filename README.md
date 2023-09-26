@@ -30,11 +30,11 @@
 
 <br>
 
-## :dart: About ##
+## :dart: About
 
 Desktop application to monitor and manage an Arduino-based CNC machine connected to the local machine.
 
-## :sparkles: Features ##
+## :sparkles: Features
 
 :heavy_check_mark: GUI\
 :heavy_check_mark: MySQL database management\
@@ -43,23 +43,25 @@ Desktop application to monitor and manage an Arduino-based CNC machine connected
 :heavy_check_mark: Communication with GRBL-compatible CNC machine via USB\
 :heavy_check_mark: Long-running process delegation via message broker
 
-## :rocket: Technologies ##
+## :rocket: Technologies
 
 The following tools were used in this project:
 
-- [Python](https://www.python.org/)
-- [PyQt](https://wiki.python.org/moin/PyQt)
-- [Mysql](https://www.mysql.com/)
-- [SQLAlchemy](https://www.sqlalchemy.org/) and [Alembic](https://alembic.sqlalchemy.org/en/latest/)
-- [Celery](https://docs.celeryq.dev/en/stable/)
-- [Redis](https://redis.io/)
-- [Docker](https://www.docker.com/)
+-   [Python](https://www.python.org/)
+-   [PyQt](https://wiki.python.org/moin/PyQt)
+-   [Mysql](https://www.mysql.com/)
+-   [SQLAlchemy](https://www.sqlalchemy.org/) and [Alembic](https://alembic.sqlalchemy.org/en/latest/)
+-   [Celery](https://docs.celeryq.dev/en/stable/)
+-   [Redis](https://redis.io/)
+-   [Docker](https://www.docker.com/)
 
-## :white_check_mark: Requirements ##
+## :white_check_mark: Requirements
 
 Before starting :checkered_flag:, you need to have [Python](https://www.python.org/) installed.
 
-## :checkered_flag: Development ##
+## :checkered_flag: Development
+
+### Linux
 
 ```bash
 # Clone this project
@@ -75,16 +77,15 @@ conda activate cnc-admin-dev
 
 # Option 2: If you use venv and pip
 $ python -m venv env-dev
-# Activate your environment according to your OS:
-# https://docs.python.org/3/tutorial/venv.html
+$ source env/bin/activate
 $ pip install -r pip/requirements-dev.txt
 
-# 3. Copy and (optionally) configure the .env file
+# 3. Copy and configure the .env file
 cp .env.example .env
 
 # 4. Run Docker to start the DB, PHPMyAdmin, the
 # CNC worker (Celery) and its Message broker (Redis)
-$ docker-compose up
+$ docker compose -f docker-compose.yml -f docker-compose.worker.yml up -d
 
 # 5. If you are starting a new DB, run DB migrations
 $ alembic upgrade head
@@ -93,12 +94,16 @@ $ alembic upgrade head
 $ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
 ```
 
-If you are developing on Windows, the docker-compose file won't work since ***devices*** is not able to map Windows ports to Linux containers. Options are:
-1. Use a virtual machine with a Linux distribution.
-2. In step 4, remove the service `worker` from the file `docker-compose.yaml` before running `docker-compose up`.
-3. Don't use docker-compose at all and start MySQL and Redis the common way, or with `docker run` (see [Deployment](#deployment) section for more information).
+### Windows
 
-In either cases 2 and 3, you will need to start the CNC worker by following the steps:
+If you are developing on Windows, the file `docker-compose.worker.yml` won't work since **_devices_** is not able to map Windows ports to Linux containers. Options are:
+
+1. Use a virtual machine with a Linux distribution.
+2. Run `docker-compose up` (without the worker) and start the worker manually.
+3. Don't use docker-compose at all and start all services the usual way, or with `docker run` (see [Deployment](#deployment) section for more information).
+
+If you choose the option 2, you shall follow the following steps:
+
 ```bash
 # Set up your Python environment
 # Option 1: If you use Conda
@@ -110,12 +115,16 @@ $ python -m venv env-dev
 $ .\env\Scripts\activate
 $ pip install -r pip/requirements-dev-windows.txt
 
-# (optional) Start the MySQL server with Docker
-$ docker run -d -p 3306:3306 --env-file=mysql/.env mysql:5.7
+# 4. Run Docker to start the DB, PHPMyAdmin and the Message broker (Redis)
+$ docker compose up -d
 
-# (optional) Start the Redis server with Docker
-$ docker run -d -p 6379:6379 redis
+# 5. If you are starting a new DB, run DB migrations
+$ alembic upgrade head
 
+# 6. Start the app with auto-reload
+$ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
+
+# 7. Start the Celery worker
 # Move to worker folder
 $ cd worker
 
@@ -127,7 +136,7 @@ $ watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app tasks wor
 $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
-## :wrench: Running tests ##
+## :wrench: Running tests
 
 ```bash
 $ pytest -s
@@ -139,11 +148,11 @@ If you want to update the coverage report (available in /htmlcov):
 $ pytest -s --cov=. --cov-report=html
 ```
 
-## :memo: License ##
+## :memo: License
 
 This project is under license from MIT. For more details, see the [LICENSE](LICENSE.md) file.
 
-## :writing_hand: Authors ##
+## :writing_hand: Authors
 
 Made with :heart: by <a href="https://github.com/Leandro-Bertoluzzi" target="_blank">Leandro Bertoluzzi</a> and Martín Sellart.
 

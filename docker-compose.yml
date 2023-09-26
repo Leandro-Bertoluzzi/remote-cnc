@@ -3,8 +3,6 @@ version: "3.8"
 services:
   mysql:
     image: mysql:5.7
-    networks:
-      - backend
     ports:
       - "3306:3306"
     env_file:
@@ -17,8 +15,6 @@ services:
     image: phpmyadmin/phpmyadmin:4.7
     depends_on:
       - mysql
-    networks:
-      - backend
     ports:
       - "8080:80"
     environment:
@@ -28,41 +24,11 @@ services:
       - /sessions
     container_name: cnc-admin-phpmyadmin
 
-  worker:
-    build:
-      context: ./
-      dockerfile: ./worker/Dockerfile
-    command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
-    depends_on:
-      - redis
-      - mysql
-    devices:
-      - ${SERIAL_PORT}:${SERIAL_PORT}
-    env_file:
-      - .env
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - DB_HOST=mysql
-    networks:
-      - backend
-      - message-broker
-    volumes:
-      - ./worker/logs:/usr/src/app/logs
-      - ./${FILES_FOLDER}:/usr/src/app/${FILES_FOLDER}
-    container_name: cnc-admin-worker
-
   redis:
     image: redis:6-alpine
-    networks:
-      - message-broker
     ports:
       - 6379:6379
     container_name: cnc-admin-redis
-
-networks:
-  backend:
-  message-broker:
 
 volumes:
   mysql-datavolume:
