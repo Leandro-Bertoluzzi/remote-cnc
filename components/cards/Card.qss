@@ -38,3 +38,4 @@ QWidget[status="in_progress"] QLabel:hover {
 QWidget[status="finished"] QLabel:hover {
     background-color: #4f4dca;
 }
+
