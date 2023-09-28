@@ -1,4 +1,5 @@
 import re
+from grbl.constants import GRBL_ERRORS
 from grbl.parsers.grblParserGeneric import GrblParserGeneric
 from grbl.parsers.grblMsgTypes import GRBL_RESULT_ERROR
 
@@ -15,8 +16,18 @@ class GrblParserResultError(GrblParserGeneric):
         if (not matches):
             return None
 
+        code = matches.group(1)
+        # Find dictionary matching value in list
+        error = None
+        for el in GRBL_ERRORS:
+            if el['code'] == int(code):
+                error = el
+                break
+
         payload = {
-            'code': matches.group(1)
+            'code': code,
+            'message': error['message'],
+            'description': error['description']
         }
 
         return GRBL_RESULT_ERROR, payload

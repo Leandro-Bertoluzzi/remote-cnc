@@ -9,12 +9,12 @@ from grbl.grblLineParser import GrblLineParser
                 ('GrblResultOk', {'raw': 'ok'})
             ),
             (
-                'error: 21',
-                ('GrblResultError', {'code': '21', 'raw': 'error: 21'})
+                'error:17',
+                ('GrblResultError', {'code': '17', 'message': 'Setting disabled', 'description': 'Laser mode requires PWM output.', 'raw': 'error:17'})
             ),
             (
-                'ALARM: 22',
-                ('GrblMsgAlarm', {'code': '22', 'raw': 'ALARM: 22'})
+                'ALARM:6',
+                ('GrblMsgAlarm', {'code': '6', 'message': 'Homing fail', 'description': 'Homing fail. The active homing cycle was reset.', 'raw': 'ALARM:6'})
             ),
             (
                 'Grbl 0.9j [\'$\' for help]',

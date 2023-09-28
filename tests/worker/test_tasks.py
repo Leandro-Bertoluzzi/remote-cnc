@@ -1,5 +1,5 @@
 import pytest
-from utils.serial import SerialService
+from grbl.grblController import GrblController
 from worker.tasks import executeTask
 
 def test_execute_tasks(mocker):
@@ -11,13 +11,13 @@ def test_execute_tasks(mocker):
     queued_tasks = 2
     mock_ask_for_pending_tasks = mocker.patch('worker.tasks.are_there_pending_tasks', side_effect=[True, True, False])
 
-    # Mock serial port methods
-    mock_start_connection = mocker.patch.object(SerialService, 'startConnection')
-    mock_send_line = mocker.patch.object(SerialService, 'streamLine')
+    # Mock GRBL methods
+    mock_start_connection = mocker.patch.object(GrblController, 'connect')
+    mock_send_line = mocker.patch.object(GrblController, 'streamLine')
 
     # Mock FS methods
-    mocked_file_data = mocker.mock_open(read_data="G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60")
-    mocker.patch("builtins.open", mocked_file_data)
+    mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
+    mocker.patch('builtins.open', mocked_file_data)
 
     # Call method under test
     response = executeTask()
@@ -28,7 +28,7 @@ def test_execute_tasks(mocker):
     assert mock_ask_for_pending_tasks.call_count == queued_tasks + 1
     assert mock_get_next_task.call_count == queued_tasks
     assert mock_send_line.call_count == 3 * queued_tasks
-    assert mock_update_task_status.call_count == queued_tasks
+    assert mock_update_task_status.call_count == 2 * queued_tasks
 
 def test_no_tasks_to_execute(mocker):
     # Mock DB methods
@@ -37,9 +37,9 @@ def test_no_tasks_to_execute(mocker):
     mock_update_task_status = mocker.patch('worker.tasks.update_task_status')
     mock_ask_for_pending_tasks = mocker.patch('worker.tasks.are_there_pending_tasks', return_value=False)
 
-    # Mock serial port methods
-    mock_start_connection = mocker.patch.object(SerialService, 'startConnection')
-    mock_send_line = mocker.patch.object(SerialService, 'streamLine')
+    # Mock GRBL methods
+    mock_start_connection = mocker.patch.object(GrblController, 'connect')
+    mock_send_line = mocker.patch.object(GrblController, 'streamLine')
 
     # Call method under test
     response = executeTask()

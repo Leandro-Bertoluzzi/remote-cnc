@@ -4,7 +4,9 @@ class SerialService:
     def __init__(self):
         self.interface = serial.Serial()
 
-    def startConnection(self, port: str, baudrate: int, timeout: int = 5):
+    def startConnection(self, port: str, baudrate: int, timeout: int = 5) -> str:
+        """Closes any previous connection and starts a new one.
+        """
         # Close any previous serial connection
         if self.interface.is_open:
             self.interface.close()
@@ -17,25 +19,36 @@ class SerialService:
         # Start the connection
         self.interface.open()
 
-        # Wait for the Arduino to set up
-        #time.sleep(2)
-        startMessage = self.interface.readline().decode('utf-8').strip()
-        # TODO: Add validation for the startup message
+        # Wait for the response
+        return self.readLineUntilMessage()
 
-        return
-
-    def streamLine(self, code: str):
+    def streamLine(self, code: str) -> str:
+        """Sends a line via serial port.
+        """
         # Strip all EOL characters for consistency
         message = code.strip() + '\n'
-        # Send G-code line to GRBL
+        # Send line
         self.interface.write(message.encode('utf-8'))
-        # Wait for GRBL response with carriage return
-        grbl_out = self.interface.readline().strip()
-        # TODO: Add validation for the response message
+        # Wait for the response
+        return self.readLineUntilMessage()
 
-        return "OK"
+    def readLine(self) -> str:
+        """Waits for response with carriage return.
+        """
+        return self.interface.readline().decode('utf-8').strip()
 
-    def streamBlock(self, code: str):
+    def readLineUntilMessage(self) -> str:
+        """Waits for response with carriage return.
+        Ignores empty messages and timeouts until an actual message arrives.
+        """
+        response = ''
+        while not response:
+            response = self.interface.readline().decode('utf-8').strip()
+        return response
+
+    def streamBlock(self, code: str) -> str:
+        """Sends a block of code (multiple lines) via serial port.
+        """
         # TODO: Pre-process and discard comment lines
         # Stream G-code to GRBL
         for line in code.splitlines():
@@ -43,7 +56,8 @@ class SerialService:
         return "OK"
 
     def stopConnection(self):
-        # Close any previous serial connection
+        """Closes any previous connection.
+        """
         if self.interface.is_open:
             self.interface.close()
         return

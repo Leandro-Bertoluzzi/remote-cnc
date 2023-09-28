@@ -14,7 +14,7 @@ from grbl.parsers.grblParserResultOk import GrblParserResultOk
 
 class GrblLineParser:
     @staticmethod
-    def parse(line):
+    def parse(line: str) -> tuple[str | None, dict[str, str]]:
         parsers: list[GrblParserGeneric] = [
             # <>
             #GrblLineParserResultStatus,
