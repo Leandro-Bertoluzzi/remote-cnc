@@ -311,6 +311,176 @@ class TestGrblController:
         assert str(error.value) == 'There was an error disabling the alarm.'
         assert mock_command_send.call_count == 1
 
+    def test_query_status_report(self, mocker):
+        # Test values
+        self.grbl_controller.state['status'] = {
+            'activeState': '',
+            'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'ov': []
+        }
+        # Mock GRBL methods
+        mock_command_send = mocker.patch.object(
+            GrblController,
+            'sendCommand',
+            return_value=[
+                (
+                    GRBL_MSG_STATUS,
+                    {
+                        'activeState': 'Idle',
+                        'mpos': {'x': 5.0, 'y': 2.0, 'z': 0.0},
+                        'feedrate': 0.0,
+                        'spindle': 0,
+                        'ov': [100, 100, 100],
+                        'raw': '<Idle|MPos:5.000,2.000,0.000|FS:0,0|Ov:100,100,100>'
+                    }
+                ),
+                (GRBL_RESULT_OK, {})
+            ]
+        )
+
+        new_status = {
+            'activeState': 'Idle',
+            'mpos': {'x': 5.0, 'y': 2.0, 'z': 0.0},
+            'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'feedrate': 0.0,
+            'spindle': 0,
+            'ov': [100, 100, 100],
+            'raw': '<Idle|MPos:5.000,2.000,0.000|FS:0,0|Ov:100,100,100>'
+        }
+
+        # Call the method under test
+        response = self.grbl_controller.queryStatusReport()
+
+        # Assertions
+        assert response == new_status
+        assert self.grbl_controller.state['status'] == new_status
+        assert mock_command_send.call_count == 1
+
+    def test_query_status_report_fails(self, mocker):
+        # Test values
+        old_status = {
+            'activeState': '',
+            'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'ov': []
+        }
+        self.grbl_controller.state['status'] = old_status
+        # Mock GRBL methods
+        mock_command_send = mocker.patch.object(
+            GrblController,
+            'sendCommand',
+            return_value=[
+                ('ANOTHER_CODE', {}),
+                ('ANOTHER_CODE', {}),
+                ('ANOTHER_CODE', {}),
+                (GRBL_RESULT_OK, {})
+            ]
+        )
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            self.grbl_controller.queryStatusReport()
+
+        # Assertions
+        assert str(error.value) == 'There was an error retrieving the device status.'
+        assert self.grbl_controller.state['status'] == old_status
+        assert mock_command_send.call_count == 1
+
+    def test_query_parser_state(self, mocker):
+        # Test values
+        self.grbl_controller.state['parserstate'] = {
+            'modal': {
+                'motion': 'G0',
+                'wcs': 'G54',
+                'plane': 'G17',
+                'units': 'G21',
+                'distance': 'G90',
+                'feedrate': 'G94',
+                'program': 'M0',
+                'spindle': 'M5',
+                'coolant': 'M9'
+            },
+            'tool': '',
+            'feedrate': '',
+            'spindle': ''
+        }
+        new_parser_state = {
+            'modal': {
+                'motion': 'G38.2',
+                'wcs': 'G54',
+                'plane': 'G17',
+                'units': 'G21',
+                'distance': 'G91',
+                'feedrate': 'G94',
+                'program': 'M0',
+                'spindle': 'M5',
+                'coolant': ['M7', 'M8']
+            },
+            'tool': '0',
+            'feedrate': '20.',
+            'spindle': '0.',
+            'raw': '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M7 M8 T0 F20. S0.]'
+        }
+        # Mock GRBL methods
+        mock_command_send = mocker.patch.object(
+            GrblController,
+            'sendCommand',
+            return_value=[
+                (
+                    GRBL_MSG_PARSER_STATE,
+                    new_parser_state
+                ),
+                (GRBL_RESULT_OK, {})
+            ]
+        )
+
+        # Call the method under test
+        response = self.grbl_controller.queryGcodeParserState()
+
+        # Assertions
+        assert response == new_parser_state
+        assert self.grbl_controller.state['parserstate'] == new_parser_state
+        assert mock_command_send.call_count == 1
+
+    def test_query_parser_state_fails(self, mocker):
+        # Test values
+        old_parser_state = {
+            'modal': {
+                'motion': 'G0',
+                'wcs': 'G54',
+                'plane': 'G17',
+                'units': 'G21',
+                'distance': 'G90',
+                'feedrate': 'G94',
+                'program': 'M0',
+                'spindle': 'M5',
+                'coolant': 'M9'
+            },
+            'tool': '',
+            'feedrate': '',
+            'spindle': ''
+        }
+        self.grbl_controller.state['parserstate'] = old_parser_state
+        # Mock GRBL methods
+        mock_command_send = mocker.patch.object(
+            GrblController,
+            'sendCommand',
+            return_value=[
+                ('ANOTHER_CODE', {}),
+                (GRBL_RESULT_OK, {})
+            ]
+        )
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            self.grbl_controller.queryGcodeParserState()
+
+        # Assertions
+        assert str(error.value) == 'There was an error retrieving the parser state.'
+        assert self.grbl_controller.state['parserstate'] == old_parser_state
+        assert mock_command_send.call_count == 1
+
     def test_query_help(self, mocker):
         # Mock GRBL methods
         mock_command_send = mocker.patch.object(
@@ -479,6 +649,7 @@ class TestGrblController:
         # Assertions
         assert str(error.value) == 'There was an error executing the build info command.'
         assert mock_command_send.call_count == 1
+
     @pytest.mark.parametrize(
             'messages,expected',
             [

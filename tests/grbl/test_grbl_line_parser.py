@@ -97,6 +97,164 @@ from grbl.grblLineParser import GrblLineParser
                 ('GrblMsgParams', {'name': 'PRB', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': True}, 'raw': '[PRB:0.000,0.000,0.000:1]'})
             ),
             (
+                '[G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.]',
+                (
+                    'GrblMsgParserState',
+                    {
+                        'modal': {
+                            'motion': 'G38.2',
+                            'wcs': 'G54',
+                            'plane': 'G17',
+                            'units': 'G21',
+                            'distance': 'G91',
+                            'feedrate': 'G94',
+                            'program': 'M0',
+                            'spindle': 'M5',
+                            'coolant': 'M9'
+                        },
+                        'tool': '0',
+                        'feedrate': '20.',
+                        'spindle': '0.',
+                        'raw': '[G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.]'
+                    }
+                )
+            ),
+            (
+                '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.]',
+                (
+                    'GrblMsgParserState',
+                    {
+                        'modal': {
+                            'motion': 'G38.2',
+                            'wcs': 'G54',
+                            'plane': 'G17',
+                            'units': 'G21',
+                            'distance': 'G91',
+                            'feedrate': 'G94',
+                            'program': 'M0',
+                            'spindle': 'M5',
+                            'coolant': 'M9'
+                        },
+                        'tool': '0',
+                        'feedrate': '20.',
+                        'spindle': '0.',
+                        'raw': '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.]'
+                    }
+                )
+            ),
+            (
+                '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M7 M8 T0 F20. S0.]',
+                (
+                    'GrblMsgParserState',
+                    {
+                        'modal': {
+                            'motion': 'G38.2',
+                            'wcs': 'G54',
+                            'plane': 'G17',
+                            'units': 'G21',
+                            'distance': 'G91',
+                            'feedrate': 'G94',
+                            'program': 'M0',
+                            'spindle': 'M5',
+                            'coolant': ['M7', 'M8']
+                        },
+                        'tool': '0',
+                        'feedrate': '20.',
+                        'spindle': '0.',
+                        'raw': '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M7 M8 T0 F20. S0.]'
+                    }
+                )
+            ),
+            (
+                '<Idle|MPos:3.000,2.000,0.000|FS:0,0>',
+                (
+                    'GrblMsgStatus',
+                    {
+                        'activeState': 'Idle',
+                        'mpos': {'x': 3.0, 'y': 2.0, 'z': 0.0},
+                        'feedrate': 0.0,
+                        'spindle': 0,
+                        'raw': '<Idle|MPos:3.000,2.000,0.000|FS:0,0>'
+                    }
+                )
+            ),
+            (
+                '<Hold:0|MPos:5.000,2.000,0.000|FS:0,0>',
+                (
+                    'GrblMsgStatus',
+                    {
+                        'activeState': 'Hold',
+                        'subState': 0,
+                        'mpos': {'x': 5.0, 'y': 2.0, 'z': 0.0},
+                        'feedrate': 0.0,
+                        'spindle': 0,
+                        'raw': '<Hold:0|MPos:5.000,2.000,0.000|FS:0,0>'
+                    }
+                )
+            ),
+            (
+                '<Idle|MPos:5.000,2.000,0.000|FS:0,0|Ov:100,100,100>',
+                (
+                    'GrblMsgStatus',
+                    {
+                        'activeState': 'Idle',
+                        'mpos': {'x': 5.0, 'y': 2.0, 'z': 0.0},
+                        'feedrate': 0.0,
+                        'spindle': 0,
+                        'ov': [100, 100, 100],
+                        'raw': '<Idle|MPos:5.000,2.000,0.000|FS:0,0|Ov:100,100,100>'
+                    }
+                )
+            ),
+            (
+                '<Idle|MPos:5.000,2.000,0.000|FS:0.0,0|WCO:0.000,0.000,0.000>',
+                (
+                    'GrblMsgStatus',
+                    {
+                        'activeState': 'Idle',
+                        'mpos': {'x': 5.0, 'y': 2.0, 'z': 0.0},
+                        'feedrate': 0.0,
+                        'spindle': 0,
+                        'wco': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+                        'raw': '<Idle|MPos:5.000,2.000,0.000|FS:0.0,0|WCO:0.000,0.000,0.000>'
+                    }
+                )
+            ),
+            (
+                '<Run|MPos:23.036,1.620,0.000|FS:500,0>',
+                (
+                    'GrblMsgStatus',
+                    {
+                        'activeState': 'Run',
+                        'mpos': {'x': 23.036, 'y': 1.620, 'z': 0.0},
+                        'feedrate': 500.0,
+                        'spindle': 0,
+                        'raw': '<Run|MPos:23.036,1.620,0.000|FS:500,0>'
+                    }
+                )
+            ),
+            (
+                '<Hold:0|MPos:5.000,2.000,0.000|WPos:5.000,2.000,0.000|FS:0.0,0|WCO:0.000,0.000,0.000|Pn:XYZPDHRS|Bf:15,128|Ln:90|Ov:100,100,100|A:SFM>',
+                (
+                    'GrblMsgStatus',
+                    {
+                        'activeState': 'Hold',
+                        'subState': 0,
+                        'mpos': {'x': 5.0, 'y': 2.0, 'z': 0.0},
+                        'wpos': {'x': 5.0, 'y': 2.0, 'z': 0.0},
+                        'feedrate': 0.0,
+                        'spindle': 0,
+                        'wco': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+                        'pinstate': 'XYZPDHRS',
+                        'buffer': {'planner': 15, 'rx': 128},
+                        'line': 90,
+                        'ov': [100, 100, 100],
+                        'accessoryState': 'SFM',
+                        'raw': '<Hold:0|MPos:5.000,2.000,0.000|WPos:5.000,2.000,0.000|FS:0.0,0|WCO:0.000,0.000,0.000|Pn:XYZPDHRS|Bf:15,128|Ln:90|Ov:100,100,100|A:SFM>'
+                    }
+                )
+            ),
+            (
                 'invalid',
                 (None, {'raw': 'invalid'})
             )

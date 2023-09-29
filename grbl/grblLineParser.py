@@ -5,8 +5,10 @@ from grbl.parsers.grblParserMsgFeedback import GrblParserMsgFeedback
 from grbl.parsers.grblParserMsgHelp import GrblParserMsgHelp
 from grbl.parsers.grblParserMsgOptions import GrblParserMsgOptions
 from grbl.parsers.grblParserMsgParameters import GrblParserMsgParameters
+from grbl.parsers.grblParserMsgParserState import GrblParserMsgParserState
 from grbl.parsers.grblParserMsgSettings import GrblParserMsgSettings
 from grbl.parsers.grblParserMsgStartup import GrblParserMsgStartup
+from grbl.parsers.grblParserMsgStatus import GrblParserMsgStatus
 from grbl.parsers.grblParserMsgUserDefinedStartup import GrblParserMsgUserDefinedStartup
 from grbl.parsers.grblParserMsgVersion import GrblParserMsgVersion
 from grbl.parsers.grblParserResultError import GrblParserResultError
@@ -16,8 +18,13 @@ class GrblLineParser:
     @staticmethod
     def parse(line: str) -> tuple[str | None, dict[str, str]]:
         parsers: list[GrblParserGeneric] = [
-            # <>
-            #GrblLineParserResultStatus,
+            # * Grbl v1.1
+            #   <Idle|MPos:3.000,2.000,0.000|FS:0,0>
+            #   <Hold:0|MPos:5.000,2.000,0.000|FS:0,0>
+            #   <Idle|MPos:5.000,2.000,0.000|FS:0,0|Ov:100,100,100>
+            #   <Idle|MPos:5.000,2.000,0.000|FS:0,0|WCO:0.000,0.000,0.000>
+            #   <Run|MPos:23.036,1.620,0.000|FS:500,0>
+            GrblParserMsgStatus,
 
             # ok
             GrblParserResultOk,
@@ -30,7 +37,7 @@ class GrblLineParser:
 
             # [G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.] (v0.9)
             # [GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.] (v1.1)
-            #GrblLineParserResultParserState,
+            GrblParserMsgParserState,
 
             # [G54:0.000,0.000,0.000]
             # [G55:0.000,0.000,0.000]

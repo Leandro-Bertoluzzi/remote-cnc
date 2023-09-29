@@ -8,16 +8,8 @@ class GrblController:
     state = {
         'status': {
             'activeState': '',
-            'mpos': {
-                'x': '0.000',
-                'y': '0.000',
-                'z': '0.000'
-            },
-            'wpos': {
-                'x': '0.000',
-                'y': '0.000',
-                'z': '0.000'
-            },
+            'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
             'ov': []
         },
         'parserstate': {
@@ -146,7 +138,7 @@ class GrblController:
 
     # ACTIONS
 
-    def handleHomingCycle(self) -> bool:
+    def handleHomingCycle(self):
         """Runs the GRBL device's homing cycle.
         """
         #self.sendCommand('$H')
@@ -188,14 +180,33 @@ class GrblController:
     # QUERIES
 
     def queryStatusReport(self):
-        #self.sendCommand('?')
-        pass
+        """Queries and updates the GRBL device's current status.
+        """
+        responses = self.sendCommand('?')
+
+        for (msgType, payload) in responses:
+            if (msgType == GRBL_MSG_STATUS):
+                self.state['status'].update(payload)
+                return self.state['status']
+
+        raise Exception('There was an error retrieving the device status.')
 
     def queryGcodeParserState(self):
-        #self.sendCommand('$G')
-        pass
+        """Queries and updates the GRBL device's current parser state.
+        """
+        responses = self.sendCommand('$G')
+
+        for (msgType, payload) in responses:
+            if (msgType == GRBL_MSG_PARSER_STATE):
+                self.state['parserstate'].update(payload)
+                return payload
+
+        raise Exception('There was an error retrieving the parser state.')
 
     def queryGrblHelp(self):
+        """Queries the GRBL 'help' message.
+        This message contains all valid GRBL commands.
+        """
         responses = self.sendCommand('$')
 
         for (msgType, payload) in responses:
@@ -205,6 +216,8 @@ class GrblController:
         raise Exception('There was an error executing the help command.')
 
     def queryGrblParameters(self):
+        """Queries and updates the GRBL device's current parameter data.
+        """
         responses = self.sendCommand('$#')
 
         for (msgType, payload) in responses:
@@ -215,6 +228,8 @@ class GrblController:
         return self.getParameters()
 
     def queryGrblSettings(self):
+        """Queries the list of GRBL settings with their current values.
+        """
         responses = self.sendCommand('$$')
 
         response = {}
@@ -240,6 +255,11 @@ class GrblController:
         return response
 
     def queryBuildInfo(self):
+        """Queries some GRBL device's (firmware) build information.
+
+        Example:
+        - {'version': '1.1d.20161014', 'comment': '', 'optionCode': 'VL', 'blockBufferSize': '15', 'rxBufferSize': '128'}
+        """
         responses = self.sendCommand('$I')
 
         response = {}
