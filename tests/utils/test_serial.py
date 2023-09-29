@@ -35,6 +35,21 @@ def test_start_connection(serial_service, mocker, open_port: bool):
     assert mock_open_port.call_count == 1
     assert mock_read_port.call_count == 1
 
+def test_send_line(serial_service, mocker):
+    # Sample message with valid G-code
+    line = 'G1 X10 Y20'
+
+    # Mock serial port methods
+    mock_write_port = mocker.patch.object(serial.Serial, 'write')
+    mock_read_port = mocker.patch.object(serial.Serial, 'readline', return_value=b'worked great')
+
+    # Call method under test
+    serial_service.sendLine(line)
+
+    # Assertions
+    assert mock_write_port.call_count == 1
+    assert mock_read_port.call_count == 0
+
 def test_stream_line(serial_service, mocker):
     # Sample message with valid G-code
     line = 'G1 X10 Y20'

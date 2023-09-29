@@ -82,19 +82,19 @@ from grbl.grblLineParser import GrblLineParser
             ),
             (
                 '[G54:0.000,0.000,0.000]',
-                ('GrblMsgParams', {'name': 'G54', 'value': {'x': '0.000', 'y': '0.000', 'z': '0.000'}, 'raw': '[G54:0.000,0.000,0.000]'})
+                ('GrblMsgParams', {'name': 'G54', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G54:0.000,0.000,0.000]'})
             ),
             (
                 '[TLO:0.000]',
-                ('GrblMsgParams', {'name': 'TLO', 'value': '0.000', 'raw': '[TLO:0.000]'})
+                ('GrblMsgParams', {'name': 'TLO', 'value': 0.000, 'raw': '[TLO:0.000]'})
             ),
             (
                 '[PRB:0.000,0.000,0.000:0]',
-                ('GrblMsgParams', {'name': 'PRB', 'value': {'x': '0.000', 'y': '0.000', 'z': '0.000', 'result': False}, 'raw': '[PRB:0.000,0.000,0.000:0]'})
+                ('GrblMsgParams', {'name': 'PRB', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': False}, 'raw': '[PRB:0.000,0.000,0.000:0]'})
             ),
             (
                 '[PRB:0.000,0.000,0.000:1]',
-                ('GrblMsgParams', {'name': 'PRB', 'value': {'x': '0.000', 'y': '0.000', 'z': '0.000', 'result': True}, 'raw': '[PRB:0.000,0.000,0.000:1]'})
+                ('GrblMsgParams', {'name': 'PRB', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': True}, 'raw': '[PRB:0.000,0.000,0.000:1]'})
             ),
             (
                 'invalid',

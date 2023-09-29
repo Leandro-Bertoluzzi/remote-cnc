@@ -22,8 +22,16 @@ class SerialService:
         # Wait for the response
         return self.readLineUntilMessage()
 
-    def streamLine(self, code: str) -> str:
+    def sendLine(self, code: str):
         """Sends a line via serial port.
+        """
+        # Strip all EOL characters for consistency
+        message = code.strip() + '\n'
+        # Send line
+        self.interface.write(message.encode('utf-8'))
+
+    def streamLine(self, code: str) -> str:
+        """Sends a line via serial port and waits for the response.
         """
         # Strip all EOL characters for consistency
         message = code.strip() + '\n'

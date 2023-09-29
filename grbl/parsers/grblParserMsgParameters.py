@@ -40,11 +40,11 @@ class GrblParserMsgParameters(GrblParserGeneric):
             values = value.split(',')
             payload['value'] = {}
             for i in range(len(values)):
-                payload['value'][axes[i]] = values[i]
+                payload['value'][axes[i]] = float(values[i])
 
         # [TLO:0.000]
         if (name == 'TLO'):
-            payload['value'] = value
+            payload['value'] = float(value)
 
         # [PRB:0.000,0.000,1.492:1]
         if (name == 'PRB'):
@@ -53,7 +53,7 @@ class GrblParserMsgParameters(GrblParserGeneric):
             values = valuesStr.split(',')
             payload['value'] = {}
             for i in range(len(values)):
-                payload['value'][axes[i]] = values[i]
+                payload['value'][axes[i]] = float(values[i])
             payload['value']['result'] = (result == '1')
 
         return GRBL_MSG_PARAMS, payload
