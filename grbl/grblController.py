@@ -33,7 +33,6 @@ class GrblController:
     settings = {
         'version': '',
         'parameters': {},
-        'settings': {},
         'checkmode': False
     }
 

@@ -28,8 +28,8 @@ app = Celery(
     backend=CELERY_RESULT_BACKEND
 )
 
-@app.task(name='worker.tasks.executeTask')
-def executeTask() -> bool:
+@app.task(name='worker.tasks.executeTask', bind=True)
+def executeTask(self) -> bool:
     # 1. Check if there is a task currently in progress, in which case return an exception
     if are_there_tasks_in_progress():
         raise Exception("There is a task currently in progress, please wait until finished")
@@ -37,6 +37,10 @@ def executeTask() -> bool:
     # 2. Instantiate a GrblController object and start communication with Arduino
     cnc = GrblController()
     cnc.connect(SERIAL_PORT, SERIAL_BAUDRATE)
+
+    # Task progress
+    progress: int = 0
+    total_lines: int = 0
 
     while are_there_pending_tasks():
         # 3. Get the file for the next task in the queue
@@ -47,11 +51,31 @@ def executeTask() -> bool:
 
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
         with open(file_path, "r") as file:
+            total_lines = len(file.readlines())
+
+        with open(file_path, "r") as file:
             for line in file:
                 cnc.streamLine(line)
+                # update task progress
+                progress = progress + 1
+                percentage = int((progress * 100) / float(total_lines))
+                position = cnc.getMachinePosition()
+                modal = cnc.getModalGroup()
+                parameters = cnc.getParameters()
+                self.update_state(
+                    state='PROGRESS',
+                    meta={
+                        'progress': percentage,
+                        'lines': progress,
+                        'position': position,
+                        'modal': modal,
+                        'parameters': parameters
+                    }
+                )
 
         # 5. When the file finishes, mark it as 'finished' in the DB and check if there is a queued task in DB. If there is none, close the connection and return
         update_task_status(task.id, TASK_FINISHED_STATUS, USER_ID)
         # 6. If there is a pending task, go to step 3 and repeat
 
+    cnc.disconnect()
     return True
