@@ -1,7 +1,7 @@
-import os
 import shutil
 import time
 from config import FILES_FOLDER_PATH
+from pathlib import Path
 
 ALLOWED_FILE_EXTENSIONS = {'txt', 'gcode', 'nc'}
 
@@ -16,7 +16,7 @@ def isAllowedFile(filename: str) -> bool:
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_FILE_EXTENSIONS
 
-def getFileNameInFolder(current: str, searched: str) -> str:
+def getFileNameInFolder(current: str, searched: str) -> Path:
     """
     - Name: getFileNameInFolder
     - Parameter(s):
@@ -25,7 +25,8 @@ def getFileNameInFolder(current: str, searched: str) -> str:
     - Description:
         Generates the absolute path to a file in the same folder
     """
-    return os.path.join(os.path.split(current)[0], searched)
+    folder = Path(current).parent
+    return folder / searched
 
 def createFileName(filename: str) -> str:
     """
@@ -36,8 +37,8 @@ def createFileName(filename: str) -> str:
         Defines a secure filename to avoid repeated files
     """
     timestamp = time.strftime('%Y%m%d-%H%M%S')
-    file_base_name = os.path.splitext(filename)[0]
-    file_extension = os.path.splitext(filename)[1].lower()
+    file_base_name = Path(filename).stem
+    file_extension = Path(filename).suffix.lower()
     return f'{file_base_name}_{timestamp}{file_extension}'
 
 def saveFile(userId: int, original_path: str, fileName: str) -> str:
@@ -57,29 +58,26 @@ def saveFile(userId: int, original_path: str, fileName: str) -> str:
 
     try:
         # If FILES_FOLDER_PATH or the folder for the current user are not present, then create them
-        user_files_folder_path = f'{FILES_FOLDER_PATH}\\{userId}'
-        if not os.path.isdir(user_files_folder_path):
-            os.makedirs(user_files_folder_path)
+        user_files_folder_path = Path(f'{FILES_FOLDER_PATH}/{userId}')
+        if not user_files_folder_path.is_dir():
+            user_files_folder_path.mkdir(parents=True)
 
         file_name = createFileName(fileName)
 
-        # Relative path
-        relative_file_path = f'{userId}\\{file_name}'
-
         # Save the file
-        full_file_path = os.path.join(user_files_folder_path, file_name)
+        full_file_path = user_files_folder_path / file_name
         shutil.copy(original_path, full_file_path)
     except Exception as error:
         raise Exception('There was an error writing the file in the file system')
 
-    return relative_file_path
+    return file_name
 
-def renameFile(userId: int, filePath: str, newFileName: str) -> str:
+def renameFile(userId: int, fileName: str, newFileName: str) -> str:
     """
     - Name: renameFile
     - Parameter(s):
         - userId: int, user ID
-        - filePath: string, path to the file we need to update
+        - fileName: string, name of the file we need to update
         - newFileName: string, file name for the final file
     - Description:
         Updates the name of a file in the file system
@@ -91,27 +89,27 @@ def renameFile(userId: int, filePath: str, newFileName: str) -> str:
 
     try:
         # Rename the file
-        current_file_path = f'{FILES_FOLDER_PATH}\\{filePath}'
+        current_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
         file_name = createFileName(newFileName)
-        new_file_path = f'{userId}\\{file_name}'
-        full_file_path = f'{FILES_FOLDER_PATH}\\{new_file_path}'
-        os.rename(current_file_path, full_file_path)
+        full_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{file_name}')
+        current_file_path.rename(full_file_path)
     except Exception as error:
         raise Exception('There was an error renaming the file in the file system')
 
-    return new_file_path
+    return file_name
 
-def deleteFile(filePath: str) -> None:
+def deleteFile(userId: int, fileName: str) -> None:
     """
     - Name: deleteFile
     - Parameter(s):
-        - filePath: string, path to the file we need to remove
+        - userId: int, user ID
+        - fileName: string, name of the file we need to remove
     - Description:
         Removes a file from the file system
     """
     try:
         # Remove the file
-        file_whole_path = f'{FILES_FOLDER_PATH}/{filePath}'
-        os.remove(file_whole_path)
+        file_whole_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
+        file_whole_path.unlink()
     except Exception as error:
         raise Exception('There was an error removing the file from the file system')

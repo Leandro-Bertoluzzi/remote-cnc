@@ -50,7 +50,7 @@ class FileCard(Card):
         if confirmation.exec() == QMessageBox.Yes:
             # Remove the file from the file system
             try:
-                deleteFile(self.file.file_path)
+                deleteFile(self.file.user_id, self.file.file_path)
             except Exception as error:
                 print('Error: ', error)
 

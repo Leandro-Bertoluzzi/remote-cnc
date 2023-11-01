@@ -17,6 +17,7 @@ sys.path.append(parent_dir)
 ###########################################################
 
 from celery import Celery
+from pathlib import Path
 from celery.utils.log import get_task_logger
 from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
 from database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
@@ -47,7 +48,7 @@ def executeTask(self) -> bool:
     while are_there_pending_tasks():
         # 3. Get the file for the next task in the queue
         task = get_next_task()
-        file_path = f'../{FILES_FOLDER_PATH}/{task.file.file_path}'
+        file_path = Path(f'../{FILES_FOLDER_PATH}/{task.file.user_id}/{task.file.file_path}')
         # Mark the task as 'in progress' in the DB
         update_task_status(task.id, TASK_IN_PROGRESS_STATUS, USER_ID)
         task_logger.info('Started execution of file: %s', file_path)
