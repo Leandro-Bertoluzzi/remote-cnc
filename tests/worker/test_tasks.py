@@ -15,6 +15,8 @@ def test_execute_tasks(mocker):
     # Mock GRBL methods
     mock_start_connection = mocker.patch.object(GrblController, 'connect')
     mock_stream_line = mocker.patch.object(GrblController, 'streamLine')
+    mock_query_status_report = mocker.patch.object(GrblController, 'queryStatusReport')
+    mock_query_parser_state = mocker.patch.object(GrblController, 'queryGcodeParserState')
 
     # Mock FS methods
     mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
@@ -32,6 +34,8 @@ def test_execute_tasks(mocker):
     assert mock_ask_for_pending_tasks.call_count == queued_tasks + 1
     assert mock_get_next_task.call_count == queued_tasks
     assert mock_stream_line.call_count == 3 * queued_tasks
+    assert mock_query_status_report.call_count == 3 * queued_tasks
+    assert mock_query_parser_state.call_count == 3 * queued_tasks
     assert mocked_update_state.call_count == 3 * queued_tasks
     assert mock_update_task_status.call_count == 2 * queued_tasks
 

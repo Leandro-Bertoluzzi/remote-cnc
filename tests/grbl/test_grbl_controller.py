@@ -5,6 +5,7 @@ from grbl.grblLineParser import GrblLineParser
 from grbl.parsers.grblMsgTypes import *
 from utils.serial import SerialService
 from serial import SerialException
+import logging
 import pytest
 
 # Test fixture for setting up and tearing down the SerialService instance
@@ -16,8 +17,17 @@ def serial_service():
 
 class TestGrblController:
     @pytest.fixture(autouse=True)
-    def setup_method(self):
-        self.grbl_controller = GrblController()
+    def setup_method(self, mocker):
+        grbl_logger = logging.getLogger('test_logger')
+        self.grbl_controller = GrblController(grbl_logger)
+
+        # Mock logger methods
+        mocker.patch.object(grbl_logger, 'addHandler')
+        mocker.patch.object(grbl_logger, 'debug')
+        mocker.patch.object(grbl_logger, 'info')
+        mocker.patch.object(grbl_logger, 'warning')
+        mocker.patch.object(grbl_logger, 'error')
+        mocker.patch.object(grbl_logger, 'critical')
 
     def test_connect_fails_serial(self, mocker):
         # Mock serial methods
@@ -308,7 +318,7 @@ class TestGrblController:
             self.grbl_controller.disableAlarm()
 
         # Assertions
-        assert str(error.value) == 'There was an error disabling the alarm.'
+        assert str(error.value) == 'There was an error disabling the alarm'
         assert mock_command_send.call_count == 1
 
     def test_query_status_report(self, mocker):
@@ -383,7 +393,7 @@ class TestGrblController:
             self.grbl_controller.queryStatusReport()
 
         # Assertions
-        assert str(error.value) == 'There was an error retrieving the device status.'
+        assert str(error.value) == 'There was an error retrieving the device status'
         assert self.grbl_controller.state['status'] == old_status
         assert mock_command_send.call_count == 1
 
@@ -477,7 +487,7 @@ class TestGrblController:
             self.grbl_controller.queryGcodeParserState()
 
         # Assertions
-        assert str(error.value) == 'There was an error retrieving the parser state.'
+        assert str(error.value) == 'There was an error retrieving the parser state'
         assert self.grbl_controller.state['parserstate'] == old_parser_state
         assert mock_command_send.call_count == 1
 
@@ -515,7 +525,7 @@ class TestGrblController:
             self.grbl_controller.queryGrblHelp()
 
         # Assertions
-        assert str(error.value) == 'There was an error executing the help command.'
+        assert str(error.value) == 'There was an error executing the help command'
         assert mock_command_send.call_count == 1
 
     @pytest.mark.parametrize(
@@ -584,7 +594,7 @@ class TestGrblController:
             self.grbl_controller.toggleCheckMode()
 
         # Assertions
-        assert str(error.value) == 'There was an error enabling the check mode.'
+        assert str(error.value) == 'There was an error enabling the check mode'
         assert mock_command_send.call_count == 1
 
     @pytest.mark.parametrize(
@@ -647,7 +657,7 @@ class TestGrblController:
             self.grbl_controller.queryBuildInfo()
 
         # Assertions
-        assert str(error.value) == 'There was an error executing the build info command.'
+        assert str(error.value) == 'There was an error retrieving the build info'
         assert mock_command_send.call_count == 1
 
     @pytest.mark.parametrize(
@@ -733,7 +743,7 @@ class TestGrblController:
             self.grbl_controller.queryGrblSettings()
 
         # Assertions
-        assert str(error.value) == 'There was an error retrieving the settings.'
+        assert str(error.value) == 'There was an error retrieving the GRBL settings'
         assert mock_command_send.call_count == 1
 
     def test_query_grbl_parameters(self, mocker):

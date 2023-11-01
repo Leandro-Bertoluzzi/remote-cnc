@@ -17,6 +17,7 @@ sys.path.append(parent_dir)
 ###########################################################
 
 from celery import Celery
+from celery.utils.log import get_task_logger
 from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
 from database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
 from grbl.grblController import GrblController
@@ -35,7 +36,8 @@ def executeTask(self) -> bool:
         raise Exception("There is a task currently in progress, please wait until finished")
 
     # 2. Instantiate a GrblController object and start communication with Arduino
-    cnc = GrblController()
+    task_logger = get_task_logger(__name__)
+    cnc = GrblController(logger=task_logger)
     cnc.connect(SERIAL_PORT, SERIAL_BAUDRATE)
 
     # Task progress
@@ -48,6 +50,7 @@ def executeTask(self) -> bool:
         file_path = f'../{FILES_FOLDER_PATH}/{task.file.file_path}'
         # Mark the task as 'in progress' in the DB
         update_task_status(task.id, TASK_IN_PROGRESS_STATUS, USER_ID)
+        task_logger.info('Started execution of file: %s', file_path)
 
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
         with open(file_path, "r") as file:
@@ -59,17 +62,15 @@ def executeTask(self) -> bool:
                 # update task progress
                 progress = progress + 1
                 percentage = int((progress * 100) / float(total_lines))
-                position = cnc.getMachinePosition()
-                modal = cnc.getModalGroup()
-                parameters = cnc.getParameters()
+                status = cnc.queryStatusReport()
+                parserstate = cnc.queryGcodeParserState()
                 self.update_state(
                     state='PROGRESS',
                     meta={
                         'progress': percentage,
                         'lines': progress,
-                        'position': position,
-                        'modal': modal,
-                        'parameters': parameters
+                        'status': status,
+                        'parserstate': parserstate
                     }
                 )
 
