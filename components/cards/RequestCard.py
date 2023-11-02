@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
-from config import USER_ID
+from config import USER_ID, Globals
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
 from utils.database import update_task_status, are_there_tasks_in_progress
@@ -12,7 +12,7 @@ class RequestCard(Card):
 
         self.task = task
 
-        description = f'Tarea {task.id}: {task.name}'
+        description = f'Tarea {task.id}: {task.name}\nUsuario: {task.user.name}'
         approveTaskBtn = QPushButton("Aprobar")
         approveTaskBtn.clicked.connect(self.approveTask)
         rejectTaskBtn = QPushButton("Rechazar")
@@ -32,7 +32,8 @@ class RequestCard(Card):
         if confirmation.exec() == QMessageBox.Yes:
             update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
             if not are_there_tasks_in_progress():
-                executeTask.delay()
+                task = executeTask.delay()
+                Globals.set_current_task_id(task.task_id)
             self.parent().refreshLayout()
 
     def rejectTask(self):

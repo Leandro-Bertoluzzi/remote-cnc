@@ -41,10 +41,6 @@ def executeTask(self) -> bool:
     cnc = GrblController(logger=task_logger)
     cnc.connect(SERIAL_PORT, SERIAL_BAUDRATE)
 
-    # Task progress
-    progress: int = 0
-    total_lines: int = 0
-
     while are_there_pending_tasks():
         # 3. Get the file for the next task in the queue
         task = get_next_task()
@@ -52,6 +48,10 @@ def executeTask(self) -> bool:
         # Mark the task as 'in progress' in the DB
         update_task_status(task.id, TASK_IN_PROGRESS_STATUS, USER_ID)
         task_logger.info('Started execution of file: %s', file_path)
+
+        # Task progress
+        progress = 0
+        total_lines = 0
 
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
         with open(file_path, "r") as file:
@@ -68,8 +68,9 @@ def executeTask(self) -> bool:
                 self.update_state(
                     state='PROGRESS',
                     meta={
-                        'progress': percentage,
-                        'lines': progress,
+                        'percentage': percentage,
+                        'progress': progress,
+                        'total_lines': total_lines,
                         'status': status,
                         'parserstate': parserstate
                     }

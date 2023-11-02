@@ -1,8 +1,10 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
+from celery.result import AsyncResult
 from components.cards.Card import Card
 from components.dialogs.TaskDataDialog import TaskDataDialog
+from config import Globals
 from utils.database import update_task, remove_task
-from database.models.task import TASK_DEFAULT_PRIORITY
+from database.models.task import TASK_DEFAULT_PRIORITY, TASK_IN_PROGRESS_STATUS
 
 class TaskCard(Card):
     def __init__(self, task, files=[], tools=[], materials=[], parent=None):
@@ -18,6 +20,14 @@ class TaskCard(Card):
         editTaskBtn.clicked.connect(self.updateTask)
         removeTaskBtn = QPushButton("Borrar")
         removeTaskBtn.clicked.connect(self.removeTask)
+
+        if task.status == TASK_IN_PROGRESS_STATUS:
+            task_id = Globals.get_current_task_id()
+            celery_task = AsyncResult(task_id)
+            progress = celery_task.info.get('progress')
+            total = celery_task.info.get('total_lines')
+            percentage = celery_task.info.get('percentage')
+            description = f'Tarea {task.id}: {task.name}\nEstado: {task.status}\nProgreso: {progress}/{total} ({percentage}%)'
 
         self.setDescription(description)
         self.addButton(editTaskBtn)
