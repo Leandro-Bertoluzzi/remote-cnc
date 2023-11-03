@@ -1,5 +1,6 @@
 import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
+from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from database.models.task import Task
@@ -15,7 +16,7 @@ class TestTaskCard:
     )
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, mocker):
         mocker.patch.object(TasksView, 'refreshLayout')
 
         # Patch the DB methods
@@ -25,12 +26,14 @@ class TestTaskCard:
 
         self.parent = TasksView()
         self.task.id = 1
-        self.card = TaskCard(self.task, parent=self.parent)
-        qtbot.addWidget(self.card)
 
-    def test_task_card_init(self):
-        assert self.card.task == self.task
-        assert self.card.layout is not None
+    def test_task_card_init(self, qtbot):
+        card = TaskCard(self.task, parent=self.parent)
+        qtbot.addWidget(card)
+
+        assert card.task == self.task
+        assert card.layout is not None
+        assert card.label_description.text() == 'Tarea 1: Example task\nEstado: pending_approval'
 
     @pytest.mark.parametrize(
             "dialogResponse,expected_updated",
@@ -39,7 +42,10 @@ class TestTaskCard:
                 (QDialog.Rejected, False)
             ]
         )
-    def test_task_card_update_task(self, mocker, dialogResponse, expected_updated):
+    def test_task_card_update_task(self, qtbot, mocker, dialogResponse, expected_updated):
+        card = TaskCard(self.task, parent=self.parent)
+        qtbot.addWidget(card)
+
         # Mock TaskDataDialog methods
         mock_input = 2, 3, 4, 'Updated task', 'Just a simple description'
         mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
@@ -50,7 +56,7 @@ class TestTaskCard:
         mock_update_task = mocker.patch('components.cards.TaskCard.update_task')
 
         # Call the updateTask method
-        self.card.updateTask()
+        card.updateTask()
 
         # Validate DB calls
         assert mock_update_task.call_count == (1 if expected_updated else 0)
@@ -75,7 +81,10 @@ class TestTaskCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_task_card_remove_task(self, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_task_card_remove_task(self, qtbot, mocker, msgBoxResponse, expectedMethodCalls):
+        card = TaskCard(self.task, parent=self.parent)
+        qtbot.addWidget(card)
+
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
@@ -83,7 +92,50 @@ class TestTaskCard:
         mock_remove_task = mocker.patch('components.cards.TaskCard.remove_task')
 
         # Call the removeTask method
-        self.card.removeTask()
+        card.removeTask()
 
         # Validate DB calls
         assert mock_remove_task.call_count == expectedMethodCalls
+
+    @pytest.mark.parametrize(
+            "status",
+            [
+                'pending_approval',
+                'on_hold',
+                'in_progress',
+                'finished',
+                'rejected',
+                'cancelled'
+            ]
+        )
+    def test_task_card_show_task_progress(self, qtbot, mocker, status):
+        # Mock task status
+        self.task.status = status
+
+        # Mock Celery task metadata
+        task_metadata = {
+            'result': {
+                'percentage': 50,
+                'progress': 10,
+                'total_lines': 20
+            }
+        }
+
+        # Mock Celery methods
+        mock_query_task = mocker.patch.object(AsyncResult, '__init__', return_value=None)
+        mock_query_task_info = mocker.patch.object(AsyncResult, '_get_task_meta', return_value=task_metadata)
+
+        # Instantiate card
+        card = TaskCard(self.task, parent=self.parent)
+        qtbot.addWidget(card)
+
+        # Assertions
+        if status == 'in_progress':
+            assert card.label_description.text() == 'Tarea 1: Example task\nEstado: in_progress\nProgreso: 10/20 (50%)'
+            assert mock_query_task.call_count == 1
+            assert mock_query_task_info.call_count == 1
+            return
+
+        assert card.label_description.text() == f'Tarea 1: Example task\nEstado: {status}'
+        assert mock_query_task.call_count == 0
+        assert mock_query_task_info.call_count == 0

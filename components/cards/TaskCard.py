@@ -26,10 +26,10 @@ class TaskCard(Card):
 
         if task.status == TASK_IN_PROGRESS_STATUS:
             task_id = Globals.get_current_task_id()
-            celery_task = AsyncResult(task_id)
-            progress = celery_task.info.get('progress')
-            total = celery_task.info.get('total_lines')
-            percentage = celery_task.info.get('percentage')
+            celery_task_info = AsyncResult(task_id).info
+            progress = celery_task_info.get('progress')
+            total = celery_task_info.get('total_lines')
+            percentage = celery_task_info.get('percentage')
             description = f'Tarea {task.id}: {task.name}\nEstado: {task.status}\nProgreso: {progress}/{total} ({percentage}%)'
 
         self.setDescription(description)

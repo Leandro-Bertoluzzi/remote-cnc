@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.RequestCard import RequestCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from database.models.task import Task, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+from database.models.user import User
 from views.RequestsView import RequestsView
 
 class TestRequestCard:
@@ -20,6 +21,7 @@ class TestRequestCard:
 
         self.parent = RequestsView()
         self.task.id = 1
+        self.task.user = User('John Doe', 'john@doe.com', 'password', 'user')
         self.card = RequestCard(self.task, parent=self.parent)
         qtbot.addWidget(self.card)
 

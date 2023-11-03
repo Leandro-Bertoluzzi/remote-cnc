@@ -6,6 +6,7 @@ from components.MenuButton import MenuButton
 from components.cards.RequestCard import RequestCard
 from views.RequestsView import RequestsView
 from database.models.task import Task
+from database.models.user import User
 
 class TestRequestsView:
     @pytest.fixture(autouse=True)
@@ -31,6 +32,10 @@ class TestRequestsView:
             material_id=1,
             name='Example task 3'
         )
+
+        task_1.user = User('John Doe', 'john@doe.com', 'password', 'user')
+        task_2.user = User('John Doe', 'john@doe.com', 'password', 'user')
+        task_3.user = User('John Doe', 'john@doe.com', 'password', 'user')
         self.tasks_list = [task_1, task_2, task_3]
 
         # Patch the getAllTasksFromUser method with the mock function
