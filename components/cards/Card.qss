@@ -10,3 +10,31 @@ QLabel {
 QLabel:hover {
     background-color: #aaaaaa;
 }
+
+QWidget[status="cancelled"] QLabel
+, QWidget[status="rejected"] QLabel {
+    background-color: #DB6D72;
+}
+QWidget[status="on_hold"] QLabel {
+    background-color: #DAD55E;
+}
+QWidget[status="in_progress"] QLabel {
+    background-color: #6CD974;
+}
+QWidget[status="finished"] QLabel {
+    background-color: #8483DA;
+}
+
+QWidget[status="cancelled"] QLabel:hover
+, QWidget[status="rejected"] QLabel:hover {
+    background-color: #ce383f;
+}
+QWidget[status="on_hold"] QLabel:hover {
+    background-color: #aaa527;
+}
+QWidget[status="in_progress"] QLabel:hover {
+    background-color: #2dad36;
+}
+QWidget[status="finished"] QLabel:hover {
+    background-color: #4f4dca;
+}

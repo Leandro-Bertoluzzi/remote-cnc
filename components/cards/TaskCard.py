@@ -3,8 +3,8 @@ from celery.result import AsyncResult
 from components.cards.Card import Card
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import Globals
-from utils.database import update_task, remove_task
 from database.models.task import TASK_DEFAULT_PRIORITY, TASK_IN_PROGRESS_STATUS
+from utils.database import update_task, remove_task
 
 class TaskCard(Card):
     def __init__(self, task, files=[], tools=[], materials=[], parent=None):
@@ -14,6 +14,9 @@ class TaskCard(Card):
         self.files = files
         self.tools = tools
         self.materials = materials
+
+        # Set "status" dynamic property for styling
+        self.setProperty("status", task.status)
 
         description = f'Tarea {task.id}: {task.name}\nEstado: {task.status}'
         editTaskBtn = QPushButton("Editar")
