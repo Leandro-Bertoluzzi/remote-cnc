@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.cards.RequestCard import RequestCard
-from components.MenuButton import MenuButton
+from components.buttons.MenuButton import MenuButton
 from database.models.task import TASK_PENDING_APPROVAL_STATUS
 from utils.database import get_all_tasks
 

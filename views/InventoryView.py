@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt5.QtCore import Qt
-from components.MenuButton import MenuButton
+from components.buttons.MenuButton import MenuButton
 from components.cards.MaterialCard import MaterialCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from components.cards.ToolCard import ToolCard

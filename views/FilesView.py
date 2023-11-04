@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
-from components.MenuButton import MenuButton
+from components.buttons.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID

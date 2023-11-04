@@ -16,7 +16,6 @@ class FileCard(Card):
         removeFileBtn = QPushButton("Borrar")
         removeFileBtn.clicked.connect(self.removeFile)
 
-
         self.setDescription(description)
         self.addButton(editFileBtn)
         self.addButton(removeFileBtn)

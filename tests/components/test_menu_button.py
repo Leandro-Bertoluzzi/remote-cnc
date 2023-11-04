@@ -1,4 +1,4 @@
-from components.MenuButton import MenuButton
+from components.buttons.MenuButton import MenuButton
 from views.MainMenu import MainMenu
 
 class TestMenuButton:

@@ -2,7 +2,7 @@ import pytest
 from PyQt5.QtWidgets import QDialogButtonBox
 
 from MainWindow import MainWindow
-from components.MenuButton import MenuButton
+from components.buttons.MenuButton import MenuButton
 from components.cards.RequestCard import RequestCard
 from views.RequestsView import RequestsView
 from database.models.task import Task
