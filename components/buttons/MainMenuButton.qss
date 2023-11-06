@@ -1,0 +1,24 @@
+MainMenuButton {
+    background-color: black;
+    color: white;
+    border: 2px solid #eeeeee;
+    border-radius: 5px;
+    font: bold 18px;
+    margin: auto;
+    padding: 10px;
+    width: 15em;
+    height: 15em;
+    background-image: url({image-url});
+    background-repeat: no-repeat;
+}
+
+MainMenuButton:hover:!pressed {
+    background-color: #333333;
+    color: #cccccc;
+    border-radius: 50%;
+}
+
+MainMenuButton:pressed {
+    background-color: #2E7031;
+    border: 2px solid #2E7031;
+}

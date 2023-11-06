@@ -1,13 +1,13 @@
 QPushButton {
-    background-color: #4CAF50;
-    color: white;
-    border: 2px solid #eeeeee;
+    background-color: #79ba8a;
+    color: #2e1c1c;
     border-radius: 5px;
-    font: bold 18px;
-    margin: auto;
-    padding: 10px;
-    width: 15em;
-    height: 15em;
+    font: bold 14px;
+    min-width: 12em;
+    max-width: 20em;
+    margin: 0 auto 0 auto;
+    padding: 6px;
+    text-align: bottom;
 }
 
 QPushButton:pressed {
@@ -17,4 +17,6 @@ QPushButton:pressed {
 
 QPushButton:hover:!pressed {
     background-color: #74AD6F;
+    color: #cccccc;
+    border-radius: 50%;
 }
