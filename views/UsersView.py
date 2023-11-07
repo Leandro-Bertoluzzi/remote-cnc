@@ -33,5 +33,6 @@ class UsersView(QWidget):
         users = get_all_users()
         for user in users:
             self.layout.addWidget(UserCard(user, self))
+
         self.layout.addWidget(MenuButton('Volver al menú', self.parent().backToMenu))
         self.update()

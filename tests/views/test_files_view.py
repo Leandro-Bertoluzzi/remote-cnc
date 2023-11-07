@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QDialogButtonBox
 from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
+from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from views.FilesView import FilesView
 from database.models.file import File
@@ -31,6 +32,17 @@ class TestFilesView:
         # Validate amount of each type of widget
         assert helpers.count_widgets_with_type(self.files_view.layout, MenuButton) == 2
         assert helpers.count_widgets_with_type(self.files_view.layout, FileCard) == 3
+
+    def test_files_view_init_with_no_files(self, mocker, helpers):
+        mock_get_all_files = mocker.patch('views.FilesView.get_all_files_from_user', return_value=[])
+        files_view = FilesView(parent=self.parent)
+        # Validate DB calls
+        mock_get_all_files.assert_called_once()
+
+        # Validate amount of each type of widget
+        assert helpers.count_widgets_with_type(files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets_with_type(files_view.layout, FileCard) == 0
+        assert helpers.count_widgets_with_type(files_view.layout, MsgCard) == 1
 
     def test_files_view_refresh_layout(self, helpers):
         # We remove a file

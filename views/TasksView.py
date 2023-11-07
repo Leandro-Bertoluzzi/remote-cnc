@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
+from components.cards.MsgCard import MsgCard
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
@@ -38,6 +39,9 @@ class TasksView(QWidget):
         tasks = get_all_tasks_from_user(USER_ID, status='all')
         for task in tasks:
             self.layout.addWidget(TaskCard(task, self.files, self.tools, self.materials, parent=self))
+
+        if not tasks:
+            self.layout.addWidget(MsgCard('La cola de tareas está vacía', self))
 
         self.layout.addWidget(MenuButton('Volver al menú', onClick=self.parent().backToMenu))
         self.update()

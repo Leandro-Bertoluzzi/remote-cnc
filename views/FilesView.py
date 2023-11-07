@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
+from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
 from utils.database import create_file, get_all_files_from_user
@@ -47,5 +48,9 @@ class FilesView(QWidget):
         files = get_all_files_from_user(USER_ID)
         for file in files:
             self.layout.addWidget(FileCard(file, self))
+
+        if not files:
+            self.layout.addWidget(MsgCard('Aún no hay archivos almacenados', self))
+
         self.layout.addWidget(MenuButton('Volver al menú', self.parent().backToMenu))
         self.update()

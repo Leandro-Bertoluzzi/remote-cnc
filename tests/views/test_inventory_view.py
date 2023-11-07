@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialogButtonBox
 
 from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
+from components.cards.MsgCard import MsgCard
 from components.cards.ToolCard import ToolCard
 from components.cards.MaterialCard import MaterialCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
@@ -44,6 +45,21 @@ class TestInventoryView:
         assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
         assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 3
         assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 3
+
+    def test_inventory_view_init_with_no_inventory(self, mocker, helpers):
+        mock_get_all_tools = mocker.patch('views.InventoryView.get_all_tools', return_value=[])
+        mock_get_all_materials = mocker.patch('views.InventoryView.get_all_materials', return_value=[])
+        inventory_view = InventoryView(parent=self.parent)
+
+        # Validate DB calls
+        mock_get_all_tools.assert_called_once()
+        mock_get_all_materials.assert_called_once()
+
+        # Validate amount of each type of widget
+        assert helpers.count_widgets_with_type(inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets_with_type(inventory_view.layout, ToolCard) == 0
+        assert helpers.count_widgets_with_type(inventory_view.layout, MaterialCard) == 0
+        assert helpers.count_widgets_with_type(inventory_view.layout, MsgCard) == 2
 
     def test_inventory_view_refresh_layout(self, helpers):
         # We remove a tool

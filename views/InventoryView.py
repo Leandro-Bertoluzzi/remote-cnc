@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.cards.MaterialCard import MaterialCard
+from components.cards.MsgCard import MsgCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
@@ -46,6 +47,9 @@ class InventoryView(QWidget):
         for tool in tools:
             self.layout.addWidget(ToolCard(tool, self))
 
+        if not tools:
+            self.layout.addWidget(MsgCard('Aún no hay herramientas configuradas', self))
+
         # Materials section
 
         self.layout.addWidget(QLabel('-- MATERIALES --'))
@@ -54,6 +58,9 @@ class InventoryView(QWidget):
         materials = get_all_materials()
         for material in materials:
             self.layout.addWidget(MaterialCard(material, self))
+
+        if not materials:
+            self.layout.addWidget(MsgCard('Aún no hay materiales configurados', self))
 
         # Others
 

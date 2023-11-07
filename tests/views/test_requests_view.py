@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialogButtonBox
 
 from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
+from components.cards.MsgCard import MsgCard
 from components.cards.RequestCard import RequestCard
 from views.RequestsView import RequestsView
 from database.models.task import Task
@@ -53,6 +54,17 @@ class TestRequestsView:
         # Validate amount of each type of widget
         assert helpers.count_widgets_with_type(self.requests_view.layout, MenuButton) == 1
         assert helpers.count_widgets_with_type(self.requests_view.layout, RequestCard) == 3
+
+    def test_requests_view_init_with_no_requests(self, mocker, helpers):
+        mock_get_all_tasks = mocker.patch('views.RequestsView.get_all_tasks', return_value=[])
+        requests_view = RequestsView(parent=self.parent)
+        # Validate DB calls
+        mock_get_all_tasks.assert_called_once()
+
+        # Validate amount of each type of widget
+        assert helpers.count_widgets_with_type(requests_view.layout, MenuButton) == 1
+        assert helpers.count_widgets_with_type(requests_view.layout, RequestCard) == 0
+        assert helpers.count_widgets_with_type(requests_view.layout, MsgCard) == 1
 
     def test_requests_view_refresh_layout(self, helpers):
         # We remove a task
