@@ -4,6 +4,11 @@ from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAbstractButton
 from utils.files import getFileNameInFolder
 
+color_text = QColor('#2E1C1C')
+color_hover_border = QColor('black')
+color_hover_fill = QColor('#555555')
+color_hover_text = QColor('#6e0e0e')
+
 class MainMenuButton(QAbstractButton):
     def __init__(self, text, imageRelPath, goToView=None, parent=None):
         super(MainMenuButton, self).__init__(parent)
@@ -31,12 +36,12 @@ class MainMenuButton(QAbstractButton):
         painter = QPainter(self)
 
         pen = painter.pen()
-        pen.setColor(QColor('black'))
+        pen.setColor(color_hover_border)
         pen.setWidth(5)
         painter.setPen(pen)
 
         brush = painter.brush()
-        brush.setColor(QColor('#555555'))
+        brush.setColor(color_hover_fill)
         brush.setStyle(Qt.SolidPattern)
         painter.setBrush(brush)
 
@@ -48,7 +53,9 @@ class MainMenuButton(QAbstractButton):
         if self.hover:
             painter.drawRoundedRect(event.rect(), 15, 15)
 
-        pen.setColor(QColor('#2E1C1C'))
+        pen.setColor(color_text)
+        if self.hover:
+            pen.setColor(color_hover_text)
         painter.setPen(pen)
 
         if self.imagePath.endswith('.svg'):
