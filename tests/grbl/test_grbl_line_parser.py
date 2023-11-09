@@ -166,15 +166,14 @@ from grbl.grblLineParser import GrblLineParser
                 )
             ),
             (
-                '<Idle|MPos:3.000,2.000,0.000|FS:0,0>',
+                '<Idle|MPos:3.000,2.000,0.000|F:0>',
                 (
                     'GrblMsgStatus',
                     {
                         'activeState': 'Idle',
                         'mpos': {'x': 3.0, 'y': 2.0, 'z': 0.0},
                         'feedrate': 0.0,
-                        'spindle': 0,
-                        'raw': '<Idle|MPos:3.000,2.000,0.000|FS:0,0>'
+                        'raw': '<Idle|MPos:3.000,2.000,0.000|F:0>'
                     }
                 )
             ),
