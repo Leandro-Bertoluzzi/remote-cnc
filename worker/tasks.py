@@ -77,6 +77,7 @@ def executeTask(self) -> bool:
                 )
 
         # 5. When the file finishes, mark it as 'finished' in the DB and check if there is a queued task in DB. If there is none, close the connection and return
+        task_logger.info('Finished execution of file: %s', file_path)
         update_task_status(task.id, TASK_FINISHED_STATUS, USER_ID)
         # 6. If there is a pending task, go to step 3 and repeat
 

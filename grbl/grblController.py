@@ -98,7 +98,7 @@ class GrblController:
         """
         self.logger.debug('[Received] Message from GRBL: %s', response)
         msgType, payload = GrblLineParser.parse(response)
-        self.logger.info('[Parsed] Message type: %s| Payload: %s', msgType, payload)
+        self.logger.debug('[Parsed] Message type: %s| Payload: %s', msgType, payload)
 
         return (msgType, payload)
 
@@ -219,7 +219,7 @@ class GrblController:
         for (msgType, payload) in responses:
             if (msgType == GRBL_MSG_STATUS):
                 self.state['status'].update(payload)
-                self.logger.info('Device status was successfully updated to %s', self.state['status'])
+                self.logger.debug('Device status was successfully updated to %s', self.state['status'])
                 return self.state['status']
 
         self.logger.error('There was an error retrieving the device status')
@@ -233,7 +233,7 @@ class GrblController:
         for (msgType, payload) in responses:
             if (msgType == GRBL_MSG_PARSER_STATE):
                 self.state['parserstate'].update(payload)
-                self.logger.info('Parser state was successfully updated to %s', self.state['parserstate'])
+                self.logger.debug('Parser state was successfully updated to %s', self.state['parserstate'])
                 return self.state['parserstate']
 
         self.logger.error('There was an error retrieving the parser state')
@@ -262,7 +262,7 @@ class GrblController:
                 name = payload['name']
                 self.settings['parameters'][name] = payload['value']
 
-        self.logger.info('Device parameters were successfully updated to %s', self.settings['parameters'])
+        self.logger.debug('Device parameters were successfully updated to %s', self.settings['parameters'])
         return self.settings['parameters']
 
     def queryGrblSettings(self):
