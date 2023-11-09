@@ -1,5 +1,6 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QPainter, QColor
+from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor
+from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAbstractButton
 from utils.files import getFileNameInFolder
 
@@ -8,19 +9,22 @@ class MainMenuButton(QAbstractButton):
         super(MainMenuButton, self).__init__(parent)
 
         # Save image
-        imagePath = getFileNameInFolder(__file__, imageRelPath).as_posix()
-        self.pixmap = QPixmap(imagePath)
+        self.imagePath = getFileNameInFolder(__file__, imageRelPath).as_posix()
 
+        # Customize painter
+        self.pixmap = QPixmap(self.imagePath)
+        if self.imagePath.endswith('.svg'):
+            self.renderer = QSvgRenderer(self.imagePath)
+
+        # Customize button
         self.setText(text)
+        self.setMinimumSize(350, 350)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
 
+        # Button action
         if goToView:
             self.view = goToView
             self.clicked.connect(self.redirectToView)
-
-        stylesheet = getFileNameInFolder(__file__, "MainMenuButton.qss")
-        image = getFileNameInFolder(__file__, imageRelPath).as_posix()
-        with open(stylesheet,"r") as styles:
-            self.setStyleSheet(styles.read().replace('{image-url}', image))
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -31,13 +35,18 @@ class MainMenuButton(QAbstractButton):
 
         font = painter.font()
         font.setPixelSize(24)
+        font.setBold(True)
         painter.setFont(font)
 
-        painter.drawPixmap(event.rect(), self.pixmap)
+        if self.imagePath.endswith('.svg'):
+            self.renderer.render(painter)
+        else:
+            painter.drawPixmap(event.rect(), self.pixmap)
+
         painter.drawText(event.rect(), Qt.AlignBottom + Qt.AlignHCenter, self.text())
 
     def sizeHint(self):
-        return self.pixmap.size()
+        return self.size()
 
     def redirectToView(self):
         self.parent().redirectToView(self.view)

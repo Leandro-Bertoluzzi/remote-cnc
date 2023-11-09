@@ -8,6 +8,7 @@ class MainWindow(QMainWindow):
         self.centralWidget = MainMenu(self)
         self.setCentralWidget(self.centralWidget)
         self.setWindowTitle("CNC admin")
+        self.setStyleSheet("background-color:#333333;");
 
     def changeView(self, widget):
         self.centralWidget = widget(self)
