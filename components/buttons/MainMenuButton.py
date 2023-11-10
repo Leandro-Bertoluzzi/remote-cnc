@@ -24,6 +24,7 @@ class MainMenuButton(QAbstractButton):
         # Customize button
         self.setText(text)
         self.setMinimumSize(350, 350)
+        self.setMaximumSize(350, 350)
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.hover = False
 
