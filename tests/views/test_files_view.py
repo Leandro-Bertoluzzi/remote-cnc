@@ -7,7 +7,7 @@ from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from views.FilesView import FilesView
-from database.models.file import File
+from core.database.models.file import File
 
 class TestFilesView:
     @pytest.fixture(autouse=True)

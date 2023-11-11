@@ -2,7 +2,7 @@ import pytest
 from PyQt5.QtWidgets import QFileDialog, QPushButton
 
 from components.dialogs.FileDataDialog import FileDataDialog
-from database.models.file import File
+from core.database.models.file import File
 
 class TestFileDataDialog:
     fileInfo = File(user_id=1, file_name='example_file.gcode', file_path='path/example_file.gcode')

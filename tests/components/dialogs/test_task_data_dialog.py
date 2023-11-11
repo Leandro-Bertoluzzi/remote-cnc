@@ -1,9 +1,9 @@
 import pytest
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from database.models.file import File
-from database.models.material import Material
-from database.models.task import Task
-from database.models.tool import Tool
+from core.database.models.file import File
+from core.database.models.material import Material
+from core.database.models.task import Task
+from core.database.models.tool import Tool
 
 class TestTaskDataDialog:
     taskInfo = Task(

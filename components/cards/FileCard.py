@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
-from utils.database import update_file, remove_file
-from utils.files import renameFile, deleteFile
+from core.utils.database import update_file, remove_file
+from core.utils.files import renameFile, deleteFile
 
 class FileCard(Card):
     def __init__(self, file, parent=None):

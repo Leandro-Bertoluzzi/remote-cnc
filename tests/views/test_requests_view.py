@@ -6,8 +6,8 @@ from components.buttons.MenuButton import MenuButton
 from components.cards.MsgCard import MsgCard
 from components.cards.RequestCard import RequestCard
 from views.RequestsView import RequestsView
-from database.models.task import Task
-from database.models.user import User
+from core.database.models.task import Task
+from core.database.models.user import User
 
 class TestRequestsView:
     @pytest.fixture(autouse=True)

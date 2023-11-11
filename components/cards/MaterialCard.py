@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
-from utils.database import update_material, remove_material
+from core.utils.database import update_material, remove_material
 
 class MaterialCard(Card):
     def __init__(self, material, parent=None):

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from utils.database import update_tool, remove_tool
+from core.utils.database import update_tool, remove_tool
 
 class ToolCard(Card):
     def __init__(self, tool, parent=None):

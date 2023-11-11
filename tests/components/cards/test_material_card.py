@@ -2,7 +2,7 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.MaterialCard import MaterialCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
-from database.models.material import Material
+from core.database.models.material import Material
 from views.InventoryView import InventoryView
 
 class TestMaterialCard:

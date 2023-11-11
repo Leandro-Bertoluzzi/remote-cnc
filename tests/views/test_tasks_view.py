@@ -7,7 +7,7 @@ from components.cards.MsgCard import MsgCard
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from views.TasksView import TasksView
-from database.models.task import Task
+from core.database.models.task import Task
 
 class TestTasksView:
     @pytest.fixture(autouse=True)

@@ -5,7 +5,7 @@ from components.cards.MsgCard import MsgCard
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
-from utils.database import get_all_tools, get_all_materials, get_all_files_from_user, create_task, get_all_tasks_from_user
+from core.utils.database import get_all_tools, get_all_materials, get_all_files_from_user, create_task, get_all_tasks_from_user
 
 class TasksView(QWidget):
     def __init__(self, parent=None):

@@ -5,8 +5,8 @@ from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
-from utils.database import create_file, get_all_files_from_user
-from utils.files import saveFile
+from core.utils.database import create_file, get_all_files_from_user
+from core.utils.files import saveFile
 
 class FilesView(QWidget):
     def __init__(self, parent=None):

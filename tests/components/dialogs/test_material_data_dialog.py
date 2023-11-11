@@ -1,6 +1,6 @@
 import pytest
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
-from database.models.material import Material
+from core.database.models.material import Material
 
 class TestMaterialDataDialog:
     materialInfo = Material(name='Example material', description='Just a material')

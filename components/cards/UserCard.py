@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.UserDataDialog import UserDataDialog
-from utils.database import update_user, remove_user
+from core.utils.database import update_user, remove_user
 
 class UserCard(Card):
     def __init__(self, user, parent=None):

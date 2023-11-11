@@ -6,7 +6,7 @@ from components.cards.MsgCard import MsgCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from utils.database import create_tool, get_all_tools, create_material, get_all_materials
+from core.utils.database import create_tool, get_all_tools, create_material, get_all_materials
 
 class InventoryView(QWidget):
     def __init__(self, parent=None):

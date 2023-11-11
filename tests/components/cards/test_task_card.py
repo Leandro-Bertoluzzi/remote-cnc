@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from database.models.task import Task
+from core.database.models.task import Task
 from views.TasksView import TasksView
 
 class TestTaskCard:

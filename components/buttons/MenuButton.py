@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QPushButton
-from utils.files import getFileNameInFolder
+from core.utils.files import getFileNameInFolder
 
 class MenuButton(QPushButton):
     def __init__(self, text, onClick=None, goToView=None, parent=None):

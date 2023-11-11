@@ -6,7 +6,7 @@ from components.buttons.MenuButton import MenuButton
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
 from views.UsersView import UsersView
-from database.models.user import User
+from core.database.models.user import User
 
 class TestUsersView:
     @pytest.fixture(autouse=True)

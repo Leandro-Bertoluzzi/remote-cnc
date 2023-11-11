@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
-from utils.files import getFileNameInFolder
+from core.utils.files import getFileNameInFolder
 
 class Card(QWidget):
     def __init__(self, parent=None):

@@ -2,7 +2,7 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
-from database.models.file import File
+from core.database.models.file import File
 from views.FilesView import FilesView
 
 class TestFileCard:

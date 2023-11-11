@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
-from utils.database import create_user, get_all_users
+from core.utils.database import create_user, get_all_users
 
 class UsersView(QWidget):
     def __init__(self, parent=None):
