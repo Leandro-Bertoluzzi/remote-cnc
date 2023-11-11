@@ -1,7 +1,7 @@
 import re
-from grbl.constants import GRBL_ALARMS
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_MSG_ALARM
+from ..constants import GRBL_ALARMS
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_MSG_ALARM
 
 class GrblParserMsgAlarm(GrblParserGeneric):
     """Detects a GRBL ALARM message.

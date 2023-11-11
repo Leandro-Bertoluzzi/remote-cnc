@@ -1,6 +1,6 @@
 import re
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_RESULT_OK
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_RESULT_OK
 
 class GrblParserResultOk(GrblParserGeneric):
     """Detects a successful GRBL response.

@@ -1,6 +1,6 @@
 import re
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_MSG_OPTIONS
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_MSG_OPTIONS
 
 class GrblParserMsgOptions(GrblParserGeneric):
     """Detects a GRBL compile-time options message, initiated by the user via a `$I` print help command.

@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
-from database.base import Session
-from database.models.user import User, VALID_ROLES
+from ..base import Session
+from ..models.user import User, VALID_ROLES
 
 class UserRepository:
     def __init__(self, _session=None):

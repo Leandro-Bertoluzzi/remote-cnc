@@ -1,7 +1,7 @@
 import re
-from grbl.constants import GRBL_ERRORS
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_RESULT_ERROR
+from ..constants import GRBL_ERRORS
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_RESULT_ERROR
 
 class GrblParserResultError(GrblParserGeneric):
     """Detects an error GRBL response.

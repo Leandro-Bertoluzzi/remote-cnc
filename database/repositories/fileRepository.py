@@ -1,8 +1,8 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
-from database.base import Session
-from database.models.file import File
-from database.models.user import User
+from ..base import Session
+from ..models.file import File
+from ..models.user import User
 
 class FileRepository:
     def __init__(self, _session=None):

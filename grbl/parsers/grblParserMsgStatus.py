@@ -1,6 +1,6 @@
 import re
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_MSG_STATUS
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_MSG_STATUS
 
 class GrblParserMsgStatus(GrblParserGeneric):
     """Detects a GRBL real-time status response, initiated by the user via a `?` status command.

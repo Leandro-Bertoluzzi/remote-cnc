@@ -1,9 +1,9 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
-from database.base import Session
-from database.models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_IN_PROGRESS_STATUS, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS, \
-TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, VALID_STATUSES
 from datetime import datetime
+from ..base import Session
+from ..models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS, \
+TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, VALID_STATUSES
 
 class TaskRepository:
     def __init__(self, _session=None):

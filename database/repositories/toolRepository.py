@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
-from database.base import Session
-from database.models.tool import Tool
+from ..base import Session
+from ..models.tool import Tool
 
 class ToolRepository:
     def __init__(self, _session=None):

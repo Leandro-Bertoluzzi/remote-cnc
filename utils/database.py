@@ -1,10 +1,19 @@
-from database.base import Session
-from database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
-from database.repositories.fileRepository import FileRepository
-from database.repositories.materialRepository import MaterialRepository
-from database.repositories.taskRepository import TaskRepository
-from database.repositories.toolRepository import ToolRepository
-from database.repositories.userRepository import UserRepository
+try:
+    from ..database.base import Session
+    from ..database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+    from ..database.repositories.fileRepository import FileRepository
+    from ..database.repositories.materialRepository import MaterialRepository
+    from ..database.repositories.taskRepository import TaskRepository
+    from ..database.repositories.toolRepository import ToolRepository
+    from ..database.repositories.userRepository import UserRepository
+except ImportError:
+    from database.base import Session
+    from database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+    from database.repositories.fileRepository import FileRepository
+    from database.repositories.materialRepository import MaterialRepository
+    from database.repositories.taskRepository import TaskRepository
+    from database.repositories.toolRepository import ToolRepository
+    from database.repositories.userRepository import UserRepository
 
 def session_context(func):
     def wrapper(*args, **kwargs):

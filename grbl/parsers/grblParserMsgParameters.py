@@ -1,6 +1,6 @@
 import re
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_MSG_PARAMS
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_MSG_PARAMS
 
 class GrblParserMsgParameters(GrblParserGeneric):
     """Detects a GRBL parameters response, initiated by the user via a `$#` print help command.

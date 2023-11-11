@@ -1,7 +1,7 @@
 import re
-from grbl.constants import GRBL_MODAL_GROUPS
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_MSG_PARSER_STATE
+from ..constants import GRBL_MODAL_GROUPS
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_MSG_PARSER_STATE
 
 def findGroup(code: str) -> str:
     for element in GRBL_MODAL_GROUPS:

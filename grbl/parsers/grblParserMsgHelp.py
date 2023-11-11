@@ -1,6 +1,6 @@
 import re
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblMsgTypes import GRBL_MSG_HELP
+from ..parsers.grblParserGeneric import GrblParserGeneric
+from ..parsers.grblMsgTypes import GRBL_MSG_HELP
 
 class GrblParserMsgHelp(GrblParserGeneric):
     """Detects a GRBL help response, initiated by the user via a `$` print help command.

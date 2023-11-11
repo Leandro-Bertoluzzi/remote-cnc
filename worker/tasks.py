@@ -19,10 +19,17 @@ sys.path.append(parent_dir)
 from celery import Celery
 from pathlib import Path
 from celery.utils.log import get_task_logger
-from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
-from database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
-from grbl.grblController import GrblController
-from utils.database import get_next_task, are_there_pending_tasks, are_there_tasks_in_progress, update_task_status
+
+try:
+    from ..config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
+    from ..database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
+    from ..grbl.grblController import GrblController
+    from ..utils.database import get_next_task, are_there_pending_tasks, are_there_tasks_in_progress, update_task_status
+except ImportError:
+    from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
+    from database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
+    from grbl.grblController import GrblController
+    from utils.database import get_next_task, are_there_pending_tasks, are_there_tasks_in_progress, update_task_status
 
 app = Celery(
     'worker',

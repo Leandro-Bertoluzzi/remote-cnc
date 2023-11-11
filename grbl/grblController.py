@@ -1,9 +1,13 @@
 import logging
-from grbl.constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_QUERY_COMMANDS, GRBL_REALTIME_COMMANDS, GRBL_SETTINGS
-from grbl.grblLineParser import GrblLineParser
-from grbl.parsers.grblMsgTypes import *
-from utils.serial import SerialService
 from serial import SerialException
+from .constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_QUERY_COMMANDS, GRBL_REALTIME_COMMANDS, GRBL_SETTINGS
+from .grblLineParser import GrblLineParser
+from .parsers.grblMsgTypes import *
+
+try:
+    from ..utils.serial import SerialService
+except ImportError:
+    from utils.serial import SerialService
 
 class GrblController:
     state = {

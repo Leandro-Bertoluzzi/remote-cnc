@@ -1,18 +1,18 @@
-from grbl.parsers.grblParserGeneric import GrblParserGeneric
-from grbl.parsers.grblParserMsgAlarm import GrblParserMsgAlarm
-from grbl.parsers.grblParserMsgEcho import GrblParserMsgEcho
-from grbl.parsers.grblParserMsgFeedback import GrblParserMsgFeedback
-from grbl.parsers.grblParserMsgHelp import GrblParserMsgHelp
-from grbl.parsers.grblParserMsgOptions import GrblParserMsgOptions
-from grbl.parsers.grblParserMsgParameters import GrblParserMsgParameters
-from grbl.parsers.grblParserMsgParserState import GrblParserMsgParserState
-from grbl.parsers.grblParserMsgSettings import GrblParserMsgSettings
-from grbl.parsers.grblParserMsgStartup import GrblParserMsgStartup
-from grbl.parsers.grblParserMsgStatus import GrblParserMsgStatus
-from grbl.parsers.grblParserMsgUserDefinedStartup import GrblParserMsgUserDefinedStartup
-from grbl.parsers.grblParserMsgVersion import GrblParserMsgVersion
-from grbl.parsers.grblParserResultError import GrblParserResultError
-from grbl.parsers.grblParserResultOk import GrblParserResultOk
+from .parsers.grblParserGeneric import GrblParserGeneric
+from .parsers.grblParserMsgAlarm import GrblParserMsgAlarm
+from .parsers.grblParserMsgEcho import GrblParserMsgEcho
+from .parsers.grblParserMsgFeedback import GrblParserMsgFeedback
+from .parsers.grblParserMsgHelp import GrblParserMsgHelp
+from .parsers.grblParserMsgOptions import GrblParserMsgOptions
+from .parsers.grblParserMsgParameters import GrblParserMsgParameters
+from .parsers.grblParserMsgParserState import GrblParserMsgParserState
+from .parsers.grblParserMsgSettings import GrblParserMsgSettings
+from .parsers.grblParserMsgStartup import GrblParserMsgStartup
+from .parsers.grblParserMsgStatus import GrblParserMsgStatus
+from .parsers.grblParserMsgUserDefinedStartup import GrblParserMsgUserDefinedStartup
+from .parsers.grblParserMsgVersion import GrblParserMsgVersion
+from .parsers.grblParserResultError import GrblParserResultError
+from .parsers.grblParserResultOk import GrblParserResultOk
 
 class GrblLineParser:
     @staticmethod

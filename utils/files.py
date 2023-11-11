@@ -1,7 +1,11 @@
 import shutil
 import time
-from config import FILES_FOLDER_PATH
 from pathlib import Path
+
+try:
+    from ..config import FILES_FOLDER_PATH
+except ImportError:
+    from config import FILES_FOLDER_PATH
 
 ALLOWED_FILE_EXTENSIONS = {'txt', 'gcode', 'nc'}
 
