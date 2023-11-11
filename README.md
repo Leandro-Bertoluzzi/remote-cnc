@@ -65,7 +65,7 @@ Before starting :checkered_flag:, you need to have [Python](https://www.python.o
 
 ```bash
 # Clone this project
-$ git clone https://github.com/Leandro-Bertoluzzi/cnc-local-app
+$ git clone --recurse-submodules https://github.com/Leandro-Bertoluzzi/cnc-local-app
 
 # 1. Access the repository
 $ cd cnc-local-app
