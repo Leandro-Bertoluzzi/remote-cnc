@@ -1,4 +1,4 @@
-name: cnc-admin-dev
+name: cnc-admin-core-dev
 channels:
   - defaults
   - conda-forge
@@ -11,7 +11,6 @@ dependencies:
   - pyserial
   - pytest
   - pytest-cov
-  - pytest-qt
   - pytest-mock
   - python-dotenv
   - sqlalchemy

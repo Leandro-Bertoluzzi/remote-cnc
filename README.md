@@ -1,19 +1,19 @@
-<h1 align="center">CNC manager</h1>
+<h1 align="center">CNC manager core</h1>
 
 <p align="center">
-  <img alt="Github top language" src="https://img.shields.io/github/languages/top/Leandro-Bertoluzzi/cnc-admin?color=56BEB8">
+  <img alt="Github top language" src="https://img.shields.io/github/languages/top/Leandro-Bertoluzzi/cnc-admin-core?color=56BEB8">
 
-  <img alt="Github language count" src="https://img.shields.io/github/languages/count/Leandro-Bertoluzzi/cnc-admin?color=56BEB8">
+  <img alt="Github language count" src="https://img.shields.io/github/languages/count/Leandro-Bertoluzzi/cnc-admin-core?color=56BEB8">
 
-  <img alt="Repository size" src="https://img.shields.io/github/repo-size/Leandro-Bertoluzzi/cnc-admin?color=56BEB8">
+  <img alt="Repository size" src="https://img.shields.io/github/repo-size/Leandro-Bertoluzzi/cnc-admin-core?color=56BEB8">
 
-  <img alt="License" src="https://img.shields.io/github/license/Leandro-Bertoluzzi/cnc-admin?color=56BEB8">
+  <img alt="License" src="https://img.shields.io/github/license/Leandro-Bertoluzzi/cnc-admin-core?color=56BEB8">
 </p>
 
 <!-- Status -->
 
 <h4 align="center">
-	🚧 CNC manager 🚀 Under construction...  🚧
+	🚧 CNC manager core 🚀 Under construction...  🚧
 </h4>
 
 <hr>
@@ -32,11 +32,10 @@
 
 ## :dart: About
 
-Desktop application to monitor and manage an Arduino-based CNC machine connected to the local machine.
+Core application code to monitor and manage an Arduino-based CNC machine connected to the local machine.
 
 ## :sparkles: Features
 
-:heavy_check_mark: GUI\
 :heavy_check_mark: MySQL database management\
 :heavy_check_mark: G-code files management\
 :heavy_check_mark: Real time monitoring of CNC status\
@@ -48,7 +47,6 @@ Desktop application to monitor and manage an Arduino-based CNC machine connected
 The following tools were used in this project:
 
 -   [Python](https://www.python.org/)
--   [PyQt](https://wiki.python.org/moin/PyQt)
 -   [Mysql](https://www.mysql.com/)
 -   [SQLAlchemy](https://www.sqlalchemy.org/) and [Alembic](https://alembic.sqlalchemy.org/en/latest/)
 -   [Celery](https://docs.celeryq.dev/en/stable/)
@@ -65,15 +63,15 @@ Before starting :checkered_flag:, you need to have [Python](https://www.python.o
 
 ```bash
 # Clone this project
-$ git clone https://github.com/Leandro-Bertoluzzi/cnc-admin
+$ git clone https://github.com/Leandro-Bertoluzzi/cnc-admin-core
 
 # 1. Access the repository
-$ cd cnc-admin
+$ cd cnc-admin-core
 
 # 2. Set up your Python environment
 # Option 1: If you use Conda
 conda env create -f conda/environment-dev.yml
-conda activate cnc-admin-dev
+conda activate cnc-admin-core-dev
 
 # Option 2: If you use venv and pip
 $ python -m venv env-dev
@@ -89,9 +87,6 @@ $ docker compose -f docker-compose.yml -f docker-compose.worker.yml up -d
 
 # 5. If you are starting a new DB, run DB migrations
 $ alembic upgrade head
-
-# 6. Start the app with auto-reload
-$ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
 ```
 
 ### Windows
@@ -108,7 +103,7 @@ If you choose the option 2, you shall follow the following steps:
 # Set up your Python environment
 # Option 1: If you use Conda
 conda env create -f conda/environment-dev-windows.yml
-conda activate cnc-admin-dev
+conda activate cnc-admin-core-dev
 
 # Option 2: If you use venv and pip
 $ python -m venv env-dev
@@ -121,10 +116,7 @@ $ docker compose up -d
 # 5. If you are starting a new DB, run DB migrations
 $ alembic upgrade head
 
-# 6. Start the app with auto-reload
-$ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
-
-# 7. Start the Celery worker
+# 6. Start the Celery worker
 # Move to worker folder
 $ cd worker
 

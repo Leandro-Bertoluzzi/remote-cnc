@@ -1,4 +1,4 @@
-name: cnc-admin
+name: cnc-admin-core
 channels:
   - defaults
   - conda-forge
@@ -7,7 +7,6 @@ dependencies:
   - bcrypt
   - pip
   - pymysql
-  - pyqt
   - pyserial
   - python-dotenv
   - sqlalchemy
