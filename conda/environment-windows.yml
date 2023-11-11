@@ -1,4 +1,4 @@
-name: cnc-admin-dev
+name: cnc-local-app-dev
 channels:
   - defaults
   - conda-forge
