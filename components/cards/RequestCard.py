@@ -32,7 +32,7 @@ class RequestCard(Card):
         if confirmation.exec() == QMessageBox.Yes:
             update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
             if not are_there_tasks_in_progress():
-                task = executeTask.delay()
+                task = executeTask.delay(USER_ID)
                 Globals.set_current_task_id(task.task_id)
             self.parent().refreshLayout()
 
