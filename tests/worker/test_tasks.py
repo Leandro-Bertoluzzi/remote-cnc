@@ -26,7 +26,7 @@ def test_execute_tasks(mocker):
     mocked_update_state = mocker.patch.object(Task, 'update_state')
 
     # Call method under test
-    response = executeTask()
+    response = executeTask(admin_id=1)
 
     # Assertions
     assert response
@@ -51,7 +51,7 @@ def test_no_tasks_to_execute(mocker):
     mock_stream_line = mocker.patch.object(GrblController, 'streamLine')
 
     # Call method under test
-    response = executeTask()
+    response = executeTask(admin_id=1)
 
     # Assertions
     assert response
@@ -67,5 +67,10 @@ def test_task_in_progress_exception(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        executeTask()
+        executeTask(admin_id=1)
     assert str(error.value) == 'There is a task currently in progress, please wait until finished'
+
+    # Call the method under test and assert exception
+    with pytest.raises(Exception) as error:
+        executeTask()
+    assert str(error.value) == 'executeTask() missing 1 required positional argument: \'admin_id\''

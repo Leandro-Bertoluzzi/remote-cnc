@@ -5,7 +5,6 @@ import pytest
 # Set environment variables for tests
 
 os.environ['FILES_FOLDER'] = 'files_folder'
-os.environ['USER_ID'] = '1'
 os.environ['SERIAL_PORT'] = 'COMx'
 
 # Helper fixtures

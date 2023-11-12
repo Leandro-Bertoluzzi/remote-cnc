@@ -21,12 +21,12 @@ from pathlib import Path
 from celery.utils.log import get_task_logger
 
 try:
-    from ..config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
+    from ..config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
     from ..database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from ..grbl.grblController import GrblController
     from ..utils.database import get_next_task, are_there_pending_tasks, are_there_tasks_in_progress, update_task_status
 except ImportError:
-    from config import USER_ID, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
+    from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
     from database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from grbl.grblController import GrblController
     from utils.database import get_next_task, are_there_pending_tasks, are_there_tasks_in_progress, update_task_status
@@ -38,7 +38,7 @@ app = Celery(
 )
 
 @app.task(name='worker.tasks.executeTask', bind=True)
-def executeTask(self) -> bool:
+def executeTask(self, admin_id: int) -> bool:
     # 1. Check if there is a task currently in progress, in which case return an exception
     if are_there_tasks_in_progress():
         raise Exception("There is a task currently in progress, please wait until finished")
@@ -53,7 +53,7 @@ def executeTask(self) -> bool:
         task = get_next_task()
         file_path = Path(f'../{FILES_FOLDER_PATH}/{task.file.user_id}/{task.file.file_path}')
         # Mark the task as 'in progress' in the DB
-        update_task_status(task.id, TASK_IN_PROGRESS_STATUS, USER_ID)
+        update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
         task_logger.info('Started execution of file: %s', file_path)
 
         # Task progress
@@ -85,7 +85,7 @@ def executeTask(self) -> bool:
 
         # 5. When the file finishes, mark it as 'finished' in the DB and check if there is a queued task in DB. If there is none, close the connection and return
         task_logger.info('Finished execution of file: %s', file_path)
-        update_task_status(task.id, TASK_FINISHED_STATUS, USER_ID)
+        update_task_status(task.id, TASK_FINISHED_STATUS, admin_id)
         # 6. If there is a pending task, go to step 3 and repeat
 
     cnc.disconnect()
