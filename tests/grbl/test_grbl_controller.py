@@ -1,6 +1,6 @@
 from grbl.constants import GRBL_ACTIVE_STATE_IDLE, GRBL_ACTIVE_STATE_RUN, GRBL_ACTIVE_STATE_HOLD, GRBL_ACTIVE_STATE_DOOR, \
     GRBL_ACTIVE_STATE_HOME, GRBL_ACTIVE_STATE_SLEEP, GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_CHECK
-from grbl.grblController import GrblController
+from grbl.grblController import GrblController, JOG_UNIT_MILIMETERS, JOG_UNIT_INCHES, JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL
 from grbl.grblLineParser import GrblLineParser
 from grbl.parsers.grblMsgTypes import *
 from utils.serial import SerialService
@@ -595,6 +595,107 @@ class TestGrblController:
 
         # Assertions
         assert str(error.value) == 'There was an error enabling the check mode'
+        assert mock_command_send.call_count == 1
+
+    @pytest.mark.parametrize(
+            'parameters,expected',
+            [
+                (
+                    { 'x': 1.00, 'y': 2.00, 'z': 3.00, 'units': None, 'distance_mode': None, 'machine_coordinates': False },
+                    '$J=X1.0 Y2.0 Z3.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': None, 'machine_coordinates': False },
+                    '$J=G20 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': None, 'machine_coordinates': False },
+                    '$J=G21 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': None, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    '$J=G90 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': None, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    '$J=G91 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': None, 'distance_mode': None, 'machine_coordinates': True },
+                    '$J=G53 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    '$J=G90 G20 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    '$J=G90 G21 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    '$J=G91 G20 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    '$J=G91 G21 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
+                    '$J=G53 G90 G20 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
+                    '$J=G53 G90 G21 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
+                    '$J=G53 G91 G20 X0.0 Y0.0 Z1.0'
+                ),
+                (
+                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
+                    '$J=G53 G91 G21 X0.0 Y0.0 Z1.0'
+                ),
+            ]
+        )
+    def test_jog_command(self, mocker, parameters, expected):
+        # Mock GRBL methods
+        mock_command_send = mocker.patch.object(
+            GrblController,
+            'sendCommand',
+            return_value=[
+                (GRBL_RESULT_OK, {})
+            ]
+        )
+        # Call the method under test
+        response = self.grbl_controller.jog(
+            parameters['x'], parameters['y'], parameters['z'],
+            units=parameters['units'],
+            distance_mode=parameters['distance_mode'],
+            machine_coordinates=parameters['machine_coordinates']
+        )
+
+        # Assertions
+        assert response == expected
+        assert mock_command_send.call_count == 1
+
+    def test_jog_command_fails(self, mocker):
+        # Mock GRBL methods
+        mock_command_send = mocker.patch.object(
+            GrblController,
+            'sendCommand',
+            return_value=[(
+                GRBL_RESULT_ERROR,
+                {'code': '8', 'message': 'Not idle', 'description': 'Grbl \'$\' command cannot be used unless Grbl is IDLE. Ensures smooth operation during a job.', 'raw': 'error:8'}
+            )]
+        )
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            self.grbl_controller.jog(1, 2, 3)
+
+        # Assertions
+        assert str(error.value) == 'There was an error executing the jog action'
         assert mock_command_send.call_count == 1
 
     @pytest.mark.parametrize(

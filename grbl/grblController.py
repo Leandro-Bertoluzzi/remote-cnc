@@ -9,6 +9,11 @@ try:
 except ImportError:
     from utils.serial import SerialService
 
+JOG_UNIT_MILIMETERS = 'milimeters'
+JOG_UNIT_INCHES = 'inches'
+JOG_DISTANCE_ABSOLUTE = 'distance_absolute'
+JOG_DISTANCE_INCREMENTAL = 'distance_incremental'
+
 class GrblController:
     state = {
         'status': {
@@ -195,7 +200,7 @@ class GrblController:
         self.logger.error('There was an error disabling the alarm')
         raise Exception('There was an error disabling the alarm')
 
-    def toggleCheckMode(self) -> bool:
+    def toggleCheckMode(self) -> dict[str, bool]:
         """Enables/Disables the "check G-code" mode.
 
         With this mode enabled, the user can stream a G-code program to Grbl, where it will parse it,
@@ -212,6 +217,40 @@ class GrblController:
 
         self.logger.error('There was an error enabling the check mode')
         raise Exception('There was an error enabling the check mode')
+
+    def jog(self, x:float, y:float, z:float, *, units=None, distance_mode=None, machine_coordinates=False) -> str:
+        """Executes a 'jog' action.
+
+        JOG mode is also called jogging mode. In this mode, the CNC machine is used to operate manually.
+        """
+        jog_command = "$J="
+
+        # Build GRBL command
+        if machine_coordinates:
+            jog_command = jog_command + 'G53 '
+
+        if distance_mode == JOG_DISTANCE_ABSOLUTE:
+            jog_command = jog_command + 'G90 '
+        if distance_mode == JOG_DISTANCE_INCREMENTAL:
+            jog_command = jog_command + 'G91 '
+
+        if units == JOG_UNIT_INCHES:
+            jog_command = jog_command + 'G20 '
+        if units == JOG_UNIT_MILIMETERS:
+            jog_command = jog_command + 'G21 '
+
+        jog_command = f'{jog_command}X{x} Y{y} Z{z}'
+
+        # Process response
+        responses = self.sendCommand(jog_command)
+
+        for (msgType, payload) in responses:
+            if (msgType == GRBL_RESULT_OK):
+                self.logger.debug('Jog action was successfully executed: %s', jog_command)
+                return jog_command
+
+        self.logger.error('There was an error executing the jog action')
+        raise Exception('There was an error executing the jog action')
 
     # QUERIES
 
