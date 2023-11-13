@@ -8,8 +8,5 @@ venv/
 # Test related files
 .coverage
 
-# User files
-gcode_files/
-
 # Log files
 *.log

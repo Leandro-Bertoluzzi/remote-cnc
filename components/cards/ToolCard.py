@@ -9,7 +9,7 @@ class ToolCard(Card):
 
         self.tool = tool
 
-        description = f'Tarea {tool.id}: {tool.name}'
+        description = f'Herramienta {tool.id}: {tool.name}'
         editToolBtn = QPushButton("Editar")
         editToolBtn.clicked.connect(self.updateTool)
         removeToolBtn = QPushButton("Borrar")

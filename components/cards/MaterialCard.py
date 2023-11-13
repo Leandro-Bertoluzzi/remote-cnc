@@ -9,7 +9,7 @@ class MaterialCard(Card):
 
         self.material = material
 
-        description = f'Tarea {material.id}: {material.name}'
+        description = f'Material {material.id}: {material.name}'
         editMaterialBtn = QPushButton("Editar")
         editMaterialBtn.clicked.connect(self.updateMaterial)
         removeMaterialBtn = QPushButton("Borrar")
