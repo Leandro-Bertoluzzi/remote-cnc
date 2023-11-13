@@ -1,10 +1,10 @@
-import pytest
 from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
-from components.ControllerActions import ControllerActions
+from containers.ControllerActions import ControllerActions
 from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
 from components.Terminal import Terminal
+from core.utils.serial import SerialService
 from views.ControlView import ControlView
 
 class TestControlView:
@@ -12,8 +12,9 @@ class TestControlView:
         # Create an instance of ControlView
         parent = MainWindow()
 
-        # Mock parent methods
+        # Mock object methods
         mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
+        mock_get_ports = mocker.patch.object(SerialService, 'get_ports')
 
         # Create an instance of ControlView
         control_view = ControlView(parent)
@@ -25,6 +26,9 @@ class TestControlView:
         assert helpers.count_widgets_with_type(control_view.layout, CodeEditor) == 1
         assert helpers.count_widgets_with_type(control_view.layout, ControllerStatus) == 1
         assert helpers.count_widgets_with_type(control_view.layout, Terminal) == 1
+
+        # More assertions
+        assert mock_get_ports.call_count == 1
         assert mock_add_toolbar.call_count == 1
 
     def test_control_view_goes_back_to_menu(self, qtbot, mocker):

@@ -1,4 +1,4 @@
-from components.ButtonList import ButtonList
+from containers.ButtonList import ButtonList
 from PyQt5.QtWidgets import QPushButton
 
 class TestButtonList:

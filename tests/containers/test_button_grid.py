@@ -1,5 +1,5 @@
 
-from components.ButtonGrid import ButtonGrid
+from containers.ButtonGrid import ButtonGrid
 from PyQt5.QtWidgets import QPushButton
 
 class TestButtonGrid:

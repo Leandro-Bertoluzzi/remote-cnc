@@ -1,5 +1,4 @@
 from PyQt5.QtWidgets import QTabWidget
-from PyQt5.QtCore import Qt
 
 class ControllerActions(QTabWidget):
     def __init__(self, tabs=[], parent=None):
