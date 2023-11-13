@@ -1,8 +1,13 @@
 import serial
+import serial.tools.list_ports as serial_ports
 
 class SerialService:
     def __init__(self):
         self.interface = serial.Serial()
+
+    @classmethod
+    def get_ports(cls):
+        return serial_ports.comports()
 
     def startConnection(self, port: str, baudrate: int, timeout: int = 5) -> str:
         """Closes any previous connection and starts a new one.
