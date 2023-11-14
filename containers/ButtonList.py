@@ -10,5 +10,7 @@ class ButtonList(QWidget):
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
-        for option in options:
-            layout.addWidget(QPushButton(option))
+        for (label, action) in options:
+            button = QPushButton(label)
+            button.clicked.connect(action)
+            layout.addWidget(button)

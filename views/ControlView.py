@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QGridLayout, QToolBar, QToolButton, QComboBox
+from PyQt5.QtWidgets import QComboBox, QGridLayout, QToolBar, QToolButton, QWidget
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from containers.ButtonGrid import ButtonGrid
@@ -6,8 +6,12 @@ from containers.ButtonList import ButtonList
 from containers.ControllerActions import ControllerActions
 from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
+from components.JogController import JogController
 from components.Terminal import Terminal
+from core.config import SERIAL_BAUDRATE
+from core.grbl.grblController import GrblController
 from core.utils.serial import SerialService
+import logging
 
 class ControlView(QWidget):
     def __init__(self, parent=None):
@@ -17,12 +21,30 @@ class ControlView(QWidget):
         self.layout.setAlignment(Qt.AlignCenter)
         self.setLayout(self.layout)
 
-        # VIEW STRUCTURE
+        # STATE MANAGEMENT
+        self.connected = False
+        self.port_selected = ''
 
+        # GRBL CONTROLLER CONFIGURATION
+        grbl_logger = logging.getLogger('control_view_logger')
+        grbl_logger.setLevel(logging.INFO)
+        self.grbl_controller = GrblController(grbl_logger)
+
+        # VIEW STRUCTURE
         self.status_monitor = ControllerStatus(parent=self)
-        controller_commands = ButtonGrid(['Home', 'Configurar', 'Modo chequeo', 'Desactivar alarma'], width=3, parent=self)
-        controller_macros = ButtonList(['Sonda Z', 'Buscar centro', 'Cambiar herramienta', 'Dibujar círculo'], parent=self)
-        controller_jog = ButtonGrid([' ↖ ', ' ↑ ', ' ↗ ', ' ← ', '', ' → ', ' ↙ ', ' ↓ ', ' ↘ '], width=3, parent=self)
+        controller_commands = ButtonGrid([
+            ('Home', self.empty),
+            ('Configurar', self.empty),
+            ('Modo chequeo', self.empty),
+            ('Desactivar alarma', self.empty),
+        ], width=3, parent=self)
+        controller_macros = ButtonList([
+            ('Sonda Z', self.empty),
+            ('Buscar centro', self.empty),
+            ('Cambiar herramienta', self.empty),
+            ('Dibujar círculo', self.empty),
+        ], parent=self)
+        controller_jog = JogController(self.grbl_controller, parent=self)
         self.control_panel = ControllerActions(
             [
                 (controller_commands, 'Acciones'),
@@ -33,6 +55,8 @@ class ControlView(QWidget):
         )
         self.code_editor = CodeEditor(self)
         self.terminal = Terminal(self)
+
+        self.enable_serial_widgets(False)
 
         ############################################
         # 0                  |                     #
@@ -64,20 +88,26 @@ class ControlView(QWidget):
             ('Ejecutar', self.empty),
             ('Detener', self.empty),
             ('Pausar', self.empty),
-            ('Conectar', self.empty),
         ]
 
         for (label, action) in options:
             tool_button = QToolButton()
             tool_button.setText(label)
             tool_button.clicked.connect(action)
-            tool_button.setCheckable(True)
             self.tool_bar.addWidget(tool_button)
+
+        self.connect_button = QToolButton()
+        self.connect_button.setText('Conectar')
+        self.connect_button.clicked.connect(self.connect_device)
+        self.connect_button.setCheckable(True)
+        self.tool_bar.addWidget(self.connect_button)
 
         # Connected devices
         combo_ports = QComboBox()
-        ports = [port.name for port in SerialService.get_ports()]
+        combo_ports.addItems([''])
+        ports = [port.device for port in SerialService.get_ports()]
         combo_ports.addItems(ports)
+        combo_ports.currentTextChanged.connect(self.set_selected_port)
         self.tool_bar.addWidget(combo_ports)
 
         self.parent().addToolBar(Qt.TopToolBarArea, self.tool_bar)
@@ -87,6 +117,32 @@ class ControlView(QWidget):
         """
         self.parent().removeToolBar(self.tool_bar)
         self.parent().backToMenu()
+
+    def set_selected_port(self, port):
+        self.port_selected = port
+
+    def connect_device(self):
+        """Open the connection with the GRBL device connected to the selected port.
+        """
+        if not self.port_selected:
+            return
+
+        if self.connected:
+            self.grbl_controller.disconnect()
+            self.connect_button.setText('Conectar')
+            self.connected = False
+            self.enable_serial_widgets(False)
+            return
+
+        response = self.grbl_controller.connect(self.port_selected, SERIAL_BAUDRATE)
+        self.connect_button.setText('Desconectar')
+        self.connected = True
+        self.enable_serial_widgets(True)
+
+    def enable_serial_widgets(self, enable:bool = True):
+        self.status_monitor.setEnabled(enable)
+        self.control_panel.setEnabled(enable)
+        self.terminal.setEnabled(enable)
 
     def empty(self):
         pass

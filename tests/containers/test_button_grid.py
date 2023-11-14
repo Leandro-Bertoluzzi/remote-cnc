@@ -3,8 +3,13 @@ from containers.ButtonGrid import ButtonGrid
 from PyQt5.QtWidgets import QPushButton
 
 class TestButtonGrid:
-    def test_button_grid_init(self, qtbot, helpers):
-        actions = ['Action 1', 'Action 2', 'Action 3', 'Action 4']
+    def test_button_grid_init(self, qtbot, mocker, helpers):
+        actions = [
+            ('Action 1', mocker.Mock()),
+            ('Action 2', mocker.Mock()),
+            ('Action 3', mocker.Mock()),
+            ('Action 4', mocker.Mock())
+        ]
         button_grid = ButtonGrid(actions)
         qtbot.addWidget(button_grid)
 

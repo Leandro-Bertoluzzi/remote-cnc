@@ -11,8 +11,10 @@ class ButtonGrid(QWidget):
         self.setLayout(layout)
 
         i = 0
-        for option in options:
+        for (label, action) in options:
             x = int(floor(i/width))
             y = int(i - width*x)
-            layout.addWidget(QPushButton(option), x, y)
+            button = QPushButton(label)
+            button.clicked.connect(action)
+            layout.addWidget(button, x, y)
             i = i+1
