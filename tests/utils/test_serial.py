@@ -121,3 +121,13 @@ def test_stop_connection(serial_service, mocker, open_port: bool):
 
     # Assertions
     assert mock_close_port.call_count == (1 if open_port else 0)
+
+def test_get_ports(mocker):
+    # Mock serial port class method
+    mock_list_ports = mocker.patch('serial.tools.list_ports.comports')
+
+    # Call method under test
+    SerialService.get_ports()
+
+    # Assertions
+    assert mock_list_ports.call_count == 1

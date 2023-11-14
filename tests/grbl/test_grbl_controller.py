@@ -601,75 +601,72 @@ class TestGrblController:
             'parameters,expected',
             [
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 3.00, 'units': None, 'distance_mode': None, 'machine_coordinates': False },
-                    '$J=X1.0 Y2.0 Z3.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 3.00, 'feedrate': 500.00, 'units': None, 'distance_mode': None, 'machine_coordinates': False },
+                    '$J=X1.0 Y2.0 Z3.0 F500.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': None, 'machine_coordinates': False },
-                    '$J=G20 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 500.00, 'units': JOG_UNIT_INCHES, 'distance_mode': None, 'machine_coordinates': False },
+                    '$J=G20 X1.0 Y2.0 F500.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': None, 'machine_coordinates': False },
-                    '$J=G21 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': None, 'machine_coordinates': False },
+                    '$J=G21 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': None, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
-                    '$J=G90 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    '$J=G90 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': None, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
-                    '$J=G91 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    '$J=G91 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': None, 'distance_mode': None, 'machine_coordinates': True },
-                    '$J=G53 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': None, 'machine_coordinates': True },
+                    '$J=G53 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
-                    '$J=G90 G20 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    '$J=G90 G20 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
-                    '$J=G90 G21 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    '$J=G90 G21 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
-                    '$J=G91 G20 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    '$J=G91 G20 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
-                    '$J=G91 G21 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    '$J=G91 G21 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
-                    '$J=G53 G90 G20 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
+                    '$J=G53 G90 G20 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
-                    '$J=G53 G90 G21 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
+                    '$J=G53 G90 G21 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
-                    '$J=G53 G91 G20 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
+                    '$J=G53 G91 G20 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 0.00, 'y': 0.00, 'z': 1.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
-                    '$J=G53 G91 G21 X0.0 Y0.0 Z1.0'
+                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
+                    '$J=G53 G91 G21 X1.0 Y2.0'
                 ),
             ]
         )
     def test_jog_command(self, mocker, parameters, expected):
+        # Mock serial methods
+        mock_serial_stream = mocker.patch.object(SerialService, 'streamLine')
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(
-            GrblController,
-            'sendCommand',
-            return_value=[
-                (GRBL_RESULT_OK, {})
-            ]
-        )
+        mock_grbl_parser = mocker.patch.object(GrblLineParser, 'parse', return_value=(GRBL_RESULT_OK, {}))
+
         # Call the method under test
         response = self.grbl_controller.jog(
-            parameters['x'], parameters['y'], parameters['z'],
+            parameters['x'], parameters['y'], parameters['z'], parameters['feedrate'],
             units=parameters['units'],
             distance_mode=parameters['distance_mode'],
             machine_coordinates=parameters['machine_coordinates']
@@ -677,26 +674,58 @@ class TestGrblController:
 
         # Assertions
         assert response == expected
-        assert mock_command_send.call_count == 1
+        assert mock_serial_stream.call_count == 1
+        assert mock_grbl_parser.call_count == 1
 
     def test_jog_command_fails(self, mocker):
+        # Mock serial methods
+        mock_serial_stream = mocker.patch.object(SerialService, 'streamLine')
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(
-            GrblController,
-            'sendCommand',
-            return_value=[(
+        mock_grbl_parser = mocker.patch.object(
+            GrblLineParser,
+            'parse',
+            return_value=(
                 GRBL_RESULT_ERROR,
-                {'code': '8', 'message': 'Not idle', 'description': 'Grbl \'$\' command cannot be used unless Grbl is IDLE. Ensures smooth operation during a job.', 'raw': 'error:8'}
-            )]
+                {'code': '99', 'message': 'An error', 'description': 'An error happened.', 'raw': 'error:99'}
+            )
         )
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            self.grbl_controller.jog(1, 2, 3)
+            self.grbl_controller.jog(1, 2, 3, 500)
 
         # Assertions
-        assert str(error.value) == 'There was an error executing the jog action'
-        assert mock_command_send.call_count == 1
+        assert str(error.value) == 'Error executing command: An error. Description: An error happened.'
+        assert mock_serial_stream.call_count == 1
+        assert mock_grbl_parser.call_count == 1
+
+    def test_jog_command_alarm(self, mocker):
+        # Mock serial methods
+        mock_serial_stream = mocker.patch.object(SerialService, 'streamLine')
+        # Mock GRBL methods
+        mock_grbl_parser = mocker.patch.object(
+            GrblLineParser,
+            'parse',
+            return_value=(GRBL_MSG_ALARM, {'code': '99', 'message': 'An alarm', 'description': 'An alarm was triggered.', 'raw': 'error:99'})
+        )
+        # Mock GRBL methods
+        mock_grbl_parser = mocker.patch.object(
+            GrblLineParser,
+            'parse',
+            return_value=(
+                GRBL_MSG_ALARM,
+                {'code': '99', 'message': 'An alarm', 'description': 'An alarm was triggered.', 'raw': 'error:99'}
+            )
+        )
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            self.grbl_controller.jog(1, 2, 3, 500)
+
+        # Assertions
+        assert str(error.value) == 'Alarm activated: An alarm. Description: An alarm was triggered.'
+        assert mock_serial_stream.call_count == 1
+        assert mock_grbl_parser.call_count == 1
 
     @pytest.mark.parametrize(
             'messages,expected',

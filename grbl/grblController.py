@@ -52,7 +52,6 @@ class GrblController:
 
         # Configure logger
         file_handler = logging.FileHandler('grbl.log', 'a')
-        file_handler.setLevel(logging.INFO)
         file_format = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
         file_handler.setFormatter(file_format)
         self.logger = logger
@@ -218,7 +217,7 @@ class GrblController:
         self.logger.error('There was an error enabling the check mode')
         raise Exception('There was an error enabling the check mode')
 
-    def jog(self, x:float, y:float, z:float, *, units=None, distance_mode=None, machine_coordinates=False) -> str:
+    def jog(self, x:float, y:float, z:float, feedrate:float, *, units=None, distance_mode=None, machine_coordinates=False) -> str:
         """Executes a 'jog' action.
 
         JOG mode is also called jogging mode. In this mode, the CNC machine is used to operate manually.
@@ -239,18 +238,35 @@ class GrblController:
         if units == JOG_UNIT_MILIMETERS:
             jog_command = jog_command + 'G21 '
 
-        jog_command = f'{jog_command}X{x} Y{y} Z{z}'
+        x_str = f'X{x} ' if x else ''
+        y_str = f'Y{y} ' if y else ''
+        z_str = f'Z{z} ' if z else ''
+        feedrate_str = f'F{feedrate}' if feedrate else ''
+        jog_command = jog_command + x_str + y_str + z_str + feedrate_str
+        jog_command = jog_command.strip()
 
-        # Process response
-        responses = self.sendCommand(jog_command)
+        # Send command and process response
+        self.logger.debug('[Sent] GRBL jog command: %s', jog_command)
+        response = self.serial.streamLine(jog_command)
+        msgType, payload = self.parseResponse(response)
 
-        for (msgType, payload) in responses:
-            if (msgType == GRBL_RESULT_OK):
-                self.logger.debug('Jog action was successfully executed: %s', jog_command)
-                return jog_command
-
-        self.logger.error('There was an error executing the jog action')
-        raise Exception('There was an error executing the jog action')
+        if msgType == GRBL_RESULT_ERROR:
+            self.logger.error(
+                'Error executing jog command: %s. Error: %s. Description: %s',
+                jog_command,
+                payload['message'],
+                payload['description']
+            )
+            raise Exception('Error executing command: ' + payload['message'] + '. Description: ' + payload['description'])
+        if msgType == GRBL_MSG_ALARM:
+            self.logger.critical(
+                'Alarm activated executing jog command: %s. Alarm: %s. Description: %s',
+                jog_command,
+                payload['message'],
+                payload['description']
+            )
+            raise Exception('Alarm activated: ' + payload['message'] + '. Description: ' + payload['description'])
+        return jog_command
 
     # QUERIES
 
