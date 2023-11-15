@@ -9,9 +9,16 @@ from components.ControllerStatus import ControllerStatus
 from components.JogController import JogController
 from components.Terminal import Terminal
 from core.config import SERIAL_BAUDRATE
+from core.utils.database import get_tool_by_id
 from core.grbl.grblController import GrblController
 from core.utils.serial import SerialService
 import logging
+
+GRBL_STATUS_DISCONNECTED = {
+    'activeState': 'disconnected',
+    'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+    'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0}
+}
 
 class ControlView(QWidget):
     def __init__(self, parent=None):
@@ -24,6 +31,7 @@ class ControlView(QWidget):
         # STATE MANAGEMENT
         self.connected = False
         self.port_selected = ''
+        self.device_settings = {}
 
         # GRBL CONTROLLER CONFIGURATION
         grbl_logger = logging.getLogger('control_view_logger')
@@ -44,7 +52,7 @@ class ControlView(QWidget):
             ('Cambiar herramienta', self.empty),
             ('Dibujar círculo', self.empty),
         ], parent=self)
-        controller_jog = JogController(self.grbl_controller, parent=self)
+        controller_jog = JogController(self.grbl_controller, self.write_to_terminal, parent=self)
         self.control_panel = ControllerActions(
             [
                 (controller_commands, 'Acciones'),
@@ -54,7 +62,7 @@ class ControlView(QWidget):
             parent=self
         )
         self.code_editor = CodeEditor(self)
-        self.terminal = Terminal(self)
+        self.terminal = Terminal(self.grbl_controller, parent=self)
 
         self.enable_serial_widgets(False)
 
@@ -132,17 +140,41 @@ class ControlView(QWidget):
             self.connect_button.setText('Conectar')
             self.connected = False
             self.enable_serial_widgets(False)
+            self.status_monitor.set_status(GRBL_STATUS_DISCONNECTED)
             return
 
         response = self.grbl_controller.connect(self.port_selected, SERIAL_BAUDRATE)
         self.connect_button.setText('Desconectar')
         self.connected = True
         self.enable_serial_widgets(True)
+        self.query_device_status()
+        self.write_to_terminal(response['raw'])
 
     def enable_serial_widgets(self, enable:bool = True):
         self.status_monitor.setEnabled(enable)
         self.control_panel.setEnabled(enable)
         self.terminal.setEnabled(enable)
+
+    def query_device_status(self):
+        status = self.grbl_controller.queryStatusReport()
+        self.status_monitor.set_status(status)
+
+        feedrate = self.grbl_controller.getFeedrate()
+        self.status_monitor.set_feedrate(feedrate)
+
+        spindle = self.grbl_controller.getSpindle()
+        self.status_monitor.set_spindle(spindle)
+
+        tool_index_grbl = self.grbl_controller.getTool()
+        tool_info = get_tool_by_id(tool_index_grbl)
+        self.status_monitor.set_tool(tool_index_grbl, tool_info)
+
+    def query_device_settings(self):
+        settings = self.grbl_controller.queryGrblSettings()
+        self.device_settings = settings
+
+    def write_to_terminal(self, text):
+        self.terminal.display_text(text)
 
     def empty(self):
         pass

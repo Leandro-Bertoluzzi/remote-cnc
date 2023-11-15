@@ -9,8 +9,11 @@ class TestJogController:
         # Mock GRBL controller object
         self.grbl_controller = mocker.MagicMock()
 
+        # Mock terminal method
+        self.mock_grbl_log = mocker.Mock()
+
         # Create an instance of JogController
-        self.jog_controller = JogController(self.grbl_controller)
+        self.jog_controller = JogController(self.grbl_controller, self.mock_grbl_log)
         qtbot.addWidget(self.jog_controller)
 
     def test_jog_controller_init(self, helpers):
@@ -93,14 +96,18 @@ class TestJogController:
         self.jog_controller.units = 'mm'
 
         # Mock GRBL controller method
-        attrs = {'jog.return_value': 'jog_command'}
+        attrs = {
+            'build_jog_command.return_value': 'jog_command',
+            'streamLine.return_value': {'raw': 'ok'},
+        }
         self.grbl_controller.configure_mock(**attrs)
 
         # Trigger action under test
         self.jog_controller.make_incremental_move(1, 1, 1)()
 
         # Assertions
-        self.grbl_controller.jog.assert_called_once()
+        self.grbl_controller.build_jog_command.assert_called_once()
+        self.grbl_controller.streamLine.assert_called_once()
 
         jog_params = {
             'x': 1.5,
@@ -108,4 +115,5 @@ class TestJogController:
             'z': 1.2,
             'feedrate': 500.0
         }
-        self.grbl_controller.jog.assert_called_with(*jog_params.values(), units='milimeters', distance_mode='distance_incremental')
+        self.grbl_controller.build_jog_command.assert_called_with(*jog_params.values(), units='milimeters', distance_mode='distance_incremental')
+        self.grbl_controller.streamLine.assert_called_with('jog_command', 'jog command')

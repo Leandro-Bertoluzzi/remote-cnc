@@ -1,10 +1,12 @@
 from containers.ButtonGrid import ButtonGrid
-from core.grbl.grblController import GrblController, JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL, JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
+from core.grbl.grblController import GrblController, GRBL_LINE_JOG, JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL, \
+    JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QRadioButton, QVBoxLayout, QWidget
+from typing import Callable
 
 class JogController(QWidget):
-    def __init__(self, grbl_controller: GrblController, parent=None):
+    def __init__(self, grbl_controller: GrblController, grbl_log: Callable[[str], None], parent=None):
         super(JogController, self).__init__(parent)
 
         layout = QVBoxLayout()
@@ -13,6 +15,7 @@ class JogController(QWidget):
 
         # Attributes definition
         self.grbl_controller = grbl_controller
+        self.grbl_log = grbl_log
 
         # State management
         self.step_x = 0.00
@@ -29,7 +32,7 @@ class JogController(QWidget):
                 (' ↑ ', self.make_incremental_move(0, 1, 0)),
                 (' ↗ ', self.make_incremental_move(1, 1, 0)),
                 (' ← ', self.make_incremental_move(-1, 0, 0)),
-                ('   ', self.make_incremental_move(0, 0, 0)),
+                ('   ', self.empty),
                 (' → ', self.make_incremental_move(1, 0, 0)),
                 (' ↙ ', self.make_incremental_move(-1, -1, 0)),
                 (' ↓ ', self.make_incremental_move(0, -1, 0)),
@@ -126,9 +129,25 @@ class JogController(QWidget):
             move_z = z * self.step_z
             units = JOG_UNIT_MILIMETERS if self.units == 'mm' else JOG_UNIT_INCHES
 
+            if (move_x == 0 and move_y == 0 and move_z == 0): return
+
+            jog_command = self.grbl_controller.build_jog_command(
+                move_x,
+                move_y,
+                move_z,
+                self.feedrate,
+                units=units,
+                distance_mode=JOG_DISTANCE_INCREMENTAL
+            )
+            self.grbl_log(jog_command)
+
             try:
-                response = self.grbl_controller.jog(move_x, move_y, move_z, self.feedrate, units=units, distance_mode=JOG_DISTANCE_INCREMENTAL)
+                response = self.grbl_controller.streamLine(jog_command, GRBL_LINE_JOG)
+                self.grbl_log(response['raw'])
             except Exception as error:
                 # TO DO: Show dialog with error message
                 pass
         return send_jog_incremental_move
+
+    def empty(self):
+        pass

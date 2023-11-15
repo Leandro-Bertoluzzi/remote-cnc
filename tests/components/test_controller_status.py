@@ -17,7 +17,7 @@ class TestControllerStatus:
         assert self.controller_status.x_pos.text() == 'X: 0.0 (0.0)'
         assert self.controller_status.y_pos.text() == 'Y: 0.0 (0.0)'
         assert self.controller_status.z_pos.text() == 'Z: 0.0 (0.0)'
-        assert self.controller_status.tool.text() == 'Tool: 1 (Mecha 5mm)'
+        assert self.controller_status.tool.text() == 'Tool: xxx'
         assert self.controller_status.feedrate.text() == 'Feed rate: 0'
         assert self.controller_status.spindle.text() == 'Spindle: 0'
 

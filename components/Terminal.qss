@@ -1,0 +1,8 @@
+QPlainTextEdit {
+    background-color: 'black';
+    color: 'brown';
+}
+
+QLineEdit {
+    background-color: 'white';
+}
