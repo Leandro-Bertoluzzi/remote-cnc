@@ -658,14 +658,9 @@ class TestGrblController:
                 ),
             ]
         )
-    def test_jog_command(self, mocker, parameters, expected):
-        # Mock serial methods
-        mock_serial_stream = mocker.patch.object(SerialService, 'streamLine')
-        # Mock GRBL methods
-        mock_grbl_parser = mocker.patch.object(GrblLineParser, 'parse', return_value=(GRBL_RESULT_OK, {}))
-
+    def test_build_jog_command(self, parameters, expected):
         # Call the method under test
-        response = self.grbl_controller.jog(
+        response = self.grbl_controller.build_jog_command(
             parameters['x'], parameters['y'], parameters['z'], parameters['feedrate'],
             units=parameters['units'],
             distance_mode=parameters['distance_mode'],
@@ -674,58 +669,19 @@ class TestGrblController:
 
         # Assertions
         assert response == expected
-        assert mock_serial_stream.call_count == 1
-        assert mock_grbl_parser.call_count == 1
 
-    def test_jog_command_fails(self, mocker):
-        # Mock serial methods
-        mock_serial_stream = mocker.patch.object(SerialService, 'streamLine')
+    def test_jog(self, mocker):
         # Mock GRBL methods
-        mock_grbl_parser = mocker.patch.object(
-            GrblLineParser,
-            'parse',
-            return_value=(
-                GRBL_RESULT_ERROR,
-                {'code': '99', 'message': 'An error', 'description': 'An error happened.', 'raw': 'error:99'}
-            )
-        )
+        mock_build_jog_command = mocker.patch.object(GrblController, 'build_jog_command', return_value='$J=X1.0 Y2.0 Z3.0 F500.0')
+        mock_stream_line = mocker.patch.object(GrblController, 'streamLine', return_value={'raw': 'ok'})
 
-        # Call the method under test and assert exception
-        with pytest.raises(Exception) as error:
-            self.grbl_controller.jog(1, 2, 3, 500)
+        # Call the method under test
+        response = self.grbl_controller.jog(1.00, 2.00, 3.00, 500.00)
 
         # Assertions
-        assert str(error.value) == 'Error executing command: An error. Description: An error happened.'
-        assert mock_serial_stream.call_count == 1
-        assert mock_grbl_parser.call_count == 1
-
-    def test_jog_command_alarm(self, mocker):
-        # Mock serial methods
-        mock_serial_stream = mocker.patch.object(SerialService, 'streamLine')
-        # Mock GRBL methods
-        mock_grbl_parser = mocker.patch.object(
-            GrblLineParser,
-            'parse',
-            return_value=(GRBL_MSG_ALARM, {'code': '99', 'message': 'An alarm', 'description': 'An alarm was triggered.', 'raw': 'error:99'})
-        )
-        # Mock GRBL methods
-        mock_grbl_parser = mocker.patch.object(
-            GrblLineParser,
-            'parse',
-            return_value=(
-                GRBL_MSG_ALARM,
-                {'code': '99', 'message': 'An alarm', 'description': 'An alarm was triggered.', 'raw': 'error:99'}
-            )
-        )
-
-        # Call the method under test and assert exception
-        with pytest.raises(Exception) as error:
-            self.grbl_controller.jog(1, 2, 3, 500)
-
-        # Assertions
-        assert str(error.value) == 'Alarm activated: An alarm. Description: An alarm was triggered.'
-        assert mock_serial_stream.call_count == 1
-        assert mock_grbl_parser.call_count == 1
+        assert response == ('$J=X1.0 Y2.0 Z3.0 F500.0', {'raw': 'ok'})
+        assert mock_build_jog_command.call_count == 1
+        assert mock_stream_line.call_count == 1
 
     @pytest.mark.parametrize(
             'messages,expected',
@@ -924,6 +880,8 @@ class TestGrblController:
         mock_work_position = { 'x': '3.000', 'y': '2.000', 'z': '1.000' }
         mock_modal_group = { 'motion': 'G0', 'wcs': 'G54', 'plane': 'G17', 'units': 'G21', 'distance': 'G90', 'feedrate': 'G94', 'program': 'M0', 'spindle': 'M5', 'coolant': 'M9' }
         mock_tool = '7'
+        mock_feedrate = '500.0'
+        mock_spindle = '50.0'
         mock_parameters = {
             'G54' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
             'G55' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
@@ -944,6 +902,8 @@ class TestGrblController:
         self.grbl_controller.state['status']['wpos'] = mock_work_position
         self.grbl_controller.state['parserstate']['modal'] = mock_modal_group
         self.grbl_controller.state['parserstate']['tool'] = mock_tool
+        self.grbl_controller.state['parserstate']['feedrate'] = mock_feedrate
+        self.grbl_controller.state['parserstate']['spindle'] = mock_spindle
         self.grbl_controller.settings['parameters'] = mock_parameters
         self.grbl_controller.settings['checkmode'] = mock_checkmode
 
@@ -952,6 +912,8 @@ class TestGrblController:
         work_position = self.grbl_controller.getWorkPosition()
         modal_group = self.grbl_controller.getModalGroup()
         tool = self.grbl_controller.getTool()
+        feedrate = self.grbl_controller.getFeedrate()
+        spindle = self.grbl_controller.getSpindle()
         parameters = self.grbl_controller.getParameters()
         checkmode = self.grbl_controller.getCheckModeEnabled()
 
@@ -960,6 +922,8 @@ class TestGrblController:
         assert work_position == mock_work_position
         assert modal_group == mock_modal_group
         assert tool == mock_tool
+        assert feedrate == mock_feedrate
+        assert spindle == mock_spindle
         assert parameters == mock_parameters
         assert checkmode == mock_checkmode
 

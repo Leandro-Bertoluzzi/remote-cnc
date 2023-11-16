@@ -19,6 +19,15 @@ class ToolRepository:
             self.session.rollback()
             raise Exception(f'Error creating the tool in the DB: {e}')
 
+    def get_tool_by_id(self, id):
+        try:
+            tool = self.session.query(Tool).get(id)
+            if not tool:
+                raise Exception(f'Tool with ID {id} was not found')
+            return tool
+        except SQLAlchemyError as e:
+            raise Exception(f'Error retrieving the tool with ID {id}: {e}')
+
     def get_all_tools(self):
         try:
             tools = self.session.query(Tool).all()

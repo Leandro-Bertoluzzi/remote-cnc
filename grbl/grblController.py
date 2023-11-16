@@ -9,6 +9,11 @@ try:
 except ImportError:
     from utils.serial import SerialService
 
+# Constants
+
+GRBL_LINE_GCODE = 'G-code'
+GRBL_LINE_JOG = 'jog command'
+
 JOG_UNIT_MILIMETERS = 'milimeters'
 JOG_UNIT_INCHES = 'inches'
 JOG_DISTANCE_ABSOLUTE = 'distance_absolute'
@@ -34,9 +39,9 @@ class GrblController:
                 'spindle': 'M5', # M3: Spindle (cw), M4: Spindle (ccw), M5: Spindle off
                 'coolant': 'M9' # M7: Mist coolant, M8: Flood coolant, M9: Coolant off, [M7,M8]: Both on
             },
-            'tool': '',
-            'feedrate': '',
-            'spindle': ''
+            'tool': '1',
+            'feedrate': '0',
+            'spindle': '0'
         }
     }
 
@@ -110,18 +115,18 @@ class GrblController:
 
         return (msgType, payload)
 
-    def streamLine(self, line: str) -> dict[str, str]:
-        """Sends a line of G-code to the GRBL device.
+    def streamLine(self, line: str, type: str = GRBL_LINE_GCODE) -> dict[str, str]:
+        """Sends a line of G-code, or a jog command, to the GRBL device.
         """
-        self.logger.debug('[Sent] G-code line: %s', line)
+        self.logger.debug('[Sent] %s line: %s', type, line)
         response = self.serial.streamLine(line)
         msgType, payload = self.parseResponse(response)
 
         if msgType == GRBL_RESULT_ERROR:
-            self.logger.error('Error executing line: %s. Description: %s', payload['message'], payload['description'])
+            self.logger.error('Error executing line: %s. Error: %s. Description: %s', line, payload['message'], payload['description'])
             raise Exception('Error executing line: ' + payload['message'] + '. Description: ' + payload['description'])
         if msgType == GRBL_MSG_ALARM:
-            self.logger.critical('Alarm activated executing line: %s. Description: %s', payload['message'], payload['description'])
+            self.logger.critical('Alarm activated executing line: %s. Alarm: %s. Description: %s', line, payload['message'], payload['description'])
             raise Exception('Alarm activated: ' + payload['message'] + '. Description: ' + payload['description'])
         return payload
 
@@ -222,51 +227,12 @@ class GrblController:
 
         JOG mode is also called jogging mode. In this mode, the CNC machine is used to operate manually.
         """
-        jog_command = "$J="
+        jog_command = self.build_jog_command(x, y, z, feedrate, units=units, distance_mode=distance_mode, machine_coordinates=machine_coordinates)
 
-        # Build GRBL command
-        if machine_coordinates:
-            jog_command = jog_command + 'G53 '
+        # Send command and expect response
+        response = self.streamLine(jog_command, GRBL_LINE_JOG)
 
-        if distance_mode == JOG_DISTANCE_ABSOLUTE:
-            jog_command = jog_command + 'G90 '
-        if distance_mode == JOG_DISTANCE_INCREMENTAL:
-            jog_command = jog_command + 'G91 '
-
-        if units == JOG_UNIT_INCHES:
-            jog_command = jog_command + 'G20 '
-        if units == JOG_UNIT_MILIMETERS:
-            jog_command = jog_command + 'G21 '
-
-        x_str = f'X{x} ' if x else ''
-        y_str = f'Y{y} ' if y else ''
-        z_str = f'Z{z} ' if z else ''
-        feedrate_str = f'F{feedrate}' if feedrate else ''
-        jog_command = jog_command + x_str + y_str + z_str + feedrate_str
-        jog_command = jog_command.strip()
-
-        # Send command and process response
-        self.logger.debug('[Sent] GRBL jog command: %s', jog_command)
-        response = self.serial.streamLine(jog_command)
-        msgType, payload = self.parseResponse(response)
-
-        if msgType == GRBL_RESULT_ERROR:
-            self.logger.error(
-                'Error executing jog command: %s. Error: %s. Description: %s',
-                jog_command,
-                payload['message'],
-                payload['description']
-            )
-            raise Exception('Error executing command: ' + payload['message'] + '. Description: ' + payload['description'])
-        if msgType == GRBL_MSG_ALARM:
-            self.logger.critical(
-                'Alarm activated executing jog command: %s. Alarm: %s. Description: %s',
-                jog_command,
-                payload['message'],
-                payload['description']
-            )
-            raise Exception('Alarm activated: ' + payload['message'] + '. Description: ' + payload['description'])
-        return jog_command
+        return (jog_command, response)
 
     # QUERIES
 
@@ -410,6 +376,16 @@ class GrblController:
         """
         return self.state['parserstate']['modal']
 
+    def getFeedrate(self) -> str:
+        """Returns the GRBL device's current feed rate.
+        """
+        return self.state['parserstate']['feedrate']
+
+    def getSpindle(self) -> str:
+        """Returns the GRBL device's current spindle speed.
+        """
+        return self.state['parserstate']['spindle']
+
     def getTool(self) -> str:
         """Returns the GRBL device's current tool.
         """
@@ -450,3 +426,31 @@ class GrblController:
         """
         activeState = self.state['status']['activeState']
         return activeState == GRBL_ACTIVE_STATE_IDLE
+
+    def build_jog_command(self, x:float, y:float, z:float, feedrate:float, *, units=None, distance_mode=None, machine_coordinates=False) -> str:
+        """Builds a 'jog' command from the parameters.
+
+        JOG mode is also called jogging mode. In this mode, the CNC machine is used to operate manually.
+        """
+        jog_command = "$J="
+
+        # Build GRBL command
+        if machine_coordinates:
+            jog_command = jog_command + 'G53 '
+
+        if distance_mode == JOG_DISTANCE_ABSOLUTE:
+            jog_command = jog_command + 'G90 '
+        if distance_mode == JOG_DISTANCE_INCREMENTAL:
+            jog_command = jog_command + 'G91 '
+
+        if units == JOG_UNIT_INCHES:
+            jog_command = jog_command + 'G20 '
+        if units == JOG_UNIT_MILIMETERS:
+            jog_command = jog_command + 'G21 '
+
+        x_str = f'X{x} ' if x else ''
+        y_str = f'Y{y} ' if y else ''
+        z_str = f'Z{z} ' if z else ''
+        feedrate_str = f'F{feedrate}' if feedrate else ''
+        jog_command = jog_command + x_str + y_str + z_str + feedrate_str
+        return jog_command.strip()

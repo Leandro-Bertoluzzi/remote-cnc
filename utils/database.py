@@ -38,6 +38,12 @@ def get_all_tools(session):
     return tools
 
 @session_context
+def get_tool_by_id(session, tool_id):
+    tool_repository = ToolRepository(session)
+    tool = tool_repository.get_tool_by_id(tool_id)
+    return tool
+
+@session_context
 def update_tool(session, tool_id, name, description):
     tool_repository = ToolRepository(session)
     updated_tool = tool_repository.update_tool(tool_id, name, description)

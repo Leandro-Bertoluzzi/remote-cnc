@@ -27,6 +27,17 @@ class TestToolRepository:
         # Assertions
         assert isinstance(tools, list)
 
+    def test_get_tool_by_id(self, mocked_session):
+        tool_repository = ToolRepository(mocked_session)
+
+        # Call method under test
+        tool = tool_repository.get_tool_by_id(1)
+
+        # Assertions
+        assert isinstance(tool, Tool)
+        assert tool.name == 'tool 1'
+        assert tool.description == 'It is a tool'
+
     def test_update_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)
         updated_name = 'Updated Tool'
@@ -69,6 +80,24 @@ class TestToolRepository:
         with pytest.raises(Exception) as error:
             tool_repository.get_all_tools()
         assert 'Error retrieving tools from the DB' in str(error.value)
+
+    def test_error_get_non_existing_tool(self, mocked_session):
+        tool_repository = ToolRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            tool_repository.get_tool_by_id(id=5000)
+        assert str(error.value) == 'Tool with ID 5000 was not found'
+
+    def test_error_get_tool_db_error(self, mocker, mocked_session):
+        # Mock DB method to simulate exception
+        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        tool_repository = ToolRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            tool_repository.get_tool_by_id(id=1)
+        assert 'Error retrieving the tool with ID 1' in str(error.value)
 
     def test_error_update_non_existing_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)
