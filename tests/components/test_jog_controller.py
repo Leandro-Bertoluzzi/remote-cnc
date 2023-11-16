@@ -1,6 +1,7 @@
-from containers.ButtonGrid import ButtonGrid
 from components.JogController import JogController
-from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QRadioButton
+from containers.ButtonGrid import ButtonGrid
+from containers.WidgetsHList import WidgetsHList
+from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QPushButton, QRadioButton
 import pytest
 
 class TestJogController:
@@ -19,49 +20,11 @@ class TestJogController:
     def test_jog_controller_init(self, helpers):
         # Validate amount of each type of widget
         assert helpers.count_widgets_with_type(self.jog_controller.layout(), ButtonGrid) == 1
-        assert helpers.count_widgets_with_type(self.jog_controller.form_layout, QLabel) == 5
-        assert helpers.count_widgets_with_type(self.jog_controller.form_layout, QDoubleSpinBox) == 4
+        assert helpers.count_widgets_with_type(self.jog_controller.layout(), WidgetsHList) == 1
+        assert helpers.count_widgets_with_type(self.jog_controller.layout(), QPushButton) == 1
+        assert helpers.count_widgets_with_type(self.jog_controller.layout_incremental_config, QLabel) == 5
+        assert helpers.count_widgets_with_type(self.jog_controller.layout_incremental_config, QDoubleSpinBox) == 4
         assert helpers.count_widgets_with_type(self.jog_controller.input_units, QRadioButton) == 2
-
-    def test_jog_controller_set_step_x(self):
-        # Mock attributes
-        self.jog_controller.step_x = 0.00
-
-        # Trigger action under test
-        self.jog_controller.input_x.setValue(2.522)
-
-        # Assertions
-        assert self.jog_controller.step_x == 2.52
-
-    def test_jog_controller_set_step_y(self):
-        # Mock attributes
-        self.jog_controller.step_y = 0.00
-
-        # Trigger action under test
-        self.jog_controller.input_y.setValue(2.522)
-
-        # Assertions
-        assert self.jog_controller.step_y == 2.52
-
-    def test_jog_controller_set_step_z(self):
-        # Mock attributes
-        self.jog_controller.step_z = 0.00
-
-        # Trigger action under test
-        self.jog_controller.input_z.setValue(2.522)
-
-        # Assertions
-        assert self.jog_controller.step_z == 2.52
-
-    def test_jog_controller_set_feedrate(self):
-        # Mock attributes
-        self.jog_controller.feedrate = 0.00
-
-        # Trigger action under test
-        self.jog_controller.input_feedrate.setValue(252.203)
-
-        # Assertions
-        assert self.jog_controller.feedrate == 252.20
 
     def test_jog_controller_set_units(self):
         # Mock attributes
@@ -88,11 +51,83 @@ class TestJogController:
         assert self.jog_controller.input_feedrate.suffix() == ' mm/min'
 
     def test_jog_controller_incremental_move(self, mocker):
-        # Mock attributes
-        self.jog_controller.step_x = 1.5
-        self.jog_controller.step_y = 1.3
-        self.jog_controller.step_z = 1.2
-        self.jog_controller.feedrate = 500.0
+        # Mock widget state
+        self.jog_controller.input_x.setValue(1.5)
+        self.jog_controller.input_y.setValue(1.3)
+        self.jog_controller.input_z.setValue(1.2)
+        self.jog_controller.input_feedrate.setValue(500.0)
+        self.jog_controller.units = 'mm'
+
+        # Mock method
+        mock_send_jog_command = mocker.patch.object(JogController, 'send_jog_command')
+
+        # Trigger action under test
+        self.jog_controller.make_incremental_move(1, 1, 1)()
+
+        # Assertions
+        mock_send_jog_command.assert_called_once()
+
+        jog_params = {
+            'x': 1.5,
+            'y': 1.3,
+            'z': 1.2,
+            'distance_mode': 'distance_incremental'
+        }
+        mock_send_jog_command.assert_called_with(*jog_params.values())
+
+    def test_jog_controller_incremental_move_avoids_null_movement(self, mocker):
+        # Mock widget state
+        self.jog_controller.input_x.setValue(1.5)
+        self.jog_controller.input_y.setValue(1.3)
+        self.jog_controller.input_z.setValue(1.2)
+        self.jog_controller.input_feedrate.setValue(500.0)
+        self.jog_controller.units = 'mm'
+
+        # Mock method
+        mock_send_jog_command = mocker.patch.object(JogController, 'send_jog_command')
+
+        # Trigger action under test
+        self.jog_controller.make_incremental_move(0, 0, 0)()
+
+        # Mock widget state
+        self.jog_controller.input_x.setValue(0)
+        self.jog_controller.input_y.setValue(0)
+        self.jog_controller.input_z.setValue(0)
+
+        # Trigger action under test
+        self.jog_controller.make_incremental_move(1, 1, 1)()
+
+        # Assertions
+        assert mock_send_jog_command.call_count == 0
+
+    def test_jog_controller_absolute_move(self, mocker):
+        # Mock widget state
+        self.jog_controller.input_abs_x.setValue(1.5)
+        self.jog_controller.input_abs_y.setValue(1.3)
+        self.jog_controller.input_abs_z.setValue(1.2)
+        self.jog_controller.input_feedrate.setValue(500.0)
+        self.jog_controller.units = 'mm'
+
+        # Mock method
+        mock_send_jog_command = mocker.patch.object(JogController, 'send_jog_command')
+
+        # Trigger action under test
+        self.jog_controller.make_absolute_move()
+
+        # Assertions
+        mock_send_jog_command.assert_called_once()
+
+        jog_params = {
+            'x': 1.5,
+            'y': 1.3,
+            'z': 1.2,
+            'distance_mode': 'distance_absolute'
+        }
+        mock_send_jog_command.assert_called_with(*jog_params.values())
+
+    def test_send_jog_command(self):
+        # Mock widget state
+        self.jog_controller.input_feedrate.setValue(500.0)
         self.jog_controller.units = 'mm'
 
         # Mock GRBL controller method
@@ -103,7 +138,7 @@ class TestJogController:
         self.grbl_controller.configure_mock(**attrs)
 
         # Trigger action under test
-        self.jog_controller.make_incremental_move(1, 1, 1)()
+        self.jog_controller.send_jog_command(1.5, 1.3, 1.2, 'distance_absolute')
 
         # Assertions
         self.grbl_controller.build_jog_command.assert_called_once()
@@ -115,5 +150,5 @@ class TestJogController:
             'z': 1.2,
             'feedrate': 500.0
         }
-        self.grbl_controller.build_jog_command.assert_called_with(*jog_params.values(), units='milimeters', distance_mode='distance_incremental')
+        self.grbl_controller.build_jog_command.assert_called_with(*jog_params.values(), units='milimeters', distance_mode='distance_absolute')
         self.grbl_controller.streamLine.assert_called_with('jog_command', 'jog command')

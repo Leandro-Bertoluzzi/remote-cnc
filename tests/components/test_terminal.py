@@ -25,9 +25,9 @@ class TestTerminal:
         # Assertions
         assert self.terminal.window.toPlainText() == 'some text\n'
 
-    def text_terminal_send_line(self):
+    def test_terminal_send_line(self):
         # Mock state of widget
-        self.terminal.window.insertPlainText('A G-code command')
+        self.terminal.input.setText('A G-code command')
 
         # Mock GRBL controller method
         attrs = {
@@ -41,3 +41,4 @@ class TestTerminal:
         # Assertions
         self.grbl_controller.streamLine.assert_called_once()
         self.grbl_controller.streamLine.assert_called_with('A G-code command')
+        assert self.terminal.input.text() == ''
