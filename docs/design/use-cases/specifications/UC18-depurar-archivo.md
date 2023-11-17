@@ -12,28 +12,27 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda d
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | Entre las opciones del archivo, selecciona la opción "depurar". |  |
-| 2      |  | Muestra al usuario la vista de depuración de archivo, con el código en un editor con capacidad de colocar breakpoints y ejecutar línea por línea. |
-| 3      | Sobre una de las líneas del código, selecciona la opción de "ejecutar" comando |  |
-| 4      |  | Deshabilita los controles, muestra un ícono de carga y envía el comando por puerto serie para su ejecución. |
-| 5      |  | Se espera hasta recibir notificación de ejecución del comando. |
-| 6      |  | Se actualiza el indicador de coordenadas del cabezal y se habilitan los controles. |
-| 7      | Coloca un marcador de "breakpoint" en una de las líneas del archivo y presiona el botón "ejecutar". |  |
-| 8      |  | Deshabilita los controles, muestra un ícono de carga y comienza a enviar los comandos por puerto serie para su ejecución. |
-| 9      |  | Se espera hasta recibir notificación de ejecución de cada comando. |
-| 10      |  | Se actualiza el indicador de coordenadas del cabezal por cada comando ejecutado. |
-| 11      |  | Una vez ejecutados todos los comandos, se habilitan los controles. |
+| 1      | En el menú principal, selecciona la opción de "Control manual y calibración". |  |
+| 2      | Presiona la opción "Abrir" en la barra de tareas. |  |
+| 3      |  | Abre una ventana de selección de archivo. |
+| 4      | Selecciona el archivo a cargar. |  |
+| 5      |  | Muestra el contenido del archivo en el editor de código. |
+| 6      | (opcional) Agrega uno o varios "breakpoints" al código. |  |
+| 7      | Selecciona el puerto serie del equipo y presiona "Conectar". |  |
+| 8      |  | Inicia la comunicación por puerto serie con el equipo. |
+| 9      |  | Habilita el uso del panel de control y el terminal. |
+| 10      | Presiona la opción "Ejecutar" en la barra de tareas. |  |
+| 11      |  | Inhabilita el uso del editor de código. |
+| 12      |  | **Mientras haya líneas en el archivo o se alcance breakpoint:** |
+| 12.1      |  | Escribe el comando en el terminal, lo envía por puerto serie para su ejecución y espera hasta recibir notificación de ejecución del comando. |
+| 12.2      |  | Se actualizan las coordenadas del cabezal en el monitor de estado y se muestra la respuesta del dispositivo en el terminal. |
+| 13      |  | Habilita el uso del editor de código. |
 
 **Curso alternativo (comando inválido):**
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 10a      |  | Se notifica que el comando a ejecutar es inválido.  |
-| 10b      |  | Señala en el archivo la línea en la que se produjo el error. |
-
-**Curso alternativo (colisión detectada):**
-
-| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
-| :---        | :---        | :---        |
-| 10a      |  | Se notifica que la ejecución del comando escapa a las dimensiones del equipo. |
-| 10b      |  | Señala en el archivo la línea en la que se produjo el error. |
+| 12.2a      |  | Se notifica que el comando a ejecutar es inválido.  |
+| 12.2b      |  | Muestra una ventana emergente indicando que hubo un error. |
+| 12.2c      | Cierra la ventana |  |
+| 12.2d      |  | Habilita el uso del editor de código y señala en el archivo la línea en la que se produjo el error. |

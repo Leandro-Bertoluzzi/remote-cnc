@@ -12,7 +12,7 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda agregar
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En la vista de "archivos", cliquea el botón "Nuevo". |  |
+| 1      | En la vista de "Archivos", cliquea el botón "Nuevo". |  |
 | 2      |  | Muestra un modal con opciones para cargar el archivo. |
 | 3      | Selecciona el archivo a cargar. |  |
 | 4      | (opcional) Elige un nuevo nombre de archivo. |  |

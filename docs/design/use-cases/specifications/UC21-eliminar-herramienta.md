@@ -12,8 +12,15 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda e
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En la vista de "administrar inventario", selecciona una herramienta. |  |
+| 1      | En la vista de "Inventario", selecciona una herramienta. |  |
 | 2      | Cliquea el botón "Eliminar". |  |
 | 3      |  | Despliega una ventana de confirmación. |
 | 4      | Presiona "Aceptar". |  |
 | 5      |  | Actualiza la DB y muestra una notificación de éxito. |
+
+**Curso alternativo (el usuario se retracta):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 4a      | Presiona "Cancelar". |  |
+| 4b      |  | Cierra el mensaje de confirmación. |

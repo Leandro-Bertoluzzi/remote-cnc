@@ -12,7 +12,7 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda ver un 
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En el menú principal, selecciona la opción de "Administrar tareas". |  |
+| 1      | En el menú principal, selecciona la opción de "Tareas". |  |
 | 2      |  | Solicita a la DB las tareas pendientes de aprobación, en cola y en progreso para el equipo. |
 | 3      |  | Muestra al usuario el listado de tareas pendientes de aprobación y en cola de espera. |
 
@@ -21,7 +21,7 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda ver un 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
 | 3a      |  | Recibe un listado vacío de la DB. |
-| 3b      |  | Muestra al usuario el mensaje "Actualmente no hay tareas programadas para este equipo". |
+| 3b      |  | Muestra al usuario el mensaje "La cola de tareas está vacía". |
 
 **Curso alternativo (hay una tarea en ejecución):**
 

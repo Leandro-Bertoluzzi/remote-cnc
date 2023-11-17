@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC08 |
 | **Actores**      | Usuario |
-| **Precondición**   | -- |
+| **Precondición**   | Hay al menos un archivo almacenado. |
 | **Resultado**   | El usuario puede solicitar la ejecución de un archivo en el listado de archivos disponibles. |
 
 **Resumen:**
@@ -12,7 +12,7 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda solicit
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En la vista de "archivos", selecciona el archivo deseado. |  |
+| 1      | En la vista de "Archivos", selecciona el archivo deseado. |  |
 | 2      | Cliquea "solicitar ejecución". |  |
 | 3      |  | Despliega una ventana de registro de solicitud. |
 | 4      | Completa con un comentario y acepta. |  |

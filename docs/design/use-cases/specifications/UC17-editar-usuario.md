@@ -12,7 +12,7 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda e
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En la vista de "administrar usuarios", selecciona un usuario. |  |
+| 1      | En la vista de "Usuarios", selecciona un usuario. |  |
 | 2      | Cliquea el botón "Editar". |  |
 | 3      |  | Despliega un formulario. |
 | 4      | Completa con la información actualizada del usuario y presiona "Aceptar". |  |

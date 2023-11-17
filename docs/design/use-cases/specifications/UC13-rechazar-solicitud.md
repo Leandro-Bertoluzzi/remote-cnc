@@ -12,9 +12,16 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda v
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 1      | En la vista de "solicitudes de ejecución", selecciona una de ellas. |  |
+| 1      | En la vista de "Solicitudes", selecciona una de ellas. |  |
 | 2      | Cliquea el botón de "Rechazar". |  |
 | 3      |  | Muestra el formulario de cancelación de solicitud. |
 | 4      | Completa la razón de cancelación y presiona el botón de "Aceptar". |  |
 | 5      |  | Actualiza la DB y muestra una notificación de éxito. |
 | 6      |  | Quita la tarea rechazada del listado de solicitudes. |
+
+**Curso alternativo (el usuario se retracta):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 4a      | Cliquea "Cancelar". |  |
+| 4b      |  | Cierra el mensaje de confirmación. |
