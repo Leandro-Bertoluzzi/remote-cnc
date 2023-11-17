@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC10 |
 | **Actores**      | Administrador |
-| **Precondición**   | -- |
+| **Precondición**   | El equipo **NO** debe estar ejecutando una tarea actualmente. |
 | **Resultado**   | El usuario puede controlar el equipo de forma manual. |
 
 **Resumen:**

@@ -16,4 +16,5 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda v
 | 2      | Cliquea el botón de "Aprobar". |  |
 | 3      |  | Actualiza la DB y muestra una notificación de éxito. |
 | 4      |  | Si no hay tareas en progreso, notifica al CNC worker para su ejecución. |
-| 5      |  | Quita la tarea aprobada del listado de solicitudes. |
+| 5      |  | Bloquea la conexión al equipo desde la vista de "Control manual y calibración". |
+| 6      |  | Quita la tarea aprobada del listado de solicitudes. |

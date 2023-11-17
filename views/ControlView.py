@@ -9,7 +9,8 @@ from components.ControllerStatus import ControllerStatus
 from components.JogController import JogController
 from components.Terminal import Terminal
 from core.config import SERIAL_BAUDRATE
-from core.utils.database import get_tool_by_id
+from core.database.models.task import TASK_IN_PROGRESS_STATUS
+from core.utils.database import get_tool_by_id, are_there_tasks_with_status
 from core.grbl.grblController import GrblController
 from core.utils.serial import SerialService
 import logging
@@ -32,6 +33,7 @@ class ControlView(QWidget):
         self.connected = False
         self.port_selected = ''
         self.device_settings = {}
+        self.device_busy = are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
 
         # GRBL CONTROLLER CONFIGURATION
         grbl_logger = logging.getLogger('control_view_logger')
@@ -77,7 +79,8 @@ class ControlView(QWidget):
         ############################################
 
         self.addToolBar()
-        self.layout.addWidget(self.status_monitor, 0, 0, 3, 1)
+        if not self.device_busy:
+            self.layout.addWidget(self.status_monitor, 0, 0, 3, 1)
         self.layout.addWidget(self.code_editor, 0, 1, 3, 1)
         self.layout.addWidget(self.control_panel, 3, 0)
         self.layout.addWidget(self.terminal, 3, 1)
@@ -88,17 +91,30 @@ class ControlView(QWidget):
         """Adds a tool bar to the Main window
         """
         self.tool_bar = QToolBar()
+        self.parent().addToolBar(Qt.TopToolBarArea, self.tool_bar)
 
-        options = [
+        file_options = [
             ('Nuevo', self.code_editor.new_file),
             ('Abrir', self.code_editor.open_file),
             ('Guardar', self.code_editor.save_file),
+        ]
+
+        for (label, action) in file_options:
+            tool_button = QToolButton()
+            tool_button.setText(label)
+            tool_button.clicked.connect(action)
+            self.tool_bar.addWidget(tool_button)
+
+        if self.device_busy:
+            return
+
+        exec_options = [
             ('Ejecutar', self.empty),
             ('Detener', self.empty),
             ('Pausar', self.empty),
         ]
 
-        for (label, action) in options:
+        for (label, action) in exec_options:
             tool_button = QToolButton()
             tool_button.setText(label)
             tool_button.clicked.connect(action)
@@ -118,8 +134,6 @@ class ControlView(QWidget):
         combo_ports.currentTextChanged.connect(self.set_selected_port)
         self.tool_bar.addWidget(combo_ports)
 
-        self.parent().addToolBar(Qt.TopToolBarArea, self.tool_bar)
-
     def backToMenu(self):
         """Removes the tool bar from the main window and goes back to the main menu
         """
@@ -133,6 +147,7 @@ class ControlView(QWidget):
         """Open the connection with the GRBL device connected to the selected port.
         """
         if not self.port_selected:
+            self.connect_button.setChecked(False)
             return
 
         if self.connected:

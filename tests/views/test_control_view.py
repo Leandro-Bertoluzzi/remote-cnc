@@ -19,20 +19,38 @@ class TestControlView:
         self.parent.removeToolBar = mocker.Mock()
         self.parent.backToMenu = mocker.Mock()
 
+        # Mock view methods
+        mocker.patch('views.ControlView.are_there_tasks_with_status', return_value=False)
+
         # Create an instance of ControlView
-        self.control_view = ControlView(parent=self.parent)
+        self.control_view = ControlView(self.parent)
         qtbot.addWidget(self.control_view)
 
-    def test_control_view_init(self, helpers):
+    @pytest.mark.parametrize("device_busy", [False, True])
+    def test_control_view_init(self, qtbot, mocker, helpers, device_busy):
+        # Create an instance of the parent
+        parent = MainWindow()
+
+        # Mock parent methods
+        parent.addToolBar = mocker.Mock()
+
+        # Mock other functions
+        mock_check_tasks_in_progress = mocker.patch('views.ControlView.are_there_tasks_with_status', return_value=device_busy)
+
+        # Create an instance of ControlView
+        control_view = ControlView(parent)
+        qtbot.addWidget(control_view)
+
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.control_view.layout, MenuButton) == 1
-        assert helpers.count_widgets_with_type(self.control_view.layout, ControllerActions) == 1
-        assert helpers.count_widgets_with_type(self.control_view.layout, CodeEditor) == 1
-        assert helpers.count_widgets_with_type(self.control_view.layout, ControllerStatus) == 1
-        assert helpers.count_widgets_with_type(self.control_view.layout, Terminal) == 1
+        assert helpers.count_widgets_with_type(control_view.layout, MenuButton) == 1
+        assert helpers.count_widgets_with_type(control_view.layout, ControllerActions) == 1
+        assert helpers.count_widgets_with_type(control_view.layout, CodeEditor) == 1
+        assert helpers.count_widgets_with_type(control_view.layout, ControllerStatus) == (0 if device_busy else 1)
+        assert helpers.count_widgets_with_type(control_view.layout, Terminal) == 1
 
         # More assertions
-        self.parent.addToolBar.assert_called_once()
+        parent.addToolBar.assert_called_once()
+        mock_check_tasks_in_progress.assert_called_once()
 
     def test_control_view_goes_back_to_menu(self):
         # Call method under test
