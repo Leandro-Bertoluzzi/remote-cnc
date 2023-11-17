@@ -614,7 +614,7 @@ class TestGrblController:
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
-                    '$J=G90 X1.0 Y2.0'
+                    '$J=G90 X1.0 Y2.0 Z0.0'
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
@@ -626,11 +626,11 @@ class TestGrblController:
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
-                    '$J=G90 G20 X1.0 Y2.0'
+                    '$J=G90 G20 X1.0 Y2.0 Z0.0'
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
-                    '$J=G90 G21 X1.0 Y2.0'
+                    '$J=G90 G21 X1.0 Y2.0 Z0.0'
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
@@ -642,11 +642,11 @@ class TestGrblController:
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
-                    '$J=G53 G90 G20 X1.0 Y2.0'
+                    '$J=G53 G90 G20 X1.0 Y2.0 Z0.0'
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
-                    '$J=G53 G90 G21 X1.0 Y2.0'
+                    '$J=G53 G90 G21 X1.0 Y2.0 Z0.0'
                 ),
                 (
                     { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },

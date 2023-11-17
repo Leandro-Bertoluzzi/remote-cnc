@@ -448,9 +448,9 @@ class GrblController:
         if units == JOG_UNIT_MILIMETERS:
             jog_command = jog_command + 'G21 '
 
-        x_str = f'X{x} ' if x else ''
-        y_str = f'Y{y} ' if y else ''
-        z_str = f'Z{z} ' if z else ''
+        x_str = f'X{x} ' if x or distance_mode == JOG_DISTANCE_ABSOLUTE else ''
+        y_str = f'Y{y} ' if y or distance_mode == JOG_DISTANCE_ABSOLUTE else ''
+        z_str = f'Z{z} ' if z or distance_mode == JOG_DISTANCE_ABSOLUTE else ''
         feedrate_str = f'F{feedrate}' if feedrate else ''
         jog_command = jog_command + x_str + y_str + z_str + feedrate_str
         return jog_command.strip()
