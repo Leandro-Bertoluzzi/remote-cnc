@@ -5,6 +5,7 @@ from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
 from core.utils.database import create_user, get_all_users
 
+
 class UsersView(QWidget):
     def __init__(self, parent=None):
         super(UsersView, self).__init__(parent)

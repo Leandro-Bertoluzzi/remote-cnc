@@ -3,6 +3,7 @@ from core.utils.files import getFileNameInFolder
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
 
+
 class Terminal(QWidget):
     def __init__(self, grbl_controller: GrblController, parent=None):
         super(Terminal, self).__init__(parent)
@@ -25,7 +26,7 @@ class Terminal(QWidget):
 
         # Apply custom styles
         stylesheet = getFileNameInFolder(__file__, 'Terminal.qss')
-        with open(stylesheet,'r') as styles:
+        with open(stylesheet, 'r') as styles:
             self.setStyleSheet(styles.read())
 
     def display_text(self, text):

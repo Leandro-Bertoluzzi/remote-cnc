@@ -8,6 +8,7 @@ from core.grbl.grblController import GrblController
 import pytest
 from views.ControlView import ControlView
 
+
 class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
@@ -35,18 +36,22 @@ class TestControlView:
         parent.addToolBar = mocker.Mock()
 
         # Mock other functions
-        mock_check_tasks_in_progress = mocker.patch('views.ControlView.are_there_tasks_with_status', return_value=device_busy)
+        mock_check_tasks_in_progress = mocker.patch(
+            'views.ControlView.are_there_tasks_with_status',
+            return_value=device_busy
+        )
 
         # Create an instance of ControlView
         control_view = ControlView(parent)
         qtbot.addWidget(control_view)
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(control_view.layout, MenuButton) == 1
-        assert helpers.count_widgets_with_type(control_view.layout, ControllerActions) == 1
-        assert helpers.count_widgets_with_type(control_view.layout, CodeEditor) == 1
-        assert helpers.count_widgets_with_type(control_view.layout, ControllerStatus) == (0 if device_busy else 1)
-        assert helpers.count_widgets_with_type(control_view.layout, Terminal) == 1
+        layout = control_view.layout
+        assert helpers.count_widgets(layout, MenuButton) == 1
+        assert helpers.count_widgets(layout, ControllerActions) == 1
+        assert helpers.count_widgets(layout, CodeEditor) == 1
+        assert helpers.count_widgets(layout, ControllerStatus) == (0 if device_busy else 1)
+        assert helpers.count_widgets(layout, Terminal) == 1
 
         # More assertions
         parent.addToolBar.assert_called_once()
@@ -87,7 +92,11 @@ class TestControlView:
         grbl_init_message = 'Grbl 1.1h [\'$\' for help]'
 
         # Mock methods
-        mock_grbl_connect = mocker.patch.object(GrblController, 'connect', return_value={'raw': grbl_init_message})
+        mock_grbl_connect = mocker.patch.object(
+            GrblController,
+            'connect',
+            return_value={'raw': grbl_init_message}
+        )
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
         mock_query_device_status = mocker.patch.object(ControlView, 'query_device_status')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
@@ -102,7 +111,8 @@ class TestControlView:
         assert mock_query_device_status.call_count == (1 if should_connect else 0)
         assert mock_write_to_terminal.call_count == (1 if should_connect else 0)
         assert mock_grbl_disconnect.call_count == (1 if should_disconnect else 0)
-        assert self.control_view.connect_button.text() == ('Desconectar' if should_connect else 'Conectar')
+        connect_btn_text = self.control_view.connect_button.text()
+        assert connect_btn_text == ('Desconectar' if should_connect else 'Conectar')
         if should_connect:
             mock_write_to_terminal.assert_called_with(grbl_init_message)
 
@@ -115,10 +125,26 @@ class TestControlView:
         }
 
         # Mock methods
-        mock_grbl_query_status = mocker.patch.object(GrblController, 'queryStatusReport', return_value=grbl_status)
-        mock_grbl_get_feedrate = mocker.patch.object(GrblController, 'getFeedrate', return_value='500.0')
-        mock_grbl_get_spindle = mocker.patch.object(GrblController, 'getSpindle', return_value='500.0')
-        mock_grbl_get_tool = mocker.patch.object(GrblController, 'getTool', return_value='1')
+        mock_grbl_query_status = mocker.patch.object(
+            GrblController,
+            'queryStatusReport',
+            return_value=grbl_status
+        )
+        mock_grbl_get_feedrate = mocker.patch.object(
+            GrblController,
+            'getFeedrate',
+            return_value='500.0'
+        )
+        mock_grbl_get_spindle = mocker.patch.object(
+            GrblController,
+            'getSpindle',
+            return_value='500.0'
+        )
+        mock_grbl_get_tool = mocker.patch.object(
+            GrblController,
+            'getTool',
+            return_value='1'
+        )
         mock_get_tool_by_id = mocker.patch('views.ControlView.get_tool_by_id')
 
         # Call method under test
@@ -135,7 +161,7 @@ class TestControlView:
         # Mock attributes
         self.control_view.device_settings = {}
         grbl_settings = {
-            '$0':{
+            '$0': {
                 'value': '10',
                 'message': 'Step pulse time',
                 'units': 'microseconds',
@@ -150,7 +176,11 @@ class TestControlView:
         }
 
         # Mock methods
-        mock_grbl_query_settings = mocker.patch.object(GrblController, 'queryGrblSettings', return_value=grbl_settings)
+        mock_grbl_query_settings = mocker.patch.object(
+            GrblController,
+            'queryGrblSettings',
+            return_value=grbl_settings
+        )
 
         # Call method under test
         self.control_view.query_device_settings()

@@ -5,6 +5,7 @@ from components.dialogs.UserDataDialog import UserDataDialog
 from core.database.models.user import User
 from views.UsersView import UsersView
 
+
 class TestUserCard:
     user = User(name='John Doe', email='test@testing.com', password='1234', role='user')
 
@@ -44,7 +45,12 @@ class TestUserCard:
         assert mock_update_user.call_count == (1 if expected_updated else 0)
 
         if expected_updated:
-            update_user_params = {'id': 1, 'name': 'Updated Name', 'email': 'updated@email.com', 'role': 'admin'}
+            update_user_params = {
+                'id': 1,
+                'name': 'Updated Name',
+                'email': 'updated@email.com',
+                'role': 'admin'
+            }
             mock_update_user.assert_called_with(*update_user_params.values())
 
     @pytest.mark.parametrize(

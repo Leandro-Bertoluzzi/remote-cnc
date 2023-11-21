@@ -3,6 +3,7 @@ from components.cards.Card import Card
 from components.dialogs.UserDataDialog import UserDataDialog
 from core.utils.database import update_user, remove_user
 
+
 class UserCard(Card):
     def __init__(self, user, parent=None):
         super(UserCard, self).__init__(parent)

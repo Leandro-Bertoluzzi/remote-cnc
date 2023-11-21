@@ -3,6 +3,7 @@ from core.database.models.tool import Tool
 from PyQt5.QtWidgets import QLabel
 import pytest
 
+
 class TestControllerStatus:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot):
@@ -12,7 +13,7 @@ class TestControllerStatus:
 
     def test_controller_status_init(self, helpers):
         # Assertions
-        assert helpers.count_widgets_with_type(self.controller_status.layout(), QLabel) == 7
+        assert helpers.count_widgets(self.controller_status.layout(), QLabel) == 7
         assert self.controller_status.status.text() == 'DISCONNECTED'
         assert self.controller_status.x_pos.text() == 'X: 0.0 (0.0)'
         assert self.controller_status.y_pos.text() == 'Y: 0.0 (0.0)'

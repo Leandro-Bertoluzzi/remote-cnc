@@ -1,11 +1,15 @@
 import pytest
 from PyQt5.QtWidgets import QFileDialog, QPushButton
-
 from components.dialogs.FileDataDialog import FileDataDialog
 from core.database.models.file import File
 
+
 class TestFileDataDialog:
-    fileInfo = File(user_id=1, file_name='example_file.gcode', file_path='path/example_file.gcode')
+    fileInfo = File(
+        user_id=1,
+        file_name='example_file.gcode',
+        file_path='path/example_file.gcode'
+    )
 
     def test_file_data_dialog_init(self, qtbot):
         dialog = FileDataDialog()
@@ -28,7 +32,7 @@ class TestFileDataDialog:
         assert dialog.name.isEnabled() == expectedNameEnabled
         assert dialog.buttonBox.isEnabled() == expectedButtonBoxEnabled
         assert dialog.windowTitle() == expectedWindowTitle
-        assert helpers.count_widgets_with_type(dialog.layout(), QPushButton) == buttonsCount
+        assert helpers.count_widgets(dialog.layout(), QPushButton) == buttonsCount
 
     def test_file_data_dialog_get_inputs_new_file(self, qtbot, mocker):
         dialog = FileDataDialog()
@@ -36,14 +40,18 @@ class TestFileDataDialog:
 
         file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
-        mock_select_file = mocker.patch.object(QFileDialog, 'getOpenFileName', return_value=(file_path, filters))
+        mock_select_file = mocker.patch.object(
+            QFileDialog,
+            'getOpenFileName',
+            return_value=(file_path, filters)
+        )
 
         # Interaction with widget
         dialog.file.click()
 
         # Assertions
-        assert dialog.name.isEnabled() == True
-        assert dialog.buttonBox.isEnabled() == True
+        assert dialog.name.isEnabled()
+        assert dialog.buttonBox.isEnabled()
         assert dialog.getInputs() == ('file.gcode', 'path/to/file.gcode')
 
         # Interaction with widget

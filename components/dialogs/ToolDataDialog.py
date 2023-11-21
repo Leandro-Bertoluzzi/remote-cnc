@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QTextEdit
 from PyQt5.QtCore import Qt
 
+
 class ToolDataDialog(QDialog):
     def __init__(self, toolInfo=None, parent=None):
         super(ToolDataDialog, self).__init__(parent)

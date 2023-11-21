@@ -5,6 +5,7 @@ from components.dialogs.ToolDataDialog import ToolDataDialog
 from core.database.models.tool import Tool
 from views.InventoryView import InventoryView
 
+
 class TestToolCard:
     tool = Tool(name='Example tool', description='Just a tool')
 

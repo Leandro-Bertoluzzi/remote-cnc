@@ -2,6 +2,7 @@ from MainWindow import MainWindow
 from views.MainMenu import MainMenu
 from views.UsersView import UsersView
 
+
 class TestMainWindow:
     def test_main_window_init(self, qtbot):
         window = MainWindow()

@@ -1,6 +1,7 @@
 from components.buttons.MenuButton import MenuButton
 from views.MainMenu import MainMenu
 
+
 class TestMenuButton:
     def test_menu_button_init(self, qtbot):
         button = MenuButton('Test Button')

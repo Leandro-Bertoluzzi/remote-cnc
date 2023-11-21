@@ -4,6 +4,7 @@ from containers.WidgetsHList import WidgetsHList
 from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QPushButton, QRadioButton
 import pytest
 
+
 class TestJogController:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
@@ -19,12 +20,12 @@ class TestJogController:
 
     def test_jog_controller_init(self, helpers):
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.jog_controller.layout(), ButtonGrid) == 1
-        assert helpers.count_widgets_with_type(self.jog_controller.layout(), WidgetsHList) == 1
-        assert helpers.count_widgets_with_type(self.jog_controller.layout(), QPushButton) == 1
-        assert helpers.count_widgets_with_type(self.jog_controller.layout_incremental_config, QLabel) == 5
-        assert helpers.count_widgets_with_type(self.jog_controller.layout_incremental_config, QDoubleSpinBox) == 4
-        assert helpers.count_widgets_with_type(self.jog_controller.input_units, QRadioButton) == 2
+        assert helpers.count_widgets(self.jog_controller.layout(), ButtonGrid) == 1
+        assert helpers.count_widgets(self.jog_controller.layout(), WidgetsHList) == 1
+        assert helpers.count_widgets(self.jog_controller.layout(), QPushButton) == 1
+        assert helpers.count_widgets(self.jog_controller.layout_config, QLabel) == 5
+        assert helpers.count_widgets(self.jog_controller.layout_config, QDoubleSpinBox) == 4
+        assert helpers.count_widgets(self.jog_controller.input_units, QRadioButton) == 2
 
     def test_jog_controller_set_units(self):
         # Mock attributes
@@ -150,5 +151,9 @@ class TestJogController:
             'z': 1.2,
             'feedrate': 500.0
         }
-        self.grbl_controller.build_jog_command.assert_called_with(*jog_params.values(), units='milimeters', distance_mode='distance_absolute')
+        self.grbl_controller.build_jog_command.assert_called_with(
+            *jog_params.values(),
+            units='milimeters',
+            distance_mode='distance_absolute'
+        )
         self.grbl_controller.streamLine.assert_called_with('jog_command', 'jog command')

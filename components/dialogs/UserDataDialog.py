@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, Q
 from PyQt5.QtCore import Qt
 from core.database.models.user import VALID_ROLES
 
+
 class UserDataDialog(QDialog):
     def __init__(self, userInfo=None, parent=None):
         super(UserDataDialog, self).__init__(parent)

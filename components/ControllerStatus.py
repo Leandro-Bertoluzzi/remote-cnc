@@ -2,6 +2,7 @@ from core.utils.files import getFileNameInFolder
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt5.QtCore import Qt
 
+
 class ControllerStatus(QWidget):
     def __init__(self, parent=None):
         super(ControllerStatus, self).__init__(parent)
@@ -33,7 +34,7 @@ class ControllerStatus(QWidget):
         layout.addWidget(self.spindle)
 
         stylesheet = getFileNameInFolder(__file__, 'ControllerStatus.qss')
-        with open(stylesheet,'r') as styles:
+        with open(stylesheet, 'r') as styles:
             self.setStyleSheet(styles.read())
 
     def set_status(self, status):

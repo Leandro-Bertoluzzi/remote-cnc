@@ -5,15 +5,23 @@ from components.cards.MsgCard import MsgCard
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
-from core.utils.database import get_all_tools, get_all_materials, get_all_files_from_user, create_task, get_all_tasks_from_user
+from core.utils.database import get_all_tools, get_all_materials, \
+    get_all_files_from_user, create_task, get_all_tasks_from_user
+
 
 class TasksView(QWidget):
     def __init__(self, parent=None):
         super(TasksView, self).__init__(parent)
 
-        self.files = [{'id': file.id, 'name': file.file_name} for file in get_all_files_from_user(USER_ID)]
-        self.materials = [{'id': material.id, 'name': material.name} for material in get_all_materials()]
-        self.tools = [{'id': tool.id, 'name': tool.name} for tool in get_all_tools()]
+        self.files = [
+            {'id': file.id, 'name': file.file_name} for file in get_all_files_from_user(USER_ID)
+        ]
+        self.materials = [
+            {'id': material.id, 'name': material.name} for material in get_all_materials()
+        ]
+        self.tools = [
+            {'id': tool.id, 'name': tool.name} for tool in get_all_tools()
+        ]
 
         self.layout = QVBoxLayout()
         self.refreshLayout()
@@ -38,7 +46,15 @@ class TasksView(QWidget):
 
         tasks = get_all_tasks_from_user(USER_ID, status='all')
         for task in tasks:
-            self.layout.addWidget(TaskCard(task, self.files, self.tools, self.materials, parent=self))
+            self.layout.addWidget(
+                TaskCard(
+                    task,
+                    self.files,
+                    self.tools,
+                    self.materials,
+                    parent=self
+                )
+            )
 
         if not tasks:
             self.layout.addWidget(MsgCard('La cola de tareas está vacía', self))

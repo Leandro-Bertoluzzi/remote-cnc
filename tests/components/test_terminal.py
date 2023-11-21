@@ -1,6 +1,7 @@
 from components.Terminal import Terminal
-from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit
 import pytest
+
 
 class TestTerminal:
     @pytest.fixture(autouse=True)
@@ -14,8 +15,8 @@ class TestTerminal:
 
     def test_terminal_init(self, helpers):
         # Assertions
-        assert helpers.count_widgets_with_type(self.terminal.layout(), QPlainTextEdit) == 1
-        assert helpers.count_widgets_with_type(self.terminal.layout(), QLineEdit) == 1
+        assert helpers.count_widgets(self.terminal.layout(), QPlainTextEdit) == 1
+        assert helpers.count_widgets(self.terminal.layout(), QLineEdit) == 1
         assert self.terminal.window.toPlainText() == ''
 
     def test_terminal_display_text(self):

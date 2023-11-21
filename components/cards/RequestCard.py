@@ -6,6 +6,7 @@ from core.utils.database import update_task_status, are_there_tasks_in_progress
 from core.database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from core.worker.tasks import executeTask
 
+
 class RequestCard(Card):
     def __init__(self, task, parent=None):
         super(RequestCard, self).__init__(parent)

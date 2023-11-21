@@ -1,14 +1,20 @@
 from containers.ButtonGrid import ButtonGrid
 from containers.WidgetsHList import WidgetsHList
-from core.grbl.grblController import GrblController, GRBL_LINE_JOG, JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL, \
-    JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
+from core.grbl.grblController import GrblController, GRBL_LINE_JOG, JOG_DISTANCE_ABSOLUTE, \
+    JOG_DISTANCE_INCREMENTAL, JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, QLabel, QPushButton, \
-    QRadioButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, \
+    QLabel, QPushButton, QRadioButton, QSizePolicy, QVBoxLayout, QWidget
 from typing import Callable
 
+
 class JogController(QWidget):
-    def __init__(self, grbl_controller: GrblController, grbl_log: Callable[[str], None], parent=None):
+    def __init__(
+            self,
+            grbl_controller: GrblController,
+            grbl_log: Callable[[str], None],
+            parent=None
+    ):
         super(JogController, self).__init__(parent)
 
         layout = QVBoxLayout()
@@ -41,19 +47,19 @@ class JogController(QWidget):
         )
         layout.addWidget(joystick)
 
-        self.layout_incremental_config = QFormLayout()
+        self.layout_config = QFormLayout()
 
         label_x = QLabel('Paso en X:')
         self.input_x = self.create_double_spinbox(0, 10, 0.05, 2)
-        self.layout_incremental_config.addRow(label_x, self.input_x)
+        self.layout_config.addRow(label_x, self.input_x)
 
         label_y = QLabel('Paso en Y:')
         self.input_y = self.create_double_spinbox(0, 10, 0.05, 2)
-        self.layout_incremental_config.addRow(label_y, self.input_y)
+        self.layout_config.addRow(label_y, self.input_y)
 
         label_z = QLabel('Paso en Z:')
         self.input_z = self.create_double_spinbox(0, 10, 0.05, 2)
-        self.layout_incremental_config.addRow(label_z, self.input_z)
+        self.layout_config.addRow(label_z, self.input_z)
 
         label_feedrate = QLabel('Velocidad de avance:')
         # TO DO -> Actualizar feedrate según estado del dispositivo
@@ -62,7 +68,7 @@ class JogController(QWidget):
         # $111=800.000 (y max rate, mm/min)
         # $112=350.000 (z max rate, mm/min)
         self.input_feedrate = self.create_double_spinbox(0, 1000, 25, 2)
-        self.layout_incremental_config.addRow(label_feedrate, self.input_feedrate)
+        self.layout_config.addRow(label_feedrate, self.input_feedrate)
 
         label_units = QLabel('Unidades:')
         radio_mm = QRadioButton('Milímetros')
@@ -70,13 +76,13 @@ class JogController(QWidget):
         self.input_units = QHBoxLayout()
         self.input_units.addWidget(radio_mm)
         self.input_units.addWidget(radio_in)
-        self.layout_incremental_config.addRow(label_units, self.input_units)
+        self.layout_config.addRow(label_units, self.input_units)
         self.control_units = QButtonGroup()
         self.control_units.addButton(radio_mm, 1)
         self.control_units.addButton(radio_in, 2)
         self.control_units.buttonClicked.connect(self.set_units)
 
-        layout.addLayout(self.layout_incremental_config)
+        layout.addLayout(self.layout_config)
 
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
@@ -132,7 +138,8 @@ class JogController(QWidget):
             move_y = y * round(self.input_y.value(), 2)
             move_z = z * round(self.input_z.value(), 2)
 
-            if (move_x == 0 and move_y == 0 and move_z == 0): return
+            if (move_x == 0 and move_y == 0 and move_z == 0):
+                return
 
             self.send_jog_command(move_x, move_y, move_z, JOG_DISTANCE_INCREMENTAL)
         return send_jog_incremental_move
@@ -158,11 +165,17 @@ class JogController(QWidget):
         try:
             response = self.grbl_controller.streamLine(jog_command, GRBL_LINE_JOG)
             self.grbl_log(response['raw'])
-        except Exception as error:
+        except Exception:
             # TO DO: Show dialog with error message
             pass
 
-    def create_double_spinbox(self, limit_low: float, limit_high: float, step: float, precision: int = 2):
+    def create_double_spinbox(
+            self,
+            limit_low: float,
+            limit_high: float,
+            step: float,
+            precision: int = 2
+    ):
         spinbox = QDoubleSpinBox()
         spinbox.setDecimals(precision)
         spinbox.setRange(limit_low, limit_high)

@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButt
 from PyQt5.QtCore import Qt
 from core.utils.files import getFileNameInFolder
 
+
 class Card(QWidget):
     def __init__(self, parent=None):
         super(Card, self).__init__(parent)
@@ -21,7 +22,7 @@ class Card(QWidget):
 
         # Apply custom styles
         stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet,"r") as styles:
+        with open(stylesheet, "r") as styles:
             self.setStyleSheet(styles.read())
 
     def setDescription(self, description: str) -> None:

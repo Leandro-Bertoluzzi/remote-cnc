@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 FROM_CANCEL = 'cancel'
 FROM_REJECT = 'reject'
 
+
 class TaskCancelDialog(QDialog):
     def __init__(self, origin=FROM_CANCEL, parent=None):
         super(TaskCancelDialog, self).__init__(parent)

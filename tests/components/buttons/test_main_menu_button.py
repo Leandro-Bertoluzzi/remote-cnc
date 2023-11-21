@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPaintEvent, QRegion
 import pytest
 from views.MainMenu import MainMenu
 
+
 class TestMainMenuButton:
     @pytest.mark.parametrize(
             "image_name",

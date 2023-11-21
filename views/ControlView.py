@@ -21,6 +21,7 @@ GRBL_STATUS_DISCONNECTED = {
     'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0}
 }
 
+
 class ControlView(QWidget):
     def __init__(self, parent=None):
         super(ControlView, self).__init__(parent)
@@ -85,7 +86,11 @@ class ControlView(QWidget):
         self.layout.addWidget(self.control_panel, 3, 0)
         self.layout.addWidget(self.terminal, 3, 1)
 
-        self.layout.addWidget(MenuButton('Volver al menú', onClick=self.backToMenu), 5, 0, 1, 2, alignment=Qt.AlignCenter)
+        self.layout.addWidget(
+            MenuButton('Volver al menú', onClick=self.backToMenu),
+            5, 0, 1, 2,
+            alignment=Qt.AlignCenter
+        )
 
     def addToolBar(self):
         """Adds a tool bar to the Main window
@@ -165,7 +170,7 @@ class ControlView(QWidget):
         self.query_device_status()
         self.write_to_terminal(response['raw'])
 
-    def enable_serial_widgets(self, enable:bool = True):
+    def enable_serial_widgets(self, enable: bool = True):
         self.status_monitor.setEnabled(enable)
         self.control_panel.setEnabled(enable)
         self.terminal.setEnabled(enable)

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
-from math import floor
+
 
 class ButtonList(QWidget):
     def __init__(self, options=[], parent=None):

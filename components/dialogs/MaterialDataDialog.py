@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QTextEdit
 from PyQt5.QtCore import Qt
 
+
 class MaterialDataDialog(QDialog):
     def __init__(self, materialInfo=None, parent=None):
         super(MaterialDataDialog, self).__init__(parent)

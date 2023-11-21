@@ -5,6 +5,7 @@ from components.dialogs.FileDataDialog import FileDataDialog
 from core.database.models.file import File
 from views.FilesView import FilesView
 
+
 class TestFileCard:
     file = File(user_id=1, file_name='example_file.gcode', file_path='path/example_file.gcode')
 

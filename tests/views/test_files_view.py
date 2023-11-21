@@ -9,6 +9,7 @@ from components.dialogs.FileDataDialog import FileDataDialog
 from views.FilesView import FilesView
 from core.database.models.file import File
 
+
 class TestFilesView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
@@ -18,7 +19,10 @@ class TestFilesView:
         self.files_list = [file_1, file_2, file_3]
 
         # Patch the getAllFilesFromUser method with the mock function
-        self.mock_get_all_files = mocker.patch('views.FilesView.get_all_files_from_user', return_value=self.files_list)
+        self.mock_get_all_files = mocker.patch(
+            'views.FilesView.get_all_files_from_user',
+            return_value=self.files_list
+        )
 
         # Create an instance of FilesView
         self.parent = MainWindow()
@@ -30,19 +34,22 @@ class TestFilesView:
         self.mock_get_all_files.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(self.files_view.layout, FileCard) == 3
+        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout, FileCard) == 3
 
     def test_files_view_init_with_no_files(self, mocker, helpers):
-        mock_get_all_files = mocker.patch('views.FilesView.get_all_files_from_user', return_value=[])
+        mock_get_all_files = mocker.patch(
+            'views.FilesView.get_all_files_from_user',
+            return_value=[]
+        )
         files_view = FilesView(parent=self.parent)
         # Validate DB calls
         mock_get_all_files.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(files_view.layout, FileCard) == 0
-        assert helpers.count_widgets_with_type(files_view.layout, MsgCard) == 1
+        assert helpers.count_widgets(files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(files_view.layout, FileCard) == 0
+        assert helpers.count_widgets(files_view.layout, MsgCard) == 1
 
     def test_files_view_refresh_layout(self, helpers):
         # We remove a file
@@ -55,8 +62,8 @@ class TestFilesView:
         assert self.mock_get_all_files.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(self.files_view.layout, FileCard) == 2
+        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout, FileCard) == 2
 
     def test_files_view_create_file(self, mocker, helpers):
         # Mock FileDataDialog methods
@@ -75,8 +82,14 @@ class TestFilesView:
             return
 
         generated_file_name = '1/example-file-4_20230720-184800.gcode'
-        mock_save_file = mocker.patch('views.FilesView.saveFile', return_value=generated_file_name)
-        mock_create_file = mocker.patch('views.FilesView.create_file', side_effect=side_effect_create_file)
+        mock_save_file = mocker.patch(
+            'views.FilesView.saveFile',
+            return_value=generated_file_name
+        )
+        mock_create_file = mocker.patch(
+            'views.FilesView.create_file',
+            side_effect=side_effect_create_file
+        )
 
         # Call the createFile method
         self.files_view.createFile()
@@ -87,5 +100,5 @@ class TestFilesView:
         assert self.mock_get_all_files.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(self.files_view.layout, FileCard) == 4
+        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout, FileCard) == 4

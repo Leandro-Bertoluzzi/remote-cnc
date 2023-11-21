@@ -6,6 +6,7 @@ from components.buttons.MenuButton import MenuButton
 from core.database.models.task import TASK_PENDING_APPROVAL_STATUS
 from core.utils.database import get_all_tasks
 
+
 class RequestsView(QWidget):
     def __init__(self, parent=None):
         super(RequestsView, self).__init__(parent)

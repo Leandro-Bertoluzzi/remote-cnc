@@ -1,6 +1,7 @@
 from containers.ButtonList import ButtonList
 from PyQt5.QtWidgets import QPushButton
 
+
 class TestButtonList:
     def test_button_list_init(self, qtbot, mocker, helpers):
         actions = [
@@ -13,4 +14,4 @@ class TestButtonList:
         qtbot.addWidget(button_list)
 
         # Assertions
-        assert helpers.count_widgets_with_type(button_list.layout(), QPushButton) == 4
+        assert helpers.count_widgets(button_list.layout(), QPushButton) == 4

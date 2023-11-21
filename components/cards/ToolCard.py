@@ -3,6 +3,7 @@ from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from core.utils.database import update_tool, remove_tool
 
+
 class ToolCard(Card):
     def __init__(self, tool, parent=None):
         super(ToolCard, self).__init__(parent)

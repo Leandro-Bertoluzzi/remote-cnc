@@ -2,6 +2,7 @@ import pytest
 from components.dialogs.UserDataDialog import UserDataDialog
 from core.database.models.user import User, VALID_ROLES
 
+
 class TestUserDataDialog:
     userInfo = User(name='John Doe', email='test@testing.com', password='1234', role='admin')
 

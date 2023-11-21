@@ -5,6 +5,7 @@ from core.database.models.material import Material
 from core.database.models.task import Task
 from core.database.models.tool import Tool
 
+
 class TestTaskDataDialog:
     taskInfo = Task(
         user_id=1,

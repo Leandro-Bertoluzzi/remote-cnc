@@ -9,6 +9,7 @@ color_hover_border = QColor('black')
 color_hover_fill = QColor('#555555')
 color_hover_text = QColor('#6e0e0e')
 
+
 class MainMenuButton(QAbstractButton):
     def __init__(self, text, imageRelPath, goToView=None, parent=None):
         super(MainMenuButton, self).__init__(parent)

@@ -6,6 +6,7 @@ from config import Globals
 from core.database.models.task import TASK_DEFAULT_PRIORITY, TASK_IN_PROGRESS_STATUS
 from core.utils.database import update_task, remove_task
 
+
 class TaskCard(Card):
     def __init__(self, task, files=[], tools=[], materials=[], parent=None):
         super(TaskCard, self).__init__(parent)
@@ -30,7 +31,14 @@ class TaskCard(Card):
             progress = celery_task_info.get('progress')
             total = celery_task_info.get('total_lines')
             percentage = celery_task_info.get('percentage')
-            description = f'Tarea {task.id}: {task.name}\nEstado: {task.status}\nProgreso: {progress}/{total} ({percentage}%)'
+            description = 'Tarea {0}: {1}\nEstado: {2}\nProgreso: {3}/{4} ({5}%)'.format(
+                task.id,
+                task.name,
+                task.status,
+                progress,
+                total,
+                percentage
+            )
 
         self.setDescription(description)
         self.addButton(editTaskBtn)

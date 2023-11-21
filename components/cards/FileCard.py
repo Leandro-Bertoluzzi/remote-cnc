@@ -4,6 +4,7 @@ from components.dialogs.FileDataDialog import FileDataDialog
 from core.utils.database import update_file, remove_file
 from core.utils.files import renameFile, deleteFile
 
+
 class FileCard(Card):
     def __init__(self, file, parent=None):
         super(FileCard, self).__init__(parent)
@@ -27,7 +28,11 @@ class FileCard(Card):
 
             # Update file in the file system
             try:
-                generatedFilename = renameFile(self.file.user_id, self.file.file_path, name)
+                generatedFilename = renameFile(
+                    self.file.user_id,
+                    self.file.file_path,
+                    name
+                )
             except Exception as error:
                 print('Error: ', error)
 

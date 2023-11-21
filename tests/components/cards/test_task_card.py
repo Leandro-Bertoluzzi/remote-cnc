@@ -6,6 +6,7 @@ from components.dialogs.TaskDataDialog import TaskDataDialog
 from core.database.models.task import Task
 from views.TasksView import TasksView
 
+
 class TestTaskCard:
     task = Task(
         user_id=1,
@@ -122,8 +123,16 @@ class TestTaskCard:
         }
 
         # Mock Celery methods
-        mock_query_task = mocker.patch.object(AsyncResult, '__init__', return_value=None)
-        mock_query_task_info = mocker.patch.object(AsyncResult, '_get_task_meta', return_value=task_metadata)
+        mock_query_task = mocker.patch.object(
+            AsyncResult,
+            '__init__',
+            return_value=None
+        )
+        mock_query_task_info = mocker.patch.object(
+            AsyncResult,
+            '_get_task_meta',
+            return_value=task_metadata
+        )
 
         # Instantiate card
         card = TaskCard(self.task, parent=self.parent)
@@ -131,7 +140,8 @@ class TestTaskCard:
 
         # Assertions
         if status == 'in_progress':
-            assert card.label_description.text() == 'Tarea 1: Example task\nEstado: in_progress\nProgreso: 10/20 (50%)'
+            expected_text = 'Tarea 1: Example task\nEstado: in_progress\nProgreso: 10/20 (50%)'
+            assert card.label_description.text() == expected_text
             assert mock_query_task.call_count == 1
             assert mock_query_task_info.call_count == 1
             return

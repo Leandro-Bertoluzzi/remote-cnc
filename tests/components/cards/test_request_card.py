@@ -6,6 +6,7 @@ from core.database.models.task import Task, TASK_APPROVED_STATUS, TASK_REJECTED_
 from core.database.models.user import User
 from views.RequestsView import RequestsView
 
+
 class TestRequestCard:
     task = Task(
         user_id=1,
@@ -37,10 +38,19 @@ class TestRequestCard:
             ]
         )
     @pytest.mark.parametrize("task_in_progress", [True, False])
-    def test_request_card_approve_task(self, mocker, msgBoxResponse, expected_updated, task_in_progress):
+    def test_request_card_approve_task(
+        self,
+        mocker,
+        msgBoxResponse,
+        expected_updated,
+        task_in_progress
+    ):
         # Mock DB methods
         mock_update_task_status = mocker.patch('components.cards.RequestCard.update_task_status')
-        mocker.patch('components.cards.RequestCard.are_there_tasks_in_progress', return_value=task_in_progress)
+        mocker.patch(
+            'components.cards.RequestCard.are_there_tasks_in_progress',
+            return_value=task_in_progress
+        )
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
         # Mock task manager methods

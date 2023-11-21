@@ -12,6 +12,7 @@ from views.InventoryView import InventoryView
 from core.database.models.tool import Tool
 from core.database.models.material import Material
 
+
 class TestInventoryView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
@@ -21,7 +22,10 @@ class TestInventoryView:
         self.tools_list = [tool_1, tool_2, tool_3]
 
         # Patch the getAllTools method with the mock function
-        self.mock_get_all_tools = mocker.patch('views.InventoryView.get_all_tools', return_value=self.tools_list)
+        self.mock_get_all_tools = mocker.patch(
+            'views.InventoryView.get_all_tools',
+            return_value=self.tools_list
+        )
 
         material_1 = Material(name='Example material 1', description='It is the first material')
         material_2 = Material(name='Example material 2', description='It is the second material')
@@ -29,7 +33,10 @@ class TestInventoryView:
         self.materials_list = [material_1, material_2, material_3]
 
         # Patch the getAllMaterials method with the mock function
-        self.mock_get_all_materials = mocker.patch('views.InventoryView.get_all_materials', return_value=self.materials_list)
+        self.mock_get_all_materials = mocker.patch(
+            'views.InventoryView.get_all_materials',
+            return_value=self.materials_list
+        )
 
         # Create an instance of InventoryView
         self.parent = MainWindow()
@@ -42,13 +49,19 @@ class TestInventoryView:
         self.mock_get_all_materials.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 3
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, ToolCard) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, MaterialCard) == 3
 
     def test_inventory_view_init_with_no_inventory(self, mocker, helpers):
-        mock_get_all_tools = mocker.patch('views.InventoryView.get_all_tools', return_value=[])
-        mock_get_all_materials = mocker.patch('views.InventoryView.get_all_materials', return_value=[])
+        mock_get_all_tools = mocker.patch(
+            'views.InventoryView.get_all_tools',
+            return_value=[]
+        )
+        mock_get_all_materials = mocker.patch(
+            'views.InventoryView.get_all_materials',
+            return_value=[]
+        )
         inventory_view = InventoryView(parent=self.parent)
 
         # Validate DB calls
@@ -56,10 +69,10 @@ class TestInventoryView:
         mock_get_all_materials.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(inventory_view.layout, MenuButton) == 3
-        assert helpers.count_widgets_with_type(inventory_view.layout, ToolCard) == 0
-        assert helpers.count_widgets_with_type(inventory_view.layout, MaterialCard) == 0
-        assert helpers.count_widgets_with_type(inventory_view.layout, MsgCard) == 2
+        assert helpers.count_widgets(inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets(inventory_view.layout, ToolCard) == 0
+        assert helpers.count_widgets(inventory_view.layout, MaterialCard) == 0
+        assert helpers.count_widgets(inventory_view.layout, MsgCard) == 2
 
     def test_inventory_view_refresh_layout(self, helpers):
         # We remove a tool
@@ -74,9 +87,9 @@ class TestInventoryView:
         assert self.mock_get_all_tools.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 2
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 2
+        assert helpers.count_widgets(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, ToolCard) == 2
+        assert helpers.count_widgets(self.inventory_view.layout, MaterialCard) == 2
 
     def test_inventory_view_create_tool(self, mocker, helpers):
         # Mock ToolDataDialog methods
@@ -90,7 +103,10 @@ class TestInventoryView:
             self.tools_list.append(tool_4)
             return
 
-        mock_create_tool = mocker.patch('views.InventoryView.create_tool', side_effect=side_effect_create_tool)
+        mock_create_tool = mocker.patch(
+            'views.InventoryView.create_tool',
+            side_effect=side_effect_create_tool
+        )
 
         # Call the createTool method
         self.inventory_view.createTool()
@@ -100,9 +116,9 @@ class TestInventoryView:
         assert self.mock_get_all_tools.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 4
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, ToolCard) == 4
+        assert helpers.count_widgets(self.inventory_view.layout, MaterialCard) == 3
 
     def test_inventory_view_create_material(self, mocker, helpers):
         # Mock MaterialDataDialog methods
@@ -112,11 +128,17 @@ class TestInventoryView:
 
         # Mock DB method
         def side_effect_create_material(name, description):
-            material_4 = Material(name='Example material 4', description='It is the fourth material')
+            material_4 = Material(
+                name='Example material 4',
+                description='It is the fourth material'
+            )
             self.materials_list.append(material_4)
             return
 
-        mock_create_material = mocker.patch('views.InventoryView.create_material', side_effect=side_effect_create_material)
+        mock_create_material = mocker.patch(
+            'views.InventoryView.create_material',
+            side_effect=side_effect_create_material
+        )
 
         # Call the createMaterial method
         self.inventory_view.createMaterial()
@@ -126,6 +148,6 @@ class TestInventoryView:
         assert self.mock_get_all_materials.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MenuButton) == 3
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, ToolCard) == 3
-        assert helpers.count_widgets_with_type(self.inventory_view.layout, MaterialCard) == 4
+        assert helpers.count_widgets(self.inventory_view.layout, MenuButton) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, ToolCard) == 3
+        assert helpers.count_widgets(self.inventory_view.layout, MaterialCard) == 4

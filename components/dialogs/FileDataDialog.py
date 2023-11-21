@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, \
+    QPushButton, QFileDialog
 from PyQt5.QtCore import Qt
 import os
+
 
 class FileDataDialog(QDialog):
     def __init__(self, fileInfo=None, parent=None):

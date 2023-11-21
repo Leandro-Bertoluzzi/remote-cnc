@@ -1,6 +1,7 @@
 from containers.WidgetsHList import WidgetsHList
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
 
+
 class TestWidgetsHList:
     def test_widgets_hlist_init(self, qtbot, helpers):
         widgets = [
@@ -13,6 +14,6 @@ class TestWidgetsHList:
         qtbot.addWidget(widgets_list)
 
         # Assertions
-        assert helpers.count_widgets_with_type(widgets_list.layout(), QWidget) == 4
-        assert helpers.count_widgets_with_type(widgets_list.layout(), QLabel) == 2
-        assert helpers.count_widgets_with_type(widgets_list.layout(), QPushButton) == 2
+        assert helpers.count_widgets(widgets_list.layout(), QWidget) == 4
+        assert helpers.count_widgets(widgets_list.layout(), QLabel) == 2
+        assert helpers.count_widgets(widgets_list.layout(), QPushButton) == 2

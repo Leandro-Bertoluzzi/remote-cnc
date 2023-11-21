@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QComboBox, QTextEdit
 from PyQt5.QtCore import Qt
 
+
 class TaskDataDialog(QDialog):
     def __init__(self, files=[], tools=[], materials=[], taskInfo=None, parent=None):
         super(TaskDataDialog, self).__init__(parent)

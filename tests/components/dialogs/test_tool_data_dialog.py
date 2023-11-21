@@ -2,6 +2,7 @@ import pytest
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from core.database.models.tool import Tool
 
+
 class TestToolDataDialog:
     toolInfo = Tool(name='Example tool', description='Just a tool')
 
@@ -16,9 +17,9 @@ class TestToolDataDialog:
         dialog = ToolDataDialog(toolInfo=tool_info)
         qtbot.addWidget(dialog)
 
-        expectedName = self.toolInfo.name if tool_info is not None else ''
-        expectedDescription = self.toolInfo.description if tool_info is not None else ''
-        expectedWindowTitle = 'Actualizar herramienta' if tool_info is not None else 'Agregar herramienta'
+        expectedName = self.toolInfo.name if tool_info else ''
+        expectedDescription = self.toolInfo.description if tool_info else ''
+        expectedWindowTitle = 'Actualizar herramienta' if tool_info else 'Agregar herramienta'
 
         assert dialog.name.text() == expectedName
         assert dialog.description.toPlainText() == expectedDescription

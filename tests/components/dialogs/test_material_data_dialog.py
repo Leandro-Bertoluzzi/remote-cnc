@@ -2,6 +2,7 @@ import pytest
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.models.material import Material
 
+
 class TestMaterialDataDialog:
     materialInfo = Material(name='Example material', description='Just a material')
 
@@ -16,9 +17,9 @@ class TestMaterialDataDialog:
         dialog = MaterialDataDialog(materialInfo=material_info)
         qtbot.addWidget(dialog)
 
-        expectedName = self.materialInfo.name if material_info is not None else ''
-        expectedDescription = self.materialInfo.description if material_info is not None else ''
-        expectedWindowTitle = 'Actualizar material' if material_info is not None else 'Agregar material'
+        expectedName = self.materialInfo.name if material_info else ''
+        expectedDescription = self.materialInfo.description if material_info else ''
+        expectedWindowTitle = 'Actualizar material' if material_info else 'Agregar material'
 
         assert dialog.name.text() == expectedName
         assert dialog.description.toPlainText() == expectedDescription

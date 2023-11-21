@@ -9,6 +9,7 @@ from components.dialogs.TaskDataDialog import TaskDataDialog
 from views.TasksView import TasksView
 from core.database.models.task import Task
 
+
 class TestTasksView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
@@ -41,7 +42,10 @@ class TestTasksView:
         mocker.patch('views.TasksView.get_all_materials', return_value=[])
 
         # Patch the getAllTasksFromUser method with the mock function
-        self.mock_get_all_tasks = mocker.patch('views.TasksView.get_all_tasks_from_user', return_value=self.tasks_list)
+        self.mock_get_all_tasks = mocker.patch(
+            'views.TasksView.get_all_tasks_from_user',
+            return_value=self.tasks_list
+        )
 
         # Create an instance of TasksView
         self.parent = MainWindow()
@@ -53,19 +57,22 @@ class TestTasksView:
         self.mock_get_all_tasks.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(self.tasks_view.layout, TaskCard) == 3
+        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 3
 
     def test_tasks_view_init_with_no_tasks(self, mocker, helpers):
-        mock_get_all_tasks = mocker.patch('views.TasksView.get_all_tasks_from_user', return_value=[])
+        mock_get_all_tasks = mocker.patch(
+            'views.TasksView.get_all_tasks_from_user',
+            return_value=[]
+        )
         tasks_view = TasksView(parent=self.parent)
         # Validate DB calls
         mock_get_all_tasks.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(tasks_view.layout, TaskCard) == 0
-        assert helpers.count_widgets_with_type(tasks_view.layout, MsgCard) == 1
+        assert helpers.count_widgets(tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(tasks_view.layout, TaskCard) == 0
+        assert helpers.count_widgets(tasks_view.layout, MsgCard) == 1
 
     def test_tasks_view_refresh_layout(self, helpers):
         # We remove a task
@@ -78,8 +85,8 @@ class TestTasksView:
         assert self.mock_get_all_tasks.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(self.tasks_view.layout, TaskCard) == 2
+        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 2
 
     def test_tasks_view_create_task(self, mocker, helpers):
         # Mock TaskDataDialog methods
@@ -102,7 +109,10 @@ class TestTasksView:
             return
 
         # Mock and keep track of function calls
-        mock_create_task = mocker.patch('views.TasksView.create_task', side_effect=side_effect_create_task)
+        mock_create_task = mocker.patch(
+            'views.TasksView.create_task',
+            side_effect=side_effect_create_task
+        )
 
         # Call the createTask method
         self.tasks_view.createTask()
@@ -121,5 +131,5 @@ class TestTasksView:
         assert self.mock_get_all_tasks.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets_with_type(self.tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets_with_type(self.tasks_view.layout, TaskCard) == 4
+        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 4

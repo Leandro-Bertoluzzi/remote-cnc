@@ -5,6 +5,7 @@ from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.models.material import Material
 from views.InventoryView import InventoryView
 
+
 class TestMaterialCard:
     material = Material(name='Example material', description='Just a material')
 

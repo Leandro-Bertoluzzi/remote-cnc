@@ -1,6 +1,7 @@
 import pytest
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_CANCEL, FROM_REJECT
 
+
 class TestTaskCancelDialog:
     @pytest.mark.parametrize(
             "origin,expected_title",

@@ -2,6 +2,7 @@ from components.CodeEditor import CodeEditor
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import pytest
 
+
 class TestCodeEditor:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot):
@@ -15,7 +16,7 @@ class TestCodeEditor:
             self.code_editor.setPlainText('new text')
 
         # Assertions
-        assert self.code_editor.modified == True
+        assert self.code_editor.modified
 
     @pytest.mark.parametrize(
             "modified,accept",
@@ -28,7 +29,11 @@ class TestCodeEditor:
         )
     def test_code_editor_new_file(self, mocker, modified, accept):
         # Mock other methods
-        mock_ask_to_save_changes = mocker.patch.object(CodeEditor, 'ask_to_save_changes', return_value=accept)
+        mock_ask_to_save_changes = mocker.patch.object(
+            CodeEditor,
+            'ask_to_save_changes',
+            return_value=accept
+        )
         mock_set_text = mocker.patch.object(CodeEditor, 'setPlainText')
 
         # Conditions for test
@@ -56,14 +61,22 @@ class TestCodeEditor:
         # Mock dialog methods
         file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
-        mock_select_file = mocker.patch.object(QFileDialog, 'getOpenFileName', return_value=(file_path, filters))
+        mock_select_file = mocker.patch.object(
+            QFileDialog,
+            'getOpenFileName',
+            return_value=(file_path, filters)
+        )
 
         # Mock FS methods
         mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
         mocked_open = mocker.patch('builtins.open', mocked_file_data)
 
         # Mock other methods
-        mock_ask_to_save_changes = mocker.patch.object(CodeEditor, 'ask_to_save_changes', return_value=accept)
+        mock_ask_to_save_changes = mocker.patch.object(
+            CodeEditor,
+            'ask_to_save_changes',
+            return_value=accept
+        )
         mock_set_text = mocker.patch.object(CodeEditor, 'setPlainText')
 
         # Conditions for test
@@ -107,7 +120,11 @@ class TestCodeEditor:
         # Mock dialog methods
         file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
-        mock_select_file = mocker.patch.object(QFileDialog, 'getSaveFileName', return_value=(file_path, filters))
+        mock_select_file = mocker.patch.object(
+            QFileDialog,
+            'getSaveFileName',
+            return_value=(file_path, filters)
+        )
 
         # Mock FS methods
         mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
@@ -132,12 +149,22 @@ class TestCodeEditor:
                 (QMessageBox.Cancel, False, False)
             ]
         )
-    def test_code_editor_ask_to_save_changes(self, mocker, msg_box_response, save_file_response, expected_result):
+    def test_code_editor_ask_to_save_changes(
+        self,
+        mocker,
+        msg_box_response,
+        save_file_response,
+        expected_result
+    ):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msg_box_response)
 
         # Mock other methods
-        mock_save_file = mocker.patch.object(CodeEditor, 'save_file', return_value=save_file_response)
+        mock_save_file = mocker.patch.object(
+            CodeEditor,
+            'save_file',
+            return_value=save_file_response
+        )
 
         # Call the removeFile method
         result = self.code_editor.ask_to_save_changes()

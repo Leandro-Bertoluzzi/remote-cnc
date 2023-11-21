@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QPlainTextEdit
 
+
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent=None):
         super(CodeEditor, self).__init__(parent)
@@ -86,7 +87,9 @@ class CodeEditor(QPlainTextEdit):
         confirmation.setIcon(QMessageBox.Question)
         confirmation.setText('¿Desea guardar el avance primero?')
         confirmation.setWindowTitle('Abrir archivo')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        confirmation.setStandardButtons(
+            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
+        )
         choice = confirmation.exec()
 
         if choice == QMessageBox.Yes:

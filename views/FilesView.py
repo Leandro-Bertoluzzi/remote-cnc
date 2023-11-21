@@ -8,6 +8,7 @@ from config import USER_ID
 from core.utils.database import create_file, get_all_files_from_user
 from core.utils.files import saveFile
 
+
 class FilesView(QWidget):
     def __init__(self, parent=None):
         super(FilesView, self).__init__(parent)
