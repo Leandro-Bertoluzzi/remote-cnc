@@ -5,6 +5,7 @@ channels:
 dependencies:
   - alembic
   - bcrypt
+  - flake8
   - pip
   - pymysql
   - pyqt
