@@ -24,6 +24,7 @@ task_status_type = sa.Enum(
     name='task_status'
 )
 
+
 def upgrade() -> None:
     op.create_table(
         'tasks',
@@ -35,6 +36,7 @@ def upgrade() -> None:
         sa.Column('status', task_status_type, nullable=False),
         sa.Column('priority', sa.Integer, nullable=False)
     )
+
 
 def downgrade() -> None:
     op.drop_table('tasks')

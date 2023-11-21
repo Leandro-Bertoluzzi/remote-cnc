@@ -35,5 +35,6 @@ def upgrade() -> None:
         ondelete='CASCADE'
     )
 
+
 def downgrade() -> None:
     op.drop_table('files')

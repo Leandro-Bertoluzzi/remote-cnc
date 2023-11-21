@@ -14,6 +14,7 @@ down_revision = '6d8972b34033'
 branch_labels = None
 depends_on = None
 
+
 def upgrade() -> None:
     op.add_column('tasks', sa.Column('tool_id', sa.Integer, nullable=False))
     op.add_column('tasks', sa.Column('material_id', sa.Integer, nullable=False))
@@ -39,4 +40,3 @@ def downgrade() -> None:
     op.drop_column('tasks', 'tool_id')
     op.drop_constraint('fk_material_id', 'tasks', type_='foreignkey')
     op.drop_column('tasks', 'material_id')
-

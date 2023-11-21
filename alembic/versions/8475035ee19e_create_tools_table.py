@@ -26,5 +26,6 @@ def upgrade() -> None:
         sa.Column('added_at', sa.DateTime, nullable=False, server_default=func.now())
     )
 
+
 def downgrade() -> None:
     op.drop_table('tools')

@@ -6,13 +6,13 @@ Create Date: 2023-05-22 13:24:26.032792
 
 """
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '32e4b2aa88f4'
 down_revision = 'bb56f0eca8c5'
 branch_labels = None
 depends_on = None
+
 
 def upgrade() -> None:
     # Tasks
@@ -22,6 +22,7 @@ def upgrade() -> None:
     op.execute('ALTER TABLE tasks MODIFY COLUMN tool_id INTEGER AFTER file_id')
     op.execute('ALTER TABLE tasks MODIFY COLUMN material_id INTEGER AFTER tool_id')
     op.execute('ALTER TABLE tasks MODIFY COLUMN note VARCHAR(150) AFTER material_id')
+
 
 def downgrade() -> None:
     return

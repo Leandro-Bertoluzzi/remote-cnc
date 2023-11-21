@@ -24,9 +24,11 @@ down_revision = '161422f1d9c0'
 branch_labels = None
 depends_on = None
 
+
 def upgrade() -> None:
     op.alter_column('tasks', 'status', type_=task_status_type)
     op.add_column('tasks', sa.Column('cancellation_reason', sa.String(150)))
+
 
 def downgrade() -> None:
     op.drop_column('tasks', 'cancellation_reason')

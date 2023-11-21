@@ -25,5 +25,6 @@ def upgrade():
         sa.Column('added_at', sa.DateTime, nullable=False, server_default=func.now())
     )
 
+
 def downgrade():
     op.drop_table('materials')

@@ -1,7 +1,7 @@
 """create users table
 
 Revision ID: dda662b6775d
-Revises: 
+Revises:
 Create Date: 2023-04-01 22:27:11.119142
 
 """
@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column('password', sa.String(100), nullable=False),
         sa.Column('role', sa.Enum('user', 'admin', name='role'), nullable=False)
     )
+
 
 def downgrade() -> None:
     op.drop_table('users')
