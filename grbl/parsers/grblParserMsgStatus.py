@@ -2,11 +2,13 @@ import re
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_STATUS
 
+
 class GrblParserMsgStatus(GrblParserGeneric):
     """Detects a GRBL real-time status response, initiated by the user via a `?` status command.
     Only supports GRBL v1.1 !!
 
-    Contains real-time data of Grbl's state, position, and other data required independently of the stream.
+    Contains real-time data of Grbl's state, position, and other data required
+    independently of the stream.
 
     Example:
         * GRBL v1.1
@@ -37,7 +39,8 @@ class GrblParserMsgStatus(GrblParserGeneric):
         #   - Door:0 Door closed. Ready to resume.
         #   - Door:1 Machine stopped. Door still ajar. Can't resume until closed.
         #   - Door:2 Door opened. Hold (or parking retract) in-progress. Reset will throw an alarm.
-        #   - Door:3 Door closed and resuming. Restoring from park, if applicable. Reset will throw an alarm.
+        #   - Door:3 Door closed and resuming. Restoring from park, if applicable.
+        #   Reset will throw an alarm.
         states = params[0].split(':')
         payload['activeState'] = states[0] or ''
         if len(states) > 1:
@@ -112,13 +115,17 @@ class GrblParserMsgStatus(GrblParserGeneric):
             payload['pinstate'] = result['Pn'][0]
 
         # Override Values
-        # Ov:100,100,100 indicates current override values in percent of programmed values for feed, rapids, and spindle speed, respectively.
+        # Ov:100,100,100 indicates current override values in percent of programmed values
+        # for feed, rapids, and spindle speed, respectively.
         if 'Ov' in result.keys():
             payload['ov'] = [int(ov) for ov in result['Ov']]
 
         # Accessory State
-        # * A:SFM indicates the current state of accessory machine components, such as the spindle and coolant.
-        # * Each letter after A: denotes a particular state. When it appears, the state is enabled. When it does not appear, the state is disabled.
+        # * A:SFM indicates the current state of accessory machine components,
+        # such as the spindle and coolant.
+        # * Each letter after A: denotes a particular state.
+        # When it appears, the state is enabled.
+        # When it does not appear, the state is disabled.
         # - S indicates spindle is enabled in the CW direction. This does not appear with C.
         # - C indicates spindle is enabled in the CCW direction. This does not appear with S.
         # - F indicates flood coolant is enabled.

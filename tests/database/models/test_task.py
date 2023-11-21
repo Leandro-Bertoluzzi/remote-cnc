@@ -1,6 +1,7 @@
 from database.models.task import Task
 from datetime import datetime
 
+
 def test_task():
     # Auxiliary variables
     now = datetime(2023, 7, 20)
@@ -29,7 +30,10 @@ def test_task():
     assert task.priority == 8
     assert task.created_at == datetime(2023, 7, 20)
 
-    assert task.__repr__() == '<Task: Example task, status: on_hold, created at: 2023-07-20 00:00:00>'
+    assert task.__repr__() == (
+        '<Task: Example task, status: on_hold, created at: 2023-07-20 00:00:00>'
+    )
+
 
 def test_task_default_values():
     # Auxiliary variables
@@ -56,5 +60,6 @@ def test_task_default_values():
     assert task.priority == 0
     assert task.created_at == datetime(2023, 7, 20)
 
-    assert task.__repr__() == '<Task: Example task, status: pending_approval, created at: 2023-07-20 00:00:00>'
-
+    assert task.__repr__() == (
+        '<Task: Example task, status: pending_approval, created at: 2023-07-20 00:00:00>'
+    )

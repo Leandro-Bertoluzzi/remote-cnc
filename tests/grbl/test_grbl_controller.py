@@ -1,12 +1,17 @@
-from grbl.constants import GRBL_ACTIVE_STATE_IDLE, GRBL_ACTIVE_STATE_RUN, GRBL_ACTIVE_STATE_HOLD, GRBL_ACTIVE_STATE_DOOR, \
-    GRBL_ACTIVE_STATE_HOME, GRBL_ACTIVE_STATE_SLEEP, GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_CHECK
-from grbl.grblController import GrblController, JOG_UNIT_MILIMETERS, JOG_UNIT_INCHES, JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL
+from grbl.constants import GRBL_ACTIVE_STATE_IDLE, GRBL_ACTIVE_STATE_RUN, \
+    GRBL_ACTIVE_STATE_HOLD, GRBL_ACTIVE_STATE_DOOR, GRBL_ACTIVE_STATE_HOME, \
+    GRBL_ACTIVE_STATE_SLEEP, GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_CHECK
+from grbl.grblController import GrblController, JOG_UNIT_MILIMETERS, JOG_UNIT_INCHES, \
+    JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL
 from grbl.grblLineParser import GrblLineParser
-from grbl.parsers.grblMsgTypes import *
+from grbl.parsers.grblMsgTypes import GRBL_MSG_ALARM, GRBL_MSG_FEEDBACK, GRBL_MSG_HELP, \
+    GRBL_MSG_PARAMS, GRBL_MSG_PARSER_STATE, GRBL_MSG_OPTIONS, GRBL_MSG_SETTING, \
+    GRBL_MSG_STARTUP, GRBL_MSG_STATUS, GRBL_MSG_VERSION, GRBL_RESULT_ERROR, GRBL_RESULT_OK
 from utils.serial import SerialService
 from serial import SerialException
 import logging
 import pytest
+
 
 # Test fixture for setting up and tearing down the SerialService instance
 @pytest.fixture
@@ -14,6 +19,7 @@ def serial_service():
     service = SerialService()
     yield service
     service.stopConnection()
+
 
 class TestGrblController:
     @pytest.fixture(autouse=True)
@@ -31,12 +37,21 @@ class TestGrblController:
 
     def test_connect_fails_serial(self, mocker):
         # Mock serial methods
-        mocker.patch.object(SerialService, 'startConnection', side_effect=SerialException('mocked error'))
+        mocker.patch.object(
+            SerialService,
+            'startConnection',
+            side_effect=SerialException('mocked error')
+        )
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             self.grbl_controller.connect('port', 9600)
-        assert str(error.value) == 'Failed opening serial port, verify the connection and close any other connection you may have'
+
+        # Assertions
+        expected_error_msg = (
+            'Failed opening serial port, verify and close any other connection you may have'
+        )
+        assert str(error.value) == expected_error_msg
 
     def test_connect_fails_grbl(self, mocker):
         # Mock serial methods
@@ -57,7 +72,12 @@ class TestGrblController:
 
         second_message = (GRBL_RESULT_OK, {})
         if initial_homing:
-            second_message = (GRBL_MSG_FEEDBACK, {'message': '\'$H\'|\'$X\' to unlock', 'raw': '[MSG:\'$H\'|\'$X\' to unlock]'})
+            second_message = (
+                GRBL_MSG_FEEDBACK, {
+                    'message': '\'$H\'|\'$X\' to unlock',
+                    'raw': '[MSG:\'$H\'|\'$X\' to unlock]'
+                }
+            )
 
         # Mock GRBL methods to receive:
         # Grbl 1.1
@@ -69,7 +89,14 @@ class TestGrblController:
             GrblLineParser,
             'parse',
             side_effect=[
-                (GRBL_MSG_STARTUP, {'firmware': 'Grbl', 'version': '1.1', 'message': None, 'raw': "Grbl 1.1"}),
+                (
+                    GRBL_MSG_STARTUP, {
+                        'firmware': 'Grbl',
+                        'version': '1.1',
+                        'message': None,
+                        'raw': "Grbl 1.1"
+                    }
+                ),
                 second_message
             ]
         )
@@ -79,7 +106,12 @@ class TestGrblController:
         response = self.grbl_controller.connect('port', 9600)
 
         # Assertions
-        assert response == {'firmware': 'Grbl', 'version': '1.1', 'message': None, 'raw': "Grbl 1.1"}
+        assert response == {
+            'firmware': 'Grbl',
+            'version': '1.1',
+            'message': None,
+            'raw': "Grbl 1.1"
+        }
         assert self.grbl_controller.settings['version'] == '1.1'
         assert mock_serial_connect.call_count == 1
         assert mock_grbl_parser.call_count == 2
@@ -99,7 +131,11 @@ class TestGrblController:
         # Mock serial methods
         mock_serial_stream = mocker.patch.object(SerialService, 'streamLine')
         # Mock GRBL methods
-        mock_grbl_parser = mocker.patch.object(GrblLineParser, 'parse', return_value=(GRBL_RESULT_OK, {}))
+        mock_grbl_parser = mocker.patch.object(
+            GrblLineParser,
+            'parse',
+            return_value=(GRBL_RESULT_OK, {})
+        )
 
         # Call method under test
         response = self.grbl_controller.streamLine('a line of code')
@@ -114,7 +150,10 @@ class TestGrblController:
             [
                 (
                     [
-                        (GRBL_MSG_FEEDBACK, {'message': 'A message', 'raw': '[MSG: A message]'}),
+                        (GRBL_MSG_FEEDBACK, {
+                            'message': 'A message',
+                            'raw': '[MSG: A message]'
+                        }),
                         (GRBL_RESULT_OK, {'raw': 'ok'})
                     ],
                     2
@@ -122,7 +161,10 @@ class TestGrblController:
                 (
                     [
                         ('ANOTHER_CODE', {}),
-                        (GRBL_MSG_HELP, {'message': 'help message...', 'raw': '[HLP: help message...]'}),
+                        (GRBL_MSG_HELP, {
+                            'message': 'help message...',
+                            'raw': '[HLP: help message...]'
+                        }),
                         (GRBL_RESULT_OK, {'raw': 'ok'})
                     ],
                     3
@@ -131,7 +173,10 @@ class TestGrblController:
                     [
                         ('ANOTHER_CODE', {}),
                         ('ANOTHER_CODE', {}),
-                        (GRBL_MSG_FEEDBACK, {'message': 'A message', 'raw': '[MSG: A message]'}),
+                        (GRBL_MSG_FEEDBACK, {
+                            'message': 'A message',
+                            'raw': '[MSG: A message]'
+                        }),
                         ('ANOTHER_CODE', {}),
                         ('ANOTHER_CODE', {}),
                         (GRBL_RESULT_OK, {'raw': 'ok'})
@@ -142,7 +187,10 @@ class TestGrblController:
                     [
                         ('ANOTHER_CODE', {}),
                         ('ANOTHER_CODE', {}),
-                        (GRBL_MSG_FEEDBACK, {'message': 'A message', 'raw': '[MSG: A message]'}),
+                        (GRBL_MSG_FEEDBACK, {
+                            'message': 'A message',
+                            'raw': '[MSG: A message]'
+                        }),
                         (GRBL_RESULT_OK, {'raw': 'ok'}),
                         ('ANOTHER_CODE', {}),
                         ('ANOTHER_CODE', {}),
@@ -157,7 +205,11 @@ class TestGrblController:
         mock_serial_send = mocker.patch.object(SerialService, 'sendLine')
         mock_serial_read = mocker.patch.object(SerialService, 'readLine')
         # Mock GRBL methods
-        mock_grbl_parser = mocker.patch.object(GrblLineParser, 'parse', side_effect=messages)
+        mock_grbl_parser = mocker.patch.object(
+            GrblLineParser,
+            'parse',
+            side_effect=messages
+        )
 
         # Call method under test
         self.grbl_controller.sendCommand('$')
@@ -226,7 +278,14 @@ class TestGrblController:
         mock_grbl_parser = mocker.patch.object(
             GrblLineParser,
             'parse',
-            return_value=(GRBL_RESULT_ERROR, {'code': '99', 'message': 'An error', 'description': 'An error happened.', 'raw': 'error:99'})
+            return_value=(
+                GRBL_RESULT_ERROR, {
+                    'code': '99',
+                    'message': 'An error',
+                    'description': 'An error happened.',
+                    'raw': 'error:99'
+                    }
+                )
         )
 
         # Call the method under test and assert exception
@@ -234,7 +293,8 @@ class TestGrblController:
             self.grbl_controller.streamLine('a line of code')
 
         # Assertions
-        assert str(error.value) == 'Error executing line: An error. Description: An error happened.'
+        expected_error = 'Error executing line: An error. Description: An error happened.'
+        assert str(error.value) == expected_error
         assert mock_serial_stream.call_count == 1
         assert mock_grbl_parser.call_count == 1
 
@@ -245,7 +305,14 @@ class TestGrblController:
         mock_grbl_parser = mocker.patch.object(
             GrblLineParser,
             'parse',
-            return_value=(GRBL_MSG_ALARM, {'code': '99', 'message': 'An alarm', 'description': 'An alarm was triggered.', 'raw': 'error:99'})
+            return_value=(
+                GRBL_MSG_ALARM, {
+                    'code': '99',
+                    'message': 'An alarm',
+                    'description': 'An alarm was triggered.',
+                    'raw': 'error:99'
+                    }
+                )
         )
 
         # Call the method under test and assert exception
@@ -253,7 +320,8 @@ class TestGrblController:
             self.grbl_controller.streamLine('a line of code')
 
         # Assertions
-        assert str(error.value) == 'Alarm activated: An alarm. Description: An alarm was triggered.'
+        expected_error = 'Alarm activated: An alarm. Description: An alarm was triggered.'
+        assert str(error.value) == expected_error
         assert mock_serial_stream.call_count == 1
         assert mock_grbl_parser.call_count == 1
 
@@ -273,7 +341,10 @@ class TestGrblController:
             GrblController,
             'sendCommand',
             return_value=[
-                (GRBL_MSG_FEEDBACK, {'message': 'Caution: Unlocked', 'raw': '[MSG:Caution: Unlocked]'}),
+                (GRBL_MSG_FEEDBACK, {
+                    'message': 'Caution: Unlocked',
+                    'raw': '[MSG:Caution: Unlocked]'
+                }),
                 (GRBL_RESULT_OK, {})
             ]
         )
@@ -497,7 +568,10 @@ class TestGrblController:
             GrblController,
             'sendCommand',
             return_value=[
-                (GRBL_MSG_HELP, {'message': '$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x', 'raw': '[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x]'}),
+                (GRBL_MSG_HELP, {
+                    'message': '$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x',
+                    'raw': '[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x]'
+                }),
                 (GRBL_RESULT_OK, {})
             ]
         )
@@ -506,7 +580,10 @@ class TestGrblController:
         response = self.grbl_controller.queryGrblHelp()
 
         # Assertions
-        assert response == {'message': '$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x', 'raw': '[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x]'}
+        assert response == {
+            'message': '$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x',
+            'raw': '[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x]'
+        }
         assert mock_command_send.call_count == 1
 
     def test_query_help_fails(self, mocker):
@@ -555,7 +632,7 @@ class TestGrblController:
 
         # Assertions
         assert self.grbl_controller.settings['checkmode'] == expected_state
-        assert response == {'checkmode': expected_state }
+        assert response == {'checkmode': expected_state}
         assert mock_command_send.call_count == 1
 
     @pytest.mark.parametrize(
@@ -587,7 +664,11 @@ class TestGrblController:
         )
     def test_toggle_checkmode_fails(self, mocker, messages):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand', return_value=messages)
+        mock_command_send = mocker.patch.object(
+            GrblController,
+            'sendCommand',
+            return_value=messages
+        )
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
@@ -601,59 +682,171 @@ class TestGrblController:
             'parameters,expected',
             [
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 3.00, 'feedrate': 500.00, 'units': None, 'distance_mode': None, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 3.00,
+                        'feedrate': 500.00,
+                        'units': None,
+                        'distance_mode': None,
+                        'machine_coordinates': False
+                    },
                     '$J=X1.0 Y2.0 Z3.0 F500.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 500.00, 'units': JOG_UNIT_INCHES, 'distance_mode': None, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 500.00,
+                        'units': JOG_UNIT_INCHES,
+                        'distance_mode': None,
+                        'machine_coordinates': False
+                    },
                     '$J=G20 X1.0 Y2.0 F500.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': None, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_MILIMETERS,
+                        'distance_mode': None,
+                        'machine_coordinates': False
+                    },
                     '$J=G21 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': None,
+                        'distance_mode': JOG_DISTANCE_ABSOLUTE,
+                        'machine_coordinates': False
+                    },
                     '$J=G90 X1.0 Y2.0 Z0.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': None,
+                        'distance_mode': JOG_DISTANCE_INCREMENTAL,
+                        'machine_coordinates': False
+                    },
                     '$J=G91 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': None, 'distance_mode': None, 'machine_coordinates': True },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': None,
+                        'distance_mode': None,
+                        'machine_coordinates': True
+                    },
                     '$J=G53 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_INCHES,
+                        'distance_mode': JOG_DISTANCE_ABSOLUTE,
+                        'machine_coordinates': False
+                    },
                     '$J=G90 G20 X1.0 Y2.0 Z0.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_MILIMETERS,
+                        'distance_mode': JOG_DISTANCE_ABSOLUTE,
+                        'machine_coordinates': False
+                    },
                     '$J=G90 G21 X1.0 Y2.0 Z0.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_INCHES,
+                        'distance_mode': JOG_DISTANCE_INCREMENTAL,
+                        'machine_coordinates': False
+                    },
                     '$J=G91 G20 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': False },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_MILIMETERS,
+                        'distance_mode': JOG_DISTANCE_INCREMENTAL,
+                        'machine_coordinates': False
+                    },
                     '$J=G91 G21 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_INCHES,
+                        'distance_mode': JOG_DISTANCE_ABSOLUTE,
+                        'machine_coordinates': True
+                    },
                     '$J=G53 G90 G20 X1.0 Y2.0 Z0.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_ABSOLUTE, 'machine_coordinates': True },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_MILIMETERS,
+                        'distance_mode': JOG_DISTANCE_ABSOLUTE,
+                        'machine_coordinates': True
+                    },
                     '$J=G53 G90 G21 X1.0 Y2.0 Z0.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_INCHES, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_INCHES,
+                        'distance_mode': JOG_DISTANCE_INCREMENTAL,
+                        'machine_coordinates': True
+                    },
                     '$J=G53 G91 G20 X1.0 Y2.0'
                 ),
                 (
-                    { 'x': 1.00, 'y': 2.00, 'z': 0.00, 'feedrate': 0.00, 'units': JOG_UNIT_MILIMETERS, 'distance_mode': JOG_DISTANCE_INCREMENTAL, 'machine_coordinates': True },
+                    {
+                        'x': 1.00,
+                        'y': 2.00,
+                        'z': 0.00,
+                        'feedrate': 0.00,
+                        'units': JOG_UNIT_MILIMETERS,
+                        'distance_mode': JOG_DISTANCE_INCREMENTAL,
+                        'machine_coordinates': True
+                    },
                     '$J=G53 G91 G21 X1.0 Y2.0'
                 ),
             ]
@@ -672,8 +865,16 @@ class TestGrblController:
 
     def test_jog(self, mocker):
         # Mock GRBL methods
-        mock_build_jog_command = mocker.patch.object(GrblController, 'build_jog_command', return_value='$J=X1.0 Y2.0 Z3.0 F500.0')
-        mock_stream_line = mocker.patch.object(GrblController, 'streamLine', return_value={'raw': 'ok'})
+        mock_build_jog_command = mocker.patch.object(
+            GrblController,
+            'build_jog_command',
+            return_value='$J=X1.0 Y2.0 Z3.0 F500.0'
+        )
+        mock_stream_line = mocker.patch.object(
+            GrblController,
+            'streamLine',
+            return_value={'raw': 'ok'}
+        )
 
         # Call the method under test
         response = self.grbl_controller.jog(1.00, 2.00, 3.00, 500.00)
@@ -688,25 +889,60 @@ class TestGrblController:
             [
                 (
                     [
-                        (GRBL_MSG_VERSION, {'version': '1.1d.20161014', 'comment': '', 'raw': '[VER:1.1d.20161014:]'}),
-                        (GRBL_MSG_OPTIONS, {'optionCode': 'VL', 'blockBufferSize': '15', 'rxBufferSize': '128', 'raw': '[OPT:VL,15,128]'}),
+                        (GRBL_MSG_VERSION, {
+                            'version': '1.1d.20161014',
+                            'comment': '',
+                            'raw': '[VER:1.1d.20161014:]'
+                        }),
+                        (GRBL_MSG_OPTIONS, {
+                            'optionCode': 'VL',
+                            'blockBufferSize': '15',
+                            'rxBufferSize': '128',
+                            'raw': '[OPT:VL,15,128]'
+                        }),
                         (GRBL_RESULT_OK, {})
                     ],
-                    {'version': '1.1d.20161014', 'comment': '', 'raw_version': '[VER:1.1d.20161014:]', 'optionCode': 'VL', 'blockBufferSize': '15', 'rxBufferSize': '128', 'raw_option': '[OPT:VL,15,128]'}
+                    {
+                        'version': '1.1d.20161014',
+                        'comment': '',
+                        'raw_version': '[VER:1.1d.20161014:]',
+                        'optionCode': 'VL',
+                        'blockBufferSize': '15',
+                        'rxBufferSize': '128',
+                        'raw_option': '[OPT:VL,15,128]'
+                    }
                 ),
                 (
                     [
-                        (GRBL_MSG_OPTIONS, {'optionCode': 'VL', 'blockBufferSize': '15', 'rxBufferSize': '128', 'raw': '[OPT:VL,15,128]'}),
+                        (GRBL_MSG_OPTIONS, {
+                            'optionCode': 'VL',
+                            'blockBufferSize': '15',
+                            'rxBufferSize': '128',
+                            'raw': '[OPT:VL,15,128]'
+                        }),
                         (GRBL_RESULT_OK, {})
                     ],
-                    {'optionCode': 'VL', 'blockBufferSize': '15', 'rxBufferSize': '128', 'raw_option': '[OPT:VL,15,128]'}
+                    {
+                        'optionCode': 'VL',
+                        'blockBufferSize': '15',
+                        'rxBufferSize': '128',
+                        'raw_option': '[OPT:VL,15,128]'
+                    }
                 ),
                 (
                     [
-                        (GRBL_MSG_VERSION, {'version': '1.1d.20161014', 'comment': '', 'raw': '[VER:1.1d.20161014:]'}),
+                        (GRBL_MSG_VERSION, {
+                            'version': '1.1d.20161014',
+                            'comment': '',
+                            'raw': '[VER:1.1d.20161014:]'
+                        }),
                         (GRBL_RESULT_OK, {})
                     ],
-                    {'version': '1.1d.20161014', 'comment': '', 'raw_version': '[VER:1.1d.20161014:]'}
+                    {
+                        'version': '1.1d.20161014',
+                        'comment': '',
+                        'raw_version': '[VER:1.1d.20161014:]'
+                    }
                 )
             ]
         )
@@ -751,19 +987,27 @@ class TestGrblController:
             [
                 (
                     [
-                        (GRBL_MSG_SETTING, {'name': '$0', 'value': '100.200', 'raw': '$0=100.200'}),
-                        (GRBL_MSG_SETTING, {'name': '$102', 'value': '1.000', 'raw': '$102=1.000'}),
+                        (GRBL_MSG_SETTING, {
+                            'name': '$0',
+                            'value': '100.200',
+                            'raw': '$0=100.200'
+                        }),
+                        (GRBL_MSG_SETTING, {
+                            'name': '$102',
+                            'value': '1.000',
+                            'raw': '$102=1.000'
+                        }),
                         (GRBL_RESULT_OK, {})
                     ],
                     {
                         '$0': {
-                            'value' : '100.200',
+                            'value': '100.200',
                             'message': 'Step pulse time',
                             'units': 'microseconds',
                             'description': 'Sets time length per step. Minimum 3usec.'
                         },
                         '$102': {
-                            'value' : '1.000',
+                            'value': '1.000',
                             'message': 'Z-axis travel resolution',
                             'units': 'step/mm',
                             'description': 'Z-axis travel resolution in steps per millimeter.'
@@ -772,22 +1016,30 @@ class TestGrblController:
                 ),
                 (
                     [
-                        (GRBL_MSG_SETTING, {'name': '$0', 'value': '100.200', 'raw': '$0=100.200'}),
+                        (GRBL_MSG_SETTING, {
+                            'name': '$0',
+                            'value': '100.200',
+                            'raw': '$0=100.200'
+                        }),
                         ('ANOTHER_CODE', {}),
                         ('ANOTHER_CODE', {}),
                         ('ANOTHER_CODE', {}),
-                        (GRBL_MSG_SETTING, {'name': '$102', 'value': '1.000', 'raw': '$102=1.000'}),
+                        (GRBL_MSG_SETTING, {
+                            'name': '$102',
+                            'value': '1.000',
+                            'raw': '$102=1.000'
+                        }),
                         (GRBL_RESULT_OK, {})
                     ],
                     {
                         '$0': {
-                            'value' : '100.200',
+                            'value': '100.200',
                             'message': 'Step pulse time',
                             'units': 'microseconds',
                             'description': 'Sets time length per step. Minimum 3usec.'
                         },
                         '$102': {
-                            'value' : '1.000',
+                            'value': '1.000',
                             'message': 'Z-axis travel resolution',
                             'units': 'step/mm',
                             'description': 'Z-axis travel resolution in steps per millimeter.'
@@ -841,17 +1093,52 @@ class TestGrblController:
             GrblController,
             'sendCommand',
             return_value=[
-                (GRBL_MSG_PARAMS, {'name': 'G54', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G54:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G55', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G55:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G56', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G56:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G57', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G57:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G58', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G58:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G59', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G59:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G28', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G28:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G30', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G30:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'G92', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000}, 'raw': '[G92:0.000,0.000,0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'TLO', 'value': 0.000, 'raw': '[TLO:0.000]'}),
-                (GRBL_MSG_PARAMS, {'name': 'PRB', 'value': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': False}, 'raw': '[PRB:0.000,0.000,0.000:0]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G54',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G54:0.000,0.000,0.000]'
+                }),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G55',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G55:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G56',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G56:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G57',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G57:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G58',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G58:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G59',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G59:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G28',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G28:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G30',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G30:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'G92',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+                    'raw': '[G92:0.000,0.000,0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'TLO',
+                    'value': 0.000,
+                    'raw': '[TLO:0.000]'}),
+                (GRBL_MSG_PARAMS, {
+                    'name': 'PRB',
+                    'value': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': False},
+                    'raw': '[PRB:0.000,0.000,0.000:0]'
+                }),
             ]
         )
 
@@ -860,40 +1147,50 @@ class TestGrblController:
 
         # Assertions
         assert response == {
-            'G54' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G55' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G56' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G57' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G58' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G59' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G28' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G30' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G92' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'TLO' : 0.000,
-            'PRB' : { 'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': False }
+            'G54': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G55': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G56': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G57': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G58': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G59': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G28': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G30': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G92': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'TLO': 0.000,
+            'PRB': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': False}
         }
         assert mock_command_send.call_count == 1
 
     def test_getters(self):
         # Test values
-        mock_machine_position = { 'x': '1.000', 'y': '2.000', 'z': '3.000' }
-        mock_work_position = { 'x': '3.000', 'y': '2.000', 'z': '1.000' }
-        mock_modal_group = { 'motion': 'G0', 'wcs': 'G54', 'plane': 'G17', 'units': 'G21', 'distance': 'G90', 'feedrate': 'G94', 'program': 'M0', 'spindle': 'M5', 'coolant': 'M9' }
+        mock_machine_position = {'x': '1.000', 'y': '2.000', 'z': '3.000'}
+        mock_work_position = {'x': '3.000', 'y': '2.000', 'z': '1.000'}
+        mock_modal_group = {
+            'motion': 'G0',
+            'wcs': 'G54',
+            'plane': 'G17',
+            'units': 'G21',
+            'distance': 'G90',
+            'feedrate': 'G94',
+            'program': 'M0',
+            'spindle': 'M5',
+            'coolant': 'M9'
+        }
         mock_tool = '7'
         mock_feedrate = '500.0'
         mock_spindle = '50.0'
         mock_parameters = {
-            'G54' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G55' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G56' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G57' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G58' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G59' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G28' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G30' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'G92' : { 'x': 0.000, 'y': 0.000, 'z': 0.000 },
-            'TLO' : 0.000,
-            'PRB' : { 'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': True }
+            'G54': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G55': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G56': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G57': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G58': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G59': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G28': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G30': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'G92': {'x': 0.000, 'y': 0.000, 'z': 0.000},
+            'TLO': 0.000,
+            'PRB': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': True}
         }
         mock_checkmode = True
 

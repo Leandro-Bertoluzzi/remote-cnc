@@ -3,6 +3,7 @@ from database.repositories.materialRepository import MaterialRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
+
 class TestMaterialRepository:
     def test_create_material(self, mocked_session):
         material_repository = MaterialRepository(mocked_session)
@@ -33,7 +34,11 @@ class TestMaterialRepository:
         updated_description = 'Updated description'
 
         # Call method under test
-        updated_material = material_repository.update_material(1, updated_name, updated_description)
+        updated_material = material_repository.update_material(
+            1,
+            updated_name,
+            updated_description
+        )
 
         # Assertions
         assert updated_material.name == updated_name

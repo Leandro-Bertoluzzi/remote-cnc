@@ -2,8 +2,9 @@ from pathlib import Path
 import pytest
 import shutil
 import time
+from utils.files import isAllowedFile, getFileNameInFolder, createFileName, \
+    saveFile, renameFile, deleteFile
 
-from utils.files import isAllowedFile, getFileNameInFolder, createFileName, saveFile, renameFile, deleteFile
 
 @pytest.mark.parametrize(
         'file_name,expected',
@@ -22,11 +23,13 @@ from utils.files import isAllowedFile, getFileNameInFolder, createFileName, save
 def test_isAllowedFile(file_name, expected):
     assert isAllowedFile(file_name) == expected
 
+
 def test_getFileNameInFolder():
     current = 'path/to/files/current.py'
     searched = 'searched.txt'
     expected = Path('path/to/files/searched.txt')
     assert getFileNameInFolder(current, searched) == expected
+
 
 def test_createFileName(mocker):
     mock_timestamp = mocker.patch.object(time, 'strftime', return_value='20230720-192900')
@@ -36,6 +39,7 @@ def test_createFileName(mocker):
     # Assertions
     assert createFileName(file_name) == expected
     assert mock_timestamp.call_count == 1
+
 
 @pytest.mark.parametrize('user_folder_exists', [True, False])
 def test_saveFile(mocker, user_folder_exists):
@@ -61,6 +65,7 @@ def test_saveFile(mocker, user_folder_exists):
     assert mock_create_dir.call_count == create_dir_call_count
     assert mock_copy_file.call_count == 1
 
+
 def test_saveFile_with_invalid_name(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.invalid'
@@ -81,6 +86,7 @@ def test_saveFile_with_invalid_name(mocker):
     assert mock_create_dir.call_count == 0
     assert mock_copy_file.call_count == 0
 
+
 def test_saveFile_with_os_error(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
@@ -92,7 +98,8 @@ def test_saveFile_with_os_error(mocker):
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
         saveFile(user_id, original_path, file_name)
-    assert str(error.value) == 'There was an error writing the file in the file system'
+    assert 'There was an error writing the file in the file system' in str(error.value)
+
 
 def test_renameFile(mocker):
     # Set variables
@@ -114,6 +121,7 @@ def test_renameFile(mocker):
     assert result == expected
     assert mock_rename_file.call_count == 1
 
+
 def test_renameFile_with_invalid_name(mocker):
     file_name = 'file_20220610-192900.gcode'
     new_file_name = 'file-updated.invalid'
@@ -130,6 +138,7 @@ def test_renameFile_with_invalid_name(mocker):
     # Assertions
     assert mock_rename_file.call_count == 0
 
+
 def test_renameFile_with_os_error(mocker):
     file_name = '1/file_20220610-192900.gcode'
     new_file_name = 'file-updated.gcode'
@@ -141,7 +150,8 @@ def test_renameFile_with_os_error(mocker):
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
         renameFile(user_id, file_name, new_file_name)
-    assert str(error.value) == 'There was an error renaming the file in the file system'
+    assert 'There was an error renaming the file in the file system' in str(error.value)
+
 
 def test_deleteFile(mocker):
     file_name = 'file_20230720-192900.gcode'
@@ -154,6 +164,7 @@ def test_deleteFile(mocker):
     deleteFile(user_id, file_name)
     assert mock_remove_file.call_count == 1
 
+
 def test_deleteFile_with_os_error(mocker):
     # Mock file removal and simulate exception
     mocker.patch.object(Path, 'unlink', side_effect=Exception('mocked error'))
@@ -161,4 +172,4 @@ def test_deleteFile_with_os_error(mocker):
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
         deleteFile(1, 'file_name')
-    assert str(error.value) == 'There was an error removing the file from the file system'
+    assert 'There was an error removing the file from the file system' in str(error.value)

@@ -2,6 +2,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from ..base import Session
 from ..models.material import Material
 
+
 class MaterialRepository:
     def __init__(self, _session=None):
         self.session = _session or Session()

@@ -3,6 +3,7 @@ from database.repositories.userRepository import UserRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
+
 class TestUserRepository:
     def test_create_user(self, mocked_session):
         user_repository = UserRepository(mocked_session)
@@ -61,7 +62,12 @@ class TestUserRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            user_repository.create_user(name='name', email='email@email.com', password='password', role='invalid-role')
+            user_repository.create_user(
+                name='name',
+                email='email@email.com',
+                password='password',
+                role='invalid-role'
+            )
         assert str(error.value) == 'ERROR: Role invalid-role is not valid'
 
     def test_error_create_existing_user(self, mocked_session):
@@ -69,7 +75,12 @@ class TestUserRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            user_repository.create_user(name='name', email='test@testing.com', password='password', role='user')
+            user_repository.create_user(
+                name='name',
+                email='test@testing.com',
+                password='password',
+                role='user'
+            )
         assert 'There is already a user registered with the email' in str(error.value)
 
     def test_error_create_user_db_error(self, mocker, mocked_session):
@@ -79,7 +90,12 @@ class TestUserRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            user_repository.create_user(name='name', email='email@email.com', password='password', role='user')
+            user_repository.create_user(
+                name='name',
+                email='email@email.com',
+                password='password',
+                role='user'
+            )
         assert 'Error creating the user in the DB' in str(error.value)
 
     def test_error_get_all_users_db_error(self, mocker, mocked_session):
@@ -97,7 +113,12 @@ class TestUserRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            user_repository.update_user(id=1, name='name', email='email@email.com', role='invalid-role')
+            user_repository.update_user(
+                id=1,
+                name='name',
+                email='email@email.com',
+                role='invalid-role'
+            )
         assert str(error.value) == 'ERROR: Role invalid-role is not valid'
 
     def test_error_update_non_existing_user(self, mocked_session):
@@ -105,7 +126,12 @@ class TestUserRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            user_repository.update_user(id=5000, name='name', email='test@testing.com', role='user')
+            user_repository.update_user(
+                id=5000,
+                name='name',
+                email='test@testing.com',
+                role='user'
+            )
         assert str(error.value) == 'User with ID 5000 was not found'
 
     def test_error_update_user_db_error(self, mocker, mocked_session):

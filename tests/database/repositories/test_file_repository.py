@@ -3,6 +3,7 @@ from database.repositories.fileRepository import FileRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
+
 class TestFileRepository:
     def test_create_file(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -82,7 +83,11 @@ class TestFileRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            file_repository.create_file(user_id=1, file_name='name.gcode', file_name_saved='path/to/files/name.gcode')
+            file_repository.create_file(
+                user_id=1,
+                file_name='name.gcode',
+                file_name_saved='path/to/files/name.gcode'
+            )
         assert 'Error creating the file in the DB' in str(error.value)
 
     def test_error_get_all_files_from_non_existing_user(self, mocked_session):
@@ -137,7 +142,12 @@ class TestFileRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            file_repository.update_file(id=5000, user_id=1, file_name='name.gcode', file_name_saved='path/to/files/name.gcode')
+            file_repository.update_file(
+                id=5000,
+                user_id=1,
+                file_name='name.gcode',
+                file_name_saved='path/to/files/name.gcode'
+            )
         assert str(error.value) == 'File with ID 5000 was not found'
 
     def test_error_update_file_db_error(self, mocker, mocked_session):
@@ -147,7 +157,11 @@ class TestFileRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            file_repository.update_file(id=1, user_id=1, file_name='name.gcode', file_name_saved='path/to/files/name.gcode')
+            file_repository.update_file(
+                id=1, user_id=1,
+                file_name='name.gcode',
+                file_name_saved='path/to/files/name.gcode'
+            )
         assert 'Error updating the file in the DB' in str(error.value)
 
     def test_error_remove_non_existing_file(self, mocked_session):

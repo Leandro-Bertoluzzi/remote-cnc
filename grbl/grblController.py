@@ -1,8 +1,11 @@
 import logging
 from serial import SerialException
-from .constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_QUERY_COMMANDS, GRBL_REALTIME_COMMANDS, GRBL_SETTINGS
+from .constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_QUERY_COMMANDS, \
+    GRBL_REALTIME_COMMANDS, GRBL_SETTINGS
 from .grblLineParser import GrblLineParser
-from .parsers.grblMsgTypes import *
+from .parsers.grblMsgTypes import GRBL_MSG_ALARM, GRBL_MSG_FEEDBACK, GRBL_MSG_HELP, \
+    GRBL_MSG_OPTIONS, GRBL_MSG_PARSER_STATE, GRBL_MSG_PARAMS, GRBL_MSG_SETTING, \
+    GRBL_MSG_STARTUP, GRBL_MSG_STATUS, GRBL_MSG_VERSION, GRBL_RESULT_ERROR, GRBL_RESULT_OK
 
 try:
     from ..utils.serial import SerialService
@@ -19,6 +22,7 @@ JOG_UNIT_INCHES = 'inches'
 JOG_DISTANCE_ABSOLUTE = 'distance_absolute'
 JOG_DISTANCE_INCREMENTAL = 'distance_incremental'
 
+
 class GrblController:
     state = {
         'status': {
@@ -29,15 +33,15 @@ class GrblController:
         },
         'parserstate': {
             'modal': {
-                'motion': 'G0', # G0, G1, G2, G3, G38.2, G38.3, G38.4, G38.5, G80
-                'wcs': 'G54', # G54, G55, G56, G57, G58, G59
-                'plane': 'G17', # G17: xy-plane, G18: xz-plane, G19: yz-plane
-                'units': 'G21', # G20: Inches, G21: Millimeters
-                'distance': 'G90', # G90: Absolute, G91: Relative
-                'feedrate': 'G94', # G93: Inverse time mode, G94: Units per minute
-                'program': 'M0', # M0, M1, M2, M30
-                'spindle': 'M5', # M3: Spindle (cw), M4: Spindle (ccw), M5: Spindle off
-                'coolant': 'M9' # M7: Mist coolant, M8: Flood coolant, M9: Coolant off, [M7,M8]: Both on
+                'motion': 'G0',
+                'wcs': 'G54',
+                'plane': 'G17',
+                'units': 'G21',
+                'distance': 'G90',
+                'feedrate': 'G94',
+                'program': 'M0',
+                'spindle': 'M5',
+                'coolant': 'M9'
             },
             'tool': '1',
             'feedrate': '0',
@@ -57,7 +61,10 @@ class GrblController:
 
         # Configure logger
         file_handler = logging.FileHandler('grbl.log', 'a')
-        file_format = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+        file_format = logging.Formatter(
+            '[%(asctime)s] %(levelname)s: %(message)s',
+            datefmt='%d/%m/%Y %H:%M:%S'
+        )
         file_handler.setFormatter(file_format)
         self.logger = logger
         self.logger.addHandler(file_handler)
@@ -67,10 +74,21 @@ class GrblController:
         """
         try:
             response = self.serial.startConnection(port, baudrate)
-            self.logger.info('Started USB connection at port %s with a baudrate of %s', port, baudrate)
-        except SerialException as error:
-            self.logger.critical('Failed opening serial port %s with a baudrate of %s', port, baudrate, exc_info=True)
-            raise Exception('Failed opening serial port, verify the connection and close any other connection you may have')
+            self.logger.info(
+                'Started USB connection at port %s with a baudrate of %s',
+                port,
+                baudrate
+            )
+        except SerialException:
+            self.logger.critical(
+                'Failed opening serial port %s with a baudrate of %s',
+                port,
+                baudrate,
+                exc_info=True
+            )
+            raise Exception(
+                'Failed opening serial port, verify and close any other connection you may have'
+            )
 
         msgType, payload = self.parseResponse(response)
 
@@ -84,13 +102,14 @@ class GrblController:
         # -- Startup alarm message validation --
         # [MSG:'$H'|'$X' to unlock] - Alarm state is active at initialization.
         # This message serves as a reminder note on how to cancel the alarm state.
-        # All g-code commands and some ‘$’ are blocked until the alarm state is cancelled via homing $H or unlocking $X.
+        # All g-code commands and some ‘$’ are blocked until the alarm state is cancelled
+        # via homing $H or unlocking $X.
         # Only appears immediately after the Grbl welcome message when initialized with an alarm.
         response = self.serial.readLine()
         msgType, payload = self.parseResponse(response)
 
         if (msgType == GRBL_MSG_FEEDBACK) and ('$H' in payload['message']):
-            #responsePayload['homing'] = True
+            # responsePayload['homing'] = True
             self.logger.warning('Homing cycle required at startup, handling...')
             self.handleHomingCycle()
 
@@ -123,11 +142,29 @@ class GrblController:
         msgType, payload = self.parseResponse(response)
 
         if msgType == GRBL_RESULT_ERROR:
-            self.logger.error('Error executing line: %s. Error: %s. Description: %s', line, payload['message'], payload['description'])
-            raise Exception('Error executing line: ' + payload['message'] + '. Description: ' + payload['description'])
+            message = payload['message']
+            description = payload['description']
+            self.logger.error(
+                'Error executing line: %s. Error: %s. Description: %s',
+                line,
+                message,
+                description
+            )
+            raise Exception(
+                'Error executing line: ' + message + '. Description: ' + description
+            )
         if msgType == GRBL_MSG_ALARM:
-            self.logger.critical('Alarm activated executing line: %s. Alarm: %s. Description: %s', line, payload['message'], payload['description'])
-            raise Exception('Alarm activated: ' + payload['message'] + '. Description: ' + payload['description'])
+            message = payload['message']
+            description = payload['description']
+            self.logger.critical(
+                'Alarm activated executing line: %s. Alarm: %s. Description: %s',
+                line,
+                message,
+                description
+            )
+            raise Exception(
+                'Alarm activated: ' + message + '. Description: ' + description
+            )
         return payload
 
     def sendCommand(self, command: str) -> list[tuple[str | None, dict[str, str]]]:
@@ -135,20 +172,20 @@ class GrblController:
         Returns all responses from the GRBL device until an 'ok' is found.
 
         Query commands:
-        - '$' : Help
-        - '$$' : GRBL settings
-        - '$I' : Build/Version info
-        - '$H' : Homing cycle
-        - '$X' : Disable alarm
-        - '$G' : G-code Parser State
-        - '$#' : GRBL parameters
-        - '$C' : G-code check mode enable/disable
+        - '$': Help
+        - '$$': GRBL settings
+        - '$I': Build/Version info
+        - '$H': Homing cycle
+        - '$X': Disable alarm
+        - '$G': G-code Parser State
+        - '$#': GRBL parameters
+        - '$C': G-code check mode enable/disable
 
         Real-time Commands:
-        - '~' : Cycle Start
-        - '!' : Feed Hold
-        - '?' : Current Status
-        - '\x18' (Ctrl-X) : Reset Grbl
+        - '~': Cycle Start
+        - '!': Feed Hold
+        - '?': Current Status
+        - '\x18' (Ctrl-X): Reset Grbl
         """
         if (command not in GRBL_QUERY_COMMANDS) and (command not in GRBL_REALTIME_COMMANDS):
             self.logger.error('Invalid GRBL command: %s', command)
@@ -181,7 +218,7 @@ class GrblController:
     def handleHomingCycle(self):
         """Runs the GRBL device's homing cycle.
         """
-        #self.sendCommand('$H')
+        # self.sendCommand('$H')
 
         # Technical debt: Temporary solution, disable alarm
         self.disableAlarm()
@@ -207,27 +244,47 @@ class GrblController:
     def toggleCheckMode(self) -> dict[str, bool]:
         """Enables/Disables the "check G-code" mode.
 
-        With this mode enabled, the user can stream a G-code program to Grbl, where it will parse it,
-        error-check it, and report ok's and errors:'s without powering on anything or moving.
+        With this mode enabled, the user can stream a G-code program to Grbl,
+        where it will parse it, error-check it, and report ok's and errors
+        without powering on anything or moving.
         """
         responses = self.sendCommand('$C')
 
         for (msgType, payload) in responses:
-            if (msgType == GRBL_MSG_FEEDBACK) and ('Enabled' in payload['message'] or 'Disabled' in payload['message']):
+            if (msgType == GRBL_MSG_FEEDBACK):
+                is_check_msg = 'Enabled' in payload['message'] or 'Disabled' in payload['message']
+                if not is_check_msg:
+                    continue
                 checkmode = ('Enabled' in payload['message'])
                 self.settings['checkmode'] = checkmode
                 self.logger.info('Checkmode was successfully updated to %s', checkmode)
-                return { 'checkmode' : checkmode }
+                return {'checkmode': checkmode}
 
         self.logger.error('There was an error enabling the check mode')
         raise Exception('There was an error enabling the check mode')
 
-    def jog(self, x:float, y:float, z:float, feedrate:float, *, units=None, distance_mode=None, machine_coordinates=False) -> str:
+    def jog(
+            self,
+            x: float,
+            y: float,
+            z: float,
+            feedrate: float, *,
+            units=None,
+            distance_mode=None,
+            machine_coordinates=False
+    ) -> str:
         """Executes a 'jog' action.
 
-        JOG mode is also called jogging mode. In this mode, the CNC machine is used to operate manually.
+        JOG mode is also called jogging mode.
+        In this mode, the CNC machine is used to operate manually.
         """
-        jog_command = self.build_jog_command(x, y, z, feedrate, units=units, distance_mode=distance_mode, machine_coordinates=machine_coordinates)
+        jog_command = self.build_jog_command(
+            x, y, z,
+            feedrate,
+            units=units,
+            distance_mode=distance_mode,
+            machine_coordinates=machine_coordinates
+        )
 
         # Send command and expect response
         response = self.streamLine(jog_command, GRBL_LINE_JOG)
@@ -244,7 +301,10 @@ class GrblController:
         for (msgType, payload) in responses:
             if (msgType == GRBL_MSG_STATUS):
                 self.state['status'].update(payload)
-                self.logger.debug('Device status was successfully updated to %s', self.state['status'])
+                self.logger.debug(
+                    'Device status was successfully updated to %s',
+                    self.state['status']
+                )
                 return self.state['status']
 
         self.logger.error('There was an error retrieving the device status')
@@ -258,7 +318,10 @@ class GrblController:
         for (msgType, payload) in responses:
             if (msgType == GRBL_MSG_PARSER_STATE):
                 self.state['parserstate'].update(payload)
-                self.logger.debug('Parser state was successfully updated to %s', self.state['parserstate'])
+                self.logger.debug(
+                    'Parser state was successfully updated to %s',
+                    self.state['parserstate']
+                )
                 return self.state['parserstate']
 
         self.logger.error('There was an error retrieving the parser state')
@@ -287,7 +350,10 @@ class GrblController:
                 name = payload['name']
                 self.settings['parameters'][name] = payload['value']
 
-        self.logger.debug('Device parameters were successfully updated to %s', self.settings['parameters'])
+        self.logger.debug(
+            'Device parameters were successfully updated to %s',
+            self.settings['parameters']
+        )
         return self.settings['parameters']
 
     def queryGrblSettings(self):
@@ -306,10 +372,10 @@ class GrblController:
                         setting = element
                         break
                 response[key] = {
-                    'value' : payload['value'],
-                    'message' : setting['message'],
-                    'units' : setting['units'],
-                    'description' : setting['description'],
+                    'value': payload['value'],
+                    'message': setting['message'],
+                    'units': setting['units'],
+                    'description': setting['description'],
                 }
 
         if not response:
@@ -322,7 +388,13 @@ class GrblController:
         """Queries some GRBL device's (firmware) build information.
 
         Example:
-        - {'version': '1.1d.20161014', 'comment': '', 'optionCode': 'VL', 'blockBufferSize': '15', 'rxBufferSize': '128'}
+        - {
+            'version': '1.1d.20161014',
+            'comment': '',
+            'optionCode': 'VL',
+            'blockBufferSize': '15',
+            'rxBufferSize': '128'
+        }
         """
         responses = self.sendCommand('$I')
 
@@ -361,7 +433,17 @@ class GrblController:
     def getModalGroup(self) -> dict[str, str]:
         """Returns the GRBL device's current modal state.
 
-        Example: { 'motion': 'G0', 'wcs': 'G54', 'plane': 'G17', 'units': 'G21', 'distance': 'G90', 'feedrate': 'G94', 'program': 'M0', 'spindle': 'M5', 'coolant': 'M9' }
+        Example: {
+            'motion': 'G0',
+            'wcs': 'G54',
+            'plane': 'G17',
+            'units': 'G21',
+            'distance': 'G90',
+            'feedrate': 'G94',
+            'program': 'M0',
+            'spindle': 'M5',
+            'coolant': 'M9'
+        }
 
         Fields description:
             - 'motion': G0, G1, G2, G3, G38.2, G38.3, G38.4, G38.5, G80
@@ -395,17 +477,17 @@ class GrblController:
         """Returns the GRBL device's current parameter data.
 
         Example: {
-            'G54' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G55' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G56' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G57' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G58' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G59' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G28' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G30' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'G92' : { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
-            'TLO' : 0.000,
-            'PRB' : { 'x': '0.000', 'y': '0.000', 'z': '0.000', 'result': True }
+            'G54': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G55': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G56': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G57': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G58': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G59': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G28': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G30': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'G92': { 'x': '0.000', 'y': '0.000', 'z': '0.000' },
+            'TLO': 0.000,
+            'PRB': { 'x': '0.000', 'y': '0.000', 'z': '0.000', 'result': True }
         }
         """
         return self.settings['parameters']
@@ -427,10 +509,20 @@ class GrblController:
         activeState = self.state['status']['activeState']
         return activeState == GRBL_ACTIVE_STATE_IDLE
 
-    def build_jog_command(self, x:float, y:float, z:float, feedrate:float, *, units=None, distance_mode=None, machine_coordinates=False) -> str:
+    def build_jog_command(
+            self,
+            x: float,
+            y: float,
+            z: float,
+            feedrate: float, *,
+            units=None,
+            distance_mode=None,
+            machine_coordinates=False
+    ) -> str:
         """Builds a 'jog' command from the parameters.
 
-        JOG mode is also called jogging mode. In this mode, the CNC machine is used to operate manually.
+        JOG mode is also called jogging mode.
+        In this mode, the CNC machine is used to operate manually.
         """
         jog_command = "$J="
 

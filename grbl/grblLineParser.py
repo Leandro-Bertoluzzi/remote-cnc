@@ -14,6 +14,7 @@ from .parsers.grblParserMsgVersion import GrblParserMsgVersion
 from .parsers.grblParserResultError import GrblParserResultError
 from .parsers.grblParserResultOk import GrblParserResultOk
 
+
 class GrblLineParser:
     @staticmethod
     def parse(line: str) -> tuple[str | None, dict[str, str]]:
@@ -85,4 +86,4 @@ class GrblLineParser:
                 result[1].update({'raw': line})
                 return result
 
-        return None, { 'raw': line }
+        return None, {'raw': line}

@@ -2,6 +2,7 @@ import re
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_VERSION
 
+
 class GrblParserMsgVersion(GrblParserGeneric):
     """Detects a GRBL version message, initiated by the user via a `$I` print help command.
     It always goes together with the option message [OPT: ].

@@ -3,6 +3,7 @@ from database.repositories.taskRepository import TaskRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
+
 class TestTaskRepository:
     def test_create_task(self, mocked_session):
         task_repository = TaskRepository(mocked_session)
@@ -14,7 +15,14 @@ class TestTaskRepository:
         note = 'This is a note'
 
         # Call method under test
-        new_task = task_repository.create_task(user_id, file_id, tool_id, material_id, name, note)
+        new_task = task_repository.create_task(
+            user_id,
+            file_id,
+            tool_id,
+            material_id,
+            name,
+            note
+        )
 
         # Assertions
         assert new_task is not None
@@ -73,7 +81,16 @@ class TestTaskRepository:
         priority = 80
 
         # Call method under test
-        updated_task = task_repository.update_task(1, user_id, file_id, tool_id, material_id, name, note, priority)
+        updated_task = task_repository.update_task(
+            1,
+            user_id,
+            file_id,
+            tool_id,
+            material_id,
+            name,
+            note,
+            priority
+        )
 
         # Assertions
         assert updated_task.user_id == user_id
@@ -84,21 +101,33 @@ class TestTaskRepository:
         assert updated_task.note == note
         assert updated_task.priority == priority
 
-    @pytest.mark.parametrize('status,expected_admin_id,expected_cancellation_reason',
-        [
-            ('pending_approval', None, None),
-            ('on_hold', 1, None),
-            ('rejected', 1, 'This is a valid reason'),
-            ('cancelled', None, 'This is a valid reason')
-        ]
+    @pytest.mark.parametrize(
+            'status,expected_admin_id,expected_cancellation_reason',
+            [
+                ('pending_approval', None, None),
+                ('on_hold', 1, None),
+                ('rejected', 1, 'This is a valid reason'),
+                ('cancelled', None, 'This is a valid reason')
+            ]
     )
-    def test_update_task_status(self, mocked_session, status, expected_admin_id, expected_cancellation_reason):
+    def test_update_task_status(
+        self,
+        mocked_session,
+        status,
+        expected_admin_id,
+        expected_cancellation_reason
+    ):
         task_repository = TaskRepository(mocked_session)
         admin_id = 1
         cancellation_reason = 'This is a valid reason'
 
         # Call method under test
-        updated_task = task_repository.update_task_status(1, status, admin_id, cancellation_reason)
+        updated_task = task_repository.update_task_status(
+            1,
+            status,
+            admin_id,
+            cancellation_reason
+        )
 
         # Assertions
         assert updated_task.status == status
@@ -123,7 +152,13 @@ class TestTaskRepository:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            task_repository.create_task(user_id=1, file_id=1, tool_id=1, material_id=1, name='name')
+            task_repository.create_task(
+                user_id=1,
+                file_id=1,
+                tool_id=1,
+                material_id=1,
+                name='name'
+            )
         assert 'Error creating the task in the DB' in str(error.value)
 
     def test_error_get_all_tasks_from_user_db_error(self, mocker, mocked_session):

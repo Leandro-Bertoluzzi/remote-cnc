@@ -2,6 +2,7 @@ import re
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_STARTUP
 
+
 class GrblParserMsgStartup(GrblParserGeneric):
     """Detects a GRBL startup (welcome) message.
 
@@ -15,15 +16,18 @@ class GrblParserMsgStartup(GrblParserGeneric):
     """
     @staticmethod
     def parse(line):
-        matches = re.search(r'^([a-zA-Z0-9]+)\s+((?:\d+\.){1,2}\d+[a-zA-Z0-9\-\.]*)([^\[]*\[[^\]]+\].*)?', line)
+        matches = re.search(
+            r'^([a-zA-Z0-9]+)\s+((?:\d+\.){1,2}\d+[a-zA-Z0-9\-\.]*)([^\[]*\[[^\]]+\].*)?',
+            line
+        )
 
         if (not matches):
             return None
 
         payload = {
-            'firmware' : matches.group(1),
-            'version' : matches.group(2),
-            'message' : matches.group(3)
+            'firmware': matches.group(1),
+            'version': matches.group(2),
+            'message': matches.group(3)
         }
 
         return GRBL_MSG_STARTUP, payload

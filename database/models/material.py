@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..base import Base
 
+
 class Material(Base):
     __tablename__ = 'materials'
 
@@ -20,4 +21,6 @@ class Material(Base):
         self.added_at = added_at
 
     def __repr__(self):
-        return f"<Material: {self.name}, description: {self.description}, added at: {self.added_at}>"
+        return (
+            f"<Material: {self.name}, description: {self.description}, added at: {self.added_at}>"
+        )

@@ -1,6 +1,7 @@
 from database.models.material import Material
 from datetime import datetime
 
+
 def test_material():
     # Auxiliary variables
     now = datetime(2023, 7, 20)
@@ -13,5 +14,6 @@ def test_material():
     assert material.description == 'Just a material'
     assert material.added_at == datetime(2023, 7, 20)
 
-    assert material.__repr__() == '<Material: Example material, description: Just a material, added at: 2023-07-20 00:00:00>'
-
+    assert material.__repr__() == (
+        '<Material: Example material, description: Just a material, added at: 2023-07-20 00:00:00>'
+    )

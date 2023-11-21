@@ -1,5 +1,9 @@
+from celery import Celery
+from pathlib import Path
+from celery.utils.log import get_task_logger
+
 ###########################################################
-###### Allow importing modules from parent directory ######
+#      Allow importing modules from parent directory      #
 ###########################################################
 
 import sys
@@ -16,26 +20,27 @@ sys.path.append(parent_dir)
 
 ###########################################################
 
-from celery import Celery
-from pathlib import Path
-from celery.utils.log import get_task_logger
-
 try:
-    from ..config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
+    from ..config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, \
+        SERIAL_PORT, FILES_FOLDER_PATH
     from ..database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from ..grbl.grblController import GrblController
-    from ..utils.database import get_next_task, are_there_pending_tasks, are_there_tasks_in_progress, update_task_status
+    from ..utils.database import get_next_task, are_there_pending_tasks, \
+        are_there_tasks_in_progress, update_task_status
 except ImportError:
-    from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, SERIAL_PORT, FILES_FOLDER_PATH
+    from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, \
+        SERIAL_PORT, FILES_FOLDER_PATH
     from database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from grbl.grblController import GrblController
-    from utils.database import get_next_task, are_there_pending_tasks, are_there_tasks_in_progress, update_task_status
+    from utils.database import get_next_task, are_there_pending_tasks, \
+        are_there_tasks_in_progress, update_task_status
 
 app = Celery(
     'worker',
     broker=CELERY_BROKER_URL,
     backend=CELERY_RESULT_BACKEND
 )
+
 
 @app.task(name='worker.tasks.executeTask', bind=True)
 def executeTask(self, admin_id: int) -> bool:
@@ -83,7 +88,9 @@ def executeTask(self, admin_id: int) -> bool:
                     }
                 )
 
-        # 5. When the file finishes, mark it as 'finished' in the DB and check if there is a queued task in DB. If there is none, close the connection and return
+        # 5. When the file finishes, mark it as 'finished' in the DB and check
+        # if there is a queued task in DB.
+        # If there is none, close the connection and return
         task_logger.info('Finished execution of file: %s', file_path)
         update_task_status(task.id, TASK_FINISHED_STATUS, admin_id)
         # 6. If there is a pending task, go to step 3 and repeat

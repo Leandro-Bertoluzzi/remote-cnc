@@ -2,8 +2,11 @@ import re
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_OPTIONS
 
+
 class GrblParserMsgOptions(GrblParserGeneric):
-    """Detects a GRBL compile-time options message, initiated by the user via a `$I` print help command.
+    """Detects a GRBL compile-time options message,
+    initiated by the user via a `$I` print help command.
+
     It always goes together with the version message [VER: ].
 
     [VER:] and [OPT:] Indicate build info data from a $I user query.
@@ -20,7 +23,8 @@ class GrblParserMsgOptions(GrblParserGeneric):
         if (not matches):
             return None
 
-        # Use the commas (,) to split the values, ignoring the first "[OPT:" and the last character "]"
+        # Values are split by commas (,)
+        # We ignore the first "[OPT:" and the last character "]"
         values = re.split(r',', line[5:-1])
 
         payload = {

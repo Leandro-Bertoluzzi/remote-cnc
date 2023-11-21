@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..base import Base
 
+
 class File(Base):
     __tablename__ = 'files'
 
@@ -24,4 +25,7 @@ class File(Base):
         self.created_at = created_at
 
     def __repr__(self):
-        return f"<File: {self.file_name}, path: {self.file_path}, user ID: {self.user_id}, created at: {self.created_at}>"
+        return (
+            f"<File: {self.file_name}, path: {self.file_path}, "
+            f"user ID: {self.user_id}, created at: {self.created_at}>"
+        )

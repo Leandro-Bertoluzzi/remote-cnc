@@ -2,9 +2,11 @@ import re
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_ECHO
 
+
 class GrblParserMsgEcho(GrblParserGeneric):
     """Detects a GRBL echo message.
-    These messages indicate an automated line echo from a pre-parsed string prior to g-code parsing.
+    These messages indicate an automated line echo from a pre-parsed string
+    prior to g-code parsing.
     Enabled by a config.h option, and often used for debugging communication issues.
 
     Example:

@@ -26,6 +26,7 @@ TASK_EMPTY_NOTE = ''
 TASK_DEFAULT_PRIORITY = 0
 TASK_INITIAL_STATUS = TASK_PENDING_APPROVAL_STATUS
 
+
 class Task(Base):
     __tablename__ = 'tasks'
 

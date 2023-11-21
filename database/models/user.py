@@ -5,6 +5,7 @@ from ..base import Base
 
 VALID_ROLES = ['user', 'admin']
 
+
 class User(Base):
     __tablename__ = 'users'
 

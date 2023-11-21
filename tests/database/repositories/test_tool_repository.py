@@ -3,6 +3,7 @@ from database.repositories.toolRepository import ToolRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
+
 class TestToolRepository:
     def test_create_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)

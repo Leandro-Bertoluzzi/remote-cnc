@@ -9,6 +9,7 @@ except ImportError:
 
 ALLOWED_FILE_EXTENSIONS = {'txt', 'gcode', 'nc'}
 
+
 def isAllowedFile(filename: str) -> bool:
     """
     - Name: isAllowedFile
@@ -19,6 +20,7 @@ def isAllowedFile(filename: str) -> bool:
     """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_FILE_EXTENSIONS
+
 
 def getFileNameInFolder(current: str, searched: str) -> Path:
     """
@@ -32,6 +34,7 @@ def getFileNameInFolder(current: str, searched: str) -> Path:
     folder = Path(current).parent
     return folder / searched
 
+
 def createFileName(filename: str) -> str:
     """
     - Name: createFileName
@@ -44,6 +47,7 @@ def createFileName(filename: str) -> str:
     file_base_name = Path(filename).stem
     file_extension = Path(filename).suffix.lower()
     return f'{file_base_name}_{timestamp}{file_extension}'
+
 
 def saveFile(userId: int, original_path: str, fileName: str) -> str:
     """
@@ -72,9 +76,10 @@ def saveFile(userId: int, original_path: str, fileName: str) -> str:
         full_file_path = user_files_folder_path / file_name
         shutil.copy(original_path, full_file_path)
     except Exception as error:
-        raise Exception('There was an error writing the file in the file system')
+        raise Exception(f'There was an error writing the file in the file system: {error}')
 
     return file_name
+
 
 def renameFile(userId: int, fileName: str, newFileName: str) -> str:
     """
@@ -98,9 +103,10 @@ def renameFile(userId: int, fileName: str, newFileName: str) -> str:
         full_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{file_name}')
         current_file_path.rename(full_file_path)
     except Exception as error:
-        raise Exception('There was an error renaming the file in the file system')
+        raise Exception(f'There was an error renaming the file in the file system: {error}')
 
     return file_name
+
 
 def deleteFile(userId: int, fileName: str) -> None:
     """
@@ -116,4 +122,4 @@ def deleteFile(userId: int, fileName: str) -> None:
         file_whole_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
         file_whole_path.unlink()
     except Exception as error:
-        raise Exception('There was an error removing the file from the file system')
+        raise Exception(f'There was an error removing the file from the file system: {error}')

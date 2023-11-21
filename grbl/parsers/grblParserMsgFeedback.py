@@ -2,6 +2,7 @@ import re
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_FEEDBACK
 
+
 class GrblParserMsgFeedback(GrblParserGeneric):
     """Detects a GRBL non-queried feedback message.
     These messages may appear at any time and are not part of a query.

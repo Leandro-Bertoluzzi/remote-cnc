@@ -2,8 +2,10 @@ import re
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_USER_DEFINED_STARTUP
 
+
 class GrblParserMsgUserDefinedStartup(GrblParserGeneric):
-    """Detects a GRBL user-defined startup lines message, initiated by the user via a `$N` command.
+    """Detects a GRBL user-defined startup lines message,
+    initiated by the user via a `$N` command.
 
     Example:
         - $N0=G54

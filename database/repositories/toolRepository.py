@@ -2,6 +2,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from ..base import Session
 from ..models.tool import Tool
 
+
 class ToolRepository:
     def __init__(self, _session=None):
         self.session = _session or Session()

@@ -2,8 +2,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 from ..base import Session
-from ..models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS, \
-TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, VALID_STATUSES
+from ..models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
+    TASK_REJECTED_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, \
+    VALID_STATUSES
+
 
 class TaskRepository:
     def __init__(self, _session=None):
@@ -42,7 +44,7 @@ class TaskRepository:
             user_id: int,
             status: str,
             order_criterion=Task.priority.asc()
-        ):
+    ):
         query = self.session.query(Task).options(
             joinedload(Task.file),
             joinedload(Task.tool),
@@ -124,8 +126,9 @@ class TaskRepository:
             if not task:
                 raise Exception(f'Task with ID {id} was not found')
 
-            approved = task.status == TASK_PENDING_APPROVAL_STATUS and status == TASK_APPROVED_STATUS
-            rejected = task.status == TASK_PENDING_APPROVAL_STATUS and status == TASK_REJECTED_STATUS
+            is_pending = task.status == TASK_PENDING_APPROVAL_STATUS
+            approved = is_pending and status == TASK_APPROVED_STATUS
+            rejected = is_pending and status == TASK_REJECTED_STATUS
 
             task.status = status
             task.status_updated_at = datetime.now()

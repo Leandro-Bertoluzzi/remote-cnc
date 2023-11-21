@@ -130,6 +130,8 @@ $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gev
 
 ## :wrench: Running tests
 
+### Unit tests
+
 ```bash
 $ pytest -s
 ```
@@ -138,6 +140,12 @@ If you want to update the coverage report (available in /htmlcov):
 
 ```bash
 $ pytest -s --cov=. --cov-report=html
+```
+
+### Code style linter
+
+```bash
+$ flake8
 ```
 
 ## :memo: License

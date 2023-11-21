@@ -1,6 +1,7 @@
 from database.models.user import User
 import bcrypt
 
+
 def test_user(mocker):
     password = '1234'
     salt = b'$2b$12$Sz3AvkbAmzPN8elw95os.u'
@@ -23,11 +24,12 @@ def test_user(mocker):
 
     assert user.__repr__() == '<User: John Doe, email: test@testing.com, role: user>'
 
+
 def test_user_validate_password(mocker):
     password = '1234'
 
     # Instantiate user
     user = User('John Doe', 'test@testing.com', password, 'user')
 
-    assert user.validatePassword('1234') == True
-    assert user.validatePassword('INCORRECT-PASSWORD') == False
+    assert user.validatePassword('1234')
+    assert not user.validatePassword('INCORRECT-PASSWORD')
