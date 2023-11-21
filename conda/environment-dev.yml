@@ -6,6 +6,7 @@ dependencies:
   - alembic
   - bcrypt
   - flake8
+  - mypy
   - pip
   - pymysql
   - pyqt
