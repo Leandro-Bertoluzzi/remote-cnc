@@ -99,7 +99,7 @@ class GrblParserMsgStatus(GrblParserGeneric):
         # FS:500,8000 contains real-time feed rate, followed by spindle speed, data as the values.
         if 'FS' in result.keys():
             payload['feedrate'] = float(result['FS'][0])
-            payload['spindle'] = int(result['FS'][1])
+            payload['spindle'] = float(result['FS'][1])
 
         # Ignored: Limit pins (v0.9)
 

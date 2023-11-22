@@ -1,3 +1,6 @@
+from typing import List
+from typing_extensions import TypedDict
+
 # Grbl
 GRBL = 'Grbl'
 
@@ -45,9 +48,11 @@ GRBL_REALTIME_COMMANDS = [
     GRBL_COMMAND_SOFT_RESET
 ]
 
+ModalGroup = TypedDict('ModalGroup', {'group': str, 'modes': List[str]})
+
 # https://github.com/gnea/grbl
 # http://linuxcnc.org/docs/html/gcode/overview.html#cap:modal-groups
-GRBL_MODAL_GROUPS = [
+GRBL_MODAL_GROUPS: List[ModalGroup] = [
     { # Motion Mode (Defaults to G0)
         'group': 'motion',
         'modes': ['G0', 'G1', 'G2', 'G3', 'G38.2', 'G38.3', 'G38.4', 'G38.5', 'G80']
@@ -86,9 +91,11 @@ GRBL_MODAL_GROUPS = [
     }
 ]
 
+GrblError = TypedDict('GrblError', {'code': int, 'message': str, 'description': str})
+
 # Errors
 # https://github.com/gnea/grbl/blob/master/doc/csv/error_codes_en_US.csv
-GRBL_ERRORS = [
+GRBL_ERRORS: List[GrblError] = [
     {
         'code': 1,
         'message': 'Expected command letter',
@@ -273,7 +280,7 @@ GRBL_ERRORS = [
 
 # Alarms
 # https://github.com/gnea/grbl/blob/master/doc/csv/alarm_codes_en_US.csv
-GRBL_ALARMS = [
+GRBL_ALARMS: List[GrblError] = [
     {
         'code': 1,
         'message': 'Hard limit',

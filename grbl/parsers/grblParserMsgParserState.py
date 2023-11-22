@@ -8,6 +8,7 @@ def findGroup(code: str) -> str:
     for element in GRBL_MODAL_GROUPS:
         if code in element['modes']:
             return element['group']
+    return ''
 
 
 class GrblParserMsgParserState(GrblParserGeneric):
@@ -41,10 +42,10 @@ class GrblParserMsgParserState(GrblParserGeneric):
                 except Exception:
                     payload['modal'][group] = word
             if word[0] == 'T':
-                payload['tool'] = word[1:]
+                payload['tool'] = int(word[1:])
             if word[0] == 'F':
-                payload['feedrate'] = word[1:]
+                payload['feedrate'] = float(word[1:])
             if word[0] == 'S':
-                payload['spindle'] = word[1:]
+                payload['spindle'] = float(word[1:])
 
         return GRBL_MSG_PARSER_STATE, payload

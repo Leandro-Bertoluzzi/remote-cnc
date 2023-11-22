@@ -207,9 +207,9 @@ from grbl.grblLineParser import GrblLineParser
                             'spindle': 'M5',
                             'coolant': 'M9'
                         },
-                        'tool': '0',
-                        'feedrate': '20.',
-                        'spindle': '0.',
+                        'tool': 0,
+                        'feedrate': 20.0,
+                        'spindle': 0.0,
                         'raw': '[G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.]'
                     }
                 )
@@ -230,9 +230,9 @@ from grbl.grblLineParser import GrblLineParser
                             'spindle': 'M5',
                             'coolant': 'M9'
                         },
-                        'tool': '0',
-                        'feedrate': '20.',
-                        'spindle': '0.',
+                        'tool': 0,
+                        'feedrate': 20.0,
+                        'spindle': 0.0,
                         'raw': '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M9 T0 F20. S0.]'
                     }
                 )
@@ -253,9 +253,9 @@ from grbl.grblLineParser import GrblLineParser
                             'spindle': 'M5',
                             'coolant': ['M7', 'M8']
                         },
-                        'tool': '0',
-                        'feedrate': '20.',
-                        'spindle': '0.',
+                        'tool': 0,
+                        'feedrate': 20.0,
+                        'spindle': 0.0,
                         'raw': '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M7 M8 T0 F20. S0.]'
                     }
                 )

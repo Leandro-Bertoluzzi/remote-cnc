@@ -1,5 +1,7 @@
 import logging
 from serial import SerialException
+from typing import Any, List, Dict, Optional, Sequence
+from typing_extensions import TypedDict
 from .constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_QUERY_COMMANDS, \
     GRBL_REALTIME_COMMANDS, GRBL_SETTINGS
 from .grblLineParser import GrblLineParser
@@ -12,11 +14,34 @@ try:
 except ImportError:
     from utils.serial import SerialService
 
-# Constants
+# Definition of types
 
+Coordinates = Dict[str, float]
+Status = TypedDict('Status', {
+    'activeState': str,
+    'subState': Optional[int],
+    'mpos': Coordinates,
+    'wpos': Coordinates,
+    'ov': List[int],
+    'wco': Coordinates,
+    'pinstate': Optional[str],
+    'buffer': Optional[Dict[str, int]],
+    'line': Optional[int],
+    'accessoryState': Optional[str]
+})
+
+ParserState = TypedDict('ParserState', {
+    'modal': Dict[str, str],
+    'tool': int,
+    'feedrate': float,
+    'spindle': float
+})
+GrblState = TypedDict('GrblState', {'status': Status, 'parserstate': ParserState})
+Settings = TypedDict('Settings', {'version': str, 'parameters': Any, 'checkmode': bool})
+
+# Constants
 GRBL_LINE_GCODE = 'G-code'
 GRBL_LINE_JOG = 'jog command'
-
 JOG_UNIT_MILIMETERS = 'milimeters'
 JOG_UNIT_INCHES = 'inches'
 JOG_DISTANCE_ABSOLUTE = 'distance_absolute'
@@ -24,12 +49,18 @@ JOG_DISTANCE_INCREMENTAL = 'distance_incremental'
 
 
 class GrblController:
-    state = {
+    state: GrblState = {
         'status': {
             'activeState': '',
             'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
             'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-            'ov': []
+            'ov': [],
+            'subState': None,
+            'wco': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'pinstate': None,
+            'buffer': None,
+            'line': None,
+            'accessoryState': None
         },
         'parserstate': {
             'modal': {
@@ -43,13 +74,13 @@ class GrblController:
                 'spindle': 'M5',
                 'coolant': 'M9'
             },
-            'tool': '1',
-            'feedrate': '0',
-            'spindle': '0'
+            'tool': 1,
+            'feedrate': 0.0,
+            'spindle': 0.0
         }
     }
 
-    settings = {
+    settings: Settings = {
         'version': '',
         'parameters': {},
         'checkmode': False
@@ -167,7 +198,7 @@ class GrblController:
             )
         return payload
 
-    def sendCommand(self, command: str) -> list[tuple[str | None, dict[str, str]]]:
+    def sendCommand(self, command: str) -> Sequence[tuple[str | None, dict[str, str]]]:
         """Sends a GRBL command to the GRBL device.
         Returns all responses from the GRBL device until an 'ok' is found.
 
@@ -197,7 +228,7 @@ class GrblController:
         # Reads messages from GRBL until it sends an 'ok' response, or MESSAGES_LIMIT is reached
         # All messages previous to 'ok' are retrieved in an array to be processed later
         responses = []
-        msgType = ''
+        msgType = None
         count = 0
         MESSAGES_LIMIT = 200 if command == '$$' else 15
 
@@ -272,7 +303,7 @@ class GrblController:
             units=None,
             distance_mode=None,
             machine_coordinates=False
-    ) -> str:
+    ) -> tuple[str, dict[str, str]]:
         """Executes a 'jog' action.
 
         JOG mode is also called jogging mode.
@@ -416,14 +447,14 @@ class GrblController:
 
     # GETTERS
 
-    def getMachinePosition(self) -> dict[str, str]:
+    def getMachinePosition(self) -> dict[str, float]:
         """Returns the GRBL device's current machine position.
 
         Example: { 'x': '0.000', 'y': '0.000', 'z': '0.000' }
         """
         return self.state['status']['mpos']
 
-    def getWorkPosition(self) -> dict[str, str]:
+    def getWorkPosition(self) -> dict[str, float]:
         """Returns the GRBL device's current work position.
 
         Example: { 'x': '0.000', 'y': '0.000', 'z': '0.000' }
@@ -458,17 +489,17 @@ class GrblController:
         """
         return self.state['parserstate']['modal']
 
-    def getFeedrate(self) -> str:
+    def getFeedrate(self) -> float:
         """Returns the GRBL device's current feed rate.
         """
         return self.state['parserstate']['feedrate']
 
-    def getSpindle(self) -> str:
+    def getSpindle(self) -> float:
         """Returns the GRBL device's current spindle speed.
         """
         return self.state['parserstate']['spindle']
 
-    def getTool(self) -> str:
+    def getTool(self) -> int:
         """Returns the GRBL device's current tool.
         """
         return self.state['parserstate']['tool']

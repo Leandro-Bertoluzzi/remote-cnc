@@ -2,6 +2,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from sqlalchemy import select
 from datetime import datetime
+from typing import Optional
 from ..base import Session
 from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
     TASK_REJECTED_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, \
@@ -42,7 +43,7 @@ class TaskRepository:
 
     def _get_filtered_tasks(
             self,
-            user_id: int,
+            user_id: Optional[int],
             status: str,
             order_criterion=Task.priority.asc()
     ):
