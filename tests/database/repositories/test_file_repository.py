@@ -1,4 +1,4 @@
-from database.models.file import File
+from database.models import File
 from database.repositories.fileRepository import FileRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
@@ -30,6 +30,7 @@ class TestFileRepository:
 
         # Assertions
         assert isinstance(files, list)
+        assert len(files) == 2
 
     def test_get_all_files(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -39,6 +40,7 @@ class TestFileRepository:
 
         # Assertions
         assert isinstance(files, list)
+        assert len(files) == 2
 
     def test_get_file_by_id(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -101,7 +103,7 @@ class TestFileRepository:
 
     def test_error_get_all_files_from_user_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'execute', side_effect=SQLAlchemyError('mocked error'))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -111,7 +113,7 @@ class TestFileRepository:
 
     def test_error_get_all_files_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'execute', side_effect=SQLAlchemyError('mocked error'))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -129,7 +131,7 @@ class TestFileRepository:
 
     def test_error_get_file_by_id_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -152,7 +154,7 @@ class TestFileRepository:
 
     def test_error_update_file_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -174,7 +176,7 @@ class TestFileRepository:
 
     def test_error_remove_file_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception

@@ -1,4 +1,4 @@
-from database.models.tool import Tool
+from database.models import Tool
 from database.repositories.toolRepository import ToolRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
@@ -74,7 +74,7 @@ class TestToolRepository:
 
     def test_error_get_all_tools_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'execute', side_effect=SQLAlchemyError('mocked error'))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -92,7 +92,7 @@ class TestToolRepository:
 
     def test_error_get_tool_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -110,7 +110,7 @@ class TestToolRepository:
 
     def test_error_update_tool_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -128,7 +128,7 @@ class TestToolRepository:
 
     def test_error_remove_tool_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception

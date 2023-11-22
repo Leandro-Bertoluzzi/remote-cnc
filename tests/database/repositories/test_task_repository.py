@@ -1,4 +1,4 @@
-from database.models.task import Task
+from database.models import Task
 from database.repositories.taskRepository import TaskRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
@@ -163,7 +163,7 @@ class TestTaskRepository:
 
     def test_error_get_all_tasks_from_user_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
         task_repository = TaskRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -173,7 +173,7 @@ class TestTaskRepository:
 
     def test_error_get_all_tasks_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
         task_repository = TaskRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -183,7 +183,7 @@ class TestTaskRepository:
 
     def test_error_get_next_task_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
         task_repository = TaskRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -209,7 +209,7 @@ class TestTaskRepository:
 
     def test_error_update_task_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         task_repository = TaskRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -235,7 +235,7 @@ class TestTaskRepository:
 
     def test_error_update_task_status_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         task_repository = TaskRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -253,7 +253,7 @@ class TestTaskRepository:
 
     def test_error_remove_task_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         task_repository = TaskRepository(mocked_session)
 
         # Call the method under test and assert exception

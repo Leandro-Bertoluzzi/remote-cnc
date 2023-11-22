@@ -23,14 +23,14 @@ sys.path.append(parent_dir)
 try:
     from ..config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, \
         SERIAL_PORT, FILES_FOLDER_PATH
-    from ..database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
+    from ..database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from ..grbl.grblController import GrblController
     from ..utils.database import get_next_task, are_there_pending_tasks, \
         are_there_tasks_in_progress, update_task_status
 except ImportError:
     from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, \
         SERIAL_PORT, FILES_FOLDER_PATH
-    from database.models.task import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
+    from database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from grbl.grblController import GrblController
     from utils.database import get_next_task, are_there_pending_tasks, \
         are_there_tasks_in_progress, update_task_status

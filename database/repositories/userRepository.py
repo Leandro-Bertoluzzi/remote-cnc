@@ -1,6 +1,8 @@
+import bcrypt
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
 from ..base import Session
-from ..models.user import User, VALID_ROLES
+from ..models import User, VALID_ROLES
 
 
 class UserRepository:
@@ -15,11 +17,17 @@ class UserRepository:
             raise Exception(f'ERROR: Role {role} is not valid')
 
         try:
-            user = self.session.query(User).filter_by(email=email).first()
+            user = self.session.scalars(
+                select(User).
+                filter_by(email=email).
+                limit(1)
+            ).first()
             if user:
                 raise Exception(f'There is already a user registered with the email {email}')
 
-            new_user = User(name, email, password, role)
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+            new_user = User(name, email, hashed_password, role)
             self.session.add(new_user)
             self.session.commit()
             return new_user
@@ -29,7 +37,9 @@ class UserRepository:
 
     def get_all_users(self):
         try:
-            users = self.session.query(User).all()
+            users = self.session.execute(
+                select(User)
+            ).scalars().all()
             return users
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving users from the DB: {e}')
@@ -39,7 +49,7 @@ class UserRepository:
             raise Exception(f'ERROR: Role {role} is not valid')
 
         try:
-            user = self.session.query(User).get(id)
+            user = self.session.get(User, id)
             if not user:
                 raise Exception(f'User with ID {id} was not found')
 
@@ -55,7 +65,7 @@ class UserRepository:
 
     def remove_user(self, id):
         try:
-            user = self.session.query(User).get(id)
+            user = self.session.get(User, id)
             if not user:
                 raise Exception(f'User with ID {id} was not found')
 

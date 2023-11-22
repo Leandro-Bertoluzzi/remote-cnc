@@ -1,6 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
 from ..base import Session
-from ..models.material import Material
+from ..models import Material
 
 
 class MaterialRepository:
@@ -22,14 +23,16 @@ class MaterialRepository:
 
     def get_all_materials(self):
         try:
-            materials = self.session.query(Material).all()
+            materials = self.session.execute(
+                select(Material)
+            ).scalars().all()
             return materials
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving materials from the DB: {e}')
 
     def update_material(self, id, name, description):
         try:
-            material = self.session.query(Material).get(id)
+            material = self.session.get(Material, id)
             if not material:
                 raise Exception(f'Material with ID {id} was not found')
 
@@ -43,7 +46,7 @@ class MaterialRepository:
 
     def remove_material(self, id):
         try:
-            material = self.session.query(Material).get(id)
+            material = self.session.get(Material, id)
             if not material:
                 raise Exception(f'Material with ID {id} was not found')
 

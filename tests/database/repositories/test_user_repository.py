@@ -1,26 +1,37 @@
-from database.models.user import User
+
+import bcrypt
+from database.models import User
 from database.repositories.userRepository import UserRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 
 class TestUserRepository:
-    def test_create_user(self, mocked_session):
+    def test_create_user(self, mocked_session, mocker):
         user_repository = UserRepository(mocked_session)
         name = 'New User'
         email = 'new.user@email.com'
-        password = 'testpassword'
+        password = '1234'
         role = 'user'
+
+        # Test password hashing
+        salt = b'$2b$12$Sz3AvkbAmzPN8elw95os.u'
+        hashedPassword = bcrypt.hashpw(password.encode('utf-8'), salt)
+
+        # Mock random salt generation for hashing
+        mock_gensalt = mocker.patch('bcrypt.gensalt', return_value=salt)
 
         # Call method under test
         new_user = user_repository.create_user(name, email, password, role)
 
         # Assertions
+        assert mock_gensalt.call_count == 1
         assert new_user is not None
         assert isinstance(new_user, User)
         assert new_user.id is not None
         assert new_user.name == name
         assert new_user.email == email
+        assert new_user.password == hashedPassword
         assert new_user.role == role
 
     def test_get_all_users(self, mocked_session):
@@ -85,7 +96,7 @@ class TestUserRepository:
 
     def test_error_create_user_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
         user_repository = UserRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -100,7 +111,7 @@ class TestUserRepository:
 
     def test_error_get_all_users_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'execute', side_effect=SQLAlchemyError('mocked error'))
         user_repository = UserRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -136,7 +147,7 @@ class TestUserRepository:
 
     def test_error_update_user_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         user_repository = UserRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -154,7 +165,7 @@ class TestUserRepository:
 
     def test_error_remove_user_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         user_repository = UserRepository(mocked_session)
 
         # Call the method under test and assert exception

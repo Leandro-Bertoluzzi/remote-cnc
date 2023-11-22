@@ -1,4 +1,4 @@
-from database.models.material import Material
+from database.models import Material
 from database.repositories.materialRepository import MaterialRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
@@ -67,7 +67,7 @@ class TestMaterialRepository:
 
     def test_error_get_all_materials_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'execute', side_effect=SQLAlchemyError('mocked error'))
         material_repository = MaterialRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -85,7 +85,7 @@ class TestMaterialRepository:
 
     def test_error_update_material_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         material_repository = MaterialRepository(mocked_session)
 
         # Call the method under test and assert exception
@@ -103,7 +103,7 @@ class TestMaterialRepository:
 
     def test_error_remove_material_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'query', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
         material_repository = MaterialRepository(mocked_session)
 
         # Call the method under test and assert exception

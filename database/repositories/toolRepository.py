@@ -1,6 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
 from ..base import Session
-from ..models.tool import Tool
+from ..models import Tool
 
 
 class ToolRepository:
@@ -22,7 +23,7 @@ class ToolRepository:
 
     def get_tool_by_id(self, id):
         try:
-            tool = self.session.query(Tool).get(id)
+            tool = self.session.get(Tool, id)
             if not tool:
                 raise Exception(f'Tool with ID {id} was not found')
             return tool
@@ -31,14 +32,16 @@ class ToolRepository:
 
     def get_all_tools(self):
         try:
-            tools = self.session.query(Tool).all()
+            tools = self.session.execute(
+                select(Tool)
+            ).scalars().all()
             return tools
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tools from the DB: {e}')
 
     def update_tool(self, id, name, description):
         try:
-            tool = self.session.query(Tool).get(id)
+            tool = self.session.get(Tool, id)
             if not tool:
                 raise Exception(f'Tool with ID {id} was not found')
 
@@ -52,7 +55,7 @@ class ToolRepository:
 
     def remove_tool(self, id):
         try:
-            tool = self.session.query(Tool).get(id)
+            tool = self.session.get(Tool, id)
             if not tool:
                 raise Exception(f'Tool with ID {id} was not found')
 

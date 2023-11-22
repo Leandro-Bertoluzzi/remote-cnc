@@ -1,8 +1,9 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
+from sqlalchemy import select
 from datetime import datetime
 from ..base import Session
-from ..models.task import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
+from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
     TASK_REJECTED_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, \
     VALID_STATUSES
 
@@ -45,17 +46,22 @@ class TaskRepository:
             status: str,
             order_criterion=Task.priority.asc()
     ):
-        query = self.session.query(Task).options(
+        query = select(
+            Task
+        ).options(
             joinedload(Task.file),
-            joinedload(Task.tool),
             joinedload(Task.material),
+            joinedload(Task.tool),
             joinedload(Task.user)
         )
+
         if user_id:
-            query = query.filter_by(user_id=user_id)
+            query = query.where(Task.user_id == user_id)
         if status != 'all':
-            query = query.filter_by(status=status)
-        return query.order_by(order_criterion).all()
+            query = query.where(Task.status == status)
+        return self.session.scalars(
+            query.order_by(order_criterion)
+        ).unique().all()
 
     def get_all_tasks_from_user(self, user_id: int, status: str = 'all'):
         try:
@@ -94,7 +100,7 @@ class TaskRepository:
         priority: int | None = None,
     ):
         try:
-            task = self.session.query(Task).get(id)
+            task = self.session.get(Task, id)
             if not task or task.user_id != user_id:
                 raise Exception(f'Task with ID {id} was not found for this user')
 
@@ -122,7 +128,7 @@ class TaskRepository:
             raise Exception(f'ERROR: Status {status} is not valid')
 
         try:
-            task = self.session.query(Task).get(id)
+            task = self.session.get(Task, id)
             if not task:
                 raise Exception(f'Task with ID {id} was not found')
 
@@ -151,7 +157,7 @@ class TaskRepository:
 
     def remove_task(self, id: int):
         try:
-            task = self.session.query(Task).get(id)
+            task = self.session.get(Task, id)
             if not task:
                 raise Exception(f'Task with ID {id} was not found')
 
