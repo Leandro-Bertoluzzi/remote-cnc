@@ -16,12 +16,12 @@ class Terminal(QWidget):
         self.grbl_controller = grbl_controller
 
         # Widget configuration
-        self.window = QPlainTextEdit()
-        self.window.setReadOnly(True)
+        self.display_screen = QPlainTextEdit()
+        self.display_screen.setReadOnly(True)
         self.input = QLineEdit()
         self.input.returnPressed.connect(self.send_line)
 
-        layout.addWidget(self.window)
+        layout.addWidget(self.display_screen)
         layout.addWidget(self.input)
 
         # Apply custom styles
@@ -30,8 +30,8 @@ class Terminal(QWidget):
             self.setStyleSheet(styles.read())
 
     def display_text(self, text):
-        self.window.insertPlainText(text)
-        self.window.insertPlainText('\n')
+        self.display_screen.insertPlainText(text)
+        self.display_screen.insertPlainText('\n')
 
     def send_line(self):
         line = self.input.text()

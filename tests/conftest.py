@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLayout
+from PyQt5.QtWidgets import QLayout
 import os
 import pytest
 
@@ -9,7 +9,7 @@ os.environ['USER_ID'] = '1'
 # Helper fixtures
 class Helpers:
     @staticmethod
-    def count_widgets(layout: QLayout, widgetType: QWidget) -> int:
+    def count_widgets(layout: QLayout, widgetType) -> int:
         count = 0
         for i in range(layout.count()):
             widget = layout.itemAt(i).widget()

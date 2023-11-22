@@ -5,7 +5,7 @@ import os
 load_dotenv()
 
 # Get environment variables
-USER_ID = int(os.environ.get('USER_ID'))
+USER_ID = int(os.environ.get('USER_ID') or '0')
 
 
 # Utility functions

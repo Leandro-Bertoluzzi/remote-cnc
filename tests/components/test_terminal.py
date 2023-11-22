@@ -17,14 +17,14 @@ class TestTerminal:
         # Assertions
         assert helpers.count_widgets(self.terminal.layout(), QPlainTextEdit) == 1
         assert helpers.count_widgets(self.terminal.layout(), QLineEdit) == 1
-        assert self.terminal.window.toPlainText() == ''
+        assert self.terminal.display_screen.toPlainText() == ''
 
     def test_terminal_display_text(self):
         # Call method under test
         self.terminal.display_text('some text')
 
         # Assertions
-        assert self.terminal.window.toPlainText() == 'some text\n'
+        assert self.terminal.display_screen.toPlainText() == 'some text\n'
 
     def test_terminal_send_line(self):
         # Mock state of widget
