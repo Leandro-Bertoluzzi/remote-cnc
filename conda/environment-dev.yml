@@ -19,4 +19,5 @@ dependencies:
   - watchdog
   - pip:
     - "celery[redis]"
+    - celery-types
     - pytest-sqlalchemy-mock

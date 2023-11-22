@@ -25,7 +25,7 @@ def test_user(mocker):
     assert user.__repr__() == '<User: John Doe, email: test@testing.com, role: user>'
 
 
-def test_user_validate_password(mocker):
+def test_user_validate_password():
     password = '1234'
 
     # Instantiate user
