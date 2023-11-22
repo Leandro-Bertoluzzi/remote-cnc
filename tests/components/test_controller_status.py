@@ -1,5 +1,5 @@
 from components.ControllerStatus import ControllerStatus
-from core.database.models.tool import Tool
+from core.database.models import Tool
 from PyQt5.QtWidgets import QLabel
 import pytest
 

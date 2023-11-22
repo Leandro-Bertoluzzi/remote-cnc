@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from components.cards.MsgCard import MsgCard
 from components.cards.RequestCard import RequestCard
 from components.buttons.MenuButton import MenuButton
-from core.database.models.task import TASK_PENDING_APPROVAL_STATUS
+from core.database.models import TASK_PENDING_APPROVAL_STATUS
 from core.utils.database import get_all_tasks
 
 

@@ -4,8 +4,8 @@ from components.buttons.MenuButton import MenuButton
 from components.cards.MsgCard import MsgCard
 from components.cards.RequestCard import RequestCard
 from views.RequestsView import RequestsView
-from core.database.models.task import Task
-from core.database.models.user import User
+from core.database.models import Task
+from core.database.models import User
 
 
 class TestRequestsView:

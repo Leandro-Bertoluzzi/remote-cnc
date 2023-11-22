@@ -2,8 +2,8 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.RequestCard import RequestCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
-from core.database.models.task import Task, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
-from core.database.models.user import User
+from core.database.models import Task, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+from core.database.models import User
 from views.RequestsView import RequestsView
 
 

@@ -3,7 +3,7 @@ from config import USER_ID, Globals
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
 from core.utils.database import update_task_status, are_there_tasks_in_progress
-from core.database.models.task import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+from core.database.models import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from core.worker.tasks import executeTask
 
 

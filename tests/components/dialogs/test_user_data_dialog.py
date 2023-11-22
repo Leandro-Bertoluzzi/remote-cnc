@@ -1,6 +1,6 @@
 import pytest
 from components.dialogs.UserDataDialog import UserDataDialog
-from core.database.models.user import User, VALID_ROLES
+from core.database.models import User, VALID_ROLES
 
 
 class TestUserDataDialog:

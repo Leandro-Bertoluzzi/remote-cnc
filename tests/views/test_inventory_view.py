@@ -9,8 +9,8 @@ from components.cards.MaterialCard import MaterialCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from views.InventoryView import InventoryView
-from core.database.models.tool import Tool
-from core.database.models.material import Material
+from core.database.models import Tool
+from core.database.models import Material
 
 
 class TestInventoryView:

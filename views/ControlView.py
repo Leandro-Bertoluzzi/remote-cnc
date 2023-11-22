@@ -9,7 +9,7 @@ from components.ControllerStatus import ControllerStatus
 from components.JogController import JogController
 from components.Terminal import Terminal
 from core.config import SERIAL_BAUDRATE
-from core.database.models.task import TASK_IN_PROGRESS_STATUS
+from core.database.models import TASK_IN_PROGRESS_STATUS
 from core.utils.database import get_tool_by_id, are_there_tasks_with_status
 from core.grbl.grblController import GrblController
 from core.utils.serial import SerialService

@@ -2,7 +2,7 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
-from core.database.models.user import User
+from core.database.models import User
 from views.UsersView import UsersView
 
 

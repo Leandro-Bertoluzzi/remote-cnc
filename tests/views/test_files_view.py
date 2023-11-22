@@ -7,7 +7,7 @@ from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from views.FilesView import FilesView
-from core.database.models.file import File
+from core.database.models import File
 
 
 class TestFilesView:

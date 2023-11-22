@@ -2,7 +2,7 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from core.database.models.tool import Tool
+from core.database.models import Tool
 from views.InventoryView import InventoryView
 
 
