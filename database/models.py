@@ -67,6 +67,29 @@ class Task(Base):
     def __repr__(self):
         return f"<Task: {self.name}, status: {self.status}, created at: {self.created_at}>"
 
+    def serialize(self):
+        print("SERIALIZED!")
+        return {
+            "id": self.id,
+            "name": self.name,
+            "status": self.status,
+            "priority": self.priority,
+            "user_id": self.user_id,
+            "user": self.user.name,
+            "file_id": self.file_id,
+            "file": self.file.file_name,
+            "tool_id": self.tool_id,
+            "tool": self.tool.name,
+            "material_id": self.material_id,
+            "material": self.material.name,
+            "note": self.note,
+            "created_at": self.created_at,
+            "status_updated_at": self.status_updated_at,
+            "admin_id": self.admin_id,
+            "admin": "" if not self.admin else self.admin.name,
+            "cancellation_reason": self.cancellation_reason
+        }
+
 
 class File(Base):
     __tablename__ = 'files'
@@ -93,6 +116,16 @@ class File(Base):
             f"user ID: {self.user_id}, created at: {self.created_at}>"
         )
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "file_name": self.file_name,
+            "user_id": self.user_id,
+            "user": self.user.name,
+            "file_path": self.file_path,
+            "created_at": self.created_at
+        }
+
 
 class Tool(Base):
     __tablename__ = 'tools'
@@ -111,6 +144,14 @@ class Tool(Base):
 
     def __repr__(self):
         return f"<Tool: {self.name}, description: {self.description}, added at: {self.added_at}>"
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "added_at": self.added_at
+        }
 
 
 class Material(Base):
@@ -132,6 +173,14 @@ class Material(Base):
         return (
             f"<Material: {self.name}, description: {self.description}, added at: {self.added_at}>"
         )
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "added_at": self.added_at
+        }
 
 
 class User(Base):
@@ -158,3 +207,11 @@ class User(Base):
 
     def __repr__(self):
         return f"<User: {self.name}, email: {self.email}, role: {self.role}>"
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "role": self.role
+        }

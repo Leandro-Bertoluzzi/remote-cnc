@@ -43,7 +43,7 @@ class FileRepository:
         try:
             files = self.session.execute(
                 select(File).options(joinedload(File.user))
-            ).unique().all()
+            ).scalars().all()
 
             return files
         except SQLAlchemyError as e:

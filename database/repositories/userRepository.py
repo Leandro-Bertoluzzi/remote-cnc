@@ -35,6 +35,26 @@ class UserRepository:
             self.session.rollback()
             raise Exception(f'Error creating the user in the DB: {e}')
 
+    def get_user_by_id(self, id):
+        try:
+            user = self.session.get(User, id)
+            if not user:
+                raise Exception(f'User with ID {id} was not found')
+            return user
+        except SQLAlchemyError as e:
+            raise Exception(f'Error retrieving the user with ID {id}: {e}')
+
+    def get_user_by_email(self, email):
+        try:
+            user = self.session.scalars(
+                select(User).
+                filter_by(email=email).
+                limit(1)
+            ).first()
+            return user
+        except SQLAlchemyError as e:
+            raise Exception(f'Error retrieving the user with ID {id}: {e}')
+
     def get_all_users(self):
         try:
             users = self.session.execute(
