@@ -5,8 +5,11 @@ services:
     image: mysql:5.7
     ports:
       - "3306:3306"
-    env_file:
-      - mysql/.env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASS_ROOT}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+      - MYSQL_DATABASE=${DB_NAME}
     volumes:
       - mysql-datavolume:/var/lib/mysql
     container_name: cnc-admin-mysql
