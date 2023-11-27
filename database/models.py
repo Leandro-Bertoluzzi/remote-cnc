@@ -1,7 +1,7 @@
 from sqlalchemy import String, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 from .base import Base
 
 # Enum values
@@ -28,6 +28,18 @@ VALID_ROLES = ['user', 'admin']
 TASK_EMPTY_NOTE = ''
 TASK_DEFAULT_PRIORITY = 0
 TASK_INITIAL_STATUS = TASK_PENDING_APPROVAL_STATUS
+
+# Types
+StatusType = Literal[
+    'pending_approval',
+    'on_hold',
+    'in_progress',
+    'finished',
+    'rejected',
+    'cancelled'
+]
+
+RoleType = Literal['user', 'admin']
 
 
 class Task(Base):
