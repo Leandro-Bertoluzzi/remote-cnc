@@ -30,7 +30,7 @@ class TestFileRepository:
 
         # Assertions
         assert isinstance(files, list)
-        assert len(files) == 2
+        assert len(files) == 1
 
     def test_get_all_files(self, mocked_session):
         file_repository = FileRepository(mocked_session)

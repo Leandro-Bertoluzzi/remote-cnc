@@ -72,7 +72,7 @@ def sqlalchemy_mock_config():
             },
             {
                 "id": 2,
-                "user_id": 1,
+                "user_id": 2,
                 "file_name": "file-2.gcode",
                 "file_path": "path/to/files/file-2.gcode",
                 "created_at": datetime.now()

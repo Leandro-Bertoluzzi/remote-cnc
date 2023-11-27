@@ -32,7 +32,7 @@ class FileRepository:
             files = self.session.scalars(
                 select(File)
                 .join(File.user)
-                .where(User.id == File.user_id)
+                .where(user_id == File.user_id)
             ).unique().all()
 
             return files
