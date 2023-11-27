@@ -1,6 +1,7 @@
 import shutil
 import time
 from pathlib import Path
+from typing import BinaryIO
 
 try:
     from ..config import FILES_FOLDER_PATH
@@ -49,15 +50,42 @@ def createFileName(filename: str) -> str:
     return f'{file_base_name}_{timestamp}{file_extension}'
 
 
-def saveFile(userId: int, original_path: str, fileName: str) -> str:
+def saveFile(userId: int, file: BinaryIO, filename: str) -> str:
+    """ Copies a file into the right folder in the file system
+    - Parameter(s):
+        - userId: int, user ID
+        - file: BinaryIO, content of the file to save in system
+        - filename: string, file name of the original file
     """
-    - Name: saveFile
+
+    # Check if the file format is a valid one
+    if not isAllowedFile(filename):
+        raise Exception(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+
+    try:
+        # If FILES_FOLDER_PATH or the folder for the current user are not present, then create them
+        user_files_folder_path = Path(f'{FILES_FOLDER_PATH}/{userId}')
+        if not user_files_folder_path.is_dir():
+            user_files_folder_path.mkdir(parents=True)
+
+        file_name = createFileName(filename)
+
+        # Save the file
+        full_file_path = user_files_folder_path / file_name
+        with full_file_path.open("wb") as buffer:
+            shutil.copyfileobj(file, buffer)
+    except Exception as error:
+        raise Exception(f'There was an error writing the file in the file system: {error}')
+
+    return file_name
+
+
+def copyFile(userId: int, original_path: str, fileName: str) -> str:
+    """ Copies a file into the right folder in the file system
     - Parameter(s):
         - userId: int, user ID
         - original_path: string, path to the file we need to save
         - filename: string, file name for the final file
-    - Description:
-        Copies a file into the right folder in the file system
     """
 
     # Check if the file format is a valid one

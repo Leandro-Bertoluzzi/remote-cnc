@@ -2,8 +2,9 @@ from pathlib import Path
 import pytest
 import shutil
 import time
+from typing import BinaryIO
 from utils.files import isAllowedFile, getFileNameInFolder, createFileName, \
-    saveFile, renameFile, deleteFile
+    saveFile, copyFile, renameFile, deleteFile
 
 
 @pytest.mark.parametrize(
@@ -44,6 +45,66 @@ def test_createFileName(mocker):
 @pytest.mark.parametrize('user_folder_exists', [True, False])
 def test_saveFile(mocker, user_folder_exists):
     mocker.patch.object(time, 'strftime', return_value='20230720-192900')
+    file = BinaryIO()
+    file_name = 'file.gcode'
+    user_id = 1
+    expected = 'file_20230720-192900.gcode'
+
+    # Mock folder creation
+    mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
+    mock_create_dir = mocker.patch.object(Path, 'mkdir')
+    create_dir_call_count = 0 if user_folder_exists else 1
+
+    # Mock file copy
+    mock_copy_file = mocker.patch.object(shutil, 'copyfileobj')
+
+    # Call the method under test
+    result = saveFile(user_id, file, file_name)
+
+    # Assertions
+    assert result == expected
+    assert mock_create_dir.call_count == create_dir_call_count
+    assert mock_copy_file.call_count == 1
+
+
+def test_saveFile_with_invalid_name(mocker):
+    file = BinaryIO()
+    file_name = 'file.invalid'
+    user_id = 1
+
+    # Mock folder creation
+    mock_create_dir = mocker.patch.object(Path, 'mkdir')
+
+    # Mock file copy
+    mock_copy_file = mocker.patch.object(shutil, 'copyfileobj')
+
+    # Call the method under test and assert exception
+    with pytest.raises(Exception) as error:
+        saveFile(user_id, file, file_name)
+    assert 'Invalid file format, must be one of: ' in str(error.value)
+
+    # Assertions
+    assert mock_create_dir.call_count == 0
+    assert mock_copy_file.call_count == 0
+
+
+def test_saveFile_with_os_error(mocker):
+    file = BinaryIO()
+    file_name = 'file.gcode'
+    user_id = 1
+
+    # Mock file copy and simulate exception
+    mocker.patch.object(shutil, 'copyfileobj', side_effect=Exception('mocked error'))
+
+    # Call the method under test and assert exception
+    with pytest.raises(Exception) as error:
+        saveFile(user_id, file, file_name)
+    assert 'There was an error writing the file in the file system' in str(error.value)
+
+
+@pytest.mark.parametrize('user_folder_exists', [True, False])
+def test_copyFile(mocker, user_folder_exists):
+    mocker.patch.object(time, 'strftime', return_value='20230720-192900')
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
     user_id = 1
@@ -58,7 +119,7 @@ def test_saveFile(mocker, user_folder_exists):
     mock_copy_file = mocker.patch.object(shutil, 'copy')
 
     # Call the method under test
-    result = saveFile(user_id, original_path, file_name)
+    result = copyFile(user_id, original_path, file_name)
 
     # Assertions
     assert result == expected
@@ -66,7 +127,7 @@ def test_saveFile(mocker, user_folder_exists):
     assert mock_copy_file.call_count == 1
 
 
-def test_saveFile_with_invalid_name(mocker):
+def test_copyFile_with_invalid_name(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.invalid'
     user_id = 1
@@ -79,7 +140,7 @@ def test_saveFile_with_invalid_name(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        saveFile(user_id, original_path, file_name)
+        copyFile(user_id, original_path, file_name)
     assert 'Invalid file format, must be one of: ' in str(error.value)
 
     # Assertions
@@ -87,7 +148,7 @@ def test_saveFile_with_invalid_name(mocker):
     assert mock_copy_file.call_count == 0
 
 
-def test_saveFile_with_os_error(mocker):
+def test_copyFile_with_os_error(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
     user_id = 1
@@ -97,7 +158,7 @@ def test_saveFile_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        saveFile(user_id, original_path, file_name)
+        copyFile(user_id, original_path, file_name)
     assert 'There was an error writing the file in the file system' in str(error.value)
 
 
