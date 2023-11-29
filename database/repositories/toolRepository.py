@@ -11,7 +11,7 @@ class ToolRepository:
     def __del__(self):
         self.close_session()
 
-    def create_tool(self, name, description):
+    def create_tool(self, name: str, description: str):
         try:
             new_tool = Tool(name=name, description=description)
             self.session.add(new_tool)
@@ -21,7 +21,7 @@ class ToolRepository:
             self.session.rollback()
             raise Exception(f'Error creating the tool in the DB: {e}')
 
-    def get_tool_by_id(self, id):
+    def get_tool_by_id(self, id: int):
         try:
             tool = self.session.get(Tool, id)
             if not tool:
@@ -39,7 +39,7 @@ class ToolRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tools from the DB: {e}')
 
-    def update_tool(self, id, name, description):
+    def update_tool(self, id: int, name: str, description: str):
         try:
             tool = self.session.get(Tool, id)
             if not tool:
@@ -53,7 +53,7 @@ class ToolRepository:
             self.session.rollback()
             raise Exception(f'Error updating the tool in the DB: {e}')
 
-    def remove_tool(self, id):
+    def remove_tool(self, id: int):
         try:
             tool = self.session.get(Tool, id)
             if not tool:

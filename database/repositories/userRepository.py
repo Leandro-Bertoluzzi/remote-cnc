@@ -1,8 +1,8 @@
-import bcrypt
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from ..base import Session
 from ..models import User, VALID_ROLES
+from utils.security import hash_password
 
 
 class UserRepository:
@@ -12,7 +12,7 @@ class UserRepository:
     def __del__(self):
         self.close_session()
 
-    def create_user(self, name, email, password, role):
+    def create_user(self, name: str, email: str, password: str, role: str):
         if role not in VALID_ROLES:
             raise Exception(f'ERROR: Role {role} is not valid')
 
@@ -25,7 +25,7 @@ class UserRepository:
             if user:
                 raise Exception(f'There is already a user registered with the email {email}')
 
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            hashed_password = hash_password(password)
 
             new_user = User(name, email, hashed_password, role)
             self.session.add(new_user)
@@ -35,7 +35,7 @@ class UserRepository:
             self.session.rollback()
             raise Exception(f'Error creating the user in the DB: {e}')
 
-    def get_user_by_id(self, id):
+    def get_user_by_id(self, id: int):
         try:
             user = self.session.get(User, id)
             if not user:
@@ -44,7 +44,7 @@ class UserRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving the user with ID {id}: {e}')
 
-    def get_user_by_email(self, email):
+    def get_user_by_email(self, email: str):
         try:
             user = self.session.scalars(
                 select(User).
@@ -64,7 +64,7 @@ class UserRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving users from the DB: {e}')
 
-    def update_user(self, id, name, email, role):
+    def update_user(self, id: int, name: str, email: str, role: str):
         if role not in VALID_ROLES:
             raise Exception(f'ERROR: Role {role} is not valid')
 
@@ -83,7 +83,7 @@ class UserRepository:
             self.session.rollback()
             raise Exception(f'Error updating the user in the DB: {e}')
 
-    def remove_user(self, id):
+    def remove_user(self, id: int):
         try:
             user = self.session.get(User, id)
             if not user:

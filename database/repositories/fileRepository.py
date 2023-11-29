@@ -12,7 +12,7 @@ class FileRepository:
     def __del__(self):
         self.close_session()
 
-    def create_file(self, user_id, file_name, file_name_saved):
+    def create_file(self, user_id: int, file_name: str, file_name_saved: str):
         try:
             new_file = File(user_id, file_name, file_name_saved)
             self.session.add(new_file)
@@ -22,7 +22,7 @@ class FileRepository:
             self.session.rollback()
             raise Exception(f'Error creating the file in the DB: {e}')
 
-    def get_all_files_from_user(self, user_id):
+    def get_all_files_from_user(self, user_id: int):
         try:
             user = self.session.get(User, user_id)
 
@@ -32,7 +32,7 @@ class FileRepository:
             files = self.session.scalars(
                 select(File)
                 .join(File.user)
-                .where(user_id == File.user_id)
+                .where(File.user_id == user_id)
             ).unique().all()
 
             return files
@@ -49,7 +49,7 @@ class FileRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving files from the DB: {e}')
 
-    def get_file_by_id(self, id):
+    def get_file_by_id(self, id: int):
         try:
             file = self.session.get(File, id)
             if not file:
@@ -58,7 +58,7 @@ class FileRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
 
-    def update_file(self, id, user_id, file_name, file_name_saved):
+    def update_file(self, id: int, user_id: int, file_name: str, file_name_saved: str):
         try:
             file = self.session.get(File, id)
             if not file:
@@ -73,7 +73,7 @@ class FileRepository:
             self.session.rollback()
             raise Exception(f'Error updating the file in the DB: {e}')
 
-    def remove_file(self, id):
+    def remove_file(self, id: int):
         try:
             file = self.session.get(File, id)
             if not file:

@@ -143,8 +143,8 @@ class Tool(Base):
     __tablename__ = 'tools'
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    name: Mapped[String] = mapped_column(String(50))
-    description: Mapped[String] = mapped_column(String(150))
+    name: Mapped[str] = mapped_column(String(50))
+    description: Mapped[str] = mapped_column(String(150))
     added_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
 
     # Virtual columns
@@ -170,8 +170,8 @@ class Material(Base):
     __tablename__ = 'materials'
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    name: Mapped[String] = mapped_column(String(50))
-    description: Mapped[String] = mapped_column(String(150))
+    name: Mapped[str] = mapped_column(String(50))
+    description: Mapped[str] = mapped_column(String(150))
     added_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
 
     # Virtual columns

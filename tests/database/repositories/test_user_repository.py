@@ -16,7 +16,7 @@ class TestUserRepository:
 
         # Test password hashing
         salt = b'$2b$12$Sz3AvkbAmzPN8elw95os.u'
-        hashedPassword = bcrypt.hashpw(password.encode('utf-8'), salt)
+        hashedPassword = bcrypt.hashpw(password.encode('utf-8'), salt).decode()
 
         # Mock random salt generation for hashing
         mock_gensalt = mocker.patch('bcrypt.gensalt', return_value=salt)

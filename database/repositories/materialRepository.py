@@ -11,7 +11,7 @@ class MaterialRepository:
     def __del__(self):
         self.close_session()
 
-    def create_material(self, name, description):
+    def create_material(self, name: str, description: str):
         try:
             new_material = Material(name, description)
             self.session.add(new_material)
@@ -30,7 +30,7 @@ class MaterialRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving materials from the DB: {e}')
 
-    def update_material(self, id, name, description):
+    def update_material(self, id: int, name: str, description: str):
         try:
             material = self.session.get(Material, id)
             if not material:
@@ -44,7 +44,7 @@ class MaterialRepository:
             self.session.rollback()
             raise Exception(f'Error updating the material in the DB: {e}')
 
-    def remove_material(self, id):
+    def remove_material(self, id: int):
         try:
             material = self.session.get(Material, id)
             if not material:
