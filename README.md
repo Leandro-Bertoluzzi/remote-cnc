@@ -149,7 +149,7 @@ $ pytest -s
 If you want to update the coverage report (available in /htmlcov):
 
 ```bash
-$ pytest -s --cov=. --cov-report=html
+$ pytest -s --cov-config=setup.cfg
 ```
 
 ### Code style linter

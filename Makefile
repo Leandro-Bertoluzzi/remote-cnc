@@ -1,5 +1,5 @@
 tests:
-	pytest -s --cov=. --cov-report=html
+	pytest -s --cov-config=setup.cfg
 	flake8
 	mypy .
 
