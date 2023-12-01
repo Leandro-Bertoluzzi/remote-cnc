@@ -88,9 +88,11 @@ cp .env.example .env
 $ docker compose -f docker-compose.yml -f docker-compose.worker.yml up -d
 
 # 5. If you are starting a new DB, run DB migrations
+$ cd core
 $ alembic upgrade head
 
 # 6. Start the app with auto-reload
+$ cd ..
 $ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
 ```
 
@@ -160,6 +162,14 @@ $ flake8
 
 ```bash
 $ mypy .
+```
+
+### All tests
+
+You can also run all tests together, by using the following command:
+
+```bash
+$ make tests
 ```
 
 ## :memo: License
