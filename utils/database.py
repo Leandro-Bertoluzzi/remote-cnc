@@ -14,6 +14,7 @@ except ImportError:
     from database.repositories.taskRepository import TaskRepository
     from database.repositories.toolRepository import ToolRepository
     from database.repositories.userRepository import UserRepository
+from typing import Optional
 
 
 def session_context(func):
@@ -246,7 +247,7 @@ def update_task_status(
     session,
     task_id: int,
     status: str,
-    admin_id: int | None = None,
+    admin_id: Optional[int] = None,
     cancellation_reason: str = ""
 ):
     task_repository = TaskRepository(session)

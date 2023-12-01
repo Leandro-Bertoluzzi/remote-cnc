@@ -1,43 +1,18 @@
 import logging
 from serial import SerialException
-from typing import Any, List, Dict, Optional, Sequence
-from typing_extensions import TypedDict
+from typing import Sequence
 from .constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_QUERY_COMMANDS, \
     GRBL_REALTIME_COMMANDS, GRBL_SETTINGS
 from .grblLineParser import GrblLineParser
 from .parsers.grblMsgTypes import GRBL_MSG_ALARM, GRBL_MSG_FEEDBACK, GRBL_MSG_HELP, \
     GRBL_MSG_OPTIONS, GRBL_MSG_PARSER_STATE, GRBL_MSG_PARAMS, GRBL_MSG_SETTING, \
     GRBL_MSG_STARTUP, GRBL_MSG_STATUS, GRBL_MSG_VERSION, GRBL_RESULT_ERROR, GRBL_RESULT_OK
+from .types import GrblResponse, GrblState, GrblSettings
 
 try:
     from ..utils.serial import SerialService
 except ImportError:
     from utils.serial import SerialService
-
-# Definition of types
-
-Coordinates = Dict[str, float]
-Status = TypedDict('Status', {
-    'activeState': str,
-    'subState': Optional[int],
-    'mpos': Coordinates,
-    'wpos': Coordinates,
-    'ov': List[int],
-    'wco': Coordinates,
-    'pinstate': Optional[str],
-    'buffer': Optional[Dict[str, int]],
-    'line': Optional[int],
-    'accessoryState': Optional[str]
-})
-
-ParserState = TypedDict('ParserState', {
-    'modal': Dict[str, str],
-    'tool': int,
-    'feedrate': float,
-    'spindle': float
-})
-GrblState = TypedDict('GrblState', {'status': Status, 'parserstate': ParserState})
-Settings = TypedDict('Settings', {'version': str, 'parameters': Any, 'checkmode': bool})
 
 # Constants
 GRBL_LINE_GCODE = 'G-code'
@@ -80,7 +55,7 @@ class GrblController:
         }
     }
 
-    settings: Settings = {
+    settings: GrblSettings = {
         'version': '',
         'parameters': {},
         'checkmode': False
@@ -156,7 +131,7 @@ class GrblController:
             if isinstance(h, logging.FileHandler):
                 self.logger.removeHandler(h)
 
-    def parseResponse(self, response: str) -> tuple[str | None, dict[str, str]]:
+    def parseResponse(self, response: str) -> GrblResponse:
         """Returns the parsed response from GRBL.
         """
         self.logger.debug('[Received] Message from GRBL: %s', response)
@@ -198,7 +173,7 @@ class GrblController:
             )
         return payload
 
-    def sendCommand(self, command: str) -> Sequence[tuple[str | None, dict[str, str]]]:
+    def sendCommand(self, command: str) -> Sequence[GrblResponse]:
         """Sends a GRBL command to the GRBL device.
         Returns all responses from the GRBL device until an 'ok' is found.
 

@@ -13,11 +13,12 @@ from .parsers.grblParserMsgUserDefinedStartup import GrblParserMsgUserDefinedSta
 from .parsers.grblParserMsgVersion import GrblParserMsgVersion
 from .parsers.grblParserResultError import GrblParserResultError
 from .parsers.grblParserResultOk import GrblParserResultOk
+from .types import GrblResponse
 
 
 class GrblLineParser:
     @staticmethod
-    def parse(line: str) -> tuple[str | None, dict[str, str]]:
+    def parse(line: str) -> GrblResponse:
         parsers: list[type[GrblParserGeneric]] = [
             # * Grbl v1.1
             #   <Idle|MPos:3.000,2.000,0.000|FS:0,0>

@@ -1,4 +1,6 @@
 from abc import abstractmethod
+from ..types import GrblResponse
+from typing import Optional
 
 
 class GrblParserGeneric:
@@ -6,7 +8,7 @@ class GrblParserGeneric:
     """
     @staticmethod
     @abstractmethod
-    def parse(line: str) -> tuple[str, dict[str, str]] | None:
+    def parse(line: str) -> Optional[GrblResponse]:
         """Parses a message from GRBL.
 
         Args:

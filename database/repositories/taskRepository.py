@@ -93,12 +93,12 @@ class TaskRepository:
         self,
         id: int,
         user_id: int,
-        file_id: int | None = None,
-        tool_id: int | None = None,
-        material_id: int | None = None,
-        name: str | None = None,
-        note: str | None = None,
-        priority: int | None = None,
+        file_id: Optional[int] = None,
+        tool_id: Optional[int] = None,
+        material_id: Optional[int] = None,
+        name: Optional[str] = None,
+        note: Optional[str] = None,
+        priority: Optional[int] = None,
     ):
         try:
             task = self.session.get(Task, id)
@@ -122,7 +122,7 @@ class TaskRepository:
         self,
         id: int,
         status: str,
-        admin_id: int | None = None,
+        admin_id: Optional[int] = None,
         cancellation_reason: str = "",
     ):
         if status not in VALID_STATUSES:
