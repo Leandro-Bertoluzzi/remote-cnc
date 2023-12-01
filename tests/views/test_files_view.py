@@ -7,7 +7,7 @@ from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from views.FilesView import FilesView
-from core.database.models import File
+from core.database.models import File, User
 
 
 class TestFilesView:
@@ -18,9 +18,19 @@ class TestFilesView:
         file_3 = File(user_id=1, file_name='example-file-3', file_path='1/example-file-3')
         self.files_list = [file_1, file_2, file_3]
 
+        self.user_test = User(
+            name='test_user',
+            email='test@email.com',
+            password='password',
+            role='admin'
+        )
+
+        for file in self.files_list:
+            file.user = self.user_test
+
         # Patch the getAllFilesFromUser method with the mock function
         self.mock_get_all_files = mocker.patch(
-            'views.FilesView.get_all_files_from_user',
+            'views.FilesView.get_all_files',
             return_value=self.files_list
         )
 
@@ -39,7 +49,7 @@ class TestFilesView:
 
     def test_files_view_init_with_no_files(self, mocker, helpers):
         mock_get_all_files = mocker.patch(
-            'views.FilesView.get_all_files_from_user',
+            'views.FilesView.get_all_files',
             return_value=[]
         )
         files_view = FilesView(parent=self.parent)
@@ -78,6 +88,7 @@ class TestFilesView:
                 file_name='example-file-4',
                 file_path='1/example-file-4_20230720-184800.gcode'
             )
+            file_4.user = self.user_test
             self.files_list.append(file_4)
             return
 

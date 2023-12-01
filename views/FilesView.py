@@ -5,7 +5,7 @@ from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
-from core.utils.database import create_file, get_all_files_from_user
+from core.utils.database import create_file, get_all_files
 from core.utils.files import saveFile
 
 
@@ -46,7 +46,7 @@ class FilesView(QWidget):
 
         self.layout.addWidget(MenuButton('Subir archivo', self.createFile))
 
-        files = get_all_files_from_user(USER_ID)
+        files = get_all_files()
         for file in files:
             self.layout.addWidget(FileCard(file, self))
 

@@ -2,12 +2,19 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
-from core.database.models import File
+from core.database.models import File, User
 from views.FilesView import FilesView
 
 
 class TestFileCard:
     file = File(user_id=1, file_name='example_file.gcode', file_path='path/example_file.gcode')
+
+    user_test = User(
+        name='test_user',
+        email='test@email.com',
+        password='password',
+        role='admin'
+    )
 
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
@@ -15,11 +22,14 @@ class TestFileCard:
 
         self.parent = FilesView()
         self.file.id = 1
+        self.file.user = self.user_test
         self.card = FileCard(self.file, parent=self.parent)
         qtbot.addWidget(self.card)
 
     def test_file_card_init(self):
+        description = self.card.label_description
         assert self.card.file == self.file
+        assert description.text() == 'Archivo 1: example_file.gcode\nUsuario: test_user'
         assert self.card.layout is not None
 
     @pytest.mark.parametrize(

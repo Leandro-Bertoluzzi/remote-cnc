@@ -11,7 +11,7 @@ class FileCard(Card):
 
         self.file = file
 
-        description = f'Archivo {file.id}: {file.file_name}'
+        description = f'Archivo {file.id}: {file.file_name}\nUsuario: {file.user.name}'
         editFileBtn = QPushButton("Editar")
         editFileBtn.clicked.connect(self.updateFile)
         removeFileBtn = QPushButton("Borrar")
