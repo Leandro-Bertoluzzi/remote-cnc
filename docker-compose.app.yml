@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: cnc-admin
+    build: .
+    image: cnc-admin-image
+    #depends_on:
+    #  - mysql
+    env_file:
+      - .env
