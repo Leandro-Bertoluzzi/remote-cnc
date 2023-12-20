@@ -6,7 +6,7 @@ dependencies:
   - alembic
   - bcrypt
   - pip
-  - pymysql
+  - psycopg2
   - pyqt
   - pyserial
   - python-dotenv

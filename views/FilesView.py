@@ -6,7 +6,7 @@ from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
 from core.utils.database import create_file, get_all_files
-from core.utils.files import saveFile
+from core.utils.files import copyFile
 
 
 class FilesView(QWidget):
@@ -26,7 +26,7 @@ class FilesView(QWidget):
 
             # Save file in the file system
             try:
-                generatedName = saveFile(USER_ID, path, name)
+                generatedName = copyFile(USER_ID, path, name)
             except Exception as error:
                 print('Error: ', error)
 

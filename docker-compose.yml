@@ -1,31 +1,27 @@
 version: "3.8"
 
 services:
-  mysql:
-    image: mysql:5.7
+  postgresql:
+    image: postgres:16.1-alpine
+    #image: arm32v7/postgres:16.1-alpine
     ports:
-      - "3306:3306"
+      - "5432:5432"
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASS_ROOT}
-      - MYSQL_USER=${DB_USER}
-      - MYSQL_PASSWORD=${DB_PASS}
-      - MYSQL_DATABASE=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
-      - mysql-datavolume:/var/lib/mysql
-    container_name: cnc-admin-mysql
+      - postgres-datavolume:/var/lib/postgresql/data
+    container_name: cnc-admin-postgresql
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:4.7
+  adminer:
+    image: adminer:4.8.1
+    #image: arm32v7/adminer:4.8.1
     depends_on:
-      - mysql
+      - postgresql
     ports:
-      - "8080:80"
-    environment:
-      - PMA_HOST=mysql
-      - PMA_PORT=3306
-    volumes:
-      - /sessions
-    container_name: cnc-admin-phpmyadmin
+      - "8080:8080"
+    container_name: cnc-admin-adminer
 
   redis:
     image: redis:6-alpine
@@ -34,4 +30,4 @@ services:
     container_name: cnc-admin-redis
 
 volumes:
-  mysql-datavolume:
+  postgres-datavolume:

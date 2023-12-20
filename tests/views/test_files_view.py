@@ -94,7 +94,7 @@ class TestFilesView:
 
         generated_file_name = '1/example-file-4_20230720-184800.gcode'
         mock_save_file = mocker.patch(
-            'views.FilesView.saveFile',
+            'views.FilesView.copyFile',
             return_value=generated_file_name
         )
         mock_create_file = mocker.patch(
