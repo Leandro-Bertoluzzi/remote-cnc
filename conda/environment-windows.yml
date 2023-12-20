@@ -9,7 +9,7 @@ dependencies:
   - flake8
   - mypy
   - pip
-  - pymysql
+  - psycopg2
   - pyserial
   - pytest
   - pytest-cov

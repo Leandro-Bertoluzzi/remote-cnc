@@ -22,9 +22,11 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('name', sa.String(50), nullable=False),
         sa.Column('email', sa.String(50), nullable=False),
-        sa.Column('password', sa.String(100), nullable=False),
-        sa.Column('role', sa.Enum('user', 'admin', name='role'), nullable=False)
+        sa.Column('password', sa.String(150), nullable=False)
     )
+
+    # To avoid trying to create type 'role' again after downgrading
+    op.add_column('users', sa.Column('role', sa.Enum('user', 'admin', name='role'), nullable=False))
 
 
 def downgrade() -> None:

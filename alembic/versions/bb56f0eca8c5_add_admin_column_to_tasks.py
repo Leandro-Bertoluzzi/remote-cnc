@@ -24,7 +24,6 @@ def upgrade() -> None:
         ["admin_id"],
         ["id"]
     )
-    op.execute('ALTER TABLE tasks MODIFY COLUMN admin_id INTEGER AFTER rejected_at')
 
 
 def downgrade() -> None:

@@ -1,7 +1,7 @@
 alembic==1.10.2
 bcrypt==3.2.0
 celery==5.3.1
-PyMySQL==1.0.2
+psycopg2==2.9.3
 PyQt5==5.15.7
 pyserial==3.5
 python-dotenv==1.0.0

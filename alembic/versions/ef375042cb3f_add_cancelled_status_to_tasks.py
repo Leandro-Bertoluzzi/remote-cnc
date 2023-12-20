@@ -20,7 +20,7 @@ task_status_type = sa.Enum(
 
 # revision identifiers, used by Alembic.
 revision = 'ef375042cb3f'
-down_revision = '161422f1d9c0'
+down_revision = 'bb56f0eca8c5'
 branch_labels = None
 depends_on = None
 

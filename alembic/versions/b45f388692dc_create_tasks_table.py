@@ -30,12 +30,12 @@ def upgrade() -> None:
         'tasks',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('created_at', sa.DateTime, nullable=False),
-        sa.Column('approved_at', sa.DateTime),
-        sa.Column('rejected_at', sa.DateTime),
-        sa.Column('finished_at', sa.DateTime),
-        sa.Column('status', task_status_type, nullable=False),
+        sa.Column('status_updated_at', sa.DateTime),
         sa.Column('priority', sa.Integer, nullable=False)
     )
+
+    # To avoid trying to create type 'status' again after downgrading
+    op.add_column('tasks', sa.Column('status', task_status_type, nullable=False))
 
 
 def downgrade() -> None:

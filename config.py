@@ -17,4 +17,4 @@ SERIAL_PORT = os.environ.get('SERIAL_PORT')
 SERIAL_BAUDRATE = os.environ.get('SERIAL_BAUDRATE')
 
 # Generate global constants
-SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
