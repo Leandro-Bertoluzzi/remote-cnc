@@ -86,20 +86,20 @@ More info about Alembic usage [here](https://alembic.sqlalchemy.org/en/latest/tu
 In order to execute tasks and scheduled tasks, you must start the CNC worker (Celery).
 
 ```bash
-# Move to worker folder
+# 1. Move to worker folder
 $ cd core/worker
 
-# Start Celery's worker server
+# 2. Start Celery's worker server
 $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
 ```
 
 Optionally, if you are going to make changes in the worker's code and want to see them in real time, you can start the Celery worker with auto-reload.
 
 ```bash
-# Move to worker folder
+# 1. Move to worker folder
 $ cd core/worker
 
-# Start Celery's worker server with auto-reload
+# 2. Start Celery's worker server with auto-reload
 $ watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
 ```
 

@@ -1,4 +1,5 @@
 amqp==5.2.0
+async-timeout==4.0.3
 bcrypt==3.2.0
 billiard==4.2.0
 celery==5.3.6
@@ -11,12 +12,11 @@ greenlet==3.0.1
 kombu==5.3.4
 packaging==23.1
 pip==23.3.2
+pkg_resources==0.0.0
 ply==3.11
 prompt-toolkit==3.0.43
 psycopg2==2.9.3
 pycparser==2.21
-PyQt5==5.15.2
-PyQt5-sip==12.8.1
 pyserial==3.5
 python-dotenv==0.21.0
 redis==5.0.1
@@ -24,6 +24,7 @@ setuptools==68.2.2
 sip==6.7.12
 six==1.16.0
 SQLAlchemy==2.0.21
+tomli==2.0.1
 typing_extensions==4.7.1
 tzdata==2023.3
 vine==5.1.0
