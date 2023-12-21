@@ -7,6 +7,7 @@ Create Date: 2023-04-01 22:27:11.119142
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -26,7 +27,10 @@ def upgrade() -> None:
     )
 
     # To avoid trying to create type 'role' again after downgrading
-    op.add_column('users', sa.Column('role', sa.Enum('user', 'admin', name='role'), nullable=False))
+    # https://github.com/sqlalchemy/alembic/issues/278#issuecomment-819209060
+    user_role = postgresql.ENUM('user', 'admin', name='role', create_type=False)
+    user_role.create(op.get_bind(), checkfirst=True)
+    op.add_column('users', sa.Column('role', user_role, nullable=False))
 
 
 def downgrade() -> None:
