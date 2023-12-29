@@ -98,6 +98,13 @@ def remove_material(session, material_id):
 
 
 @session_context
+def get_user_by_email(session, email):
+    user_repository = UserRepository(session)
+    user = user_repository.get_user_by_email(email)
+    return user
+
+
+@session_context
 def create_user(session, name, email, password, role):
     user_repository = UserRepository(session)
     new_user = user_repository.create_user(name, email, password, role)
