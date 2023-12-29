@@ -2,7 +2,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from ..base import Session
 from ..models import User, VALID_ROLES
-from utils.security import hash_password
+try:
+    from ...utils.security import hash_password
+except ImportError:
+    from utils.security import hash_password
 
 
 class UserRepository:

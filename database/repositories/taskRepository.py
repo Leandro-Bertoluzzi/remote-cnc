@@ -34,6 +34,7 @@ class TaskRepository:
                 name,
                 note
             )
+
             self.session.add(new_task)
             self.session.commit()
             return new_task

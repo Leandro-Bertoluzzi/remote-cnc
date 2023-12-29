@@ -80,7 +80,6 @@ class Task(Base):
         return f"<Task: {self.name}, status: {self.status}, created at: {self.created_at}>"
 
     def serialize(self):
-        print("SERIALIZED!")
         return {
             "id": self.id,
             "name": self.name,

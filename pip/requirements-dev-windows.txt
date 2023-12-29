@@ -1,2 +1,0 @@
--r requirements-dev.txt
-gevent==22.10.2

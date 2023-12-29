@@ -36,7 +36,7 @@ Core application code to monitor and manage an Arduino-based CNC machine connect
 
 ## :sparkles: Features
 
-:heavy_check_mark: MySQL database management\
+:heavy_check_mark: PostgreSQL database management\
 :heavy_check_mark: G-code files management\
 :heavy_check_mark: Real time monitoring of CNC status\
 :heavy_check_mark: Communication with GRBL-compatible CNC machine via USB\
@@ -47,7 +47,7 @@ Core application code to monitor and manage an Arduino-based CNC machine connect
 The following tools were used in this project:
 
 -   [Python](https://www.python.org/)
--   [Mysql](https://www.mysql.com/)
+-   [PostgreSQL](https://www.postgresql.org/)
 -   [SQLAlchemy](https://www.sqlalchemy.org/) and [Alembic](https://alembic.sqlalchemy.org/en/latest/)
 -   [Celery](https://docs.celeryq.dev/en/stable/)
 -   [Redis](https://redis.io/)
@@ -70,13 +70,13 @@ $ cd cnc-admin-core
 
 # 2. Set up your Python environment
 # Option 1: If you use Conda
-conda env create -f conda/environment-dev.yml
-conda activate cnc-admin-core-dev
+conda env create -f environment.yml
+conda activate cnc-admin-core
 
 # Option 2: If you use venv and pip
 $ python -m venv env-dev
 $ source env/bin/activate
-$ pip install -r pip/requirements-dev.txt
+$ pip install -r requirements-dev.txt
 
 # 3. Copy and configure the .env file
 cp .env.example .env
@@ -100,15 +100,26 @@ If you are developing on Windows, the file `docker-compose.worker.yml` won't wor
 If you choose the option 2, you shall follow the following steps:
 
 ```bash
-# Set up your Python environment
+# Clone this project
+$ git clone https://github.com/Leandro-Bertoluzzi/cnc-admin-core
+
+# 1. Access the repository
+$ cd cnc-admin-core
+
+# 2. Set up your Python environment
 # Option 1: If you use Conda
-conda env create -f conda/environment-dev-windows.yml
-conda activate cnc-admin-core-dev
+$ conda env create -f environment-dev.yml
+$ conda activate cnc-admin-core
+$ conda install -c anaconda gevent
 
 # Option 2: If you use venv and pip
 $ python -m venv env-dev
 $ .\env\Scripts\activate
-$ pip install -r pip/requirements-dev-windows.txt
+$ pip install -r requirements-dev.txt
+$ pip install gevent
+
+# 3. Copy and configure the .env file
+cp .env.example .env
 
 # 4. Run Docker to start the DB, PHPMyAdmin and the Message broker (Redis)
 $ docker compose up -d
@@ -117,14 +128,7 @@ $ docker compose up -d
 $ alembic upgrade head
 
 # 6. Start the Celery worker
-# Move to worker folder
 $ cd worker
-
-# Start Celery's worker server
-# Option 1: With auto-reload
-$ watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
-
-# Option 2: Static (in case you won't make changes to the worker)
 $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
@@ -152,6 +156,14 @@ $ flake8
 
 ```bash
 $ mypy .
+```
+
+### All tests
+
+You can also run all tests together, by using the following command:
+
+```bash
+$ make tests
 ```
 
 ## :memo: License
