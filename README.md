@@ -137,14 +137,10 @@ $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gev
 ### Unit tests
 
 ```bash
-$ pytest -s
+$ pytest -s --cov-config=setup.cfg
 ```
 
-If you want to update the coverage report (available in /htmlcov):
-
-```bash
-$ pytest -s --cov=. --cov-report=html
-```
+The coverage report is available in the folder `/htmlcov`.
 
 ### Code style linter
 

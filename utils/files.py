@@ -1,5 +1,5 @@
 import shutil
-import time
+import hashlib
 from pathlib import Path
 from typing import BinaryIO
 
@@ -36,21 +36,22 @@ def getFileNameInFolder(current: str, searched: str) -> Path:
     return folder / searched
 
 
-def createFileName(filename: str) -> str:
+def computeSHA256(filePath: str) -> str:
     """
-    - Name: createFileName
+    - Name: computeSHA256
     - Parameter(s):
-        - filename: string, file name to update
+        - filePath: path to the reference file
     - Description:
-        Defines a secure filename to avoid repeated files
+        Generates SHA256 hash from the content of the file
     """
-    timestamp = time.strftime('%Y%m%d-%H%M%S')
-    file_base_name = Path(filename).stem
-    file_extension = Path(filename).suffix.lower()
-    return f'{file_base_name}_{timestamp}{file_extension}'
+    hash_sha256 = hashlib.sha256()
+    with open(filePath, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_sha256.update(chunk)
+    return hash_sha256.hexdigest()
 
 
-def saveFile(userId: int, file: BinaryIO, filename: str) -> str:
+def saveFile(userId: int, file: BinaryIO, filename: str) -> Path:
     """ Copies a file into the right folder in the file system
     - Parameter(s):
         - userId: int, user ID
@@ -68,19 +69,17 @@ def saveFile(userId: int, file: BinaryIO, filename: str) -> str:
         if not user_files_folder_path.is_dir():
             user_files_folder_path.mkdir(parents=True)
 
-        file_name = createFileName(filename)
-
         # Save the file
-        full_file_path = user_files_folder_path / file_name
+        full_file_path = user_files_folder_path / filename
         with full_file_path.open("wb") as buffer:
             shutil.copyfileobj(file, buffer)
     except Exception as error:
         raise Exception(f'There was an error writing the file in the file system: {error}')
 
-    return file_name
+    return full_file_path
 
 
-def copyFile(userId: int, original_path: str, fileName: str) -> str:
+def copyFile(userId: int, original_path: str, fileName: str) -> Path:
     """ Copies a file into the right folder in the file system
     - Parameter(s):
         - userId: int, user ID
@@ -98,18 +97,16 @@ def copyFile(userId: int, original_path: str, fileName: str) -> str:
         if not user_files_folder_path.is_dir():
             user_files_folder_path.mkdir(parents=True)
 
-        file_name = createFileName(fileName)
-
         # Save the file
-        full_file_path = user_files_folder_path / file_name
+        full_file_path = user_files_folder_path / fileName
         shutil.copy(original_path, full_file_path)
     except Exception as error:
         raise Exception(f'There was an error writing the file in the file system: {error}')
 
-    return file_name
+    return full_file_path
 
 
-def renameFile(userId: int, fileName: str, newFileName: str) -> str:
+def renameFile(userId: int, fileName: str, newFileName: str) -> Path:
     """
     - Name: renameFile
     - Parameter(s):
@@ -127,13 +124,12 @@ def renameFile(userId: int, fileName: str, newFileName: str) -> str:
     try:
         # Rename the file
         current_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
-        file_name = createFileName(newFileName)
-        full_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{file_name}')
+        full_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{newFileName}')
         current_file_path.rename(full_file_path)
     except Exception as error:
         raise Exception(f'There was an error renaming the file in the file system: {error}')
 
-    return file_name
+    return full_file_path
 
 
 def deleteFile(userId: int, fileName: str) -> None:

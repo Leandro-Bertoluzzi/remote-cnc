@@ -13,6 +13,7 @@ dependencies:
   - pyserial
   - pytest
   - pytest-cov
+  - pytest-env
   - pytest-mock
   - python-dotenv
   - sqlalchemy

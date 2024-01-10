@@ -5,6 +5,15 @@ from ..base import Session
 from ..models import File, User
 
 
+# Custom exceptions
+class DuplicatedFileError(Exception):
+    pass
+
+
+class DuplicatedFileNameError(Exception):
+    pass
+
+
 class FileRepository:
     def __init__(self, _session=None):
         self.session = _session or Session()
@@ -12,9 +21,36 @@ class FileRepository:
     def __del__(self):
         self.close_session()
 
-    def create_file(self, user_id: int, file_name: str, file_name_saved: str):
+    def check_file_exists(self, user_id: int, file_name: str, file_hash: str):
+        repeated = self.session.scalars(
+            select(File)
+            .where(
+                File.file_name == file_name,
+                File.user_id == user_id
+            )
+        ).unique().all()
+
+        if repeated:
+            raise DuplicatedFileNameError(
+                f'Ya existe un archivo con el nombre <<{file_name}>>'
+            )
+
+        duplicated = self.session.scalars(
+            select(File)
+            .where(
+                File.file_hash == file_hash,
+                File.user_id == user_id
+            )
+        ).first()
+
+        if duplicated:
+            raise DuplicatedFileError(
+                f'El archivo <<{duplicated.file_name}>> tiene el mismo contenido'
+            )
+
+    def create_file(self, user_id: int, file_name: str, file_hash: str):
         try:
-            new_file = File(user_id, file_name, file_name_saved)
+            new_file = File(user_id, file_name, file_hash)
             self.session.add(new_file)
             self.session.commit()
             return new_file
@@ -58,14 +94,14 @@ class FileRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
 
-    def update_file(self, id: int, user_id: int, file_name: str, file_name_saved: str):
+    def update_file(self, id: int, user_id: int, file_name: str, file_hash: str):
         try:
             file = self.session.get(File, id)
             if not file:
                 raise Exception(f'File with ID {id} was not found')
 
             file.user_id = user_id
-            file.file_path = file_name_saved
+            file.file_hash = file_hash
             file.file_name = file_name
             self.session.commit()
             return file

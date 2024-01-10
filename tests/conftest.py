@@ -1,12 +1,6 @@
-import os
 import pytest
 from database.base import Base
 from datetime import datetime
-
-# Set environment variables for tests
-
-os.environ['FILES_FOLDER'] = 'files_folder'
-os.environ['SERIAL_PORT'] = 'COMx'
 
 
 # Settings for mocking SQLAlchemy
@@ -67,14 +61,14 @@ def sqlalchemy_mock_config():
                 "id": 1,
                 "user_id": 1,
                 "file_name": "file-1.gcode",
-                "file_path": "path/to/files/file-1.gcode",
+                "file_hash": "hashed-content",
                 "created_at": datetime.now()
             },
             {
                 "id": 2,
                 "user_id": 2,
                 "file_name": "file-2.gcode",
-                "file_path": "path/to/files/file-2.gcode",
+                "file_hash": "hashed-content-2",
                 "created_at": datetime.now()
             }
         ]),

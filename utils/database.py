@@ -136,10 +136,17 @@ def remove_user(session, user_id):
 
 
 @session_context
-def create_file(session, user_id, file_name, file_name_saved):
+def create_file(session, user_id, file_name, file_hash):
     file_repository = FileRepository(session)
-    new_file = file_repository.create_file(user_id, file_name, file_name_saved)
+    new_file = file_repository.create_file(user_id, file_name, file_hash)
     return new_file
+
+
+@session_context
+def check_file_exists(session, user_id, file_name, file_hash):
+    file_repository = FileRepository(session)
+    file_repository.check_file_exists(user_id, file_name, file_hash)
+    return
 
 
 @session_context

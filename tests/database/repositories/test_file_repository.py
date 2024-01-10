@@ -1,5 +1,6 @@
 from database.models import File
-from database.repositories.fileRepository import FileRepository
+from database.repositories.fileRepository import FileRepository, DuplicatedFileError, \
+    DuplicatedFileNameError
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -9,10 +10,10 @@ class TestFileRepository:
         file_repository = FileRepository(mocked_session)
         user_id = 1
         file_name = 'new-file.gcode'
-        file_name_saved = 'path/to/files/new-file.gcode'
+        file_hash = 'hash-for-new-file'
 
         # Call method under test
-        new_file = file_repository.create_file(user_id, file_name, file_name_saved)
+        new_file = file_repository.create_file(user_id, file_name, file_hash)
 
         # Assertions
         assert new_file is not None
@@ -20,7 +21,17 @@ class TestFileRepository:
         assert new_file.id is not None
         assert new_file.user_id == user_id
         assert new_file.file_name == file_name
-        assert new_file.file_path == file_name_saved
+        assert new_file.file_hash == file_hash
+
+    def test_check_file_exists(self, mocked_session):
+        file_repository = FileRepository(mocked_session)
+
+        # Call method under test, expecting no exceptions
+        file_repository.check_file_exists(
+            user_id=1,
+            file_name='new-file',
+            file_hash='hash-for-new-file'
+        )
 
     def test_get_all_files_from_user(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -57,15 +68,15 @@ class TestFileRepository:
         file_repository = FileRepository(mocked_session)
         user_id = 1
         file_name = 'updated-file.gcode'
-        file_name_saved = 'path/to/files/new-file.gcode'
+        file_hash = 'hash-for-updated-file'
 
         # Call method under test
-        updated_file = file_repository.update_file(1, user_id, file_name, file_name_saved)
+        updated_file = file_repository.update_file(1, user_id, file_name, file_hash)
 
         # Assertions
         assert updated_file.user_id == user_id
         assert updated_file.file_name == file_name
-        assert updated_file.file_path == file_name_saved
+        assert updated_file.file_hash == file_hash
 
     def test_remove_file(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -88,9 +99,33 @@ class TestFileRepository:
             file_repository.create_file(
                 user_id=1,
                 file_name='name.gcode',
-                file_name_saved='path/to/files/name.gcode'
+                file_hash='path/to/files/name.gcode'
             )
         assert 'Error creating the file in the DB' in str(error.value)
+
+    def test_check_file_exists_repeated_name(self, mocked_session):
+        file_repository = FileRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(DuplicatedFileNameError) as error:
+            file_repository.check_file_exists(
+                user_id=1,
+                file_name='file-1.gcode',
+                file_hash='hash-for-new-file'
+            )
+        assert str(error.value) == 'Ya existe un archivo con el nombre <<file-1.gcode>>'
+
+    def test_check_file_exists_duplicated_content(self, mocked_session):
+        file_repository = FileRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(DuplicatedFileError) as error:
+            file_repository.check_file_exists(
+                user_id=1,
+                file_name='new-file.gcode',
+                file_hash='hashed-content'
+            )
+        assert str(error.value) == 'El archivo <<file-1.gcode>> tiene el mismo contenido'
 
     def test_error_get_all_files_from_non_existing_user(self, mocked_session):
         # Mock DB method to simulate exception
@@ -148,7 +183,7 @@ class TestFileRepository:
                 id=5000,
                 user_id=1,
                 file_name='name.gcode',
-                file_name_saved='path/to/files/name.gcode'
+                file_hash='path/to/files/name.gcode'
             )
         assert str(error.value) == 'File with ID 5000 was not found'
 
@@ -162,7 +197,7 @@ class TestFileRepository:
             file_repository.update_file(
                 id=1, user_id=1,
                 file_name='name.gcode',
-                file_name_saved='path/to/files/name.gcode'
+                file_hash='path/to/files/name.gcode'
             )
         assert 'Error updating the file in the DB' in str(error.value)
 

@@ -110,7 +110,7 @@ class File(Base):
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'))
     # Other attributes
     file_name: Mapped[str] = mapped_column(String(150))
-    file_path: Mapped[str] = mapped_column(String(150))
+    file_hash: Mapped[str] = mapped_column(String(150))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
 
     # Virtual columns
@@ -123,7 +123,7 @@ class File(Base):
 
     def __repr__(self):
         return (
-            f"<File: {self.file_name}, path: {self.file_path}, "
+            f"<File: {self.file_name}, "
             f"user ID: {self.user_id}, created at: {self.created_at}>"
         )
 
@@ -133,7 +133,7 @@ class File(Base):
             "file_name": self.file_name,
             "user_id": self.user_id,
             "user": self.user.name,
-            "file_path": self.file_path,
+            "file_hash": self.file_hash,
             "created_at": self.created_at
         }
 

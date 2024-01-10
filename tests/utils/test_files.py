@@ -3,7 +3,7 @@ import pytest
 import shutil
 import time
 from typing import BinaryIO
-from utils.files import isAllowedFile, getFileNameInFolder, createFileName, \
+from utils.files import isAllowedFile, getFileNameInFolder, computeSHA256, \
     saveFile, copyFile, renameFile, deleteFile
 
 
@@ -32,23 +32,24 @@ def test_getFileNameInFolder():
     assert getFileNameInFolder(current, searched) == expected
 
 
-def test_createFileName(mocker):
-    mock_timestamp = mocker.patch.object(time, 'strftime', return_value='20230720-192900')
+def test_computeSHA256(mocker):
     file_name = 'path/to/file.gcode'
-    expected = 'file_20230720-192900.gcode'
+    expected_hash = '987d1fbbfe0da6111b6214ab798984bd96f45554c2c896bce758152045120937'
+
+    # Mock FS methods
+    mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
+    mocker.patch('builtins.open', mocked_file_data)
 
     # Assertions
-    assert createFileName(file_name) == expected
-    assert mock_timestamp.call_count == 1
+    assert computeSHA256(file_name) == expected_hash
 
 
 @pytest.mark.parametrize('user_folder_exists', [True, False])
 def test_saveFile(mocker, user_folder_exists):
-    mocker.patch.object(time, 'strftime', return_value='20230720-192900')
     file = BinaryIO()
     file_name = 'file.gcode'
     user_id = 1
-    expected = 'file_20230720-192900.gcode'
+    expected = Path('files_folder/1/file.gcode')
 
     # Mock folder creation
     mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
@@ -104,11 +105,10 @@ def test_saveFile_with_os_error(mocker):
 
 @pytest.mark.parametrize('user_folder_exists', [True, False])
 def test_copyFile(mocker, user_folder_exists):
-    mocker.patch.object(time, 'strftime', return_value='20230720-192900')
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
     user_id = 1
-    expected = 'file_20230720-192900.gcode'
+    expected = Path('files_folder/1/file.gcode')
 
     # Mock folder creation
     mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
@@ -167,7 +167,7 @@ def test_renameFile(mocker):
     file_name = 'file_20220610-192900.gcode'
     new_file_name = 'file-updated.gcode'
     user_id = 1
-    expected = 'file-updated_20230720-192900.gcode'
+    expected = Path('files_folder/1/file-updated.gcode')
 
     # Mock file update
     mocker.patch.object(time, 'strftime', return_value='20230720-192900')
