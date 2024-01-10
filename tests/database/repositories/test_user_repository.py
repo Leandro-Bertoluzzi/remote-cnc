@@ -34,6 +34,36 @@ class TestUserRepository:
         assert new_user.password == hashedPassword
         assert new_user.role == role
 
+    def test_get_user_by_id(self, mocked_session):
+        user_repository = UserRepository(mocked_session)
+
+        # Call method under test
+        user = user_repository.get_user_by_id(1)
+
+        # Assertions
+        assert user is not None
+        assert isinstance(user, User)
+        assert user.id == 1
+        assert user.name == 'User 1'
+        assert user.email == 'test@testing.com'
+        assert user.password == 'testpassword'
+        assert user.role == 'user'
+
+    def test_get_user_by_email(self, mocked_session):
+        user_repository = UserRepository(mocked_session)
+
+        # Call method under test
+        user = user_repository.get_user_by_email('test2@testing.com')
+
+        # Assertions
+        assert user is not None
+        assert isinstance(user, User)
+        assert user.id == 2
+        assert user.name == 'User 2'
+        assert user.email == 'test2@testing.com'
+        assert user.password == 'testpassword2'
+        assert user.role == 'admin'
+
     def test_get_all_users(self, mocked_session):
         user_repository = UserRepository(mocked_session)
 
@@ -108,6 +138,40 @@ class TestUserRepository:
                 role='user'
             )
         assert 'Error creating the user in the DB' in str(error.value)
+
+    def test_get_user_by_id_not_found(self, mocked_session):
+        user_repository = UserRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            user_repository.get_user_by_id(50)
+
+        # Assertions
+        assert str(error.value) == 'User with ID 50 was not found'
+
+    def test_get_user_by_id_db_error(self, mocker, mocked_session):
+        # Mock DB method to simulate exception
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        user_repository = UserRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            user_repository.get_user_by_id(1)
+
+        # Assertions
+        assert 'Error retrieving the user with ID 1' in str(error.value)
+
+    def test_get_user_by_email_db_error(self, mocker, mocked_session):
+        # Mock DB method to simulate exception
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
+        user_repository = UserRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            user_repository.get_user_by_email('test@testing.com')
+
+        # Assertions
+        assert 'Error retrieving the user with email test@testing.com' in str(error.value)
 
     def test_error_get_all_users_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception

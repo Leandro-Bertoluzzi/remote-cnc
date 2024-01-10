@@ -56,7 +56,7 @@ class UserRepository:
             ).first()
             return user
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving the user with ID {id}: {e}')
+            raise Exception(f'Error retrieving the user with email {email}: {e}')
 
     def get_all_users(self):
         try:
