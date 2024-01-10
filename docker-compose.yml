@@ -29,5 +29,13 @@ services:
       - 6379:6379
     container_name: cnc-admin-redis
 
+  flower:
+    image: mher/flower
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    depends_on:
+      - redis
+    ports:
+      - 5555:5555
+
 volumes:
   postgres-datavolume:
