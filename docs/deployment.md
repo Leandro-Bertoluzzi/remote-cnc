@@ -69,13 +69,9 @@ Once installed all dependencies and created the Python environment, every time y
 
 ```bash
 # 1. Activate your Python environment
-# Option 1: If you use Conda
-conda activate cnc-local-app
-
-# Option 2: If you use venv and pip
 $ source venv/bin/activate
 
-# 2. Start the app with auto-reload
+# 2. Start the app
 $ python main.py
 ```
 

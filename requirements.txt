@@ -13,10 +13,10 @@ packaging==23.1
 pip==23.3.2
 ply==3.11
 prompt-toolkit==3.0.43
-psycopg2==2.9.3
+psycopg2==2.9.9
 pycparser==2.21
-PyQt5==5.15.2
-PyQt5-sip==12.8.1
+PyQt5==5.15.10
+PyQt5-sip==12.13.0
 pyserial==3.5
 python-dotenv==0.21.0
 redis==5.0.1
@@ -25,7 +25,7 @@ sip==6.7.12
 six==1.16.0
 SQLAlchemy==2.0.21
 typing_extensions==4.7.1
-tzdata==2023.3
+tzdata==2023.4
 vine==5.1.0
-wcwidth==0.2.12
+wcwidth==0.2.13
 wheel==0.41.2

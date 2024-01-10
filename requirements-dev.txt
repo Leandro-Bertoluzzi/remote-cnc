@@ -1,8 +1,11 @@
 -r requirements.txt
+alembic==1.10.4
 celery-types==0.20.0
 coverage==7.2.2
 flake8==6.1.0
 iniconfig==1.1.1
+Mako==1.2.3
+MarkupSafe==2.1.3
 mccabe==0.7.0
 mypy==1.5.1
 mypy-extensions==1.0.0
@@ -16,6 +19,7 @@ pytest-cov==4.1.0
 pytest-mock==3.10.0
 pytest-qt==4.2.0
 pytest-sqlalchemy-mock==0.1.5
+python-dateutil==2.8.2
 PyYAML==6.0.1
 toml==0.10.2
 watchdog==2.1.6
