@@ -94,7 +94,7 @@ class TestToolCard:
         # Validate DB calls
         assert mock_remove_tool.call_count == expectedMethodCalls
 
-    def test_tool_card_remove_tool(self, mocker):
+    def test_tool_card_remove_tool_db_error(self, mocker):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 

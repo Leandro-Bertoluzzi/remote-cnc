@@ -142,7 +142,13 @@ class TestInventoryView:
                 (True, False)
             ]
     )
-    def test_inventory_view_refresh_layout_db_error(self, mocker, helpers, tools_error, materials_error):
+    def test_inventory_view_refresh_layout_db_error(
+        self,
+        mocker,
+        helpers,
+        tools_error,
+        materials_error
+    ):
         # Mock DB methods to simulate error(s)
         # 1st execution: Widget creation (needs to success)
         # 2nd execution: Test case

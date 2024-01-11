@@ -100,7 +100,7 @@ class TestRequestCard:
         if search_tasks_error:
             mock_validate_tasks_in_progress = mocker.patch(
                 'components.cards.RequestCard.are_there_tasks_in_progress',
-                    side_effect=Exception('mocked error')
+                side_effect=Exception('mocked error')
             )
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
