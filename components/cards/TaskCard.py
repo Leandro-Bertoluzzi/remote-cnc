@@ -48,16 +48,23 @@ class TaskCard(Card):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
         if taskDialog.exec():
             file_id, tool_id, material_id, name, note = taskDialog.getInputs()
-            update_task(
-                self.task.id,
-                self.task.user_id,
-                file_id,
-                tool_id,
-                material_id,
-                name,
-                note,
-                TASK_DEFAULT_PRIORITY
-            )
+            try:
+                update_task(
+                    self.task.id,
+                    self.task.user_id,
+                    file_id,
+                    tool_id,
+                    material_id,
+                    name,
+                    note,
+                    TASK_DEFAULT_PRIORITY
+                )
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
 
     def removeTask(self):
@@ -68,5 +75,15 @@ class TaskCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            remove_task(self.task.id)
+            try:
+                remove_task(self.task.id)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)

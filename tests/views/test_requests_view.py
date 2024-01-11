@@ -6,6 +6,7 @@ from components.cards.RequestCard import RequestCard
 from views.RequestsView import RequestsView
 from core.database.models import Task
 from core.database.models import User
+from PyQt5.QtWidgets import QMessageBox
 
 
 class TestRequestsView:
@@ -68,6 +69,25 @@ class TestRequestsView:
         assert helpers.count_widgets(requests_view.layout, RequestCard) == 0
         assert helpers.count_widgets(requests_view.layout, MsgCard) == 1
 
+    def test_requests_view_init_db_error(self, mocker, helpers):
+        mock_get_all_tasks = mocker.patch(
+            'views.RequestsView.get_all_tasks',
+            side_effect=Exception('mocked-error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Create test view
+        requests_view = RequestsView(parent=self.parent)
+
+        # Assertions
+        mock_get_all_tasks.assert_called_once()
+        mock_popup.assert_called_once()
+        assert helpers.count_widgets(requests_view.layout, MenuButton) == 0
+        assert helpers.count_widgets(requests_view.layout, RequestCard) == 0
+        assert helpers.count_widgets(requests_view.layout, MsgCard) == 0
+
     def test_requests_view_refresh_layout(self, helpers):
         # We remove a task
         self.tasks_list.pop()
@@ -81,3 +101,28 @@ class TestRequestsView:
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.requests_view.layout, MenuButton) == 1
         assert helpers.count_widgets(self.requests_view.layout, RequestCard) == 2
+
+    def test_requests_view_refresh_layout_db_error(self, mocker, helpers):
+        # Mock DB methods to simulate error(s)
+        # 1st execution: Widget creation (needs to success)
+        # 2nd execution: Test case
+        mock_get_all_tasks = mocker.patch(
+            'views.RequestsView.get_all_tasks',
+            side_effect=[
+                self.tasks_list,
+                Exception('mocked-error')
+            ]
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the method under test
+        requests_view = RequestsView(parent=self.parent)
+        requests_view.refreshLayout()
+
+        # Assertions
+        assert mock_get_all_tasks.call_count == 2
+        assert mock_popup.call_count == 1
+        assert helpers.count_widgets(requests_view.layout, MenuButton) == 0
+        assert helpers.count_widgets(requests_view.layout, RequestCard) == 0

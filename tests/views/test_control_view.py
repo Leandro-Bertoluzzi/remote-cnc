@@ -5,6 +5,7 @@ from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
 from components.Terminal import Terminal
 from core.grbl.grblController import GrblController
+from PyQt5.QtWidgets import QMessageBox
 import pytest
 from views.ControlView import ControlView
 
@@ -156,6 +157,33 @@ class TestControlView:
         assert mock_grbl_get_spindle.call_count == 1
         assert mock_grbl_get_tool.call_count == 1
         assert mock_get_tool_by_id.call_count == 1
+
+    def test_control_view_query_status_db_error(self, mocker):
+        grbl_status = {
+            'activeState': 'idle',
+            'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+            'ov': []
+        }
+
+        # Mock methods
+        mocker.patch.object(GrblController, 'queryStatusReport', return_value=grbl_status)
+        mocker.patch.object(GrblController, 'getFeedrate', return_value=500.0)
+        mocker.patch.object(GrblController, 'getSpindle', return_value=500.0)
+        mocker.patch.object(GrblController, 'getTool', return_value=1)
+        mocker.patch(
+            'views.ControlView.get_tool_by_id',
+            side_effect=Exception('mocked-error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.query_device_status()
+
+        # Assertions
+        assert mock_popup.call_count == 1
 
     def test_control_view_query_settings(self, mocker):
         # Mock attributes

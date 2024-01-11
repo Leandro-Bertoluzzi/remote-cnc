@@ -24,7 +24,14 @@ class UserCard(Card):
         userDialog = UserDataDialog(self.user)
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
-            update_user(self.user.id, name, email, role)
+            try:
+                update_user(self.user.id, name, email, role)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
 
     def removeUser(self):
@@ -35,5 +42,15 @@ class UserCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            remove_user(self.user.id)
+            try:
+                remove_user(self.user.id)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)

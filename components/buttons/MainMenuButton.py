@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor
+from PyQt5.QtCore import QEvent, Qt
+from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor, QPaintEvent
 from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAbstractButton
 from core.utils.files import getFileNameInFolder
@@ -34,7 +34,7 @@ class MainMenuButton(QAbstractButton):
             self.view = goToView
             self.clicked.connect(self.redirectToView)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
 
         pen = painter.pen()
@@ -67,11 +67,13 @@ class MainMenuButton(QAbstractButton):
 
         painter.drawText(event.rect(), Qt.AlignBottom + Qt.AlignHCenter, self.text())
 
-    def enterEvent(self, event):
+    def enterEvent(self, event: QEvent):
         self.hover = True
+        event.accept()
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event: QEvent):
         self.hover = False
+        event.accept()
 
     def sizeHint(self):
         return self.size()

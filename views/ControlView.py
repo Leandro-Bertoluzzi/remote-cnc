@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QComboBox, QGridLayout, QToolBar, QToolButton, QWidget
+from PyQt5.QtWidgets import QComboBox, QGridLayout, QMessageBox, QToolBar, QToolButton, QWidget
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from containers.ButtonGrid import ButtonGrid
@@ -34,7 +34,16 @@ class ControlView(QWidget):
         self.connected = False
         self.port_selected = ''
         self.device_settings = {}
-        self.device_busy = are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
+        self.device_busy = True
+        try:
+            self.device_busy = are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                'Error de base de datos',
+                str(error),
+                QMessageBox.Ok
+            )
 
         # GRBL CONTROLLER CONFIGURATION
         grbl_logger = logging.getLogger('control_view_logger')
@@ -186,8 +195,17 @@ class ControlView(QWidget):
         self.status_monitor.set_spindle(spindle)
 
         tool_index_grbl = self.grbl_controller.getTool()
-        tool_info = get_tool_by_id(tool_index_grbl)
-        self.status_monitor.set_tool(tool_index_grbl, tool_info)
+
+        try:
+            tool_info = get_tool_by_id(tool_index_grbl)
+            self.status_monitor.set_tool(tool_index_grbl, tool_info)
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                'Error de base de datos',
+                str(error),
+                QMessageBox.Ok
+            )
 
     def query_device_settings(self):
         settings = self.grbl_controller.queryGrblSettings()

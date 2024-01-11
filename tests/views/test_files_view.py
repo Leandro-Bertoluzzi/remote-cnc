@@ -62,6 +62,25 @@ class TestFilesView:
         assert helpers.count_widgets(files_view.layout, FileCard) == 0
         assert helpers.count_widgets(files_view.layout, MsgCard) == 1
 
+    def test_files_view_init_db_error(self, mocker, helpers):
+        mock_get_all_files = mocker.patch(
+            'views.FilesView.get_all_files',
+            side_effect=Exception('mocked-error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Create test view
+        files_view = FilesView(parent=self.parent)
+
+        # Assertions
+        mock_get_all_files.assert_called_once()
+        mock_popup.assert_called_once()
+        assert helpers.count_widgets(files_view.layout, MenuButton) == 0
+        assert helpers.count_widgets(files_view.layout, FileCard) == 0
+        assert helpers.count_widgets(files_view.layout, MsgCard) == 0
+
     def test_files_view_refresh_layout(self, helpers):
         # We remove a file
         self.files_list.pop()
@@ -75,6 +94,31 @@ class TestFilesView:
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout, FileCard) == 2
+
+    def test_files_view_refresh_layout_db_error(self, mocker, helpers):
+        # Mock DB methods to simulate error(s)
+        # 1st execution: Widget creation (needs to success)
+        # 2nd execution: Test case
+        mock_get_all_files = mocker.patch(
+            'views.FilesView.get_all_files',
+            side_effect=[
+                self.files_list,
+                Exception('mocked-error')
+            ]
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the method under test
+        files_view = FilesView(parent=self.parent)
+        files_view.refreshLayout()
+
+        # Assertions
+        assert mock_get_all_files.call_count == 2
+        assert mock_popup.call_count == 1
+        assert helpers.count_widgets(files_view.layout, MenuButton) == 0
+        assert helpers.count_widgets(files_view.layout, FileCard) == 0
 
     def test_files_view_create_file(self, mocker, helpers):
         # Mock FileDataDialog methods

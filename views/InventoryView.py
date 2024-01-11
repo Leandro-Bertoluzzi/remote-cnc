@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.cards.MaterialCard import MaterialCard
@@ -23,15 +23,32 @@ class InventoryView(QWidget):
         toolDialog = ToolDataDialog()
         if toolDialog.exec():
             name, description = toolDialog.getInputs()
-            create_tool(name, description)
+            try:
+                create_tool(name, description)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.refreshLayout()
 
     def createMaterial(self):
         materialDialog = MaterialDataDialog()
         if materialDialog.exec():
             name, description = materialDialog.getInputs()
-            create_material(name, description)
+            try:
+                create_material(name, description)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)
 
     def refreshLayout(self):
         while self.layout.count():
@@ -39,12 +56,29 @@ class InventoryView(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
+        try:
+            tools = get_all_tools()
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+
+        try:
+            materials = get_all_materials()
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+
         # Tools section
 
         self.layout.addWidget(QLabel('-- HERRAMIENTAS --'))
         self.layout.addWidget(MenuButton('Agregar herramienta', self.createTool))
 
-        tools = get_all_tools()
         for tool in tools:
             self.layout.addWidget(ToolCard(tool, self))
 
@@ -56,7 +90,6 @@ class InventoryView(QWidget):
         self.layout.addWidget(QLabel('-- MATERIALES --'))
         self.layout.addWidget(MenuButton('Agregar material', self.createMaterial))
 
-        materials = get_all_materials()
         for material in materials:
             self.layout.addWidget(MaterialCard(material, self))
 

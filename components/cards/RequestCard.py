@@ -31,15 +31,32 @@ class RequestCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
-            if not are_there_tasks_in_progress():
-                task = executeTask.delay(USER_ID)
-                Globals.set_current_task_id(task.task_id)
+            try:
+                update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
+                if not are_there_tasks_in_progress():
+                    task = executeTask.delay(USER_ID)
+                    Globals.set_current_task_id(task.task_id)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
 
     def rejectTask(self):
         rejectDialog = TaskCancelDialog(origin=FROM_REJECT)
         if rejectDialog.exec():
             reject_reason = rejectDialog.getInput()
-            update_task_status(self.task.id, TASK_REJECTED_STATUS, USER_ID, reject_reason)
+            try:
+                update_task_status(self.task.id, TASK_REJECTED_STATUS, USER_ID, reject_reason)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)

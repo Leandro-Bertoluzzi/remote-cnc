@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.cards.MsgCard import MsgCard
@@ -13,15 +13,22 @@ class TasksView(QWidget):
     def __init__(self, parent=None):
         super(TasksView, self).__init__(parent)
 
-        self.files = [
-            {'id': file.id, 'name': file.file_name} for file in get_all_files_from_user(USER_ID)
-        ]
-        self.materials = [
-            {'id': material.id, 'name': material.name} for material in get_all_materials()
-        ]
-        self.tools = [
-            {'id': tool.id, 'name': tool.name} for tool in get_all_tools()
-        ]
+        try:
+            self.files = [
+                {'id': file.id, 'name': file.file_name} for file in get_all_files_from_user(USER_ID)
+            ]
+            self.materials = [
+                {'id': material.id, 'name': material.name} for material in get_all_materials()
+            ]
+            self.tools = [
+                {'id': tool.id, 'name': tool.name} for tool in get_all_tools()
+            ]
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
 
         self.layout = QVBoxLayout()
         self.refreshLayout()
@@ -33,8 +40,18 @@ class TasksView(QWidget):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials)
         if taskDialog.exec():
             file_id, tool_id, material_id, name, note = taskDialog.getInputs()
-            create_task(USER_ID, file_id, tool_id, material_id, name, note)
+            try:
+                create_task(USER_ID, file_id, tool_id, material_id, name, note)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)
 
     def refreshLayout(self):
         while self.layout.count():
@@ -42,9 +59,17 @@ class TasksView(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
+        try:
+            tasks = get_all_tasks_from_user(USER_ID, status='all')
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+
         self.layout.addWidget(MenuButton('Crear tarea', onClick=self.createTask))
 
-        tasks = get_all_tasks_from_user(USER_ID, status='all')
         for task in tasks:
             self.layout.addWidget(
                 TaskCard(

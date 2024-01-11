@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.cards.MsgCard import MsgCard
 from components.cards.RequestCard import RequestCard
@@ -17,13 +17,24 @@ class RequestsView(QWidget):
         self.layout.setAlignment(Qt.AlignCenter)
         self.setLayout(self.layout)
 
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)
+
     def refreshLayout(self):
         while self.layout.count():
             child = self.layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
 
-        tasks = get_all_tasks(status=TASK_PENDING_APPROVAL_STATUS)
+        try:
+            tasks = get_all_tasks(status=TASK_PENDING_APPROVAL_STATUS)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+
         for task in tasks:
             self.layout.addWidget(RequestCard(task, parent=self))
 

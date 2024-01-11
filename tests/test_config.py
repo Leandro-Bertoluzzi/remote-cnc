@@ -4,7 +4,7 @@ from config import suppressQtWarnings, Globals
 
 def test_suppressQtWarnings():
     # Check environment variables before
-    assert os.getenv("QT_DEVICE_PIXEL_RATIO") is None
+    assert os.getenv("QT_DEVICE_PIXEL_RATIO") == 'auto'
     assert os.getenv("QT_AUTO_SCREEN_SCALE_FACTOR") is None
     assert os.getenv("QT_SCREEN_SCALE_FACTORS") is None
     assert os.getenv("QT_SCALE_FACTOR") is None

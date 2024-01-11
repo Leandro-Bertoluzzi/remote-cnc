@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.cards.UserCard import UserCard
@@ -20,8 +20,18 @@ class UsersView(QWidget):
         userDialog = UserDataDialog()
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
-            create_user(name, email, password, role)
+            try:
+                create_user(name, email, password, role)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)
 
     def refreshLayout(self):
         while self.layout.count():
@@ -29,9 +39,17 @@ class UsersView(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
+        try:
+            users = get_all_users()
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+
         self.layout.addWidget(MenuButton('Crear usuario', self.createUser))
 
-        users = get_all_users()
         for user in users:
             self.layout.addWidget(UserCard(user, self))
 

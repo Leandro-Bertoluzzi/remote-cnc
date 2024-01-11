@@ -13,7 +13,11 @@ class TestMainMenuButton:
                 'image.svg'
             ]
         )
-    def test_main_menu_button_init(self, qtbot, image_name):
+    def test_main_menu_button_init(self, qtbot, mocker, image_name):
+        # Mock SVG creation
+        mocker.patch.object(QSvgRenderer, '__init__', return_value=None)
+
+        # Create test button
         button = MainMenuButton('Test Button', image_name)
         qtbot.addWidget(button)
 
@@ -35,6 +39,10 @@ class TestMainMenuButton:
             ]
         )
     def test_main_menu_button_paint_event(self, qtbot, mocker, image_name, is_hover):
+        # Mock SVG creation
+        mocker.patch.object(QSvgRenderer, '__init__', return_value=None)
+
+        # Create test button
         button = MainMenuButton('Test Button', image_name)
         qtbot.addWidget(button)
 
@@ -59,6 +67,7 @@ class TestMainMenuButton:
         assert mock_painter_draw_rect.call_count == (1 if is_hover else 0)
 
     def test_main_menu_button_hover(self, qtbot):
+        # Create test button
         button = MainMenuButton('Test Button', 'an-image.png')
         qtbot.addWidget(button)
 

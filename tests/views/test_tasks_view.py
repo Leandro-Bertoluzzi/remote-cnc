@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QDialogButtonBox
+from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 
 from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
@@ -74,6 +74,85 @@ class TestTasksView:
         assert helpers.count_widgets(tasks_view.layout, TaskCard) == 0
         assert helpers.count_widgets(tasks_view.layout, MsgCard) == 1
 
+    @pytest.mark.parametrize(
+            'files_error,materials_error,tools_error,tasks_error',
+            [
+                (False, False, False, True),
+                (False, False, True, False),
+                (False, True, False, False),
+                (True, False, False, False)
+            ]
+    )
+    def test_tasks_view_init_db_error(
+        self,
+        mocker,
+        helpers,
+        files_error,
+        materials_error,
+        tools_error,
+        tasks_error
+    ):
+        mock_get_all_files = mocker.patch(
+            'views.TasksView.get_all_files_from_user',
+            return_value=[]
+        )
+        if files_error:
+            mock_get_all_files = mocker.patch(
+                'views.TasksView.get_all_files_from_user',
+                side_effect=Exception('mocked-error')
+            )
+        mock_get_all_materials = mocker.patch(
+            'views.TasksView.get_all_materials',
+            return_value=[]
+        )
+        if materials_error:
+            mock_get_all_materials = mocker.patch(
+                'views.TasksView.get_all_materials',
+                side_effect=Exception('mocked-error')
+            )
+        mock_get_all_tools = mocker.patch(
+            'views.TasksView.get_all_tools',
+            return_value=[]
+        )
+        if tools_error:
+            mock_get_all_tools = mocker.patch(
+                'views.TasksView.get_all_tools',
+                side_effect=Exception('mocked-error')
+            )
+        mock_get_all_tasks = mocker.patch(
+            'views.TasksView.get_all_tasks_from_user',
+            return_value=[]
+        )
+        if tasks_error:
+            mock_get_all_tasks = mocker.patch(
+                'views.TasksView.get_all_tasks_from_user',
+                side_effect=Exception('mocked-error')
+            )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Create test view
+        tasks_view = TasksView(parent=self.parent)
+
+        # Helper flags
+        should_query_materials = not files_error
+        should_query_tools = (not materials_error) and should_query_materials
+        should_query_tasks = (not tools_error) and should_query_tools
+
+        # Assertions
+        assert mock_get_all_files.call_count == 1
+        assert mock_get_all_materials.call_count == (1 if should_query_materials else 0)
+        assert mock_get_all_tools.call_count == (1 if should_query_tools else 0)
+        assert mock_get_all_tasks.call_count == (1 if should_query_tasks else 0)
+        assert mock_popup.call_count == 1
+        if not should_query_tasks:
+            assert tasks_view.layout() is None
+            return
+        assert helpers.count_widgets(tasks_view.layout, MenuButton) == 0
+        assert helpers.count_widgets(tasks_view.layout, TaskCard) == 0
+        assert helpers.count_widgets(tasks_view.layout, MsgCard) == 0
+
     def test_tasks_view_refresh_layout(self, helpers):
         # We remove a task
         self.tasks_list.pop()
@@ -88,10 +167,31 @@ class TestTasksView:
         assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 2
 
+    def test_tasks_view_refresh_layout_db_error(self, mocker, helpers):
+        mock_get_all_tasks = mocker.patch(
+            'views.TasksView.get_all_tasks_from_user',
+            side_effect=[
+                self.tasks_list,
+                Exception('mocked-error')
+            ]
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the method under test
+        tasks_view = TasksView(parent=self.parent)
+        tasks_view.refreshLayout()
+
+        # Assertions
+        assert mock_get_all_tasks.call_count == 2
+        assert mock_popup.call_count == 1
+        assert helpers.count_widgets(tasks_view.layout, MenuButton) == 0
+        assert helpers.count_widgets(tasks_view.layout, TaskCard) == 0
+
     def test_tasks_view_create_task(self, mocker, helpers):
         # Mock TaskDataDialog methods
         mock_inputs = 2, 3, 4, 'Example task 4', 'Just a simple description'
-        mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
         mocker.patch.object(TaskDataDialog, 'exec', return_value=QDialogButtonBox.Save)
         mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_inputs)
 
@@ -133,3 +233,30 @@ class TestTasksView:
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 4
+
+    def test_tasks_view_create_task_db_error(self, mocker, helpers):
+        # Mock TaskDataDialog methods
+        mock_inputs = 2, 3, 4, 'Example task 4', 'Just a simple description'
+        mocker.patch.object(TaskDataDialog, 'exec', return_value=QDialogButtonBox.Save)
+        mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_inputs)
+
+        # Mock DB method to simulate exception
+        mock_create_task = mocker.patch(
+            'views.TasksView.create_task',
+            side_effect=Exception('mocked-error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the createTask method
+        self.tasks_view.createTask()
+
+        # Validate DB calls
+        assert mock_create_task.call_count == 1
+        assert self.mock_get_all_tasks.call_count == 1
+        assert mock_popup.call_count == 1
+
+        # Validate amount of each type of widget
+        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 3

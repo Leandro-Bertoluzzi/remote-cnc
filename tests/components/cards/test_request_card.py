@@ -80,6 +80,46 @@ class TestRequestCard:
             mock_add_task_in_queue.assert_called_with(*add_task_in_queue_params.values())
 
     @pytest.mark.parametrize(
+            'update_error,search_tasks_error',
+            [
+                (False, True),
+                (True, False)
+            ]
+    )
+    def test_request_card_approve_task_db_error(self, mocker, update_error, search_tasks_error):
+        # Mock DB methods
+        mock_update_task_status = mocker.patch('components.cards.RequestCard.update_task_status')
+        if update_error:
+            mock_update_task_status = mocker.patch(
+                'components.cards.RequestCard.update_task_status',
+                side_effect=Exception('mocked error')
+            )
+        mock_validate_tasks_in_progress = mocker.patch(
+            'components.cards.RequestCard.are_there_tasks_in_progress'
+        )
+        if search_tasks_error:
+            mock_validate_tasks_in_progress = mocker.patch(
+                'components.cards.RequestCard.are_there_tasks_in_progress',
+                    side_effect=Exception('mocked error')
+            )
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+        # Mock task manager methods
+        mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.executeTask.delay')
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the approveTask method
+        self.card.approveTask()
+
+        # Assertions
+        assert mock_update_task_status.call_count == 1
+        assert mock_validate_tasks_in_progress.call_count == (0 if update_error else 1)
+        assert mock_add_task_in_queue.call_count == 0
+        assert mock_popup.call_count == 1
+
+    @pytest.mark.parametrize(
             "dialogResponse,expected_updated",
             [
                 (QDialog.Accepted, True),
@@ -108,3 +148,25 @@ class TestRequestCard:
                 'cancellation_reason': 'A valid cancellation reason',
             }
             mock_update_task_status.assert_called_with(*update_task_params.values())
+
+    def test_request_card_reject_task_db_error(self, mocker):
+        # Mock TaskCancelDialog methods
+        mock_input = 'A valid cancellation reason'
+        mocker.patch.object(TaskCancelDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(TaskCancelDialog, 'getInput', return_value=mock_input)
+
+        # Mock DB method to simulate exception
+        mock_update_task_status = mocker.patch(
+            'components.cards.RequestCard.update_task_status',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the rejectTask method
+        self.card.rejectTask()
+
+        # Validate DB calls
+        assert mock_update_task_status.call_count == 1
+        assert mock_popup.call_count == 1

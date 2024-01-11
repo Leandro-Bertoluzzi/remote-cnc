@@ -24,7 +24,14 @@ class ToolCard(Card):
         toolDialog = ToolDataDialog(toolInfo=self.tool)
         if toolDialog.exec():
             name, description = toolDialog.getInputs()
-            update_tool(self.tool.id, name, description)
+            try:
+                update_tool(self.tool.id, name, description)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
 
     def removeTool(self):
@@ -35,5 +42,15 @@ class ToolCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            remove_tool(self.tool.id)
+            try:
+                remove_tool(self.tool.id)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)

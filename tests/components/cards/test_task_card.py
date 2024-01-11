@@ -75,6 +75,32 @@ class TestTaskCard:
             }
             mock_update_task.assert_called_with(*update_task_params.values())
 
+    def test_task_card_update_task_db_error(self, qtbot, mocker):
+        card = TaskCard(self.task, parent=self.parent)
+        qtbot.addWidget(card)
+
+        # Mock TaskDataDialog methods
+        mock_input = 2, 3, 4, 'Updated task', 'Just a simple description'
+        mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
+        mocker.patch.object(TaskDataDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_input)
+
+        # Mock DB method
+        mock_update_task = mocker.patch(
+            'components.cards.TaskCard.update_task',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the updateTask method
+        card.updateTask()
+
+        # Validate DB calls
+        assert mock_update_task.call_count == 1
+        assert mock_popup.call_count == 1
+
     @pytest.mark.parametrize(
             "msgBoxResponse,expectedMethodCalls",
             [
@@ -97,6 +123,29 @@ class TestTaskCard:
 
         # Validate DB calls
         assert mock_remove_task.call_count == expectedMethodCalls
+
+    def test_task_card_remove_task_db_error(self, qtbot, mocker):
+        card = TaskCard(self.task, parent=self.parent)
+        qtbot.addWidget(card)
+
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+
+        # Mock DB method
+        mock_remove_task = mocker.patch(
+            'components.cards.TaskCard.remove_task',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the removeTask method
+        card.removeTask()
+
+        # Validate DB calls
+        assert mock_remove_task.call_count == 1
+        assert mock_popup.call_count == 1
 
     @pytest.mark.parametrize(
             "status",

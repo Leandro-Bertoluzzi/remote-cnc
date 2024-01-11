@@ -24,7 +24,14 @@ class MaterialCard(Card):
         materialDialog = MaterialDataDialog(materialInfo=self.material)
         if materialDialog.exec():
             name, description = materialDialog.getInputs()
-            update_material(self.material.id, name, description)
+            try:
+                update_material(self.material.id, name, description)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
 
     def removeMaterial(self):
@@ -35,5 +42,15 @@ class MaterialCard(Card):
         confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
         if confirmation.exec() == QMessageBox.Yes:
-            remove_material(self.material.id)
+            try:
+                remove_material(self.material.id)
+            except Exception as error:
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
             self.parent().refreshLayout()
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)

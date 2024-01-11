@@ -52,6 +52,28 @@ class TestMaterialCard:
             }
             mock_update_material.assert_called_with(*update_material_params.values())
 
+    def test_material_card_update_material_db_error(self, mocker):
+        # Mock MaterialDataDialog methods
+        mock_input = 'Updated material', 'Updated description'
+        mocker.patch.object(MaterialDataDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(MaterialDataDialog, 'getInputs', return_value=mock_input)
+
+        # Mock DB method
+        mock_update_material = mocker.patch(
+            'components.cards.MaterialCard.update_material',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the updateMaterial method
+        self.card.updateMaterial()
+
+        # Assertions
+        assert mock_update_material.call_count == 1
+        assert mock_popup.call_count == 1
+
     @pytest.mark.parametrize(
             "msgBoxResponse,expectedMethodCalls",
             [
@@ -71,3 +93,23 @@ class TestMaterialCard:
 
         # Validate DB calls
         assert mock_remove_material.call_count == expectedMethodCalls
+
+    def test_material_card_remove_material_db_error(self, mocker):
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+
+        # Mock DB method
+        mock_remove_material = mocker.patch(
+            'components.cards.MaterialCard.remove_material',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the removeMaterial method
+        self.card.removeMaterial()
+
+        # Validate DB calls
+        assert mock_remove_material.call_count == 1
+        assert mock_popup.call_count == 1

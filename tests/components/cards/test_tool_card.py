@@ -52,6 +52,28 @@ class TestToolCard:
             }
             mock_update_tool.assert_called_with(*update_tool_params.values())
 
+    def test_tool_card_update_tool_db_error(self, mocker):
+        # Mock ToolDataDialog methods
+        mock_input = 'Updated tool', 'Updated description'
+        mocker.patch.object(ToolDataDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(ToolDataDialog, 'getInputs', return_value=mock_input)
+
+        # Mock DB method
+        mock_update_tool = mocker.patch(
+            'components.cards.ToolCard.update_tool',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the updateTool method
+        self.card.updateTool()
+
+        # Validate DB calls
+        assert mock_update_tool.call_count == 1
+        assert mock_popup.call_count == 1
+
     @pytest.mark.parametrize(
             "msgBoxResponse,expectedMethodCalls",
             [
@@ -71,3 +93,23 @@ class TestToolCard:
 
         # Validate DB calls
         assert mock_remove_tool.call_count == expectedMethodCalls
+
+    def test_tool_card_remove_tool(self, mocker):
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+
+        # Mock DB method
+        mock_remove_tool = mocker.patch(
+            'components.cards.ToolCard.remove_tool',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the removeTool method
+        self.card.removeTool()
+
+        # Validate DB calls
+        assert mock_remove_tool.call_count == 1
+        assert mock_popup.call_count == 1

@@ -4,7 +4,7 @@ from core.grbl.grblController import GrblController, GRBL_LINE_JOG, JOG_DISTANCE
     JOG_DISTANCE_INCREMENTAL, JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, \
-    QLabel, QPushButton, QRadioButton, QSizePolicy, QVBoxLayout, QWidget
+    QLabel, QMessageBox, QPushButton, QRadioButton, QSizePolicy, QVBoxLayout, QWidget
 from typing import Callable
 
 
@@ -165,9 +165,13 @@ class JogController(QWidget):
         try:
             response = self.grbl_controller.streamLine(jog_command, GRBL_LINE_JOG)
             self.grbl_log(response['raw'])
-        except Exception:
-            # TO DO: Show dialog with error message
-            pass
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                'Error',
+                str(error),
+                QMessageBox.Ok
+            )
 
     def create_double_spinbox(
             self,

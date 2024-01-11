@@ -76,9 +76,19 @@ class FilesView(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
+        try:
+            files = get_all_files()
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                'Error de base de datos',
+                str(error),
+                QMessageBox.Ok
+            )
+            return
+
         self.layout.addWidget(MenuButton('Subir archivo', self.createFile))
 
-        files = get_all_files()
         for file in files:
             self.layout.addWidget(FileCard(file, self))
 

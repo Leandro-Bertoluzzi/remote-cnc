@@ -53,6 +53,28 @@ class TestUserCard:
             }
             mock_update_user.assert_called_with(*update_user_params.values())
 
+    def test_user_card_update_user_db_error(self, mocker):
+        # Mock UserDataDialog methods
+        mock_input = 'Updated Name', 'updated@email.com', 'updatedpassword', 'admin'
+        mocker.patch.object(UserDataDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(UserDataDialog, 'getInputs', return_value=mock_input)
+
+        # Mock DB method
+        mock_update_user = mocker.patch(
+            'components.cards.UserCard.update_user',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the updateUser method
+        self.card.updateUser()
+
+        # Validate DB calls
+        assert mock_update_user.call_count == 1
+        assert mock_popup.call_count == 1
+
     @pytest.mark.parametrize(
             "msgBoxResponse,expectedMethodCalls",
             [
@@ -72,3 +94,23 @@ class TestUserCard:
 
         # Validate DB calls
         assert mock_remove_user.call_count == expectedMethodCalls
+
+    def test_user_card_remove_user_db_error(self, mocker):
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+
+        # Mock DB method
+        mock_remove_user = mocker.patch(
+            'components.cards.UserCard.remove_user',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the removeUser method
+        self.card.removeUser()
+
+        # Validate DB calls
+        assert mock_remove_user.call_count == 1
+        assert mock_popup.call_count == 1
