@@ -171,9 +171,9 @@ def get_file_by_id(session, file_id):
 
 
 @session_context
-def update_file(session, file_id, user_id, file_name, file_name_saved):
+def update_file(session, file_id, user_id, file_name, file_hash = None):
     file_repository = FileRepository(session)
-    file = file_repository.update_file(file_id, user_id, file_name, file_name_saved)
+    file = file_repository.update_file(file_id, user_id, file_name, file_hash)
     return file
 
 

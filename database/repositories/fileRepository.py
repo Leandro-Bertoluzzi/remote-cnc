@@ -1,6 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from sqlalchemy import select
+from typing import Optional
 from ..base import Session
 from ..models import File, User
 
@@ -94,15 +95,16 @@ class FileRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
 
-    def update_file(self, id: int, user_id: int, file_name: str, file_hash: str):
+    def update_file(self, id: int, user_id: int, file_name: str, file_hash: Optional[str] = None):
         try:
             file = self.session.get(File, id)
             if not file:
                 raise Exception(f'File with ID {id} was not found')
 
             file.user_id = user_id
-            file.file_hash = file_hash
             file.file_name = file_name
+            if file_hash:
+                file.file_hash = file_hash
             self.session.commit()
             return file
         except SQLAlchemyError as e:
