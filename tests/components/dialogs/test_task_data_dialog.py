@@ -19,7 +19,7 @@ class TestTaskDataDialog:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot):
         # Mock DB data
-        file = File(user_id=1, file_name='example_file.gcode', file_path='path/example_file.gcode')
+        file = File(user_id=1, file_name='example_file.gcode', file_hash='hashed-file')
         file.id = 1
         material = Material(name='Example material', description='Just a material')
         material.id = 1

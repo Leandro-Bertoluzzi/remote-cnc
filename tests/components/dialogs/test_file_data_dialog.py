@@ -8,7 +8,7 @@ class TestFileDataDialog:
     fileInfo = File(
         user_id=1,
         file_name='example_file.gcode',
-        file_path='path/example_file.gcode'
+        file_hash='hashed-file'
     )
 
     def test_file_data_dialog_init(self, qtbot):

@@ -1,9 +1,5 @@
 from PyQt5.QtWidgets import QLayout
-import os
 import pytest
-
-# Set environment variables for tests
-os.environ['USER_ID'] = '1'
 
 
 # Helper fixtures

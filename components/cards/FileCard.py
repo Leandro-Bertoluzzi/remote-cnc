@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
-from core.utils.database import update_file, remove_file
+from config import USER_ID
+from core.database.repositories.fileRepository import DuplicatedFileNameError
+from core.utils.database import check_file_exists, update_file, remove_file
 from core.utils.files import renameFile, deleteFile
 
 
@@ -26,23 +28,50 @@ class FileCard(Card):
         if fileDialog.exec():
             name, path = fileDialog.getInputs()
 
+            if name == self.file.file_name:
+                return
+
+            # Checks if the file is repeated
+            try:
+                check_file_exists(USER_ID, name, 'impossible-hash')
+            except DuplicatedFileNameError:
+                self.showWarning(
+                    'Nombre repetido',
+                    f'Ya existe un archivo con el nombre <<{name}>>, pruebe renombrarlo'
+                )
+                return
+
             # Update file in the file system
             try:
-                generatedFilename = renameFile(
+                renameFile(
                     self.file.user_id,
-                    self.file.file_path,
+                    self.file.file_name,
                     name
                 )
             except Exception as error:
-                print('Error: ', error)
+                self.showError(
+                    'Error de guardado',
+                    str(error)
+                )
+                return
 
             # Update the entry for the file in the DB
             try:
-                update_file(self.file.id, self.file.user_id, name, generatedFilename)
+                update_file(self.file.id, self.file.user_id, name)
             except Exception as error:
-                print('Error: ', error)
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
 
             self.parent().refreshLayout()
+
+    def showWarning(self, title, text):
+        QMessageBox.warning(self, title, text, QMessageBox.Ok)
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)
 
     def removeFile(self):
         confirmation = QMessageBox()
@@ -54,14 +83,22 @@ class FileCard(Card):
         if confirmation.exec() == QMessageBox.Yes:
             # Remove the file from the file system
             try:
-                deleteFile(self.file.user_id, self.file.file_path)
+                deleteFile(self.file.user_id, self.file.file_name)
             except Exception as error:
-                print('Error: ', error)
+                self.showError(
+                    'Error de borrado',
+                    str(error)
+                )
+                return
 
             # Remove the entry for the file in the DB
             try:
                 remove_file(self.file.id)
             except Exception as error:
-                print('Error: ', error)
+                self.showError(
+                    'Error de base de datos',
+                    str(error)
+                )
+                return
 
             self.parent().refreshLayout()

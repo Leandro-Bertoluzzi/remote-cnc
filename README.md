@@ -70,14 +70,10 @@ See [Development](./docs/development.md) docs.
 ### Unit tests
 
 ```bash
-$ pytest -s
-```
-
-If you want to update the coverage report (available in /htmlcov):
-
-```bash
 $ pytest -s --cov-config=setup.cfg
 ```
+
+The coverage report is available in the folder `/htmlcov`.
 
 ### Code style linter
 
