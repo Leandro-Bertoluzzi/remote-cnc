@@ -36,6 +36,20 @@ def getFileNameInFolder(current: str, searched: str) -> Path:
     return folder / searched
 
 
+def computeSHA256FromFile(file: BinaryIO) -> str:
+    """
+    - Name: computeSHA256FromFile
+    - Parameter(s):
+        - file: reference file
+    - Description:
+        Generates SHA256 hash from the content of the file
+    """
+    hash_sha256 = hashlib.sha256()
+    for chunk in iter(lambda: file.read(4096), b""):
+        hash_sha256.update(chunk)
+    return hash_sha256.hexdigest()
+
+
 def computeSHA256(filePath: str) -> str:
     """
     - Name: computeSHA256
