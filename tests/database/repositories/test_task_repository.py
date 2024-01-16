@@ -231,7 +231,15 @@ class TestTaskRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             task_repository.update_task_status(id=1, status='invalid_status')
-        assert str(error.value) == 'ERROR: Status invalid_status is not valid'
+        assert str(error.value) == 'Status invalid_status is not valid'
+
+    def test_error_update_needed_admin(self, mocked_session):
+        task_repository = TaskRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            task_repository.update_task_status(id=1, status='on_hold')
+        assert str(error.value) == 'Admin level is required to perform the action'
 
     def test_error_update_task_status_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception

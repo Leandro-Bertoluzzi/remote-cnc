@@ -4,7 +4,7 @@ import shutil
 import time
 from typing import BinaryIO
 from utils.files import isAllowedFile, getFileNameInFolder, computeSHA256, \
-    saveFile, copyFile, renameFile, deleteFile
+    computeSHA256FromFile, saveFile, copyFile, renameFile, deleteFile
 
 
 @pytest.mark.parametrize(
@@ -30,6 +30,21 @@ def test_getFileNameInFolder():
     searched = 'searched.txt'
     expected = Path('path/to/files/searched.txt')
     assert getFileNameInFolder(current, searched) == expected
+
+
+def test_computeSHA256FromFile(mocker):
+    expected_hash = '987d1fbbfe0da6111b6214ab798984bd96f45554c2c896bce758152045120937'
+
+    # Mock FS methods
+    mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
+    mocker.patch('builtins.open', mocked_file_data)
+
+    # Call method under test
+    with open('/path/to/file') as test_file:
+        computed_hash = computeSHA256FromFile(test_file)
+
+    # Assertions
+    assert computed_hash == expected_hash
 
 
 def test_computeSHA256(mocker):

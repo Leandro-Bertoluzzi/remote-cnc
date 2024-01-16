@@ -127,7 +127,7 @@ class TaskRepository:
         cancellation_reason: str = "",
     ):
         if status not in VALID_STATUSES:
-            raise Exception(f'ERROR: Status {status} is not valid')
+            raise Exception(f'Status {status} is not valid')
 
         try:
             task = self.session.get(Task, id)
@@ -138,10 +138,9 @@ class TaskRepository:
             approved = is_pending and status == TASK_APPROVED_STATUS
             rejected = is_pending and status == TASK_REJECTED_STATUS
 
-            task.status = status
-            task.status_updated_at = datetime.now()
-
             if approved or rejected:
+                if not admin_id:
+                    raise Exception('Admin level is required to perform the action')
                 task.admin_id = admin_id
 
             if status == TASK_PENDING_APPROVAL_STATUS:
@@ -150,6 +149,9 @@ class TaskRepository:
 
             if status == TASK_CANCELLED_STATUS or rejected:
                 task.cancellation_reason = cancellation_reason
+
+            task.status = status
+            task.status_updated_at = datetime.now()
 
             self.session.commit()
             return task
