@@ -93,7 +93,8 @@ class GrblController:
                 exc_info=True
             )
             raise Exception(
-                'Failed opening serial port, verify and close any other connection you may have'
+                f'Failed opening serial port {port}, '
+                'verify and close any other connection you may have'
             )
 
         msgType, payload = self.parseResponse(response)

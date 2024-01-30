@@ -59,19 +59,21 @@ def executeTask(self, admin_id: int, base_path: str, serial_port: str, serial_ba
         # 3. Get the file for the next task in the queue
         task = repository.get_next_task()
         file_path = getFilePath(base_path, task.file.user_id, task.file.file_name)
-        # Mark the task as 'in progress' in the DB
-        repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
-        task_logger.info('Started execution of file: %s', file_path)
 
         # Task progress
         progress = 0
         total_lines = 0
 
-        # 4. Send G-code lines in a loop, until either the file is finished or there is an error
-        with open(file_path, "r") as file:
+        # Get the file lenght
+        with file_path.open("r") as file:
             total_lines = len(file.readlines())
 
-        with open(file_path, "r") as file:
+        # Once sure the file exists, mark the task as 'in progress' in the DB
+        repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
+        task_logger.info('Started execution of file: %s', file_path)
+
+        # 4. Send G-code lines in a loop, until either the file is finished or there is an error
+        with file_path.open("r") as file:
             for line in file:
                 cnc.streamLine(line)
                 # update task progress
