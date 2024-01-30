@@ -25,15 +25,15 @@ try:
         SERIAL_PORT, FILES_FOLDER_PATH
     from ..database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from ..grbl.grblController import GrblController
-    from ..utils.database import get_next_task, are_there_pending_tasks, \
-        are_there_tasks_in_progress, update_task_status
+    from ..database.base import Session as SessionLocal
+    from ..database.repositories.taskRepository import TaskRepository
 except ImportError:
     from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, \
         SERIAL_PORT, FILES_FOLDER_PATH
     from database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from grbl.grblController import GrblController
-    from utils.database import get_next_task, are_there_pending_tasks, \
-        are_there_tasks_in_progress, update_task_status
+    from database.base import Session as SessionLocal
+    from database.repositories.taskRepository import TaskRepository
 
 app = Celery(
     'worker',
@@ -44,8 +44,10 @@ app = Celery(
 
 @app.task(name='worker.tasks.executeTask', bind=True)
 def executeTask(self, admin_id: int) -> bool:
+    db_session = SessionLocal()
+    repository = TaskRepository(db_session)
     # 1. Check if there is a task currently in progress, in which case return an exception
-    if are_there_tasks_in_progress():
+    if repository.are_there_tasks_in_progress():
         raise Exception("There is a task currently in progress, please wait until finished")
 
     # 2. Instantiate a GrblController object and start communication with Arduino
@@ -53,12 +55,12 @@ def executeTask(self, admin_id: int) -> bool:
     cnc = GrblController(logger=task_logger)
     cnc.connect(SERIAL_PORT, SERIAL_BAUDRATE)
 
-    while are_there_pending_tasks():
+    while repository.are_there_pending_tasks():
         # 3. Get the file for the next task in the queue
-        task = get_next_task()
+        task = repository.get_next_task()
         file_path = Path(f'../{FILES_FOLDER_PATH}/{task.file.user_id}/{task.file.file_path}')
         # Mark the task as 'in progress' in the DB
-        update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
+        repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
         task_logger.info('Started execution of file: %s', file_path)
 
         # Task progress
@@ -92,7 +94,7 @@ def executeTask(self, admin_id: int) -> bool:
         # if there is a queued task in DB.
         # If there is none, close the connection and return
         task_logger.info('Finished execution of file: %s', file_path)
-        update_task_status(task.id, TASK_FINISHED_STATUS, admin_id)
+        repository.update_task_status(task.id, TASK_FINISHED_STATUS, admin_id)
         # 6. If there is a pending task, go to step 3 and repeat
 
     cnc.disconnect()

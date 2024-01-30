@@ -5,8 +5,8 @@ from datetime import datetime
 from typing import Optional
 from ..base import Session
 from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
-    TASK_REJECTED_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, \
-    VALID_STATUSES
+    TASK_IN_PROGRESS_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_REJECTED_STATUS, \
+    TASK_EMPTY_NOTE, VALID_STATUSES
 
 
 class TaskRepository:
@@ -90,6 +90,16 @@ class TaskRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tasks from the DB: {e}')
 
+    def are_there_tasks_with_status(self, status: str) -> bool:
+        tasks = self.get_all_tasks(status=status)
+        return bool(tasks)
+
+    def are_there_pending_tasks(self) -> bool:
+        return self.are_there_tasks_with_status(TASK_APPROVED_STATUS)
+
+    def are_there_tasks_in_progress(self) -> bool:
+        return self.are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
+
     def update_task(
         self,
         id: int,
@@ -133,6 +143,9 @@ class TaskRepository:
             task = self.session.get(Task, id)
             if not task:
                 raise Exception(f'Task with ID {id} was not found')
+
+            if task.status == status:
+                return task
 
             is_pending = task.status == TASK_PENDING_APPROVAL_STATUS
             approved = is_pending and status == TASK_APPROVED_STATUS

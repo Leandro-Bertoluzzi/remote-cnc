@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  worker:
+    build:
+      context: ./
+      dockerfile: ./worker/Dockerfile
+    command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
+    depends_on:
+      - redis
+      - postgresql
+    devices:
+      - ${SERIAL_PORT}:${SERIAL_PORT}
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DB_HOST=postgresql
+    volumes:
+      - ./worker/logs:/usr/src/app/logs
+      - ./${FILES_FOLDER}:/usr/src/app/${FILES_FOLDER}
+    container_name: cnc-admin-worker
