@@ -36,6 +36,19 @@ def getFileNameInFolder(current: str, searched: str) -> Path:
     return folder / searched
 
 
+def getFilePath(basePath: str, userId: int, fileName: str) -> Path:
+    """
+    - Name: getFilePath
+    - Parameter(s):
+        - basePath: string, absolute path to parent folder
+        - userId: int, user ID
+        - fileName: string, name of the file we need to remove
+    - Description:
+        Returns the path to the user's file
+    """
+    return Path(basePath, FILES_FOLDER_PATH, str(userId), fileName)
+
+
 def computeSHA256FromFile(file: BinaryIO) -> str:
     """
     - Name: computeSHA256FromFile

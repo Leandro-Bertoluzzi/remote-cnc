@@ -1,5 +1,4 @@
 from celery import Celery
-from pathlib import Path
 from celery.utils.log import get_task_logger
 
 ###########################################################
@@ -21,19 +20,20 @@ sys.path.append(parent_dir)
 ###########################################################
 
 try:
-    from ..config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, \
-        SERIAL_PORT, FILES_FOLDER_PATH
+    from ..config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
     from ..database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from ..grbl.grblController import GrblController
     from ..database.base import Session as SessionLocal
     from ..database.repositories.taskRepository import TaskRepository
+    from ..utils.files import getFilePath
 except ImportError:
-    from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND, SERIAL_BAUDRATE, \
-        SERIAL_PORT, FILES_FOLDER_PATH
+    from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
     from database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS
     from grbl.grblController import GrblController
     from database.base import Session as SessionLocal
     from database.repositories.taskRepository import TaskRepository
+    from utils.files import getFilePath
+
 
 app = Celery(
     'worker',
@@ -43,7 +43,7 @@ app = Celery(
 
 
 @app.task(name='worker.tasks.executeTask', bind=True)
-def executeTask(self, admin_id: int) -> bool:
+def executeTask(self, admin_id: int, base_path: str, serial_port: str, serial_baudrate: int) -> bool:
     db_session = SessionLocal()
     repository = TaskRepository(db_session)
     # 1. Check if there is a task currently in progress, in which case return an exception
@@ -53,12 +53,12 @@ def executeTask(self, admin_id: int) -> bool:
     # 2. Instantiate a GrblController object and start communication with Arduino
     task_logger = get_task_logger(__name__)
     cnc = GrblController(logger=task_logger)
-    cnc.connect(SERIAL_PORT, SERIAL_BAUDRATE)
+    cnc.connect(serial_port, serial_baudrate)
 
     while repository.are_there_pending_tasks():
         # 3. Get the file for the next task in the queue
         task = repository.get_next_task()
-        file_path = Path(f'../{FILES_FOLDER_PATH}/{task.file.user_id}/{task.file.file_path}')
+        file_path = getFilePath(base_path, task.file.user_id, task.file.file_name)
         # Mark the task as 'in progress' in the DB
         repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
         task_logger.info('Started execution of file: %s', file_path)
