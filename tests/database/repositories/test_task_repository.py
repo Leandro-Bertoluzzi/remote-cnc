@@ -70,6 +70,31 @@ class TestTaskRepository:
         assert task.note == 'This is a note'
         assert task.status == 'on_hold'
 
+    def test_are_there_tasks_with_status(self, mocked_session):
+        task_repository = TaskRepository(mocked_session)
+
+        # Call method under test and assert result
+        result = task_repository.are_there_tasks_with_status('pending_approval')
+        assert result is True
+
+        # Call method under test and assert result
+        result = task_repository.are_there_tasks_with_status('in_progress')
+        assert result is False
+
+    def test_are_there_pending_tasks(self, mocked_session):
+        task_repository = TaskRepository(mocked_session)
+
+        # Call method under test and assert result
+        result = task_repository.are_there_pending_tasks()
+        assert result is True
+
+    def test_are_there_tasks_in_progress(self, mocked_session):
+        task_repository = TaskRepository(mocked_session)
+
+        # Call method under test and assert result
+        result = task_repository.are_there_tasks_in_progress()
+        assert result is False
+
     def test_update_task(self, mocked_session):
         task_repository = TaskRepository(mocked_session)
         user_id = 1
@@ -133,6 +158,21 @@ class TestTaskRepository:
         assert updated_task.status == status
         assert updated_task.admin_id == expected_admin_id
         assert updated_task.cancellation_reason == expected_cancellation_reason
+
+    def test_update_task_status_back_to_pending(self, mocked_session):
+        task_repository = TaskRepository(mocked_session)
+        admin_id = 1
+
+        # Call method under test
+        updated_task = task_repository.update_task_status(
+            2,
+            'pending_approval',
+            admin_id
+        )
+
+        # Assertions
+        assert updated_task.status == 'pending_approval'
+        assert updated_task.admin_id is None
 
     def test_remove_task(self, mocked_session):
         task_repository = TaskRepository(mocked_session)

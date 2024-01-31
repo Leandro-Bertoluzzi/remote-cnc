@@ -43,7 +43,13 @@ app = Celery(
 
 
 @app.task(name='worker.tasks.executeTask', bind=True)
-def executeTask(self, admin_id: int, base_path: str, serial_port: str, serial_baudrate: int) -> bool:
+def executeTask(
+    self,
+    admin_id: int,
+    base_path: str,
+    serial_port: str,
+    serial_baudrate: int
+) -> bool:
     db_session = SessionLocal()
     repository = TaskRepository(db_session)
     # 1. Check if there is a task currently in progress, in which case return an exception
@@ -65,7 +71,7 @@ def executeTask(self, admin_id: int, base_path: str, serial_port: str, serial_ba
         total_lines = 0
 
         # Get the file lenght
-        with file_path.open("r") as file:
+        with open(file_path, "r") as file:
             total_lines = len(file.readlines())
 
         # Once sure the file exists, mark the task as 'in progress' in the DB
@@ -73,7 +79,7 @@ def executeTask(self, admin_id: int, base_path: str, serial_port: str, serial_ba
         task_logger.info('Started execution of file: %s', file_path)
 
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
-        with file_path.open("r") as file:
+        with open(file_path, "r") as file:
             for line in file:
                 cnc.streamLine(line)
                 # update task progress

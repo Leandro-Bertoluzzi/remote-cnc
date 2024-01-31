@@ -45,11 +45,12 @@ class TestGrblController:
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            self.grbl_controller.connect('port', 9600)
+            self.grbl_controller.connect('test-port', 9600)
 
         # Assertions
         expected_error_msg = (
-            'Failed opening serial port, verify and close any other connection you may have'
+            'Failed opening serial port test-port, '
+            'verify and close any other connection you may have'
         )
         assert str(error.value) == expected_error_msg
 

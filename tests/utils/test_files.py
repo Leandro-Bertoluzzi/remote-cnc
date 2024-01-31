@@ -4,7 +4,7 @@ import shutil
 import time
 from typing import BinaryIO
 from utils.files import isAllowedFile, getFileNameInFolder, computeSHA256, \
-    computeSHA256FromFile, saveFile, copyFile, renameFile, deleteFile
+    computeSHA256FromFile, saveFile, copyFile, renameFile, deleteFile, getFilePath
 
 
 @pytest.mark.parametrize(
@@ -30,6 +30,13 @@ def test_getFileNameInFolder():
     searched = 'searched.txt'
     expected = Path('path/to/files/searched.txt')
     assert getFileNameInFolder(current, searched) == expected
+
+
+def test_getFilePath():
+    base_path = 'path/to/files/'
+    file_name = 'file.txt'
+    expected = Path('path/to/files/files_folder/1/file.txt')
+    assert getFilePath(base_path, 1, file_name) == expected
 
 
 def test_computeSHA256FromFile(mocker):
@@ -69,7 +76,10 @@ def test_saveFile(mocker, user_folder_exists):
     # Mock folder creation
     mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
     mock_create_dir = mocker.patch.object(Path, 'mkdir')
-    create_dir_call_count = 0 if user_folder_exists else 1
+
+    # Mock file open
+    mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
+    mocker.patch('builtins.open', mocked_file_data)
 
     # Mock file copy
     mock_copy_file = mocker.patch.object(shutil, 'copyfileobj')
@@ -79,7 +89,7 @@ def test_saveFile(mocker, user_folder_exists):
 
     # Assertions
     assert result == expected
-    assert mock_create_dir.call_count == create_dir_call_count
+    assert mock_create_dir.call_count == (0 if user_folder_exists else 1)
     assert mock_copy_file.call_count == 1
 
 

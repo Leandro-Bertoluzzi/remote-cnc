@@ -98,7 +98,7 @@ def saveFile(userId: int, file: BinaryIO, filename: str) -> Path:
 
         # Save the file
         full_file_path = user_files_folder_path / filename
-        with full_file_path.open("wb") as buffer:
+        with open(full_file_path, "wb") as buffer:
             shutil.copyfileobj(file, buffer)
     except Exception as error:
         raise Exception(f'There was an error writing the file in the file system: {error}')
