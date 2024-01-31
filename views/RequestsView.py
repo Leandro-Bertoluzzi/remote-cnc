@@ -3,8 +3,9 @@ from PyQt5.QtCore import Qt
 from components.cards.MsgCard import MsgCard
 from components.cards.RequestCard import RequestCard
 from components.buttons.MenuButton import MenuButton
+from core.database.base import Session as SessionLocal
 from core.database.models import TASK_PENDING_APPROVAL_STATUS
-from core.utils.database import get_all_tasks
+from core.database.repositories.taskRepository import TaskRepository
 
 
 class RequestsView(QWidget):
@@ -27,7 +28,9 @@ class RequestsView(QWidget):
                 child.widget().deleteLater()
 
         try:
-            tasks = get_all_tasks(status=TASK_PENDING_APPROVAL_STATUS)
+            db_session = SessionLocal()
+            repository = TaskRepository(db_session)
+            tasks = repository.get_all_tasks(status=TASK_PENDING_APPROVAL_STATUS)
         except Exception as error:
             self.showError(
                 'Error de base de datos',

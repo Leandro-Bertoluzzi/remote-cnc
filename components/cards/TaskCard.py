@@ -3,8 +3,9 @@ from celery.result import AsyncResult
 from components.cards.Card import Card
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import Globals
+from core.database.base import Session as SessionLocal
 from core.database.models import TASK_DEFAULT_PRIORITY, TASK_IN_PROGRESS_STATUS
-from core.utils.database import update_task, remove_task
+from core.database.repositories.taskRepository import TaskRepository
 
 
 class TaskCard(Card):
@@ -49,7 +50,9 @@ class TaskCard(Card):
         if taskDialog.exec():
             file_id, tool_id, material_id, name, note = taskDialog.getInputs()
             try:
-                update_task(
+                db_session = SessionLocal()
+                repository = TaskRepository(db_session)
+                repository.update_task(
                     self.task.id,
                     self.task.user_id,
                     file_id,
@@ -76,7 +79,9 @@ class TaskCard(Card):
 
         if confirmation.exec() == QMessageBox.Yes:
             try:
-                remove_task(self.task.id)
+                db_session = SessionLocal()
+                repository = TaskRepository(db_session)
+                repository.remove_task(self.task.id)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',

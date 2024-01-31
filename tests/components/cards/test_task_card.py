@@ -4,6 +4,10 @@ from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from core.database.models import Task
+from core.database.repositories.fileRepository import FileRepository
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.repositories.toolRepository import ToolRepository
 from views.TasksView import TasksView
 
 
@@ -21,9 +25,9 @@ class TestTaskCard:
         mocker.patch.object(TasksView, 'refreshLayout')
 
         # Patch the DB methods
-        mocker.patch('views.TasksView.get_all_files_from_user', return_value=[])
-        mocker.patch('views.TasksView.get_all_tools', return_value=[])
-        mocker.patch('views.TasksView.get_all_materials', return_value=[])
+        mocker.patch.object(FileRepository, 'get_all_files_from_user', return_value=[])
+        mocker.patch.object(ToolRepository, 'get_all_tools', return_value=[])
+        mocker.patch.object(MaterialRepository, 'get_all_materials', return_value=[])
 
         self.parent = TasksView()
         self.task.id = 1
@@ -54,7 +58,7 @@ class TestTaskCard:
         mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_task = mocker.patch('components.cards.TaskCard.update_task')
+        mock_update_task = mocker.patch.object(TaskRepository, 'update_task')
 
         # Call the updateTask method
         card.updateTask()
@@ -86,8 +90,9 @@ class TestTaskCard:
         mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_task = mocker.patch(
-            'components.cards.TaskCard.update_task',
+        mock_update_task = mocker.patch.object(
+            TaskRepository,
+            'update_task',
             side_effect=Exception('mocked error')
         )
 
@@ -116,7 +121,7 @@ class TestTaskCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_task = mocker.patch('components.cards.TaskCard.remove_task')
+        mock_remove_task = mocker.patch.object(TaskRepository, 'remove_task')
 
         # Call the removeTask method
         card.removeTask()
@@ -132,8 +137,9 @@ class TestTaskCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
         # Mock DB method
-        mock_remove_task = mocker.patch(
-            'components.cards.TaskCard.remove_task',
+        mock_remove_task = mocker.patch.object(
+            TaskRepository,
+            'remove_task',
             side_effect=Exception('mocked error')
         )
 

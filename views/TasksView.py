@@ -5,23 +5,39 @@ from components.cards.MsgCard import MsgCard
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
-from core.utils.database import get_all_tools, get_all_materials, \
-    get_all_files_from_user, create_task, get_all_tasks_from_user
+from core.database.base import Session as SessionLocal
+from core.database.repositories.fileRepository import FileRepository
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.repositories.toolRepository import ToolRepository
 
 
 class TasksView(QWidget):
     def __init__(self, parent=None):
         super(TasksView, self).__init__(parent)
 
+        db_session = SessionLocal()
+        files_repository = FileRepository(db_session)
+        materials_repository = MaterialRepository(db_session)
+        tools_repository = ToolRepository(db_session)
         try:
             self.files = [
-                {'id': file.id, 'name': file.file_name} for file in get_all_files_from_user(USER_ID)
+                {
+                    'id': file.id,
+                    'name': file.file_name
+                } for file in files_repository.get_all_files_from_user(USER_ID)
             ]
             self.materials = [
-                {'id': material.id, 'name': material.name} for material in get_all_materials()
+                {
+                    'id': material.id,
+                    'name': material.name
+                } for material in materials_repository.get_all_materials()
             ]
             self.tools = [
-                {'id': tool.id, 'name': tool.name} for tool in get_all_tools()
+                {
+                    'id': tool.id,
+                    'name': tool.name
+                } for tool in tools_repository.get_all_tools()
             ]
         except Exception as error:
             self.showError(
@@ -41,7 +57,9 @@ class TasksView(QWidget):
         if taskDialog.exec():
             file_id, tool_id, material_id, name, note = taskDialog.getInputs()
             try:
-                create_task(USER_ID, file_id, tool_id, material_id, name, note)
+                db_session = SessionLocal()
+                repository = TaskRepository(db_session)
+                repository.create_task(USER_ID, file_id, tool_id, material_id, name, note)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -60,7 +78,9 @@ class TasksView(QWidget):
                 child.widget().deleteLater()
 
         try:
-            tasks = get_all_tasks_from_user(USER_ID, status='all')
+            db_session = SessionLocal()
+            repository = TaskRepository(db_session)
+            tasks = repository.get_all_tasks_from_user(USER_ID, status='all')
         except Exception as error:
             self.showError(
                 'Error de base de datos',

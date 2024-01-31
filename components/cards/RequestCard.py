@@ -2,8 +2,9 @@ from PyQt5.QtWidgets import QPushButton, QMessageBox
 from config import USER_ID, Globals
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
-from core.utils.database import update_task_status, are_there_tasks_in_progress
+from core.database.base import Session as SessionLocal
 from core.database.models import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+from core.database.repositories.taskRepository import TaskRepository
 from core.worker.tasks import executeTask
 
 
@@ -32,8 +33,10 @@ class RequestCard(Card):
 
         if confirmation.exec() == QMessageBox.Yes:
             try:
-                update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
-                if not are_there_tasks_in_progress():
+                db_session = SessionLocal()
+                repository = TaskRepository(db_session)
+                repository.update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
+                if not repository.are_there_tasks_in_progress():
                     task = executeTask.delay(USER_ID)
                     Globals.set_current_task_id(task.task_id)
             except Exception as error:
@@ -49,7 +52,14 @@ class RequestCard(Card):
         if rejectDialog.exec():
             reject_reason = rejectDialog.getInput()
             try:
-                update_task_status(self.task.id, TASK_REJECTED_STATUS, USER_ID, reject_reason)
+                db_session = SessionLocal()
+                repository = TaskRepository(db_session)
+                repository.update_task_status(
+                    self.task.id,
+                    TASK_REJECTED_STATUS,
+                    USER_ID,
+                    reject_reason
+                )
             except Exception as error:
                 self.showError(
                     'Error de base de datos',

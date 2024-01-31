@@ -6,6 +6,10 @@ from components.buttons.MenuButton import MenuButton
 from components.cards.MsgCard import MsgCard
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
+from core.database.repositories.fileRepository import FileRepository
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.repositories.toolRepository import ToolRepository
 from views.TasksView import TasksView
 from core.database.models import Task
 
@@ -37,13 +41,14 @@ class TestTasksView:
         self.tasks_list = [task_1, task_2, task_3]
 
         # Patch the DB methods
-        mocker.patch('views.TasksView.get_all_files_from_user', return_value=[])
-        mocker.patch('views.TasksView.get_all_tools', return_value=[])
-        mocker.patch('views.TasksView.get_all_materials', return_value=[])
+        mocker.patch.object(FileRepository, 'get_all_files_from_user', return_value=[])
+        mocker.patch.object(ToolRepository, 'get_all_tools', return_value=[])
+        mocker.patch.object(MaterialRepository, 'get_all_materials', return_value=[])
 
         # Patch the getAllTasksFromUser method with the mock function
-        self.mock_get_all_tasks = mocker.patch(
-            'views.TasksView.get_all_tasks_from_user',
+        self.mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks_from_user',
             return_value=self.tasks_list
         )
 
@@ -61,8 +66,9 @@ class TestTasksView:
         assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 3
 
     def test_tasks_view_init_with_no_tasks(self, mocker, helpers):
-        mock_get_all_tasks = mocker.patch(
-            'views.TasksView.get_all_tasks_from_user',
+        mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks_from_user',
             return_value=[]
         )
         tasks_view = TasksView(parent=self.parent)
@@ -92,40 +98,48 @@ class TestTasksView:
         tools_error,
         tasks_error
     ):
-        mock_get_all_files = mocker.patch(
-            'views.TasksView.get_all_files_from_user',
+        mock_get_all_files = mocker.patch.object(
+            FileRepository,
+            'get_all_files_from_user',
             return_value=[]
         )
         if files_error:
-            mock_get_all_files = mocker.patch(
-                'views.TasksView.get_all_files_from_user',
+            mock_get_all_files = mocker.patch.object(
+                FileRepository,
+                'get_all_files_from_user',
                 side_effect=Exception('mocked-error')
             )
-        mock_get_all_materials = mocker.patch(
-            'views.TasksView.get_all_materials',
+        mock_get_all_materials = mocker.patch.object(
+            MaterialRepository,
+            'get_all_materials',
             return_value=[]
         )
         if materials_error:
-            mock_get_all_materials = mocker.patch(
-                'views.TasksView.get_all_materials',
+            mock_get_all_materials = mocker.patch.object(
+                MaterialRepository,
+                'get_all_materials',
                 side_effect=Exception('mocked-error')
             )
-        mock_get_all_tools = mocker.patch(
-            'views.TasksView.get_all_tools',
+        mock_get_all_tools = mocker.patch.object(
+            ToolRepository,
+            'get_all_tools',
             return_value=[]
         )
         if tools_error:
-            mock_get_all_tools = mocker.patch(
-                'views.TasksView.get_all_tools',
+            mock_get_all_tools = mocker.patch.object(
+                ToolRepository,
+                'get_all_tools',
                 side_effect=Exception('mocked-error')
             )
-        mock_get_all_tasks = mocker.patch(
-            'views.TasksView.get_all_tasks_from_user',
+        mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks_from_user',
             return_value=[]
         )
         if tasks_error:
-            mock_get_all_tasks = mocker.patch(
-                'views.TasksView.get_all_tasks_from_user',
+            mock_get_all_tasks = mocker.patch.object(
+                TaskRepository,
+                'get_all_tasks_from_user',
                 side_effect=Exception('mocked-error')
             )
 
@@ -168,8 +182,9 @@ class TestTasksView:
         assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 2
 
     def test_tasks_view_refresh_layout_db_error(self, mocker, helpers):
-        mock_get_all_tasks = mocker.patch(
-            'views.TasksView.get_all_tasks_from_user',
+        mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks_from_user',
             side_effect=[
                 self.tasks_list,
                 Exception('mocked-error')
@@ -209,8 +224,9 @@ class TestTasksView:
             return
 
         # Mock and keep track of function calls
-        mock_create_task = mocker.patch(
-            'views.TasksView.create_task',
+        mock_create_task = mocker.patch.object(
+            TaskRepository,
+            'create_task',
             side_effect=side_effect_create_task
         )
 
@@ -241,8 +257,9 @@ class TestTasksView:
         mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_inputs)
 
         # Mock DB method to simulate exception
-        mock_create_task = mocker.patch(
-            'views.TasksView.create_task',
+        mock_create_task = mocker.patch.object(
+            TaskRepository,
+            'create_task',
             side_effect=Exception('mocked-error')
         )
 

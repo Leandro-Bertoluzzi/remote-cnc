@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from core.utils.database import update_tool, remove_tool
+from core.database.base import Session as SessionLocal
+from core.database.repositories.toolRepository import ToolRepository
 
 
 class ToolCard(Card):
@@ -25,7 +26,9 @@ class ToolCard(Card):
         if toolDialog.exec():
             name, description = toolDialog.getInputs()
             try:
-                update_tool(self.tool.id, name, description)
+                db_session = SessionLocal()
+                repository = ToolRepository(db_session)
+                repository.update_tool(self.tool.id, name, description)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -43,7 +46,9 @@ class ToolCard(Card):
 
         if confirmation.exec() == QMessageBox.Yes:
             try:
-                remove_tool(self.tool.id)
+                db_session = SessionLocal()
+                repository = ToolRepository(db_session)
+                repository.remove_tool(self.tool.id)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',

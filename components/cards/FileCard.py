@@ -2,8 +2,9 @@ from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
+from core.database.base import Session as SessionLocal
 from core.database.repositories.fileRepository import DuplicatedFileNameError
-from core.utils.database import check_file_exists, update_file, remove_file
+from core.database.repositories.fileRepository import FileRepository
 from core.utils.files import renameFile, deleteFile
 
 
@@ -33,7 +34,9 @@ class FileCard(Card):
 
             # Checks if the file is repeated
             try:
-                check_file_exists(USER_ID, name, 'impossible-hash')
+                db_session = SessionLocal()
+                repository = FileRepository(db_session)
+                repository.check_file_exists(USER_ID, name, 'impossible-hash')
             except DuplicatedFileNameError:
                 self.showWarning(
                     'Nombre repetido',
@@ -57,7 +60,9 @@ class FileCard(Card):
 
             # Update the entry for the file in the DB
             try:
-                update_file(self.file.id, self.file.user_id, name)
+                db_session = SessionLocal()
+                repository = FileRepository(db_session)
+                repository.update_file(self.file.id, self.file.user_id, name)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -87,7 +92,9 @@ class FileCard(Card):
 
             # Remove the entry for the file in the DB
             try:
-                remove_file(self.file.id)
+                db_session = SessionLocal()
+                repository = FileRepository(db_session)
+                repository.remove_file(self.file.id)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',

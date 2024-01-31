@@ -9,8 +9,10 @@ from components.ControllerStatus import ControllerStatus
 from components.JogController import JogController
 from components.Terminal import Terminal
 from core.config import SERIAL_BAUDRATE
+from core.database.base import Session as SessionLocal
 from core.database.models import TASK_IN_PROGRESS_STATUS
-from core.utils.database import get_tool_by_id, are_there_tasks_with_status
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.repositories.toolRepository import ToolRepository
 from core.grbl.grblController import GrblController
 from core.utils.serial import SerialService
 import logging
@@ -36,7 +38,9 @@ class ControlView(QWidget):
         self.device_settings = {}
         self.device_busy = True
         try:
-            self.device_busy = are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
+            db_session = SessionLocal()
+            repository = TaskRepository(db_session)
+            self.device_busy = repository.are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
         except Exception as error:
             QMessageBox.critical(
                 self,
@@ -197,7 +201,9 @@ class ControlView(QWidget):
         tool_index_grbl = self.grbl_controller.getTool()
 
         try:
-            tool_info = get_tool_by_id(tool_index_grbl)
+            db_session = SessionLocal()
+            repository = ToolRepository(db_session)
+            tool_info = repository.get_tool_by_id(tool_index_grbl)
             self.status_monitor.set_tool(tool_index_grbl, tool_info)
         except Exception as error:
             QMessageBox.critical(

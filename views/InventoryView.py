@@ -6,7 +6,9 @@ from components.cards.MsgCard import MsgCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from core.utils.database import create_tool, get_all_tools, create_material, get_all_materials
+from core.database.base import Session as SessionLocal
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.toolRepository import ToolRepository
 
 
 class InventoryView(QWidget):
@@ -24,7 +26,9 @@ class InventoryView(QWidget):
         if toolDialog.exec():
             name, description = toolDialog.getInputs()
             try:
-                create_tool(name, description)
+                db_session = SessionLocal()
+                repository = ToolRepository(db_session)
+                repository.create_tool(name, description)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -38,7 +42,9 @@ class InventoryView(QWidget):
         if materialDialog.exec():
             name, description = materialDialog.getInputs()
             try:
-                create_material(name, description)
+                db_session = SessionLocal()
+                repository = MaterialRepository(db_session)
+                repository.create_material(name, description)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -57,7 +63,9 @@ class InventoryView(QWidget):
                 child.widget().deleteLater()
 
         try:
-            tools = get_all_tools()
+            db_session = SessionLocal()
+            repository = ToolRepository(db_session)
+            tools = repository.get_all_tools()
         except Exception as error:
             self.showError(
                 'Error de base de datos',
@@ -66,7 +74,9 @@ class InventoryView(QWidget):
             return
 
         try:
-            materials = get_all_materials()
+            db_session = SessionLocal()
+            repository = MaterialRepository(db_session)
+            materials = repository.get_all_materials()
         except Exception as error:
             self.showError(
                 'Error de base de datos',

@@ -4,6 +4,8 @@ from containers.ControllerActions import ControllerActions
 from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
 from components.Terminal import Terminal
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.repositories.toolRepository import ToolRepository
 from core.grbl.grblController import GrblController
 from PyQt5.QtWidgets import QMessageBox
 import pytest
@@ -22,7 +24,11 @@ class TestControlView:
         self.parent.backToMenu = mocker.Mock()
 
         # Mock view methods
-        mocker.patch('views.ControlView.are_there_tasks_with_status', return_value=False)
+        mocker.patch.object(
+            TaskRepository,
+            'are_there_tasks_with_status',
+            return_value=False
+        )
 
         # Create an instance of ControlView
         self.control_view = ControlView(self.parent)
@@ -37,8 +43,9 @@ class TestControlView:
         parent.addToolBar = mocker.Mock()
 
         # Mock other functions
-        mock_check_tasks_in_progress = mocker.patch(
-            'views.ControlView.are_there_tasks_with_status',
+        mock_check_tasks_in_progress = mocker.patch.object(
+            TaskRepository,
+            'are_there_tasks_with_status',
             return_value=device_busy
         )
 
@@ -146,7 +153,7 @@ class TestControlView:
             'getTool',
             return_value='1'
         )
-        mock_get_tool_by_id = mocker.patch('views.ControlView.get_tool_by_id')
+        mock_get_tool_by_id = mocker.patch.object(ToolRepository, 'get_tool_by_id')
 
         # Call method under test
         self.control_view.query_device_status()
@@ -171,8 +178,9 @@ class TestControlView:
         mocker.patch.object(GrblController, 'getFeedrate', return_value=500.0)
         mocker.patch.object(GrblController, 'getSpindle', return_value=500.0)
         mocker.patch.object(GrblController, 'getTool', return_value=1)
-        mocker.patch(
-            'views.ControlView.get_tool_by_id',
+        mocker.patch.object(
+            ToolRepository,
+            'get_tool_by_id',
             side_effect=Exception('mocked-error')
         )
 

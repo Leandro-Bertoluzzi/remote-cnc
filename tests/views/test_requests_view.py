@@ -4,8 +4,8 @@ from components.buttons.MenuButton import MenuButton
 from components.cards.MsgCard import MsgCard
 from components.cards.RequestCard import RequestCard
 from views.RequestsView import RequestsView
-from core.database.models import Task
-from core.database.models import User
+from core.database.models import Task, User
+from core.database.repositories.taskRepository import TaskRepository
 from PyQt5.QtWidgets import QMessageBox
 
 
@@ -40,8 +40,9 @@ class TestRequestsView:
         self.tasks_list = [task_1, task_2, task_3]
 
         # Patch the getAllTasksFromUser method with the mock function
-        self.mock_get_all_tasks = mocker.patch(
-            'views.RequestsView.get_all_tasks',
+        self.mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks',
             return_value=self.tasks_list
         )
 
@@ -59,7 +60,11 @@ class TestRequestsView:
         assert helpers.count_widgets(self.requests_view.layout, RequestCard) == 3
 
     def test_requests_view_init_with_no_requests(self, mocker, helpers):
-        mock_get_all_tasks = mocker.patch('views.RequestsView.get_all_tasks', return_value=[])
+        mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks',
+            return_value=[]
+        )
         requests_view = RequestsView(parent=self.parent)
         # Validate DB calls
         mock_get_all_tasks.assert_called_once()
@@ -70,8 +75,9 @@ class TestRequestsView:
         assert helpers.count_widgets(requests_view.layout, MsgCard) == 1
 
     def test_requests_view_init_db_error(self, mocker, helpers):
-        mock_get_all_tasks = mocker.patch(
-            'views.RequestsView.get_all_tasks',
+        mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks',
             side_effect=Exception('mocked-error')
         )
 
@@ -106,8 +112,9 @@ class TestRequestsView:
         # Mock DB methods to simulate error(s)
         # 1st execution: Widget creation (needs to success)
         # 2nd execution: Test case
-        mock_get_all_tasks = mocker.patch(
-            'views.RequestsView.get_all_tasks',
+        mock_get_all_tasks = mocker.patch.object(
+            TaskRepository,
+            'get_all_tasks',
             side_effect=[
                 self.tasks_list,
                 Exception('mocked-error')

@@ -5,8 +5,9 @@ from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
-from core.database.repositories.fileRepository import DuplicatedFileError, DuplicatedFileNameError
-from core.utils.database import check_file_exists, create_file, get_all_files
+from core.database.base import Session as SessionLocal
+from core.database.repositories.fileRepository import DuplicatedFileError, \
+    DuplicatedFileNameError, FileRepository
 from core.utils.files import computeSHA256, copyFile
 
 
@@ -28,7 +29,9 @@ class FilesView(QWidget):
             # Checks if the file is repeated
             file_hash = computeSHA256(path)
             try:
-                check_file_exists(USER_ID, name, file_hash)
+                db_session = SessionLocal()
+                repository = FileRepository(db_session)
+                repository.check_file_exists(USER_ID, name, file_hash)
             except DuplicatedFileNameError:
                 self.showWarning(
                     'Nombre repetido',
@@ -54,7 +57,9 @@ class FilesView(QWidget):
 
             # Create an entry for the file in the DB
             try:
-                create_file(USER_ID, name, file_hash)
+                db_session = SessionLocal()
+                repository = FileRepository(db_session)
+                repository.create_file(USER_ID, name, file_hash)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -77,7 +82,9 @@ class FilesView(QWidget):
                 child.widget().deleteLater()
 
         try:
-            files = get_all_files()
+            db_session = SessionLocal()
+            repository = FileRepository(db_session)
+            files = repository.get_all_files()
         except Exception as error:
             QMessageBox.critical(
                 self,

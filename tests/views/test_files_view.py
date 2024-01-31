@@ -6,7 +6,8 @@ from components.buttons.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
-from core.database.repositories.fileRepository import DuplicatedFileError, DuplicatedFileNameError
+from core.database.repositories.fileRepository import DuplicatedFileError, \
+    DuplicatedFileNameError, FileRepository
 from views.FilesView import FilesView
 from core.database.models import File, User
 
@@ -30,8 +31,9 @@ class TestFilesView:
             file.user = self.user_test
 
         # Patch the getAllFilesFromUser method with the mock function
-        self.mock_get_all_files = mocker.patch(
-            'views.FilesView.get_all_files',
+        self.mock_get_all_files = mocker.patch.object(
+            FileRepository,
+            'get_all_files',
             return_value=self.files_list
         )
 
@@ -49,8 +51,9 @@ class TestFilesView:
         assert helpers.count_widgets(self.files_view.layout, FileCard) == 3
 
     def test_files_view_init_with_no_files(self, mocker, helpers):
-        mock_get_all_files = mocker.patch(
-            'views.FilesView.get_all_files',
+        mock_get_all_files = mocker.patch.object(
+            FileRepository,
+            'get_all_files',
             return_value=[]
         )
         files_view = FilesView(parent=self.parent)
@@ -63,8 +66,9 @@ class TestFilesView:
         assert helpers.count_widgets(files_view.layout, MsgCard) == 1
 
     def test_files_view_init_db_error(self, mocker, helpers):
-        mock_get_all_files = mocker.patch(
-            'views.FilesView.get_all_files',
+        mock_get_all_files = mocker.patch.object(
+            FileRepository,
+            'get_all_files',
             side_effect=Exception('mocked-error')
         )
 
@@ -99,8 +103,9 @@ class TestFilesView:
         # Mock DB methods to simulate error(s)
         # 1st execution: Widget creation (needs to success)
         # 2nd execution: Test case
-        mock_get_all_files = mocker.patch(
-            'views.FilesView.get_all_files',
+        mock_get_all_files = mocker.patch.object(
+            FileRepository,
+            'get_all_files',
             side_effect=[
                 self.files_list,
                 Exception('mocked-error')
@@ -138,10 +143,11 @@ class TestFilesView:
             return
 
         mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch('views.FilesView.check_file_exists')
+        mocker.patch.object(FileRepository, 'check_file_exists')
         mock_save_file = mocker.patch('views.FilesView.copyFile')
-        mock_create_file = mocker.patch(
-            'views.FilesView.create_file',
+        mock_create_file = mocker.patch.object(
+            FileRepository,
+            'create_file',
             side_effect=side_effect_create_file
         )
 
@@ -165,12 +171,13 @@ class TestFilesView:
 
         # Mock FS and DB methods
         mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch(
-            'views.FilesView.check_file_exists',
+        mocker.patch.object(
+            FileRepository,
+            'check_file_exists',
             side_effect=DuplicatedFileNameError('mocked error')
         )
         mock_save_file = mocker.patch('views.FilesView.copyFile')
-        mock_create_file = mocker.patch('views.FilesView.create_file')
+        mock_create_file = mocker.patch.object(FileRepository, 'create_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
@@ -194,12 +201,13 @@ class TestFilesView:
 
         # Mock FS and DB methods
         mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch(
-            'views.FilesView.check_file_exists',
+        mocker.patch.object(
+            FileRepository,
+            'check_file_exists',
             side_effect=DuplicatedFileError('mocked error')
         )
         mock_save_file = mocker.patch('views.FilesView.copyFile')
-        mock_create_file = mocker.patch('views.FilesView.create_file')
+        mock_create_file = mocker.patch.object(FileRepository, 'create_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
@@ -223,12 +231,12 @@ class TestFilesView:
 
         # Mock FS and DB methods
         mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch('views.FilesView.check_file_exists')
+        mocker.patch.object(FileRepository, 'check_file_exists')
         mock_save_file = mocker.patch(
             'views.FilesView.copyFile',
             side_effect=Exception('mocked error')
         )
-        mock_create_file = mocker.patch('views.FilesView.create_file')
+        mock_create_file = mocker.patch.object(FileRepository, 'create_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
@@ -252,10 +260,11 @@ class TestFilesView:
 
         # Mock FS and DB methods
         mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch('views.FilesView.check_file_exists')
+        mocker.patch.object(FileRepository, 'check_file_exists')
         mock_save_file = mocker.patch('views.FilesView.copyFile')
-        mock_create_file = mocker.patch(
-            'views.FilesView.create_file',
+        mock_create_file = mocker.patch.object(
+            FileRepository,
+            'create_file',
             side_effect=Exception('mocked error')
         )
 

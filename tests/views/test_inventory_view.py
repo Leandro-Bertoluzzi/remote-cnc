@@ -8,6 +8,8 @@ from components.cards.ToolCard import ToolCard
 from components.cards.MaterialCard import MaterialCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.toolRepository import ToolRepository
 from views.InventoryView import InventoryView
 from core.database.models import Tool
 from core.database.models import Material
@@ -22,8 +24,9 @@ class TestInventoryView:
         self.tools_list = [tool_1, tool_2, tool_3]
 
         # Patch the getAllTools method with the mock function
-        self.mock_get_all_tools = mocker.patch(
-            'views.InventoryView.get_all_tools',
+        self.mock_get_all_tools = mocker.patch.object(
+            ToolRepository,
+            'get_all_tools',
             return_value=self.tools_list
         )
 
@@ -33,8 +36,9 @@ class TestInventoryView:
         self.materials_list = [material_1, material_2, material_3]
 
         # Patch the getAllMaterials method with the mock function
-        self.mock_get_all_materials = mocker.patch(
-            'views.InventoryView.get_all_materials',
+        self.mock_get_all_materials = mocker.patch.object(
+            MaterialRepository,
+            'get_all_materials',
             return_value=self.materials_list
         )
 
@@ -54,12 +58,14 @@ class TestInventoryView:
         assert helpers.count_widgets(self.inventory_view.layout, MaterialCard) == 3
 
     def test_inventory_view_init_with_no_inventory(self, mocker, helpers):
-        mock_get_all_tools = mocker.patch(
-            'views.InventoryView.get_all_tools',
+        mock_get_all_tools = mocker.patch.object(
+            ToolRepository,
+            'get_all_tools',
             return_value=[]
         )
-        mock_get_all_materials = mocker.patch(
-            'views.InventoryView.get_all_materials',
+        mock_get_all_materials = mocker.patch.object(
+            MaterialRepository,
+            'get_all_materials',
             return_value=[]
         )
         inventory_view = InventoryView(parent=self.parent)
@@ -83,23 +89,27 @@ class TestInventoryView:
     )
     def test_inventory_view_init_db_error(self, mocker, helpers, tools_error, materials_error):
         # Mock DB methods to simulate error(s)
-        mock_get_all_tools = mocker.patch(
-            'views.InventoryView.get_all_tools',
+        mock_get_all_tools = mocker.patch.object(
+            ToolRepository,
+            'get_all_tools',
             return_value=self.tools_list
         )
         if tools_error:
-            mock_get_all_tools = mocker.patch(
-                'views.InventoryView.get_all_tools',
+            mock_get_all_tools = mocker.patch.object(
+                ToolRepository,
+                'get_all_tools',
                 side_effect=Exception('mocked-error')
             )
 
-        mock_get_all_materials = mocker.patch(
-            'views.InventoryView.get_all_materials',
+        mock_get_all_materials = mocker.patch.object(
+            MaterialRepository,
+            'get_all_materials',
             return_value=self.materials_list
         )
         if materials_error:
-            mock_get_all_materials = mocker.patch(
-                'views.InventoryView.get_all_materials',
+            mock_get_all_materials = mocker.patch.object(
+                MaterialRepository,
+                'get_all_materials',
                 side_effect=Exception('mocked-error')
             )
 
@@ -152,26 +162,30 @@ class TestInventoryView:
         # Mock DB methods to simulate error(s)
         # 1st execution: Widget creation (needs to success)
         # 2nd execution: Test case
-        mock_get_all_tools = mocker.patch(
-            'views.InventoryView.get_all_tools',
+        mock_get_all_tools = mocker.patch.object(
+            ToolRepository,
+            'get_all_tools',
             return_value=self.tools_list
         )
         if tools_error:
-            mock_get_all_tools = mocker.patch(
-                'views.InventoryView.get_all_tools',
+            mock_get_all_tools = mocker.patch.object(
+                ToolRepository,
+                'get_all_tools',
                 side_effect=[
                     self.tools_list,
                     Exception('mocked-error')
                 ]
             )
 
-        mock_get_all_materials = mocker.patch(
-            'views.InventoryView.get_all_materials',
+        mock_get_all_materials = mocker.patch.object(
+            MaterialRepository,
+            'get_all_materials',
             return_value=self.materials_list
         )
         if materials_error:
-            mock_get_all_materials = mocker.patch(
-                'views.InventoryView.get_all_materials',
+            mock_get_all_materials = mocker.patch.object(
+                MaterialRepository,
+                'get_all_materials',
                 side_effect=[
                     self.materials_list,
                     Exception('mocked-error')
@@ -205,8 +219,9 @@ class TestInventoryView:
             self.tools_list.append(tool_4)
             return
 
-        mock_create_tool = mocker.patch(
-            'views.InventoryView.create_tool',
+        mock_create_tool = mocker.patch.object(
+            ToolRepository,
+            'create_tool',
             side_effect=side_effect_create_tool
         )
 
@@ -229,8 +244,9 @@ class TestInventoryView:
         mocker.patch.object(ToolDataDialog, 'getInputs', return_value=mock_inputs)
 
         # Mock DB method to simulate error
-        mock_create_tool = mocker.patch(
-            'views.InventoryView.create_tool',
+        mock_create_tool = mocker.patch.object(
+            ToolRepository,
+            'create_tool',
             side_effect=Exception('mocked-error')
         )
 
@@ -265,8 +281,9 @@ class TestInventoryView:
             self.materials_list.append(material_4)
             return
 
-        mock_create_material = mocker.patch(
-            'views.InventoryView.create_material',
+        mock_create_material = mocker.patch.object(
+            MaterialRepository,
+            'create_material',
             side_effect=side_effect_create_material
         )
 
@@ -289,8 +306,9 @@ class TestInventoryView:
         mocker.patch.object(MaterialDataDialog, 'getInputs', return_value=mock_inputs)
 
         # Mock DB method to simulate error
-        mock_create_material = mocker.patch(
-            'views.InventoryView.create_material',
+        mock_create_material = mocker.patch.object(
+            MaterialRepository,
+            'create_material',
             side_effect=Exception('mocked-error')
         )
 

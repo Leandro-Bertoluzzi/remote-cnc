@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.UserDataDialog import UserDataDialog
-from core.utils.database import update_user, remove_user
+from core.database.base import Session as SessionLocal
+from core.database.repositories.userRepository import UserRepository
 
 
 class UserCard(Card):
@@ -25,7 +26,9 @@ class UserCard(Card):
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
             try:
-                update_user(self.user.id, name, email, role)
+                db_session = SessionLocal()
+                repository = UserRepository(db_session)
+                repository.update_user(self.user.id, name, email, role)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -43,7 +46,9 @@ class UserCard(Card):
 
         if confirmation.exec() == QMessageBox.Yes:
             try:
-                remove_user(self.user.id)
+                db_session = SessionLocal()
+                repository = UserRepository(db_session)
+                repository.remove_user(self.user.id)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',

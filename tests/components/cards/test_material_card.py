@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.MaterialCard import MaterialCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.models import Material
+from core.database.repositories.materialRepository import MaterialRepository
 from views.InventoryView import InventoryView
 
 
@@ -36,7 +37,7 @@ class TestMaterialCard:
         mocker.patch.object(MaterialDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_material = mocker.patch('components.cards.MaterialCard.update_material')
+        mock_update_material = mocker.patch.object(MaterialRepository, 'update_material')
 
         # Call the updateMaterial method
         self.card.updateMaterial()
@@ -59,8 +60,9 @@ class TestMaterialCard:
         mocker.patch.object(MaterialDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_material = mocker.patch(
-            'components.cards.MaterialCard.update_material',
+        mock_update_material = mocker.patch.object(
+            MaterialRepository,
+            'update_material',
             side_effect=Exception('mocked error')
         )
 
@@ -86,7 +88,7 @@ class TestMaterialCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_material = mocker.patch('components.cards.MaterialCard.remove_material')
+        mock_remove_material = mocker.patch.object(MaterialRepository, 'remove_material')
 
         # Call the removeMaterial method
         self.card.removeMaterial()
@@ -99,8 +101,9 @@ class TestMaterialCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
         # Mock DB method
-        mock_remove_material = mocker.patch(
-            'components.cards.MaterialCard.remove_material',
+        mock_remove_material = mocker.patch.object(
+            MaterialRepository,
+            'remove_material',
             side_effect=Exception('mocked error')
         )
 

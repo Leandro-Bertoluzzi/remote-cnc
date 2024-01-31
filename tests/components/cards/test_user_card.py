@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
 from core.database.models import User
+from core.database.repositories.userRepository import UserRepository
 from views.UsersView import UsersView
 
 
@@ -36,7 +37,7 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_user = mocker.patch('components.cards.UserCard.update_user')
+        mock_update_user = mocker.patch.object(UserRepository, 'update_user')
 
         # Call the updateUser method
         self.card.updateUser()
@@ -60,8 +61,9 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_user = mocker.patch(
-            'components.cards.UserCard.update_user',
+        mock_update_user = mocker.patch.object(
+            UserRepository,
+            'update_user',
             side_effect=Exception('mocked error')
         )
 
@@ -87,7 +89,7 @@ class TestUserCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_user = mocker.patch('components.cards.UserCard.remove_user')
+        mock_remove_user = mocker.patch.object(UserRepository, 'remove_user')
 
         # Call the removeUser method
         self.card.removeUser()
@@ -100,8 +102,9 @@ class TestUserCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
         # Mock DB method
-        mock_remove_user = mocker.patch(
-            'components.cards.UserCard.remove_user',
+        mock_remove_user = mocker.patch.object(
+            UserRepository,
+            'remove_user',
             side_effect=Exception('mocked error')
         )
 

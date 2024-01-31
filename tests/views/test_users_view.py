@@ -5,6 +5,7 @@ from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
+from core.database.repositories.userRepository import UserRepository
 from views.UsersView import UsersView
 from core.database.models import User
 
@@ -18,8 +19,9 @@ class TestUsersView:
         self.users_list = [user_1, user_2, user_3]
 
         # Patch the getAllUsers method with the mock function
-        self.mock_get_all_users = mocker.patch(
-            'views.UsersView.get_all_users',
+        self.mock_get_all_users = mocker.patch.object(
+            UserRepository,
+            'get_all_users',
             return_value=self.users_list
         )
 
@@ -37,8 +39,9 @@ class TestUsersView:
         assert helpers.count_widgets(self.users_view.layout, UserCard) == 3
 
     def test_users_view_init_db_error(self, mocker, helpers):
-        mock_get_all_users = mocker.patch(
-            'views.UsersView.get_all_users',
+        mock_get_all_users = mocker.patch.object(
+            UserRepository,
+            'get_all_users',
             side_effect=Exception('mocked-error')
         )
 
@@ -72,8 +75,9 @@ class TestUsersView:
         # Mock DB methods to simulate error(s)
         # 1st execution: Widget creation (needs to success)
         # 2nd execution: Test case
-        mock_get_all_users = mocker.patch(
-            'views.UsersView.get_all_users',
+        mock_get_all_users = mocker.patch.object(
+            UserRepository,
+            'get_all_users',
             side_effect=[
                 self.users_list,
                 Exception('mocked-error')
@@ -110,8 +114,9 @@ class TestUsersView:
             self.users_list.append(user_4)
             return
 
-        mock_create_user = mocker.patch(
-            'views.UsersView.create_user',
+        mock_create_user = mocker.patch.object(
+            UserRepository,
+            'create_user',
             side_effect=side_effect_create_user
         )
 
@@ -133,8 +138,9 @@ class TestUsersView:
         mocker.patch.object(UserDataDialog, 'getInputs', return_value=mock_inputs)
 
         # Mock DB method to simulate exception
-        mock_create_user = mocker.patch(
-            'views.UsersView.create_user',
+        mock_create_user = mocker.patch.object(
+            UserRepository,
+            'create_user',
             side_effect=Exception('mocked-error')
         )
 

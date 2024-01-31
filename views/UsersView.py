@@ -3,7 +3,8 @@ from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
-from core.utils.database import create_user, get_all_users
+from core.database.base import Session as SessionLocal
+from core.database.repositories.userRepository import UserRepository
 
 
 class UsersView(QWidget):
@@ -21,7 +22,9 @@ class UsersView(QWidget):
         if userDialog.exec():
             name, email, password, role = userDialog.getInputs()
             try:
-                create_user(name, email, password, role)
+                db_session = SessionLocal()
+                repository = UserRepository(db_session)
+                repository.create_user(name, email, password, role)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -40,7 +43,9 @@ class UsersView(QWidget):
                 child.widget().deleteLater()
 
         try:
-            users = get_all_users()
+            db_session = SessionLocal()
+            repository = UserRepository(db_session)
+            users = repository.get_all_users()
         except Exception as error:
             self.showError(
                 'Error de base de datos',

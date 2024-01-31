@@ -2,8 +2,8 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.RequestCard import RequestCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
-from core.database.models import Task, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
-from core.database.models import User
+from core.database.models import Task, User, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+from core.database.repositories.taskRepository import TaskRepository
 from views.RequestsView import RequestsView
 
 
@@ -46,9 +46,10 @@ class TestRequestCard:
         task_in_progress
     ):
         # Mock DB methods
-        mock_update_task_status = mocker.patch('components.cards.RequestCard.update_task_status')
-        mocker.patch(
-            'components.cards.RequestCard.are_there_tasks_in_progress',
+        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
+        mocker.patch.object(
+            TaskRepository,
+            'are_there_tasks_in_progress',
             return_value=task_in_progress
         )
         # Mock confirmation dialog methods
@@ -88,18 +89,21 @@ class TestRequestCard:
     )
     def test_request_card_approve_task_db_error(self, mocker, update_error, search_tasks_error):
         # Mock DB methods
-        mock_update_task_status = mocker.patch('components.cards.RequestCard.update_task_status')
+        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
         if update_error:
-            mock_update_task_status = mocker.patch(
-                'components.cards.RequestCard.update_task_status',
+            mock_update_task_status = mocker.patch.object(
+                TaskRepository,
+                'update_task_status',
                 side_effect=Exception('mocked error')
             )
-        mock_validate_tasks_in_progress = mocker.patch(
-            'components.cards.RequestCard.are_there_tasks_in_progress'
+        mock_validate_tasks_in_progress = mocker.patch.object(
+            TaskRepository,
+            'are_there_tasks_in_progress'
         )
         if search_tasks_error:
-            mock_validate_tasks_in_progress = mocker.patch(
-                'components.cards.RequestCard.are_there_tasks_in_progress',
+            mock_validate_tasks_in_progress = mocker.patch.object(
+                TaskRepository,
+                'are_there_tasks_in_progress',
                 side_effect=Exception('mocked error')
             )
         # Mock confirmation dialog methods
@@ -128,7 +132,7 @@ class TestRequestCard:
         )
     def test_request_card_reject_task(self, mocker, dialogResponse, expected_updated):
         # Mock DB methods
-        mock_update_task_status = mocker.patch('components.cards.RequestCard.update_task_status')
+        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
         # Mock TaskCancelDialog methods
         mock_input = 'A valid cancellation reason'
         mocker.patch.object(TaskCancelDialog, 'exec', return_value=dialogResponse)
@@ -156,8 +160,9 @@ class TestRequestCard:
         mocker.patch.object(TaskCancelDialog, 'getInput', return_value=mock_input)
 
         # Mock DB method to simulate exception
-        mock_update_task_status = mocker.patch(
-            'components.cards.RequestCard.update_task_status',
+        mock_update_task_status = mocker.patch.object(
+            TaskRepository,
+            'update_task_status',
             side_effect=Exception('mocked error')
         )
 

@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from core.database.models import Tool
+from core.database.repositories.toolRepository import ToolRepository
 from views.InventoryView import InventoryView
 
 
@@ -36,7 +37,7 @@ class TestToolCard:
         mocker.patch.object(ToolDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_tool = mocker.patch('components.cards.ToolCard.update_tool')
+        mock_update_tool = mocker.patch.object(ToolRepository, 'update_tool')
 
         # Call the updateTool method
         self.card.updateTool()
@@ -59,8 +60,9 @@ class TestToolCard:
         mocker.patch.object(ToolDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock DB method
-        mock_update_tool = mocker.patch(
-            'components.cards.ToolCard.update_tool',
+        mock_update_tool = mocker.patch.object(
+            ToolRepository,
+            'update_tool',
             side_effect=Exception('mocked error')
         )
 
@@ -86,7 +88,7 @@ class TestToolCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
         # Mock DB method
-        mock_remove_tool = mocker.patch('components.cards.ToolCard.remove_tool')
+        mock_remove_tool = mocker.patch.object(ToolRepository, 'remove_tool')
 
         # Call the removeTool method
         self.card.removeTool()
@@ -99,8 +101,9 @@ class TestToolCard:
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
         # Mock DB method
-        mock_remove_tool = mocker.patch(
-            'components.cards.ToolCard.remove_tool',
+        mock_remove_tool = mocker.patch.object(
+            ToolRepository,
+            'remove_tool',
             side_effect=Exception('mocked error')
         )
 

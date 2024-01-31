@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
 from components.cards.Card import Card
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
-from core.utils.database import update_material, remove_material
+from core.database.base import Session as SessionLocal
+from core.database.repositories.materialRepository import MaterialRepository
 
 
 class MaterialCard(Card):
@@ -25,7 +26,9 @@ class MaterialCard(Card):
         if materialDialog.exec():
             name, description = materialDialog.getInputs()
             try:
-                update_material(self.material.id, name, description)
+                db_session = SessionLocal()
+                repository = MaterialRepository(db_session)
+                repository.update_material(self.material.id, name, description)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',
@@ -43,7 +46,9 @@ class MaterialCard(Card):
 
         if confirmation.exec() == QMessageBox.Yes:
             try:
-                remove_material(self.material.id)
+                db_session = SessionLocal()
+                repository = MaterialRepository(db_session)
+                repository.remove_material(self.material.id)
             except Exception as error:
                 self.showError(
                     'Error de base de datos',

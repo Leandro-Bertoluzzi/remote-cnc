@@ -6,6 +6,6 @@ services:
     build: .
     image: cnc-admin-image
     #depends_on:
-    #  - mysql
+    #  - postgresql
     env_file:
       - .env

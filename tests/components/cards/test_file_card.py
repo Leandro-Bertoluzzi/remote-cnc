@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from core.database.models import File, User
-from core.database.repositories.fileRepository import DuplicatedFileNameError
+from core.database.repositories.fileRepository import DuplicatedFileNameError, FileRepository
 from views.FilesView import FilesView
 
 
@@ -47,9 +47,9 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock FS and DB methods
-        mocker.patch('components.cards.FileCard.check_file_exists')
+        mocker.patch.object(FileRepository, 'check_file_exists')
         mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch('components.cards.FileCard.update_file')
+        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
         # Call the updateFile method
         self.card.updateFile()
@@ -74,7 +74,7 @@ class TestFileCard:
 
         # Mock FS and DB methods
         mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch('components.cards.FileCard.update_file')
+        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
         # Call the updateFile method
         self.card.updateFile()
@@ -90,12 +90,13 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock FS and DB methods
-        mocker.patch(
-            'components.cards.FileCard.check_file_exists',
+        mocker.patch.object(
+            FileRepository,
+            'check_file_exists',
             side_effect=DuplicatedFileNameError('mocked error')
         )
         mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch('components.cards.FileCard.update_file')
+        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
@@ -115,12 +116,12 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock FS and DB methods
-        mocker.patch('components.cards.FileCard.check_file_exists')
+        mocker.patch.object(FileRepository, 'check_file_exists')
         mock_rename_file = mocker.patch(
             'components.cards.FileCard.renameFile',
             side_effect=Exception('mocked error')
         )
-        mock_update_file = mocker.patch('components.cards.FileCard.update_file')
+        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
@@ -140,10 +141,11 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock FS and DB methods
-        mocker.patch('components.cards.FileCard.check_file_exists')
+        mocker.patch.object(FileRepository, 'check_file_exists')
         mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch(
-            'components.cards.FileCard.update_file',
+        mock_update_file = mocker.patch.object(
+            FileRepository,
+            'update_file',
             side_effect=Exception('mocked error')
         )
 
@@ -171,7 +173,7 @@ class TestFileCard:
 
         # Mock FS and DB methods
         mock_delete_file = mocker.patch('components.cards.FileCard.deleteFile')
-        mock_remove_file = mocker.patch('components.cards.FileCard.remove_file')
+        mock_remove_file = mocker.patch.object(FileRepository, 'remove_file')
 
         # Call the removeFile method
         self.card.removeFile()
@@ -189,7 +191,7 @@ class TestFileCard:
             'components.cards.FileCard.deleteFile',
             side_effect=Exception('mocked error')
         )
-        mock_remove_file = mocker.patch('components.cards.FileCard.remove_file')
+        mock_remove_file = mocker.patch.object(FileRepository, 'remove_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
@@ -208,8 +210,9 @@ class TestFileCard:
 
         # Mock FS and DB methods
         mock_delete_file = mocker.patch('components.cards.FileCard.deleteFile')
-        mock_remove_file = mocker.patch(
-            'components.cards.FileCard.remove_file',
+        mock_remove_file = mocker.patch.object(
+            FileRepository,
+            'remove_file',
             side_effect=Exception('mocked error')
         )
 
