@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QPushButton, QMessageBox
-from config import USER_ID, Globals
+from config import USER_ID, Globals, PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
 from core.database.base import Session as SessionLocal
@@ -37,7 +37,7 @@ class RequestCard(Card):
                 repository = TaskRepository(db_session)
                 repository.update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
                 if not repository.are_there_tasks_in_progress():
-                    task = executeTask.delay(USER_ID)
+                    task = executeTask.delay(USER_ID, PROJECT_ROOT, SERIAL_PORT, SERIAL_BAUDRATE)
                     Globals.set_current_task_id(task.task_id)
             except Exception as error:
                 self.showError(

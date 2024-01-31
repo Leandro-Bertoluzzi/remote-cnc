@@ -8,7 +8,7 @@ from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
 from components.JogController import JogController
 from components.Terminal import Terminal
-from core.config import SERIAL_BAUDRATE
+from config import SERIAL_BAUDRATE
 from core.database.base import Session as SessionLocal
 from core.database.models import TASK_IN_PROGRESS_STATUS
 from core.database.repositories.taskRepository import TaskRepository

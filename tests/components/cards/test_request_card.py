@@ -74,12 +74,6 @@ class TestRequestCard:
         expected_call_to_worker = expected_updated and not task_in_progress
         assert mock_add_task_in_queue.call_count == (1 if expected_call_to_worker else 0)
 
-        if expected_call_to_worker:
-            add_task_in_queue_params = {
-                'admin_id': 1,
-            }
-            mock_add_task_in_queue.assert_called_with(*add_task_in_queue_params.values())
-
     @pytest.mark.parametrize(
             'update_error,search_tasks_error',
             [

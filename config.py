@@ -6,6 +6,11 @@ load_dotenv()
 
 # Get environment variables
 USER_ID = int(os.environ.get('USER_ID') or '0')
+SERIAL_PORT = os.environ.get('SERIAL_PORT', '')
+SERIAL_BAUDRATE = int(os.environ.get('SERIAL_BAUDRATE', ''))
+
+# Generate global constants
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 # Utility functions
