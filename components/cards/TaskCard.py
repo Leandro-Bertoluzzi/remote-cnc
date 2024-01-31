@@ -28,18 +28,23 @@ class TaskCard(Card):
 
         if task.status == TASK_IN_PROGRESS_STATUS:
             task_id = Globals.get_current_task_id()
-            celery_task_info = AsyncResult(task_id).info
-            progress = celery_task_info.get('progress')
-            total = celery_task_info.get('total_lines')
-            percentage = celery_task_info.get('percentage')
-            description = 'Tarea {0}: {1}\nEstado: {2}\nProgreso: {3}/{4} ({5}%)'.format(
-                task.id,
-                task.name,
-                task.status,
-                progress,
-                total,
-                percentage
-            )
+            task_state = AsyncResult(task_id)
+
+            task_info = task_state.info
+            task_status = task_state.status
+
+            if task_status == 'PROGRESS':
+                description = 'Tarea {0}: {1}\nEstado: {2}\nProgreso: {3}/{4} ({5}%)'.format(
+                    task.id,
+                    task.name,
+                    task.status,
+                    task_info.get('progress'),
+                    task_info.get('total_lines'),
+                    task_info.get('percentage')
+                )
+
+            if task_status == 'FAILURE':
+                description = f'Tarea {task.id}: {task.name}\nEstado: {task.status} (FAILED)'
 
         self.setDescription(description)
         self.addButton(editTaskBtn)
