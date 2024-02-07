@@ -10,7 +10,7 @@ class SerialService:
     def get_ports(cls):
         return serial_ports.comports()
 
-    def startConnection(self, port: str, baudrate: int, timeout: int = 5) -> str:
+    def startConnection(self, port: str, baudrate: int, timeout: int = 2) -> str:
         """Closes any previous connection and starts a new one.
         """
         # Close any previous serial connection
@@ -51,13 +51,15 @@ class SerialService:
         """
         return self.interface.readline().decode('utf-8').strip()
 
-    def readLineUntilMessage(self) -> str:
+    def readLineUntilMessage(self, max_retries: int = 3) -> str:
         """Waits for response with carriage return.
         Ignores empty messages and timeouts until an actual message arrives.
         """
         response = ''
-        while not response:
+        retries = 0
+        while not response and retries <= max_retries:
             response = self.interface.readline().decode('utf-8').strip()
+            retries = retries + 1
         return response
 
     def streamBlock(self, code: str) -> str:

@@ -125,7 +125,8 @@ def test_read_line(serial_service, mocker, received):
     assert response == received
 
 
-def test_read_line_until_message(serial_service, mocker):
+@pytest.mark.parametrize('retries', [0, 1, 2, 3])
+def test_read_line_until_message(serial_service, mocker, retries):
     # Mock serial port methods
     mock_read_port = mocker.patch.object(
         serial.Serial,
@@ -134,11 +135,11 @@ def test_read_line_until_message(serial_service, mocker):
     )
 
     # Call method under test
-    response = serial_service.readLineUntilMessage()
+    response = serial_service.readLineUntilMessage(max_retries=retries)
 
     # Assertions
-    assert mock_read_port.call_count == 3
-    assert response == 'worked great'
+    assert mock_read_port.call_count == (retries + 1 if retries <= 2 else 3)
+    assert response == ('' if retries < 2 else 'worked great')
 
 
 @pytest.mark.parametrize('open_port', [True, False])
