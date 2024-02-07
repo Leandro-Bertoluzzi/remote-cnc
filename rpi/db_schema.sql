@@ -1,5 +1,7 @@
 -- Adminer 4.8.1 PostgreSQL 16.1 dump
 
+\connect "cnc_db";
+
 DROP TABLE IF EXISTS "files";
 DROP SEQUENCE IF EXISTS files_id_seq;
 CREATE SEQUENCE files_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
@@ -8,8 +10,8 @@ CREATE TABLE "public"."files" (
     "id" integer DEFAULT nextval('files_id_seq') NOT NULL,
     "user_id" integer,
     "file_name" character varying(150) NOT NULL,
-    "file_path" character varying(150) NOT NULL,
     "created_at" timestamp DEFAULT now() NOT NULL,
+    "file_hash" character varying(150),
     CONSTRAINT "files_pkey" PRIMARY KEY ("id")
 ) WITH (oids = false);
 
@@ -98,4 +100,4 @@ ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_material_id" FOREIGN KEY (m
 ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_owner_id" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_tool_id" FOREIGN KEY (tool_id) REFERENCES tools(id) NOT DEFERRABLE;
 
--- 2023-12-21 21:47:36.35882+00
+-- 2024-02-06 19:43:29.544543+00

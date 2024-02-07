@@ -42,7 +42,7 @@ $ sudo apt-get install libpq5
 
 # 3. Set up your Python environment
 $ python -m venv --system-site-packages venv
-$ source env-dev/bin/activate
+$ source venv/bin/activate
 $ pip install -r rpi/requirements.txt
 
 # 4. Copy and configure the .env file
