@@ -57,7 +57,7 @@ class TestCodeEditor:
                 (True, True)
             ]
         )
-    def test_code_editor_open_file(self, mocker, modified, accept):
+    def test_code_editor_import_file(self, mocker, modified, accept):
         # Mock dialog methods
         file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
@@ -84,7 +84,7 @@ class TestCodeEditor:
             self.code_editor.set_modified()
 
         # Call method under test
-        self.code_editor.open_file()
+        self.code_editor.import_file()
 
         # Assertions
         should_update = not modified or accept
@@ -96,7 +96,7 @@ class TestCodeEditor:
             mocked_open.assert_called_with(file_path, "r")
 
     @pytest.mark.parametrize("file_path", ['', 'path/to/file.gcode'])
-    def test_code_editor_save_file(self, mocker, file_path):
+    def test_code_editor_export_file(self, mocker, file_path):
         # Mock attributes
         self.code_editor.file_path = file_path
 
@@ -105,18 +105,18 @@ class TestCodeEditor:
         mocked_open = mocker.patch('builtins.open', mocked_file_data)
 
         # Mock other methods
-        mock_save_file_as = mocker.patch.object(CodeEditor, 'save_file_as')
+        mock_export_file_as = mocker.patch.object(CodeEditor, 'export_file_as')
 
         # Call method under test
-        self.code_editor.save_file()
+        self.code_editor.export_file()
 
         # Assertions
-        assert mock_save_file_as.call_count == (0 if file_path else 1)
+        assert mock_export_file_as.call_count == (0 if file_path else 1)
         assert mocked_open.call_count == (1 if file_path else 0)
         if file_path:
             mocked_open.assert_called_with(file_path, "w")
 
-    def test_code_editor_save_file_as(self, mocker):
+    def test_code_editor_export_file_as(self, mocker):
         # Mock dialog methods
         file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
@@ -131,7 +131,7 @@ class TestCodeEditor:
         mocked_open = mocker.patch('builtins.open', mocked_file_data)
 
         # Call method under test
-        self.code_editor.save_file_as()
+        self.code_editor.export_file_as()
 
         # Assertions
         assert mock_select_file.call_count == 1

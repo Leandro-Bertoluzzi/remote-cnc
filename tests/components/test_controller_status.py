@@ -1,14 +1,20 @@
 from components.ControllerStatus import ControllerStatus
 from core.database.models import Tool
+from core.grbl.grblController import GrblController
+import logging
 from PyQt5.QtWidgets import QLabel
 import pytest
+import threading
 
 
 class TestControllerStatus:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot):
+        grbl_logger = logging.getLogger('test_logger')
+        self.grbl_controller = GrblController(grbl_logger)
+
         # Create an instance of ControllerStatus
-        self.controller_status = ControllerStatus()
+        self.controller_status = ControllerStatus(self.grbl_controller)
         qtbot.addWidget(self.controller_status)
 
     def test_controller_status_init(self, helpers):
@@ -21,6 +27,25 @@ class TestControllerStatus:
         assert self.controller_status.tool.text() == 'Tool: xxx'
         assert self.controller_status.feedrate.text() == 'Feed rate: 0'
         assert self.controller_status.spindle.text() == 'Spindle: 0'
+
+    def test_controller_status_start_monitor(self, mocker):
+        # Mock thread
+        mock_thread_create = mocker.patch.object(threading.Thread, '__init__', return_value=None)
+        mock_thread_start = mocker.patch.object(threading.Thread, 'start')
+
+        # Call method under test
+        self.controller_status.start_monitor()
+
+        # Assertions
+        assert mock_thread_create.call_count == 1
+        assert mock_thread_start.call_count == 1
+
+    def test_controller_status_stop_monitor(self, mocker):
+        # Call method under test
+        self.controller_status.stop_monitor()
+
+        # Assertions
+        assert self.controller_status.monitor_thread is None
 
     def test_controller_status_set_status(self):
         new_status = {

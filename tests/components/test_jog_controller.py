@@ -1,7 +1,7 @@
 from components.JogController import JogController
 from containers.ButtonGrid import ButtonGrid
 from containers.WidgetsHList import WidgetsHList
-from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QMessageBox, QPushButton, QRadioButton
+from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QPushButton, QRadioButton
 import pytest
 
 
@@ -11,11 +11,8 @@ class TestJogController:
         # Mock GRBL controller object
         self.grbl_controller = mocker.MagicMock()
 
-        # Mock terminal method
-        self.mock_grbl_log = mocker.Mock()
-
         # Create an instance of JogController
-        self.jog_controller = JogController(self.grbl_controller, self.mock_grbl_log)
+        self.jog_controller = JogController(self.grbl_controller)
         qtbot.addWidget(self.jog_controller)
 
     def test_jog_controller_init(self, helpers):
@@ -131,19 +128,11 @@ class TestJogController:
         self.jog_controller.input_feedrate.setValue(500.0)
         self.jog_controller.units = 'mm'
 
-        # Mock GRBL controller method
-        attrs = {
-            'build_jog_command.return_value': 'jog_command',
-            'streamLine.return_value': {'raw': 'ok'},
-        }
-        self.grbl_controller.configure_mock(**attrs)
-
         # Trigger action under test
         self.jog_controller.send_jog_command(1.5, 1.3, 1.2, 'distance_absolute')
 
         # Assertions
-        self.grbl_controller.build_jog_command.assert_called_once()
-        self.grbl_controller.streamLine.assert_called_once()
+        self.grbl_controller.jog.assert_called_once()
 
         jog_params = {
             'x': 1.5,
@@ -151,28 +140,8 @@ class TestJogController:
             'z': 1.2,
             'feedrate': 500.0
         }
-        self.grbl_controller.build_jog_command.assert_called_with(
+        self.grbl_controller.jog.assert_called_with(
             *jog_params.values(),
             units='milimeters',
             distance_mode='distance_absolute'
         )
-        self.grbl_controller.streamLine.assert_called_with('jog_command', 'jog command')
-
-    def test_send_jog_command_error(self, mocker):
-        # Mock GRBL controller method
-        attrs = {
-            'build_jog_command.return_value': 'jog_command',
-            'streamLine.side_effect': Exception('mocked-error'),
-        }
-        self.grbl_controller.configure_mock(**attrs)
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
-
-        # Trigger action under test
-        self.jog_controller.send_jog_command(1.5, 1.3, 1.2, 'distance_absolute')
-
-        # Assertions
-        self.grbl_controller.build_jog_command.assert_called_once()
-        self.grbl_controller.streamLine.assert_called_once()
-        mock_popup.assert_called_once()

@@ -1,18 +1,17 @@
 from containers.ButtonGrid import ButtonGrid
 from containers.WidgetsHList import WidgetsHList
-from core.grbl.grblController import GrblController, GRBL_LINE_JOG, JOG_DISTANCE_ABSOLUTE, \
-    JOG_DISTANCE_INCREMENTAL, JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
+from core.grbl.grblController import GrblController
+from core.grbl.grblUtils import JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL, \
+    JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QFormLayout, QFrame, QHBoxLayout, \
-    QLabel, QMessageBox, QPushButton, QRadioButton, QSizePolicy, QVBoxLayout, QWidget
-from typing import Callable
+    QLabel, QPushButton, QRadioButton, QSizePolicy, QVBoxLayout, QWidget
 
 
 class JogController(QWidget):
     def __init__(
             self,
             grbl_controller: GrblController,
-            grbl_log: Callable[[str], None],
             parent=None
     ):
         super(JogController, self).__init__(parent)
@@ -23,7 +22,6 @@ class JogController(QWidget):
 
         # Attributes definition
         self.grbl_controller = grbl_controller
-        self.grbl_log = grbl_log
 
         # State management
         self.units = 'mm'
@@ -155,23 +153,11 @@ class JogController(QWidget):
         feedrate = round(self.input_feedrate.value(), 2)
         units = JOG_UNIT_MILIMETERS if self.units == 'mm' else JOG_UNIT_INCHES
 
-        jog_command = self.grbl_controller.build_jog_command(
+        self.grbl_controller.jog(
             x, y, z, feedrate,
             units=units,
             distance_mode=distance_mode
         )
-        self.grbl_log(jog_command)
-
-        try:
-            response = self.grbl_controller.streamLine(jog_command, GRBL_LINE_JOG)
-            self.grbl_log(response['raw'])
-        except Exception as error:
-            QMessageBox.critical(
-                self,
-                'Error',
-                str(error),
-                QMessageBox.Ok
-            )
 
     def create_double_spinbox(
             self,

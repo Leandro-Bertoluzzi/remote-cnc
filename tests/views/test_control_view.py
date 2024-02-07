@@ -3,11 +3,11 @@ from components.buttons.MenuButton import MenuButton
 from containers.ControllerActions import ControllerActions
 from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
+from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from components.Terminal import Terminal
 from core.database.repositories.taskRepository import TaskRepository
-from core.database.repositories.toolRepository import ToolRepository
 from core.grbl.grblController import GrblController
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
 from views.ControlView import ControlView
 
@@ -62,7 +62,7 @@ class TestControlView:
         assert helpers.count_widgets(layout, Terminal) == 1
 
         # More assertions
-        parent.addToolBar.assert_called_once()
+        assert parent.addToolBar.call_count == (1 if device_busy else 2)
         mock_check_tasks_in_progress.assert_called_once()
 
     def test_control_view_init_db_error(self, qtbot, mocker, helpers):
@@ -96,15 +96,19 @@ class TestControlView:
 
         # More assertions
         mock_popup.assert_called_once()
-        parent.addToolBar.assert_called_once()
+        assert parent.addToolBar.call_count == 1
         mock_check_tasks_in_progress.assert_called_once()
 
-    def test_control_view_goes_back_to_menu(self):
+    @pytest.mark.parametrize("device_busy", [False, True])
+    def test_control_view_goes_back_to_menu(self, device_busy):
+        # Mock attributes
+        self.control_view.device_busy = device_busy
+
         # Call method under test
         self.control_view.backToMenu()
 
         # Assertions
-        self.parent.removeToolBar.assert_called_once()
+        assert self.parent.removeToolBar.call_count == (1 if device_busy else 2)
         self.parent.backToMenu.assert_called_once()
 
     def test_control_view_set_selected_port(self):
@@ -118,15 +122,15 @@ class TestControlView:
         assert self.control_view.port_selected == 'PORTx'
 
     @pytest.mark.parametrize(
-            "port,connected",
-            [
-                ('', False),
-                ('', True),
-                ('PORTx', False),
-                ('PORTx', True),
-            ]
-        )
-    def test_control_view_connect_device(self, mocker, port, connected):
+        "port,connected",
+        [
+            ('', False),
+            ('', True),
+            ('PORTx', False),
+            ('PORTx', True),
+        ]
+    )
+    def test_control_view_toggle_connected_device(self, mocker, port, connected):
         # Mock attributes
         self.control_view.port_selected = port
         self.control_view.connected = connected
@@ -140,17 +144,17 @@ class TestControlView:
             return_value={'raw': grbl_init_message}
         )
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
-        mock_query_device_status = mocker.patch.object(ControlView, 'query_device_status')
+        mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
 
         # Call method under test
-        self.control_view.connect_device()
+        self.control_view.toggle_connected()
 
         # Assertions
         should_connect = port and not connected
-        should_disconnect = port and connected
+        should_disconnect = connected
         assert mock_grbl_connect.call_count == (1 if should_connect else 0)
-        assert mock_query_device_status.call_count == (1 if should_connect else 0)
+        assert mock_start_status_monitor.call_count == (1 if should_connect else 0)
         assert mock_write_to_terminal.call_count == (1 if should_connect else 0)
         assert mock_grbl_disconnect.call_count == (1 if should_disconnect else 0)
         connect_btn_text = self.control_view.connect_button.text()
@@ -158,76 +162,68 @@ class TestControlView:
         if should_connect:
             mock_write_to_terminal.assert_called_with(grbl_init_message)
 
-    def test_control_view_query_status(self, mocker):
-        grbl_status = {
-            'activeState': 'idle',
-            'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-            'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-            'ov': []
-        }
+    def test_control_view_connect_device_serial_error(self, mocker):
+        # Mock attributes
+        self.control_view.port_selected = 'PORTx'
+        self.control_view.connected = False
 
         # Mock methods
-        mock_grbl_query_status = mocker.patch.object(
+        mock_grbl_connect = mocker.patch.object(
             GrblController,
-            'queryStatusReport',
-            return_value=grbl_status
-        )
-        mock_grbl_get_feedrate = mocker.patch.object(
-            GrblController,
-            'getFeedrate',
-            return_value='500.0'
-        )
-        mock_grbl_get_spindle = mocker.patch.object(
-            GrblController,
-            'getSpindle',
-            return_value='500.0'
-        )
-        mock_grbl_get_tool = mocker.patch.object(
-            GrblController,
-            'getTool',
-            return_value='1'
-        )
-        mock_get_tool_by_id = mocker.patch.object(ToolRepository, 'get_tool_by_id')
-
-        # Call method under test
-        self.control_view.query_device_status()
-
-        # Assertions
-        assert mock_grbl_query_status.call_count == 1
-        assert mock_grbl_get_feedrate.call_count == 1
-        assert mock_grbl_get_spindle.call_count == 1
-        assert mock_grbl_get_tool.call_count == 1
-        assert mock_get_tool_by_id.call_count == 1
-
-    def test_control_view_query_status_db_error(self, mocker):
-        grbl_status = {
-            'activeState': 'idle',
-            'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-            'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-            'ov': []
-        }
-
-        # Mock methods
-        mocker.patch.object(GrblController, 'queryStatusReport', return_value=grbl_status)
-        mocker.patch.object(GrblController, 'getFeedrate', return_value=500.0)
-        mocker.patch.object(GrblController, 'getSpindle', return_value=500.0)
-        mocker.patch.object(GrblController, 'getTool', return_value=1)
-        mocker.patch.object(
-            ToolRepository,
-            'get_tool_by_id',
+            'connect',
             side_effect=Exception('mocked-error')
         )
+        mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
+        mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Call method under test
-        self.control_view.query_device_status()
+        self.control_view.toggle_connected()
 
         # Assertions
-        assert mock_popup.call_count == 1
+        assert mock_grbl_connect.call_count == 1
+        assert mock_start_status_monitor.call_count == 0
+        assert mock_write_to_terminal.call_count == 0
+        assert self.control_view.connect_button.text() == 'Conectar'
+        mock_popup.assert_called_once()
 
-    def test_control_view_query_settings(self, mocker):
+    def test_control_view_disconnect_device_serial_error(self, mocker):
+        # Mock attributes
+        self.control_view.port_selected = 'PORTx'
+        self.control_view.connected = True
+        self.control_view.connect_button.setText('Desconectar')
+
+        # Mock methods
+        mock_grbl_disconnect = mocker.patch.object(
+            GrblController,
+            'disconnect',
+            side_effect=Exception('mocked-error')
+        )
+        mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
+        mock_stop_status_monitor = mocker.patch.object(ControllerStatus, 'stop_monitor')
+        mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.toggle_connected()
+
+        # Assertions
+        assert mock_start_status_monitor.call_count == 0
+        assert mock_write_to_terminal.call_count == 0
+        assert mock_grbl_disconnect.call_count == 1
+        assert mock_stop_status_monitor.call_count == 0
+        assert self.control_view.connect_button.text() == 'Desconectar'
+        mock_popup.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "show_in_terminal",
+        [True, False]
+    )
+    def test_control_view_query_settings(self, mocker, show_in_terminal):
         # Mock attributes
         self.control_view.device_settings = {}
         grbl_settings = {
@@ -248,16 +244,136 @@ class TestControlView:
         # Mock methods
         mock_grbl_query_settings = mocker.patch.object(
             GrblController,
-            'queryGrblSettings',
+            'getGrblSettings',
             return_value=grbl_settings
+        )
+        mock_write_to_terminal = mocker.patch.object(
+            ControlView,
+            'write_to_terminal'
         )
 
         # Call method under test
-        self.control_view.query_device_settings()
+        self.control_view.query_device_settings(show_in_terminal)
 
         # Assertions
         assert mock_grbl_query_settings.call_count == 1
         assert self.control_view.device_settings == grbl_settings
+        assert mock_write_to_terminal.call_count == (2 if show_in_terminal else 0)
+
+    def test_run_homing_cycle(self, mocker):
+        # Mock methods
+        mock_grbl_home_cyle = mocker.patch.object(
+            GrblController,
+            'handleHomingCycle'
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.run_homing_cycle()
+
+        # Assertions
+        assert mock_grbl_home_cyle.call_count == 1
+        assert mock_popup.call_count == 1
+
+    def test_disable_alarm(self, mocker):
+        # Mock methods
+        mock_grbl_disable_alarm = mocker.patch.object(
+            GrblController,
+            'disableAlarm'
+        )
+
+        # Call method under test
+        self.control_view.disable_alarm()
+
+        # Assertions
+        assert mock_grbl_disable_alarm.call_count == 1
+
+    def test_toggle_check_mode(self, mocker):
+        # Mock methods
+        mock_grbl_toggle_checkmode = mocker.patch.object(
+            GrblController,
+            'toggleCheckMode'
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.toggle_check_mode()
+
+        # Assertions
+        assert mock_grbl_toggle_checkmode.call_count == 1
+        assert self.control_view.checkmode
+        assert mock_popup.call_count == 1
+
+    @pytest.mark.parametrize(
+            "dialogResponse,expected_updated",
+            [
+                (QDialog.Accepted, True),
+                (QDialog.Rejected, False)
+            ]
+        )
+    def test_configure_grbl(self, mocker, dialogResponse, expected_updated):
+        # Mock methods
+        mock_query_settings = mocker.patch.object(
+            ControlView,
+            'query_device_settings'
+        )
+        mock_grbl_set_settings = mocker.patch.object(
+            GrblController,
+            'setSettings'
+        )
+
+        # Mock GrblConfigurationDialog methods
+        mocker.patch.object(GrblConfigurationDialog, 'exec', return_value=dialogResponse)
+        mocker.patch.object(
+            GrblConfigurationDialog,
+            'getModifiedInputs',
+            return_value={'$1': '5'}
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.configure_grbl()
+
+        # Assertions
+        assert mock_query_settings.call_count == 1
+        assert mock_grbl_set_settings.call_count == (1 if expected_updated else 0)
+        assert mock_popup.call_count == (1 if expected_updated else 0)
+
+    def test_configure_grbl_no_changes(self, mocker):
+        # Mock methods
+        mock_query_settings = mocker.patch.object(
+            ControlView,
+            'query_device_settings'
+        )
+        mock_grbl_set_settings = mocker.patch.object(
+            GrblController,
+            'setSettings'
+        )
+
+        # Mock GrblConfigurationDialog methods
+        mocker.patch.object(GrblConfigurationDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(
+            GrblConfigurationDialog,
+            'getModifiedInputs',
+            return_value={}
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.configure_grbl()
+
+        # Assertions
+        assert mock_query_settings.call_count == 1
+        assert mock_grbl_set_settings.call_count == 0
+        assert mock_popup.call_count == 0
 
     def test_control_view_write_to_terminal(self, mocker):
         # Mock methods

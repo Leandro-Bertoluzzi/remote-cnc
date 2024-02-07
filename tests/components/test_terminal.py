@@ -30,16 +30,10 @@ class TestTerminal:
         # Mock state of widget
         self.terminal.input.setText('A G-code command')
 
-        # Mock GRBL controller method
-        attrs = {
-            'streamLine.return_value': {'raw': 'ok'},
-        }
-        self.grbl_controller.configure_mock(**attrs)
-
         # Call method under test
         self.terminal.send_line()
 
         # Assertions
-        self.grbl_controller.streamLine.assert_called_once()
-        self.grbl_controller.streamLine.assert_called_with('A G-code command')
+        self.grbl_controller.sendCommand.assert_called_once()
+        self.grbl_controller.sendCommand.assert_called_with('A G-code command')
         assert self.terminal.input.text() == ''
