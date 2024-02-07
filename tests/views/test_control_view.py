@@ -65,6 +65,40 @@ class TestControlView:
         parent.addToolBar.assert_called_once()
         mock_check_tasks_in_progress.assert_called_once()
 
+    def test_control_view_init_db_error(self, qtbot, mocker, helpers):
+        # Create an instance of the parent
+        parent = MainWindow()
+
+        # Mock parent methods
+        parent.addToolBar = mocker.Mock()
+
+        # Mock other functions
+        mock_check_tasks_in_progress = mocker.patch.object(
+            TaskRepository,
+            'are_there_tasks_with_status',
+            side_effect=Exception('mocked-error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Create an instance of ControlView
+        control_view = ControlView(parent)
+        qtbot.addWidget(control_view)
+
+        # Validate amount of each type of widget
+        layout = control_view.layout
+        assert helpers.count_widgets(layout, MenuButton) == 1
+        assert helpers.count_widgets(layout, ControllerActions) == 1
+        assert helpers.count_widgets(layout, CodeEditor) == 1
+        assert helpers.count_widgets(layout, ControllerStatus) == 0
+        assert helpers.count_widgets(layout, Terminal) == 1
+
+        # More assertions
+        mock_popup.assert_called_once()
+        parent.addToolBar.assert_called_once()
+        mock_check_tasks_in_progress.assert_called_once()
+
     def test_control_view_goes_back_to_menu(self):
         # Call method under test
         self.control_view.backToMenu()

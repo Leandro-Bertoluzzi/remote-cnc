@@ -170,6 +170,7 @@ class TestTaskCard:
 
         # Mock Celery task metadata
         task_metadata = {
+            'status': 'PROGRESS',
             'result': {
                 'percentage': 50,
                 'progress': 10,
@@ -198,7 +199,7 @@ class TestTaskCard:
             expected_text = 'Tarea 1: Example task\nEstado: in_progress\nProgreso: 10/20 (50%)'
             assert card.label_description.text() == expected_text
             assert mock_query_task.call_count == 1
-            assert mock_query_task_info.call_count == 1
+            assert mock_query_task_info.call_count == 2
             return
 
         assert card.label_description.text() == f'Tarea 1: Example task\nEstado: {status}'
