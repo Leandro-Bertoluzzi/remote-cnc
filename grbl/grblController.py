@@ -4,6 +4,7 @@ from typing import Sequence
 from .constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_QUERY_COMMANDS, \
     GRBL_REALTIME_COMMANDS, GRBL_SETTINGS
 from .grblLineParser import GrblLineParser
+from .grblUtils import build_jog_command, is_setting_update_command
 from .parsers.grblMsgTypes import GRBL_MSG_ALARM, GRBL_MSG_FEEDBACK, GRBL_MSG_HELP, \
     GRBL_MSG_OPTIONS, GRBL_MSG_PARSER_STATE, GRBL_MSG_PARAMS, GRBL_MSG_SETTING, \
     GRBL_MSG_STARTUP, GRBL_MSG_STATUS, GRBL_MSG_VERSION, GRBL_RESULT_ERROR, GRBL_RESULT_OK
@@ -17,10 +18,6 @@ except ImportError:
 # Constants
 GRBL_LINE_GCODE = 'G-code'
 GRBL_LINE_JOG = 'jog command'
-JOG_UNIT_MILIMETERS = 'milimeters'
-JOG_UNIT_INCHES = 'inches'
-JOG_DISTANCE_ABSOLUTE = 'distance_absolute'
-JOG_DISTANCE_INCREMENTAL = 'distance_incremental'
 
 
 class GrblController:
@@ -194,7 +191,11 @@ class GrblController:
         - '?': Current Status
         - '\x18' (Ctrl-X): Reset Grbl
         """
-        if (command not in GRBL_QUERY_COMMANDS) and (command not in GRBL_REALTIME_COMMANDS):
+        if (
+            (command not in GRBL_QUERY_COMMANDS)
+            and (command not in GRBL_REALTIME_COMMANDS)
+            and not is_setting_update_command(command)
+        ):
             self.logger.error('Invalid GRBL command: %s', command)
             raise Exception('Invalid GRBL command: ' + command)
 
@@ -285,7 +286,7 @@ class GrblController:
         JOG mode is also called jogging mode.
         In this mode, the CNC machine is used to operate manually.
         """
-        jog_command = self.build_jog_command(
+        jog_command = build_jog_command(
             x, y, z,
             feedrate,
             units=units,
@@ -297,6 +298,17 @@ class GrblController:
         response = self.streamLine(jog_command, GRBL_LINE_JOG)
 
         return (jog_command, response)
+
+    def setSettings(self, settings: dict[str, str]) -> None:
+        """Updates the value of the given GRBL settings.
+        """
+        for key, value in settings.items():
+            responses = self.sendCommand(f'{key}={value}')
+
+            msgType, _ = responses[0]
+            if msgType != GRBL_RESULT_OK:
+                self.logger.error('There was an error updating the GRBL settings')
+                raise Exception(f'There was an error updating the GRBL settings: {key}={value}')
 
     # QUERIES
 
@@ -515,41 +527,3 @@ class GrblController:
         """
         activeState = self.state['status']['activeState']
         return activeState == GRBL_ACTIVE_STATE_IDLE
-
-    def build_jog_command(
-            self,
-            x: float,
-            y: float,
-            z: float,
-            feedrate: float, *,
-            units=None,
-            distance_mode=None,
-            machine_coordinates=False
-    ) -> str:
-        """Builds a 'jog' command from the parameters.
-
-        JOG mode is also called jogging mode.
-        In this mode, the CNC machine is used to operate manually.
-        """
-        jog_command = "$J="
-
-        # Build GRBL command
-        if machine_coordinates:
-            jog_command = jog_command + 'G53 '
-
-        if distance_mode == JOG_DISTANCE_ABSOLUTE:
-            jog_command = jog_command + 'G90 '
-        if distance_mode == JOG_DISTANCE_INCREMENTAL:
-            jog_command = jog_command + 'G91 '
-
-        if units == JOG_UNIT_INCHES:
-            jog_command = jog_command + 'G20 '
-        if units == JOG_UNIT_MILIMETERS:
-            jog_command = jog_command + 'G21 '
-
-        x_str = f'X{x} ' if x or distance_mode == JOG_DISTANCE_ABSOLUTE else ''
-        y_str = f'Y{y} ' if y or distance_mode == JOG_DISTANCE_ABSOLUTE else ''
-        z_str = f'Z{z} ' if z or distance_mode == JOG_DISTANCE_ABSOLUTE else ''
-        feedrate_str = f'F{feedrate}' if feedrate else ''
-        jog_command = jog_command + x_str + y_str + z_str + feedrate_str
-        return jog_command.strip()
