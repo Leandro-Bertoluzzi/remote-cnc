@@ -3,6 +3,16 @@ from typing_extensions import TypedDict
 
 # Definition of types
 
+ModalGroup = TypedDict('ModalGroup', {'group': str, 'modes': List[str]})
+GrblError = TypedDict('GrblError', {'code': int, 'message': str, 'description': str})
+GrblSetting = TypedDict('GrblSetting', {
+    'value': str,
+    'message': str,
+    'units': str,
+    'description': str
+})
+GrblSettings = dict[str, GrblSetting]
+
 Coordinates = Dict[str, float]
 Status = TypedDict('Status', {
     'activeState': str,
@@ -23,6 +33,13 @@ ParserState = TypedDict('ParserState', {
     'feedrate': float,
     'spindle': float
 })
-GrblState = TypedDict('GrblState', {'status': Status, 'parserstate': ParserState})
-GrblSettings = TypedDict('GrblSettings', {'version': str, 'parameters': Any, 'checkmode': bool})
+GrblControllerState = TypedDict('GrblControllerState', {
+    'status': Status,
+    'parserstate': ParserState
+})
+GrblControllerSettings = TypedDict('GrblControllerSettings', {
+    'version': str,
+    'parameters': Any,
+    'checkmode': bool
+})
 GrblResponse = tuple[Optional[str], dict[str, str]]

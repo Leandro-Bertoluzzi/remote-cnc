@@ -8,7 +8,8 @@ from .grblUtils import build_jog_command, is_setting_update_command
 from .parsers.grblMsgTypes import GRBL_MSG_ALARM, GRBL_MSG_FEEDBACK, GRBL_MSG_HELP, \
     GRBL_MSG_OPTIONS, GRBL_MSG_PARSER_STATE, GRBL_MSG_PARAMS, GRBL_MSG_SETTING, \
     GRBL_MSG_STARTUP, GRBL_MSG_STATUS, GRBL_MSG_VERSION, GRBL_RESULT_ERROR, GRBL_RESULT_OK
-from .types import GrblResponse, GrblState, GrblSettings
+from .types import GrblResponse, GrblControllerState, GrblControllerSettings, \
+    GrblSetting, GrblSettings
 
 try:
     from ..utils.serial import SerialService
@@ -21,7 +22,7 @@ GRBL_LINE_JOG = 'jog command'
 
 
 class GrblController:
-    state: GrblState = {
+    state: GrblControllerState = {
         'status': {
             'activeState': '',
             'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
@@ -52,7 +53,7 @@ class GrblController:
         }
     }
 
-    settings: GrblSettings = {
+    settings: GrblControllerSettings = {
         'version': '',
         'parameters': {},
         'checkmode': False
@@ -375,7 +376,7 @@ class GrblController:
         )
         return self.settings['parameters']
 
-    def queryGrblSettings(self):
+    def queryGrblSettings(self) -> GrblSettings:
         """Queries the list of GRBL settings with their current values.
         """
         responses = self.sendCommand('$$')
@@ -390,12 +391,15 @@ class GrblController:
                     if element['setting'] == key:
                         setting = element
                         break
-                response[key] = {
+                if not setting:
+                    continue
+                value: GrblSetting = {
                     'value': payload['value'],
                     'message': setting['message'],
                     'units': setting['units'],
                     'description': setting['description'],
                 }
+                response[key] = value
 
         if not response:
             self.logger.error('There was an error retrieving the GRBL settings')

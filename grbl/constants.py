@@ -1,5 +1,5 @@
 from typing import List
-from typing_extensions import TypedDict
+from .types import ModalGroup, GrblError
 
 # Grbl
 GRBL = 'Grbl'
@@ -48,8 +48,6 @@ GRBL_REALTIME_COMMANDS = [
     GRBL_COMMAND_SOFT_RESET
 ]
 
-ModalGroup = TypedDict('ModalGroup', {'group': str, 'modes': List[str]})
-
 # https://github.com/gnea/grbl
 # http://linuxcnc.org/docs/html/gcode/overview.html#cap:modal-groups
 GRBL_MODAL_GROUPS: List[ModalGroup] = [
@@ -90,8 +88,6 @@ GRBL_MODAL_GROUPS: List[ModalGroup] = [
         'modes': ['M7', 'M8', 'M9']
     }
 ]
-
-GrblError = TypedDict('GrblError', {'code': int, 'message': str, 'description': str})
 
 # Errors
 # https://github.com/gnea/grbl/blob/master/doc/csv/error_codes_en_US.csv
