@@ -21,9 +21,9 @@ def test_execute_tasks(mocker):
 
     # Mock GRBL methods
     mock_start_connection = mocker.patch.object(GrblController, 'connect')
-    mock_stream_line = mocker.patch.object(GrblController, 'streamLine')
-    mock_query_status_report = mocker.patch.object(GrblController, 'queryStatusReport')
-    mock_query_parser_state = mocker.patch.object(GrblController, 'queryGcodeParserState')
+    mock_stream_line = mocker.patch.object(GrblController, 'sendCommand')
+    mock_query_status_report = mocker.patch.object(GrblController, 'getStatusReport')
+    mock_query_parser_state = mocker.patch.object(GrblController, 'getGcodeParserState')
 
     # Mock FS methods
     mocker.patch('worker.tasks.getFilePath')
@@ -66,7 +66,7 @@ def test_no_tasks_to_execute(mocker):
 
     # Mock GRBL methods
     mock_start_connection = mocker.patch.object(GrblController, 'connect')
-    mock_stream_line = mocker.patch.object(GrblController, 'streamLine')
+    mock_stream_line = mocker.patch.object(GrblController, 'sendCommand')
 
     # Call method under test
     response = executeTask(

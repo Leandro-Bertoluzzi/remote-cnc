@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Optional
+from typing import List, Dict, Optional
 from typing_extensions import TypedDict
 
 # Definition of types
@@ -37,9 +37,31 @@ GrblControllerState = TypedDict('GrblControllerState', {
     'status': Status,
     'parserstate': ParserState
 })
-GrblControllerSettings = TypedDict('GrblControllerSettings', {
+
+ProbeStatus = TypedDict('ProbeStatus', {
+    'x': float,
+    'y': float,
+    'z': float,
+    'result': bool
+})
+GrblControllerParameters = TypedDict('GrblControllerParameters', {
+    'G54': Coordinates,
+    'G55': Coordinates,
+    'G56': Coordinates,
+    'G57': Coordinates,
+    'G58': Coordinates,
+    'G59': Coordinates,
+    'G28': Coordinates,
+    'G30': Coordinates,
+    'G92': Coordinates,
+    'TLO': float,
+    'PRB': ProbeStatus
+})
+GrblBuildInfo = TypedDict('GrblBuildInfo', {
     'version': str,
-    'parameters': Any,
-    'checkmode': bool
+    'comment': str,
+    'optionCode': str,
+    'blockBufferSize': int,
+    'rxBufferSize': int
 })
 GrblResponse = tuple[Optional[str], dict[str, str]]

@@ -27,8 +27,8 @@ class GrblParserMsgAlarm(GrblParserGeneric):
 
         payload = {
             'code': code,
-            'message': alarm['message'],
-            'description': alarm['description']
+            'message': alarm['message'] if alarm else '',
+            'description': alarm['description'] if alarm else ''
         }
 
         return GRBL_MSG_ALARM, payload

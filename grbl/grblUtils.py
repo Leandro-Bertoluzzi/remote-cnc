@@ -1,4 +1,5 @@
 import re
+from .constants import GRBL_SETTINGS
 
 # Constants
 JOG_UNIT_MILIMETERS = 'milimeters'
@@ -63,3 +64,10 @@ def is_setting_update_command(command) -> bool:
     if int(parameter) > 132:
         return False
     return True
+
+
+def get_grbl_setting(key: str):
+    for element in GRBL_SETTINGS:
+        if element['setting'] == key:
+            return element
+    return None

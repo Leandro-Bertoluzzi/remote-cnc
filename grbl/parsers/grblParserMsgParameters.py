@@ -35,7 +35,7 @@ class GrblParserMsgParameters(GrblParserGeneric):
             'name': name
         }
 
-        # [Gxx:0.000]
+        # [Gxx:0.000,0.000,0.000]
         if (re.search(r'^G\d+$', name)):
             axes = ['x', 'y', 'z']
             values = value.split(',')
@@ -47,7 +47,7 @@ class GrblParserMsgParameters(GrblParserGeneric):
         if (name == 'TLO'):
             payload['value'] = float(value)
 
-        # [PRB:0.000,0.000,1.492:1]
+        # [PRB:0.000,0.000,0.000:1]
         if (name == 'PRB'):
             axes = ['x', 'y', 'z']
             [valuesStr, result] = value.split(':')

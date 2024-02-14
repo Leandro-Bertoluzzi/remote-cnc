@@ -2,6 +2,7 @@ import re
 from ..constants import GRBL_MODAL_GROUPS
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_PARSER_STATE
+from typing import Any
 
 
 def findGroup(code: str) -> str:
@@ -31,7 +32,7 @@ class GrblParserMsgParserState(GrblParserGeneric):
         words_not_trimmed = matches.group(1).split(' ')
         words = map(str.strip, words_not_trimmed)
 
-        payload = {'modal': {}}
+        payload: dict[str, Any] = {'modal': {}}
 
         for word in words:
             if word[0] == 'G' or word[0] == 'M':

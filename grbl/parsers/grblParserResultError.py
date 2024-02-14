@@ -27,8 +27,8 @@ class GrblParserResultError(GrblParserGeneric):
 
         payload = {
             'code': code,
-            'message': error['message'],
-            'description': error['description']
+            'message': error['message'] if error else '',
+            'description': error['description'] if error else ''
         }
 
         return GRBL_RESULT_ERROR, payload

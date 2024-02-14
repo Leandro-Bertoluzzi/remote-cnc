@@ -25,8 +25,14 @@ class SerialService:
         # Start the connection
         self.interface.open()
 
+        # Dump any data already received
+        #self.interface.reset_input_buffer()
+
         # Wait for the response
         return self.readLineUntilMessage()
+
+    def waiting(self) -> bool:
+        return self.interface.in_waiting
 
     def sendLine(self, code: str):
         """Sends a line via serial port.
@@ -34,42 +40,23 @@ class SerialService:
         # Strip all EOL characters for consistency
         message = code.strip() + '\n'
         # Send line
-        self.interface.write(message.encode('utf-8'))
-
-    def streamLine(self, code: str) -> str:
-        """Sends a line via serial port and waits for the response.
-        """
-        # Strip all EOL characters for consistency
-        message = code.strip() + '\n'
-        # Send line
-        self.interface.write(message.encode('utf-8'))
-        # Wait for the response
-        return self.readLineUntilMessage()
+        self.interface.write(message.encode())
 
     def readLine(self) -> str:
         """Waits for response with carriage return.
         """
-        return self.interface.readline().decode('utf-8').strip()
+        return str(self.interface.readline().decode('ascii', 'ignore')).strip()
 
-    def readLineUntilMessage(self, max_retries: int = 3) -> str:
+    def readLineUntilMessage(self, max_retries: int = 30) -> str:
         """Waits for response with carriage return.
         Ignores empty messages and timeouts until an actual message arrives.
         """
         response = ''
         retries = 0
         while not response and retries <= max_retries:
-            response = self.interface.readline().decode('utf-8').strip()
+            response = self.readLine()
             retries = retries + 1
         return response
-
-    def streamBlock(self, code: str) -> str:
-        """Sends a block of code (multiple lines) via serial port.
-        """
-        # TODO: Pre-process and discard comment lines
-        # Stream G-code to GRBL
-        for line in code.splitlines():
-            self.streamLine(line)
-        return "OK"
 
     def stopConnection(self):
         """Closes any previous connection.

@@ -16,6 +16,4 @@ class GrblParserResultOk(GrblParserGeneric):
         if (not matches):
             return None
 
-        payload = {}
-
-        return GRBL_RESULT_OK, payload
+        return GRBL_RESULT_OK, {}

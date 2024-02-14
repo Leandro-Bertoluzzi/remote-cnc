@@ -81,12 +81,12 @@ def executeTask(
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
         with open(file_path, "r") as file:
             for line in file:
-                cnc.streamLine(line)
+                cnc.sendCommand(line)
                 # update task progress
                 progress = progress + 1
                 percentage = int((progress * 100) / float(total_lines))
-                status = cnc.queryStatusReport()
-                parserstate = cnc.queryGcodeParserState()
+                status = cnc.getStatusReport()
+                parserstate = cnc.getGcodeParserState()
                 self.update_state(
                     state='PROGRESS',
                     meta={

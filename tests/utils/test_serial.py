@@ -66,48 +66,6 @@ def test_send_line(serial_service, mocker):
     assert mock_read_port.call_count == 0
 
 
-def test_stream_line(serial_service, mocker):
-    # Sample message with valid G-code
-    line = 'G1 X10 Y20'
-
-    # Mock serial port methods
-    mock_write_port = mocker.patch.object(serial.Serial, 'write')
-    mock_read_port = mocker.patch.object(
-        serial.Serial,
-        'readline',
-        return_value=b'worked great'
-    )
-
-    # Call method under test
-    response = serial_service.streamLine(line)
-
-    # Assertions
-    assert mock_write_port.call_count == 1
-    assert mock_read_port.call_count == 1
-    assert response == 'worked great'
-
-
-def test_stream_block(serial_service, mocker):
-    # Sample message with multiple lines
-    block = 'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60'
-
-    # Mock serial port methods
-    mock_write_port = mocker.patch.object(serial.Serial, 'write')
-    mock_read_port = mocker.patch.object(
-        serial.Serial,
-        'readline',
-        return_value=b'worked great'
-    )
-
-    # Call method under test
-    response = serial_service.streamBlock(block)
-
-    # Assertions
-    assert mock_write_port.call_count == 3
-    assert mock_read_port.call_count == 3
-    assert response == 'OK'
-
-
 @pytest.mark.parametrize('received', ['', 'worked great'])
 def test_read_line(serial_service, mocker, received):
     # Mock serial port methods
