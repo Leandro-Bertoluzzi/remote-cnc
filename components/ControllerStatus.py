@@ -60,7 +60,7 @@ class ControllerStatus(QWidget):
         self.stop_monitor()
 
     def start_monitor(self):
-        self.monitor_thread = threading.Thread(target=self.update_status)
+        self.monitor_thread = threading.Thread(target=self.monitor_status)
         self.monitor_thread.start()
 
     def stop_monitor(self):
@@ -82,7 +82,7 @@ class ControllerStatus(QWidget):
     def set_spindle(self, spindle: int):
         self.spindle.setText(f'Spindle: {spindle}')
 
-    def update_status(self):
+    def monitor_status(self):
         tr = time.time()  # last time the status was queried
 
         while self.monitor_thread:
@@ -94,6 +94,7 @@ class ControllerStatus(QWidget):
                 continue
 
             tr = t
+
             status = self.grbl_controller.getStatusReport()
             self.set_status(status)
 

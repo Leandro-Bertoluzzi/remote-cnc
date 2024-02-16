@@ -180,7 +180,7 @@ class TestControlView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Call method under test
-        self.control_view.toggle_connected()
+        self.control_view.connect_device()
 
         # Assertions
         assert mock_grbl_connect.call_count == 1
@@ -201,23 +201,42 @@ class TestControlView:
             'disconnect',
             side_effect=Exception('mocked-error')
         )
-        mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
         mock_stop_status_monitor = mocker.patch.object(ControllerStatus, 'stop_monitor')
-        mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Call method under test
-        self.control_view.toggle_connected()
+        self.control_view.disconnect_device()
 
         # Assertions
-        assert mock_start_status_monitor.call_count == 0
-        assert mock_write_to_terminal.call_count == 0
         assert mock_grbl_disconnect.call_count == 1
         assert mock_stop_status_monitor.call_count == 0
         assert self.control_view.connect_button.text() == 'Desconectar'
         mock_popup.assert_called_once()
+
+    def test_control_view_disconnect_device_runtime_error(self, mocker):
+        # Mock attributes
+        self.control_view.connected = True
+
+        # Mock exception
+        self.control_view.connect_button.setText = mocker.Mock()
+        self.control_view.connect_button.setText.side_effect = RuntimeError(
+            'wrapped C/C++ object of type QToolButton has been deleted'
+        )
+
+        # Mock methods
+        mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
+        mock_stop_status_monitor = mocker.patch.object(ControllerStatus, 'stop_monitor')
+        mock_enable_serial_widgets = mocker.patch.object(ControlView, 'enable_serial_widgets')
+
+        # Call method under test
+        self.control_view.disconnect_device()
+
+        # Assertions
+        assert mock_grbl_disconnect.call_count == 1
+        assert mock_stop_status_monitor.call_count == 1
+        assert mock_enable_serial_widgets.call_count == 0
 
     @pytest.mark.parametrize(
         "show_in_terminal",

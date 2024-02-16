@@ -232,11 +232,14 @@ class ControlView(QWidget):
                 QMessageBox.Ok
             )
             return
-        self.connect_button.setText('Conectar')
         self.connected = False
-        self.enable_serial_widgets(False)
         self.status_monitor.stop_monitor()
-        self.status_monitor.set_status(GRBL_STATUS_DISCONNECTED)
+        try:
+            self.connect_button.setText('Conectar')
+            self.enable_serial_widgets(False)
+            self.status_monitor.set_status(GRBL_STATUS_DISCONNECTED)
+        except RuntimeError:
+            pass
 
     def enable_serial_widgets(self, enable: bool = True):
         self.status_monitor.setEnabled(enable)

@@ -1,5 +1,6 @@
 from components.ControllerStatus import ControllerStatus
 from core.database.models import Tool
+from core.database.repositories.toolRepository import ToolRepository
 from core.grbl.grblController import GrblController
 import logging
 from PyQt5.QtWidgets import QLabel
@@ -86,3 +87,71 @@ class TestControllerStatus:
 
         # Assertions
         assert self.controller_status.spindle.text() == 'Spindle: 1500'
+
+    @pytest.mark.parametrize("db_fails", [False, True])
+    def test_controller_status_monitor_status(self, mocker, db_fails):
+        # Mock attributes
+        self.controller_status.monitor_thread = threading.Thread()
+        self.controller_status.tool_index = 0
+
+        # Mock thread life cycle
+        self.count = 0
+
+        def manage_thread():
+            self.count = self.count + 1
+            if self.count == 3:
+                self.controller_status.monitor_thread = None
+            return 1
+
+        # Mock GRBL methods
+        mock_grbl_get_status_report = mocker.patch.object(
+            GrblController,
+            'getStatusReport',
+            return_value={
+                'activeState': 'idle',
+                'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+                'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0}
+            }
+        )
+        mock_grbl_get_feedrate = mocker.patch.object(
+            GrblController,
+            'getFeedrate',
+            return_value=500.0
+        )
+        mock_grbl_get_spindle = mocker.patch.object(
+            GrblController,
+            'getSpindle',
+            return_value=500.0
+        )
+        mock_grbl_get_tool = mocker.patch.object(
+            GrblController,
+            'getTool',
+            side_effect=manage_thread
+        )
+
+        # Mock DB methods
+        test_tool = Tool('Test tool', 'It is a really useful tool')
+        mock_db_get_tool_by_id = mocker.patch.object(
+            ToolRepository,
+            'get_tool_by_id',
+            return_value=test_tool
+        )
+
+        if db_fails:
+            mock_db_get_tool_by_id.side_effect = Exception('mocked-error')
+
+        # Call method under test
+        self.controller_status.monitor_status()
+
+        # Assertions
+        assert mock_grbl_get_status_report.call_count == 3
+        assert mock_grbl_get_feedrate.call_count == 3
+        assert mock_grbl_get_spindle.call_count == 3
+        assert mock_grbl_get_tool.call_count == 3
+        assert mock_db_get_tool_by_id.call_count == (3 if db_fails else 1)
+        assert self.controller_status.status.text() == 'IDLE'
+        assert self.controller_status.feedrate.text() == 'Feed rate: 500.0'
+        assert self.controller_status.spindle.text() == 'Spindle: 500.0'
+        assert self.controller_status.tool.text() == (
+            'Tool: xxx' if db_fails else 'Tool: 1 (Test tool)'
+        )
