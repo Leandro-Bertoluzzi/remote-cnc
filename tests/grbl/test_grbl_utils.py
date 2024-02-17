@@ -1,5 +1,5 @@
-from grbl.grblUtils import build_jog_command, is_setting_update_command, JOG_DISTANCE_ABSOLUTE, \
-    JOG_DISTANCE_INCREMENTAL, JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
+from grbl.grblUtils import build_jog_command, get_grbl_setting, is_setting_update_command, \
+    JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL, JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 import pytest
 
 
@@ -205,6 +205,33 @@ def test_build_jog_command(parameters, expected):
 def test_is_setting_update_command(command, expected):
     # Call the method under test
     response = is_setting_update_command(command)
+
+    # Assertions
+    assert response == expected
+
+
+@pytest.mark.parametrize(
+    'key,expected',
+    [
+        ('$0', {
+            'setting': '$0',
+            'message': 'Step pulse time',
+            'units': 'microseconds',
+            'description': 'Sets time length per step. Minimum 3usec.'
+        }),
+        ('$112', {
+            'setting': '$112',
+            'message': 'Z-axis maximum rate',
+            'units': 'mm/min',
+            'description': 'Z-axis maximum rate. Used as G0 rapid rate.'
+        }),
+        ('$200', None),
+        ('invalid', None),
+    ]
+)
+def test_get_grbl_setting(key, expected):
+    # Call the method under test
+    response = get_grbl_setting(key)
 
     # Assertions
     assert response == expected

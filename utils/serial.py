@@ -26,13 +26,18 @@ class SerialService:
         self.interface.open()
 
         # Dump any data already received
-        #self.interface.reset_input_buffer()
+        # self.interface.reset_input_buffer()
 
         # Wait for the response
         return self.readLineUntilMessage()
 
     def waiting(self) -> bool:
         return self.interface.in_waiting
+
+    def sendBytes(self, code: bytes):
+        """Sends byte(s) via serial port.
+        """
+        self.interface.write(code)
 
     def sendLine(self, code: str):
         """Sends a line via serial port.

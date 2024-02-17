@@ -3,14 +3,15 @@ from grbl.constants import GRBL_ACTIVE_STATE_IDLE, GRBL_ACTIVE_STATE_RUN, \
     GRBL_ACTIVE_STATE_SLEEP, GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_CHECK
 from grbl.grblController import GrblController
 from grbl.grblLineParser import GrblLineParser
-from grbl.parsers.grblMsgTypes import GRBL_MSG_ALARM, GRBL_MSG_FEEDBACK, GRBL_MSG_HELP, \
-    GRBL_MSG_PARAMS, GRBL_MSG_PARSER_STATE, GRBL_MSG_OPTIONS, GRBL_MSG_SETTING, \
-    GRBL_MSG_STARTUP, GRBL_MSG_STATUS, GRBL_MSG_VERSION, GRBL_RESULT_ERROR, GRBL_RESULT_OK
+from grbl.grblMonitor import GrblMonitor
+from grbl.parsers.grblMsgTypes import GRBL_MSG_FEEDBACK, GRBL_MSG_STARTUP, GRBL_RESULT_OK
 from utils.serial import SerialService
 from serial import SerialException
 import logging
-from queue import Queue
+from queue import Empty, Queue
 import pytest
+import threading
+import time
 
 
 # Test fixture for setting up and tearing down the SerialService instance
@@ -28,12 +29,13 @@ class TestGrblController:
         self.grbl_controller = GrblController(grbl_logger)
 
         # Mock logger methods
-        mocker.patch.object(grbl_logger, 'addHandler')
-        mocker.patch.object(grbl_logger, 'debug')
-        mocker.patch.object(grbl_logger, 'info')
-        mocker.patch.object(grbl_logger, 'warning')
-        mocker.patch.object(grbl_logger, 'error')
-        mocker.patch.object(grbl_logger, 'critical')
+        mocker.patch.object(GrblMonitor, 'debug')
+        mocker.patch.object(GrblMonitor, 'info')
+        mocker.patch.object(GrblMonitor, 'warning')
+        mocker.patch.object(GrblMonitor, 'error')
+        mocker.patch.object(GrblMonitor, 'critical')
+        mocker.patch.object(GrblMonitor, 'sent')
+        mocker.patch.object(GrblMonitor, 'received')
 
     def test_connect_fails_serial(self, mocker):
         # Mock serial methods
@@ -80,6 +82,10 @@ class TestGrblController:
                 }
             )
 
+        # Mock thread
+        mock_thread_create = mocker.patch.object(threading.Thread, '__init__', return_value=None)
+        mock_thread_start = mocker.patch.object(threading.Thread, 'start')
+
         # Mock GRBL methods to receive:
         # Grbl 1.1
         # ok
@@ -117,6 +123,8 @@ class TestGrblController:
         assert mock_serial_connect.call_count == 1
         assert mock_grbl_parser.call_count == 2
         assert mock_handle_homing.call_count == (1 if initial_homing else 0)
+        assert mock_thread_create.call_count == 1
+        assert mock_thread_start.call_count == 1
 
     @pytest.mark.parametrize('connected', [True, False])
     def test_disconnect(self, mocker, connected):
@@ -132,7 +140,7 @@ class TestGrblController:
 
         # Assertions
         assert mock_serial_disconnect.call_count == (1 if connected else 0)
-        assert self.grbl_controller.connected == False
+        assert self.grbl_controller.connected is False
         assert self.grbl_controller.state['status']['activeState'] == (
             'DISCONNECTED' if connected else 'CONNECTED'
         )
@@ -171,14 +179,14 @@ class TestGrblController:
 
     def test_query_status_report(self, mocker):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(SerialService, 'sendBytes')
 
         # Call the method under test
         self.grbl_controller.queryStatusReport()
 
         # Assertions
         assert mock_command_send.call_count == 1
-        mock_command_send.assert_called_with('?')
+        mock_command_send.assert_called_with(b'?')
 
     def test_query_parser_state(self, mocker):
         # Mock GRBL methods
@@ -279,9 +287,14 @@ class TestGrblController:
         mock_command_send.assert_called_with('$#')
 
     def test_getters(self):
-        # Test values
-        mock_machine_position = {'x': '1.000', 'y': '2.000', 'z': '3.000'}
-        mock_work_position = {'x': '3.000', 'y': '2.000', 'z': '1.000'}
+        # Mock controller state
+        mock_machine_position = {'x': 1.000, 'y': 2.000, 'z': 3.000}
+        mock_work_position = {'x': 3.000, 'y': 2.000, 'z': 1.000}
+        mock_status = {
+            'activeState': 'IDLE',
+            'mpos': mock_machine_position,
+            'wpos': mock_work_position
+        }
         mock_modal_group = {
             'motion': 'G0',
             'wcs': 'G54',
@@ -293,9 +306,15 @@ class TestGrblController:
             'spindle': 'M5',
             'coolant': 'M9'
         }
-        mock_tool = '7'
-        mock_feedrate = '500.0'
-        mock_spindle = '50.0'
+        mock_tool = 7
+        mock_feedrate = 500.0
+        mock_spindle = 50.0
+        mock_parser_state = {
+            'modal': mock_modal_group,
+            'tool': mock_tool,
+            'feedrate': mock_feedrate,
+            'spindle': mock_spindle
+        }
         mock_parameters = {
             'G54': {'x': 0.000, 'y': 0.000, 'z': 0.000},
             'G55': {'x': 0.000, 'y': 0.000, 'z': 0.000},
@@ -309,36 +328,63 @@ class TestGrblController:
             'TLO': 0.000,
             'PRB': {'x': 0.000, 'y': 0.000, 'z': 0.000, 'result': True}
         }
+        mock_settings = {
+            '$0': {
+                'value': 10.0,
+                'message': 'Step pulse time',
+                'units': 'microseconds',
+                'description': 'Sets time length per step. Minimum 3usec.'
+            },
+            '$2': {
+                'value': 7,
+                'message': 'Step pulse invert',
+                'units': 'mask',
+                'description': 'Inverts the step signal. Set axis bit to invert (00000ZYX).'
+            }
+        }
+        mock_build_info = {
+            'version': '1.1d',
+            'comment': 'A comment',
+            'optionCode': '',
+            'blockBufferSize': 15,
+            'rxBufferSize': 128
+        }
         mock_checkmode = True
 
         # Set test values for controller's parameters
-        self.grbl_controller.state['status']['mpos'] = mock_machine_position
-        self.grbl_controller.state['status']['wpos'] = mock_work_position
-        self.grbl_controller.state['parserstate']['modal'] = mock_modal_group
-        self.grbl_controller.state['parserstate']['tool'] = mock_tool
-        self.grbl_controller.state['parserstate']['feedrate'] = mock_feedrate
-        self.grbl_controller.state['parserstate']['spindle'] = mock_spindle
+        self.grbl_controller.state['status'] = mock_status
+        self.grbl_controller.state['parserstate'] = mock_parser_state
         self.grbl_controller.parameters = mock_parameters
+        self.grbl_controller.settings = mock_settings
+        self.grbl_controller.build_info = mock_build_info
         self.grbl_controller._checkmode = mock_checkmode
 
         # Call methods under test
+        status = self.grbl_controller.getStatusReport()
         machine_position = self.grbl_controller.getMachinePosition()
         work_position = self.grbl_controller.getWorkPosition()
+        parser_state = self.grbl_controller.getGcodeParserState()
         modal_group = self.grbl_controller.getModalGroup()
         tool = self.grbl_controller.getTool()
         feedrate = self.grbl_controller.getFeedrate()
         spindle = self.grbl_controller.getSpindle()
         parameters = self.grbl_controller.getParameters()
+        settings = self.grbl_controller.getGrblSettings()
+        build_info = self.grbl_controller.getBuildInfo()
         checkmode = self.grbl_controller.getCheckModeEnabled()
 
         # Assertions
+        assert status == mock_status
         assert machine_position == mock_machine_position
         assert work_position == mock_work_position
+        assert parser_state == mock_parser_state
         assert modal_group == mock_modal_group
         assert tool == mock_tool
         assert feedrate == mock_feedrate
         assert spindle == mock_spindle
         assert parameters == mock_parameters
+        assert settings == mock_settings
+        assert build_info == mock_build_info
         assert checkmode == mock_checkmode
 
     @pytest.mark.parametrize(
@@ -365,6 +411,55 @@ class TestGrblController:
         # Assertions
         assert is_alarm == (active_state == GRBL_ACTIVE_STATE_ALARM)
         assert is_idle == (active_state == GRBL_ACTIVE_STATE_IDLE)
+
+    @pytest.mark.parametrize(
+            'occupied,expected',
+            [
+                (0, 0.0),
+                (16, 12.5),
+                (32, 25.0),
+                (64, 50.0),
+                (128, 100.0)
+            ]
+        )
+    def test_get_buffer_fill(self, occupied, expected):
+        # Set test value for controller's active state
+        self.grbl_controller._sumcline = occupied
+
+        # Call methods under test
+        value = self.grbl_controller.getBufferFill()
+
+        # Assertions
+        assert value == expected
+
+    def test_empty_command_queue(self, mocker):
+        # Mock queue contents
+        self.grbl_controller.queue.put('Command 1')
+        self.grbl_controller.queue.put('Command 2')
+        self.grbl_controller.queue.put('Command 3')
+
+        # Spy queue methods
+        mock_queue_size = mocker.spy(Queue, 'qsize')
+        mock_queue_get = mocker.spy(Queue, 'get_nowait')
+
+        # Call method under test
+        self.grbl_controller.emptyQueue()
+
+        # Assertions
+        assert mock_queue_size.call_count == 4
+        assert mock_queue_get.call_count == 3
+
+    def test_empty_command_queue_empty(self, mocker):
+        # Mock queue methods
+        mock_queue_size = mocker.patch.object(Queue, 'qsize', return_value=1)
+        mock_queue_get = mocker.patch.object(Queue, 'get_nowait', side_effect=Empty())
+
+        # Call method under test
+        self.grbl_controller.emptyQueue()
+
+        # Assertions
+        assert mock_queue_size.call_count == 1
+        assert mock_queue_get.call_count == 1
 
     # PARSER
 
@@ -587,4 +682,229 @@ class TestGrblController:
         self.grbl_controller.parseResponse('[MSG:Caution: Unlocked]', [], [])
 
         # Assertions
-        assert self.grbl_controller._alarm == False
+        assert self.grbl_controller._alarm is False
+
+    # SERIAL I/O
+
+    @pytest.mark.parametrize('paused', [True, False])
+    def test_serial_io(self, mocker, paused):
+        # **Test case description (no pause)**
+        # Round 1: query status + get command to send + read line + parse line + send command
+        # Round 2: query status + get command to send + send command
+        # Round 3: query status + read line (no response)
+
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+        self.grbl_controller._paused = paused
+
+        # Mock queue contents
+        self.grbl_controller.queue.put('Command 1')
+        self.grbl_controller.queue.put('Command 2')
+
+        # Mock time and thread life cycle
+        self.count = 0
+        self.current_time = 1703991600.0    # 2023-12-31 03:00:00.3 (UTC)
+
+        def manage_time():
+            # Manage thread
+            if self.count == 3:
+                self.grbl_controller.serial_thread = None
+            self.count = self.count + 1
+
+            # Fake time, adding 200 ms each time
+            new_time = self.current_time
+            self.current_time = self.current_time + 0.2
+            return new_time
+
+        # Mock timer method
+        mock_time = mocker.patch.object(
+            time,
+            'time',
+            side_effect=manage_time
+        )
+
+        # Mock controller methods
+        mock_query_status_report = mocker.patch.object(GrblController, 'queryStatusReport')
+        mock_parse_response = mocker.patch.object(GrblController, 'parseResponse')
+
+        # Mock serial methods
+        mock_serial_waiting = mocker.patch.object(
+            SerialService,
+            'waiting',
+            side_effect=[True, False, True]
+        )
+        mock_serial_read_line = mocker.patch.object(
+            SerialService,
+            'readLine',
+            side_effect=['test message', '', '']
+        )
+        mock_serial_send_line = mocker.patch.object(SerialService, 'sendLine')
+
+        # Mock monitor methods
+        mock_monitor_sent = mocker.patch.object(GrblMonitor, 'sent')
+
+        # Spy queue methods
+        spy_queue_size = mocker.spy(Queue, 'qsize')
+        spy_queue_get = mocker.spy(Queue, 'get_nowait')
+
+        # Call method under test
+        self.grbl_controller.serialIO()
+
+        # Assertions
+        # **Query GRBL status section**
+        assert mock_time.call_count == 4
+        assert mock_query_status_report.call_count == 3
+        # **Read serial section**
+        assert mock_serial_waiting.call_count == 3
+        assert mock_serial_read_line.call_count == (3 if paused else 2)
+        assert mock_parse_response.call_count == 1
+        # **Write serial section**
+        assert spy_queue_size.call_count == (0 if paused else 3)
+        assert spy_queue_get.call_count == (0 if paused else 2)
+        assert mock_serial_send_line.call_count == (0 if paused else 2)
+        assert mock_monitor_sent.call_count == (0 if paused else 2)
+
+    def test_serial_io_serial_error(self, mocker):
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        # Mock controller methods
+        mocker.patch.object(GrblController, 'queryStatusReport')
+        mock_disconnect = mocker.patch.object(GrblController, 'disconnect')
+        mock_parse_response = mocker.patch.object(GrblController, 'parseResponse')
+
+        # Mock serial methods
+        mock_serial_waiting = mocker.patch.object(
+            SerialService,
+            'waiting',
+            return_value=True
+        )
+        mock_serial_read_line = mocker.patch.object(
+            SerialService,
+            'readLine',
+            side_effect=Exception('mocked-error')
+        )
+
+        # Mock monitor methods
+        mock_monitor_error = mocker.patch.object(GrblMonitor, 'error')
+
+        # Call method under test
+        self.grbl_controller.serialIO()
+
+        # Assertions
+        assert mock_serial_waiting.call_count == 1
+        assert mock_serial_read_line.call_count == 1
+        assert mock_parse_response.call_count == 0
+        assert mock_monitor_error.call_count == 1
+        assert mock_disconnect.call_count == 1
+
+    def test_serial_io_stop(self, mocker):
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+        self.grbl_controller._stop = True
+
+        # Mock thread life cycle
+        def stop_thread():
+            self.grbl_controller.serial_thread = None
+
+        # Mock controller methods
+        mocker.patch.object(GrblController, 'queryStatusReport')
+
+        # Mock serial methods
+        mocker.patch.object(SerialService, 'waiting', return_value=False)
+        mocker.patch.object(SerialService, 'readLine', return_value='')
+
+        # Mock monitor methods
+        mocker.patch.object(GrblController, 'emptyQueue', side_effect=stop_thread)
+        mock_monitor_info = mocker.patch.object(GrblMonitor, 'info')
+
+        # Call method under test
+        self.grbl_controller.serialIO()
+
+        # Assertions
+        assert mock_monitor_info.call_count == 1
+        assert self.grbl_controller._stop is False
+
+    def test_serial_io_query_parser_state(self, mocker):
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        # Mock queue contents
+        self.grbl_controller.queue.put('Command 1')
+
+        # Mock time
+        self.current_time = 1703991600.0    # 2023-12-31 03:00:00.3 (UTC)
+
+        def manage_time():
+            # Fake time, adding 15 s each time
+            new_time = self.current_time
+            self.current_time = self.current_time + 15.0
+            return new_time
+
+        # Mock timer method
+        mock_time = mocker.patch.object(
+            time,
+            'time',
+            side_effect=manage_time
+        )
+
+        # Mock thread life cycle
+        def stop_thread():
+            self.grbl_controller.serial_thread = None
+
+        # Mock controller methods
+        mocker.patch.object(GrblController, 'queryStatusReport')
+        mock_query_parser_state = mocker.patch.object(
+            GrblController,
+            'queryGcodeParserState',
+            side_effect=stop_thread
+        )
+
+        # Mock serial methods
+        mocker.patch.object(SerialService, 'waiting', return_value=False)
+        mocker.patch.object(SerialService, 'readLine', return_value='')
+        mocker.patch.object(SerialService, 'sendLine')
+
+        # Mock monitor methods
+        mocker.patch.object(GrblMonitor, 'sent')
+
+        # Call method under test
+        self.grbl_controller.serialIO()
+
+        # Assertions
+        assert mock_time.call_count == 2
+        assert mock_query_parser_state.call_count == 1
+
+    def test_serial_io_query_buffer_full(self, mocker):
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        # Mock queue contents
+        self.grbl_controller.queue.put('Command 1')
+
+        # Mock thread life cycle
+        def stop_thread():
+            self.grbl_controller.serial_thread = None
+            return False
+
+        # Mock builtin 'sum' fucntion
+        mock_sum = mocker.patch('builtins.sum', return_value=500)
+
+        # Mock controller methods
+        mocker.patch.object(GrblController, 'queryStatusReport')
+
+        # Mock serial methods
+        mocker.patch.object(SerialService, 'waiting', side_effect=stop_thread)
+        mocker.patch.object(SerialService, 'readLine', return_value='')
+        mock_send_line = mocker.patch.object(SerialService, 'sendLine')
+
+        # Mock monitor methods
+        mock_monitor_sent = mocker.patch.object(GrblMonitor, 'sent')
+
+        # Call method under test
+        self.grbl_controller.serialIO()
+
+        # Assertions
+        assert mock_sum.call_count == 1
+        assert mock_send_line.call_count == 0
+        assert mock_monitor_sent.call_count == 0
