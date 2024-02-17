@@ -41,7 +41,7 @@ class TestControllerStatus:
         assert mock_thread_create.call_count == 1
         assert mock_thread_start.call_count == 1
 
-    def test_controller_status_stop_monitor(self, mocker):
+    def test_controller_status_stop_monitor(self):
         # Call method under test
         self.controller_status.stop_monitor()
 

@@ -145,6 +145,7 @@ class TestControlView:
         )
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
         mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
+        mock_start_commands_monitor = mocker.patch.object(Terminal, 'start_monitor')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
 
         # Call method under test
@@ -155,6 +156,7 @@ class TestControlView:
         should_disconnect = connected
         assert mock_grbl_connect.call_count == (1 if should_connect else 0)
         assert mock_start_status_monitor.call_count == (1 if should_connect else 0)
+        assert mock_start_commands_monitor.call_count == (1 if should_connect else 0)
         assert mock_write_to_terminal.call_count == (1 if should_connect else 0)
         assert mock_grbl_disconnect.call_count == (1 if should_disconnect else 0)
         connect_btn_text = self.control_view.connect_button.text()
@@ -174,6 +176,7 @@ class TestControlView:
             side_effect=Exception('mocked-error')
         )
         mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
+        mock_start_commands_monitor = mocker.patch.object(Terminal, 'start_monitor')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
 
         # Mock QMessageBox methods
@@ -185,6 +188,7 @@ class TestControlView:
         # Assertions
         assert mock_grbl_connect.call_count == 1
         assert mock_start_status_monitor.call_count == 0
+        assert mock_start_commands_monitor.call_count == 0
         assert mock_write_to_terminal.call_count == 0
         assert self.control_view.connect_button.text() == 'Conectar'
         mock_popup.assert_called_once()
@@ -202,6 +206,7 @@ class TestControlView:
             side_effect=Exception('mocked-error')
         )
         mock_stop_status_monitor = mocker.patch.object(ControllerStatus, 'stop_monitor')
+        mock_stop_commands_monitor = mocker.patch.object(Terminal, 'stop_monitor')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
@@ -212,6 +217,7 @@ class TestControlView:
         # Assertions
         assert mock_grbl_disconnect.call_count == 1
         assert mock_stop_status_monitor.call_count == 0
+        assert mock_stop_commands_monitor.call_count == 0
         assert self.control_view.connect_button.text() == 'Desconectar'
         mock_popup.assert_called_once()
 
@@ -228,6 +234,7 @@ class TestControlView:
         # Mock methods
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
         mock_stop_status_monitor = mocker.patch.object(ControllerStatus, 'stop_monitor')
+        mock_stop_commands_monitor = mocker.patch.object(Terminal, 'stop_monitor')
         mock_enable_serial_widgets = mocker.patch.object(ControlView, 'enable_serial_widgets')
 
         # Call method under test
@@ -236,6 +243,7 @@ class TestControlView:
         # Assertions
         assert mock_grbl_disconnect.call_count == 1
         assert mock_stop_status_monitor.call_count == 1
+        assert mock_stop_commands_monitor.call_count == 1
         assert mock_enable_serial_widgets.call_count == 0
 
     @pytest.mark.parametrize(

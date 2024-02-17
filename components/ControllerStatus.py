@@ -90,7 +90,7 @@ class ControllerStatus(QWidget):
 
             # Refresh machine position?
             if t - tr < STATUS_POLL:
-                time.sleep(0.01)
+                time.sleep(0.1)
                 continue
 
             tr = t

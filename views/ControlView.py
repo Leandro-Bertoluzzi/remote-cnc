@@ -214,6 +214,7 @@ class ControlView(QWidget):
         self.connected = True
         self.enable_serial_widgets(True)
         self.status_monitor.start_monitor()
+        self.terminal.start_monitor()
         self.write_to_terminal(response['raw'])
 
     def disconnect_device(self):
@@ -234,6 +235,7 @@ class ControlView(QWidget):
             return
         self.connected = False
         self.status_monitor.stop_monitor()
+        self.terminal.stop_monitor()
         try:
             self.connect_button.setText('Conectar')
             self.enable_serial_widgets(False)
