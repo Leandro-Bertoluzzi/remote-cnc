@@ -145,6 +145,14 @@ class TestGrblController:
             'DISCONNECTED' if connected else 'CONNECTED'
         )
 
+    @pytest.mark.parametrize('paused', [False, True])
+    def test_set_paused(self, paused):
+        # Call method under test
+        self.grbl_controller.setPaused(paused)
+
+        # Assertions
+        assert self.grbl_controller._paused == paused
+
     def test_send_command(self):
         # Set up command queue for test
         self.grbl_controller.queue = Queue()
@@ -603,24 +611,6 @@ class TestGrblController:
         )
 
     def test_parser_receive_parser_state(self):
-        # Set test values for controller's status
-        self.grbl_controller.state['parserstate'] = {
-            'modal': {
-                'motion': 'G0',
-                'wcs': 'G54',
-                'plane': 'G17',
-                'units': 'G21',
-                'distance': 'G90',
-                'feedrate': 'G94',
-                'program': 'M0',
-                'spindle': 'M5',
-                'coolant': 'M9'
-            },
-            'tool': 1,
-            'feedrate': 0.0,
-            'spindle': 0.0
-        }
-
         # Simulate getting responses from GRBL
         self.grbl_controller.parseResponse(
             '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M7 M8 T0 F20. S0.]',
@@ -683,6 +673,60 @@ class TestGrblController:
 
         # Assertions
         assert self.grbl_controller._alarm is False
+
+    def test_parser_receive_ok(self):
+        # Set test values
+        cline = [1, 2, 3]
+        sline = ['$H', 'G54', 'G00 X0 Y0']
+
+        # Simulate getting responses from GRBL
+        self.grbl_controller.parseResponse('ok', cline, sline)
+
+        # Assertions
+        assert cline == [2, 3]
+        assert sline == ['G54', 'G00 X0 Y0']
+
+    def test_parser_receive_error(self, mocker):
+        # Set test values
+        cline = [1, 2, 3]
+        sline = ['G54 G54', 'G90', 'G00 X0 Y0']
+
+        # Mock monitor methods
+        mock_monitor_error = mocker.patch.object(GrblMonitor, 'error')
+
+        # Simulate getting responses from GRBL
+        self.grbl_controller.parseResponse('error:25', cline, sline)
+
+        # Assertions
+        assert cline == [2, 3]
+        assert sline == ['G90', 'G00 X0 Y0']
+        assert self.grbl_controller.error_line == 'G54 G54'
+        assert mock_monitor_error.call_count == 1
+        mock_monitor_error.assert_called_with(
+            'Error: Invalid gcode ID:25. Description: Repeated g-code word found in block.'
+        )
+
+    def test_parser_receive_alarm(self, mocker):
+        # Set test values
+        cline = [1, 2, 3]
+        sline = ['$H', 'G54', 'G00 X0 Y0']
+
+        # Mock monitor methods
+        mock_monitor_critical = mocker.patch.object(GrblMonitor, 'critical')
+
+        # Simulate getting responses from GRBL
+        self.grbl_controller.parseResponse('ALARM:6', cline, sline)
+
+        # Assertions
+        assert cline == [2, 3]
+        assert sline == ['G54', 'G00 X0 Y0']
+        assert self.grbl_controller.alarm_code == 6
+        assert self.grbl_controller.error_line == '$H'
+        assert self.grbl_controller._alarm is True
+        assert mock_monitor_critical.call_count == 1
+        mock_monitor_critical.assert_called_with(
+            'Alarm activated: Homing fail. Description: Homing fail. The active homing cycle was reset.'
+        )
 
     # SERIAL I/O
 

@@ -53,6 +53,7 @@ class GrblMonitor:
             self.queueLog(log)
 
     def sent(self, command: str, debug: bool = False):
+        command = command.strip()   # Strip all EOL characters for consistency
         if debug:
             self.logger.debug('[Sent] command: %s', command)
             return

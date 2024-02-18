@@ -93,7 +93,6 @@ class GrblController:
         # Configure serial interface
         self.serial = SerialService()
         self.queue: Queue[str] = Queue()        # Command queue to be sent to GRBL
-        self.queue_log: Queue[str] = Queue()    # Logs queue for external monitor
         self.serial_thread: Optional[threading.Thread] = None
 
         # Configure logger
@@ -167,7 +166,7 @@ class GrblController:
         # Stops communication with serial port
         self.serial_thread = None
         self.serial.stopConnection()
-        self.grbl_monitor.info('**Disconnected from device**', queue=True)
+        self.grbl_monitor.info('**Disconnected from device**')
 
         # State variables
         self.connected = False
@@ -278,17 +277,20 @@ class GrblController:
 
         self.grbl_monitor.debug(f'Unprocessed message from GRBL: {response}')
 
-    def sendCommand(self, command: str):
-        """Adds a GCODE line or a GRBL command to the serial queue.
-        """
-        self.queue.put(command)
-
     # INTERNAL STATE MANAGEMENT
 
     def setState(self, state: str):
         self.state['status']['activeState'] = state
 
+    def setPaused(self, paused: bool):
+        self._paused = paused
+
     # ACTIONS
+
+    def sendCommand(self, command: str):
+        """Adds a GCODE line or a GRBL command to the serial queue.
+        """
+        self.queue.put(command)
 
     def handleHomingCycle(self):
         """Runs the GRBL device's homing cycle.
