@@ -18,6 +18,27 @@ class TestCodeEditor:
         # Assertions
         assert self.code_editor.modified
 
+    def test_code_editor_get_modified(self, qtbot):
+        # Wait for signal to trigger
+        with qtbot.waitSignal(self.code_editor.textChanged, raising=True):
+            self.code_editor.setPlainText('new text')
+
+        # Call method under test
+        modified = self.code_editor.get_modified()
+
+        # Assertions
+        assert modified is True
+
+    def test_code_editor_get_File_path(self, qtbot):
+        # Set widget attributes
+        self.code_editor.file_path = 'path/to/file.gcode'
+
+        # Call method under test
+        file_path = self.code_editor.get_file_path()
+
+        # Assertions
+        assert file_path == 'path/to/file.gcode'
+
     @pytest.mark.parametrize(
             "modified,accept",
             [

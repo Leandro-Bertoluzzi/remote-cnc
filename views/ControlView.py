@@ -16,6 +16,8 @@ from core.database.repositories.taskRepository import TaskRepository
 from core.grbl.grblController import GrblController
 from core.grbl.types import GrblSettings
 from core.utils.serial import SerialService
+from helpers.fileSender import FileSender
+from helpers.grblSync import GrblSync
 import logging
 
 GRBL_STATUS_DISCONNECTED = {
@@ -56,8 +58,14 @@ class ControlView(QWidget):
         self.grbl_controller = GrblController(grbl_logger)
         self.checkmode = self.grbl_controller.getCheckModeEnabled()
 
+        # GRBL SYNC
+        self.grbl_sync = GrblSync(self)
+
+        # FILE SENDER
+        self.file_sender = FileSender(self.grbl_controller)
+
         # VIEW STRUCTURE
-        self.status_monitor = ControllerStatus(self.grbl_controller, parent=self)
+        self.status_monitor = ControllerStatus(parent=self)
         controller_commands = ButtonGrid([
             ('Home', self.run_homing_cycle),
             ('Ver configuración', self.query_device_settings),
@@ -113,8 +121,7 @@ class ControlView(QWidget):
         )
 
     def __del__(self):
-        if not self.device_busy:
-            self.disconnect_device()
+        self.disconnect_device()
 
     def createToolBars(self):
         """Adds the tool bars to the Main window
@@ -143,9 +150,9 @@ class ControlView(QWidget):
         self.parent().addToolBar(Qt.TopToolBarArea, self.tool_bar_grbl)
 
         exec_options = [
-            ('Ejecutar', self.empty),
-            ('Detener', self.empty),
-            ('Pausar', self.empty),
+            ('Ejecutar', self.start_file_stream),
+            ('Detener', self.file_sender.stop),
+            ('Pausar', self.file_sender.toggle_paused),
         ]
 
         for (label, action) in exec_options:
@@ -171,6 +178,7 @@ class ControlView(QWidget):
     def backToMenu(self):
         """Removes the tool bar from the main window and goes back to the main menu
         """
+        self.disconnect_device()
         self.parent().removeToolBar(self.tool_bar_files)
         if not self.device_busy:
             self.parent().removeToolBar(self.tool_bar_grbl)
@@ -213,8 +221,7 @@ class ControlView(QWidget):
         self.connect_button.setText('Desconectar')
         self.connected = True
         self.enable_serial_widgets(True)
-        self.status_monitor.start_monitor()
-        self.terminal.start_monitor()
+        self.grbl_sync.start_monitor()
         self.write_to_terminal(response['raw'])
 
     def disconnect_device(self):
@@ -234,8 +241,7 @@ class ControlView(QWidget):
             )
             return
         self.connected = False
-        self.status_monitor.stop_monitor()
-        self.terminal.stop_monitor()
+        self.grbl_sync.stop_monitor()
         try:
             self.connect_button.setText('Conectar')
             self.enable_serial_widgets(False)
@@ -284,6 +290,25 @@ class ControlView(QWidget):
             QMessageBox.Ok
         )
 
+    def start_file_stream(self):
+        file_path = self.code_editor.get_file_path()
+
+        if not file_path:
+            return
+
+        # Check if the file has changes without saving
+        if self.code_editor.get_modified():
+            QMessageBox.warning(
+                self,
+                'Cambios sin guardar',
+                'El archivo tiene cambios sin guardar en el editor, por favor guárdelos',
+                QMessageBox.Ok
+            )
+            return
+
+        self.file_sender.set_file(file_path)
+        self.file_sender.start()
+
     # Interaction with other widgets
 
     def configure_grbl(self):
@@ -306,6 +331,18 @@ class ControlView(QWidget):
 
     def write_to_terminal(self, text):
         self.terminal.display_text(text)
+
+    def update_device_status(
+            self,
+            status,
+            feedrate: float,
+            spindle: float,
+            tool_index: int
+        ):
+        self.status_monitor.set_status(status)
+        self.status_monitor.set_feedrate(feedrate)
+        self.status_monitor.set_spindle(spindle)
+        self.status_monitor.set_tool(tool_index)
 
     def empty(self):
         pass

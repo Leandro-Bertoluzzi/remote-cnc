@@ -20,6 +20,16 @@ class CodeEditor(QPlainTextEdit):
         """
         self.modified = True
 
+    def get_modified(self):
+        """Indicates if the content has changes without saving.
+        """
+        return self.modified
+
+    def get_file_path(self):
+        """Returns the path to the open file.
+        """
+        return self.file_path
+
     def new_file(self):
         """Empties the editor.
         """

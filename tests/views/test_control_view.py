@@ -7,6 +7,8 @@ from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from components.Terminal import Terminal
 from core.database.repositories.taskRepository import TaskRepository
 from core.grbl.grblController import GrblController
+from helpers.grblSync import GrblSync
+from helpers.fileSender import FileSender
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
 from views.ControlView import ControlView
@@ -63,7 +65,7 @@ class TestControlView:
 
         # More assertions
         assert parent.addToolBar.call_count == (1 if device_busy else 2)
-        mock_check_tasks_in_progress.assert_called_once()
+        assert mock_check_tasks_in_progress.call_count == 1
 
     def test_control_view_init_db_error(self, qtbot, mocker, helpers):
         # Create an instance of the parent
@@ -144,8 +146,7 @@ class TestControlView:
             return_value={'raw': grbl_init_message}
         )
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
-        mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
-        mock_start_commands_monitor = mocker.patch.object(Terminal, 'start_monitor')
+        mock_start_monitor = mocker.patch.object(GrblSync, 'start_monitor')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
 
         # Call method under test
@@ -155,8 +156,7 @@ class TestControlView:
         should_connect = port and not connected
         should_disconnect = connected
         assert mock_grbl_connect.call_count == (1 if should_connect else 0)
-        assert mock_start_status_monitor.call_count == (1 if should_connect else 0)
-        assert mock_start_commands_monitor.call_count == (1 if should_connect else 0)
+        assert mock_start_monitor.call_count == (1 if should_connect else 0)
         assert mock_write_to_terminal.call_count == (1 if should_connect else 0)
         assert mock_grbl_disconnect.call_count == (1 if should_disconnect else 0)
         connect_btn_text = self.control_view.connect_button.text()
@@ -175,8 +175,7 @@ class TestControlView:
             'connect',
             side_effect=Exception('mocked-error')
         )
-        mock_start_status_monitor = mocker.patch.object(ControllerStatus, 'start_monitor')
-        mock_start_commands_monitor = mocker.patch.object(Terminal, 'start_monitor')
+        mock_start_monitor = mocker.patch.object(GrblSync, 'start_monitor')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
 
         # Mock QMessageBox methods
@@ -187,8 +186,7 @@ class TestControlView:
 
         # Assertions
         assert mock_grbl_connect.call_count == 1
-        assert mock_start_status_monitor.call_count == 0
-        assert mock_start_commands_monitor.call_count == 0
+        assert mock_start_monitor.call_count == 0
         assert mock_write_to_terminal.call_count == 0
         assert self.control_view.connect_button.text() == 'Conectar'
         mock_popup.assert_called_once()
@@ -205,8 +203,7 @@ class TestControlView:
             'disconnect',
             side_effect=Exception('mocked-error')
         )
-        mock_stop_status_monitor = mocker.patch.object(ControllerStatus, 'stop_monitor')
-        mock_stop_commands_monitor = mocker.patch.object(Terminal, 'stop_monitor')
+        mock_stop_monitor = mocker.patch.object(GrblSync, 'stop_monitor')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
@@ -216,8 +213,7 @@ class TestControlView:
 
         # Assertions
         assert mock_grbl_disconnect.call_count == 1
-        assert mock_stop_status_monitor.call_count == 0
-        assert mock_stop_commands_monitor.call_count == 0
+        assert mock_stop_monitor.call_count == 0
         assert self.control_view.connect_button.text() == 'Desconectar'
         mock_popup.assert_called_once()
 
@@ -233,8 +229,7 @@ class TestControlView:
 
         # Mock methods
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
-        mock_stop_status_monitor = mocker.patch.object(ControllerStatus, 'stop_monitor')
-        mock_stop_commands_monitor = mocker.patch.object(Terminal, 'stop_monitor')
+        mock_stop_monitor = mocker.patch.object(GrblSync, 'stop_monitor')
         mock_enable_serial_widgets = mocker.patch.object(ControlView, 'enable_serial_widgets')
 
         # Call method under test
@@ -242,8 +237,7 @@ class TestControlView:
 
         # Assertions
         assert mock_grbl_disconnect.call_count == 1
-        assert mock_stop_status_monitor.call_count == 1
-        assert mock_stop_commands_monitor.call_count == 1
+        assert mock_stop_monitor.call_count == 1
         assert mock_enable_serial_widgets.call_count == 0
 
     @pytest.mark.parametrize(
@@ -335,6 +329,38 @@ class TestControlView:
         assert self.control_view.checkmode
         assert mock_popup.call_count == 1
 
+    @pytest.mark.parametrize("file_path", ['', '/path/to/file.gcode'])
+    @pytest.mark.parametrize("modified", [False, True])
+    def test_start_file_stream(self, mocker, file_path, modified):
+        # Mock code editor methods
+        mock_get_file_path = mocker.patch.object(
+            CodeEditor,
+            'get_file_path',
+            return_value=file_path
+        )
+        mock_get_file_modified = mocker.patch.object(
+            CodeEditor,
+            'get_modified',
+            return_value=modified
+        )
+
+        # Mock file sender methods
+        mock_set_file_to_stream = mocker.patch.object(FileSender, 'set_file')
+        mock_start_file_stream = mocker.patch.object(FileSender, 'start')
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.start_file_stream()
+
+        # Assertions
+        assert mock_get_file_path.call_count == 1
+        assert mock_get_file_modified.call_count == (1 if file_path else 0)
+        assert mock_popup.call_count == (1 if modified and file_path else 0)
+        assert mock_set_file_to_stream.call_count == (1 if not modified and file_path else 0)
+        assert mock_start_file_stream.call_count == (1 if not modified and file_path else 0)
+
     @pytest.mark.parametrize(
             "dialogResponse,expected_updated",
             [
@@ -412,3 +438,19 @@ class TestControlView:
         # Assertions
         assert mock_display_text.call_count == 1
         mock_display_text.assert_called_with('some text')
+
+    def test_control_view_update_device_status(self, mocker):
+        # Mock methods
+        mock_set_status = mocker.patch.object(ControllerStatus, 'set_status')
+        mock_set_feedrate = mocker.patch.object(ControllerStatus, 'set_feedrate')
+        mock_set_spindle = mocker.patch.object(ControllerStatus, 'set_spindle')
+        mock_set_tool = mocker.patch.object(ControllerStatus, 'set_tool')
+
+        # Call method under test
+        self.control_view.update_device_status({}, 50.0, 500.0, 1)
+
+        # Assertions
+        assert mock_set_status.call_count == 1
+        assert mock_set_feedrate.call_count == 1
+        assert mock_set_spindle.call_count == 1
+        assert mock_set_tool.call_count == 1
