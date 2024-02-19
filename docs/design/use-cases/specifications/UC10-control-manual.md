@@ -37,8 +37,7 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda m
 | 5      | Va al panel de control y selecciona la pestaña de "jog". |  |
 | 6      | Configura el "paso" en cada coordenada, y la velocidad de avance (feed rate). |  |
 | 7      | Cliquea uno de los botones de dirección. |  |
-| 8      |  | Genera el comando, lo escribe en el terminal, lo envía por puerto serie para su ejecución y espera hasta recibir notificación de ejecución del comando. |
-| 9      |  | Se actualizan las coordenadas del cabezal en el monitor de estado y se muestra la respuesta del dispositivo en el terminal. |
+| 8      |  | Genera el comando, lo escribe en el terminal y lo envía por puerto serie para su ejecución. |
 
 ---
 
@@ -63,8 +62,7 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda m
 | 5      | Va al panel de control y selecciona la pestaña de "jog". |  |
 | 6      | Indica la coordenada (absoluta) a la que debe desplazarse el cabezal. |  |
 | 7      | Presiona "Mover". |  |
-| 8      |  | Genera el comando, lo escribe en el terminal, lo envía por puerto serie para su ejecución y espera hasta recibir notificación de ejecución del comando. |
-| 9      |  | Se actualizan las coordenadas del cabezal en el monitor de estado y se muestra la respuesta del dispositivo en el terminal. |
+| 8      |  | Genera el comando, lo escribe en el terminal y lo envía por puerto serie para su ejecución. |
 
 ---
 
@@ -88,5 +86,4 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda e
 | 4      |  | Habilita el uso del panel de control y el terminal. |
 | 5      | Se dirije a la entrada de texto del terminal. |  |
 | 6      | Ingresa un a línea de código G (o comando de GRBL) y presiona la tecla Enter. |  |
-| 7      |  | Escribe el comando en el terminal, lo envía por puerto serie para su ejecución y espera hasta recibir notificación de ejecución del comando. |
-| 8      |  | Se actualizan las coordenadas del cabezal en el monitor de estado y se muestra la respuesta del dispositivo en el terminal. |
+| 7      |  | Escribe el comando en el terminal y lo envía por puerto serie para su ejecución. |

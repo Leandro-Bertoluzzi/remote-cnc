@@ -23,16 +23,39 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda d
 | 9      |  | Habilita el uso del panel de control y el terminal. |
 | 10      | Presiona la opción "Ejecutar" en la barra de tareas. |  |
 | 11      |  | Inhabilita el uso del editor de código. |
-| 12      |  | **Mientras haya líneas en el archivo o se alcance breakpoint:** |
-| 12.1      |  | Escribe el comando en el terminal, lo envía por puerto serie para su ejecución y espera hasta recibir notificación de ejecución del comando. |
-| 12.2      |  | Se actualizan las coordenadas del cabezal en el monitor de estado y se muestra la respuesta del dispositivo en el terminal. |
-| 13      |  | Habilita el uso del editor de código. |
+| 12      |  | Inicia un nuevo hilo (thread) de ejecución. |
+| 13      |  | **Mientras haya líneas en el archivo o se alcance breakpoint:** |
+| 13.1      |  | Envía el comando por puerto serie para su ejecución. |
+| 14      |  | Cierra el archivo y detiene el hilo de ejecución. |
+| 15      |  | Habilita el uso del editor de código. |
 
-**Curso alternativo (comando inválido):**
+**Curso alternativo (el archivo tiene modificaciones sin guardar):**
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 12.2a      |  | Se notifica que el comando a ejecutar es inválido.  |
-| 12.2b      |  | Muestra una ventana emergente indicando que hubo un error. |
-| 12.2c      | Cierra la ventana |  |
-| 12.2d      |  | Habilita el uso del editor de código y señala en el archivo la línea en la que se produjo el error. |
+| 6      | Modifica el archivo. |  |
+| 7      | Selecciona el puerto serie del equipo y presiona "Conectar". |  |
+| 8      |  | Inicia la comunicación por puerto serie con el equipo. |
+| 9      |  | Habilita el uso del panel de control y el terminal. |
+| 10      | Presiona la opción "Ejecutar" en la barra de tareas. |  |
+| 11      |  | Muestra una ventana emergente informando que debe guardar, o descartar, los cambios en el archivo. |
+
+**Curso alternativo (se detiene la ejecución):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 13.1a      | Envía señal de "detener". |  |
+| 13.1b      |  | Cierra el archivo y detiene el hilo de ejecución. |
+
+**Curso alternativo (se pausa la ejecución):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 13.1a      | Envía señal de "pausar". |  |
+| 13.1b      |  | (nada, sigue validando hasta que se retome la ejecución) |
+
+**Curso alternativo (el buffer de GRBL está lleno):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 13.1a      |  | (nada, sigue validando hasta que el buffer tenga espacio) |
