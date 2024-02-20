@@ -148,7 +148,7 @@ class TestFileSender:
         mock_grbl_get_buffer_fill = mocker.patch.object(
             self.file_sender.grbl_controller,
             'getBufferFill',
-            side_effect=[20.0, 20.0, 100,0, 100.0, 20.0, 20.0]
+            side_effect=[20.0, 20.0, 100.0, 100.0, 20.0, 20.0]
         )
         mock_grbl_send_command = mocker.patch.object(
             self.file_sender.grbl_controller,

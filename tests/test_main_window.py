@@ -52,8 +52,10 @@ class TestMainWindow:
             return_value=msgBoxResponse
         )
 
-        # Call method under test
+        # Mock child widget method
         mock_child_close_event = mocker.patch.object(window.centralWidget(), 'closeEvent')
+
+        # Call method under test
         window.closeEvent(QCloseEvent())
 
         # Assertions

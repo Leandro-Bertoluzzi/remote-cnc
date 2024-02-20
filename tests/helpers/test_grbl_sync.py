@@ -80,7 +80,7 @@ class TestGrblSync:
         # Assertions
         assert self.grbl_sync.monitor_worker._running is False
 
-    def test_grbl_sync_monitor_status(self, mocker):
+    def test_grbl_sync_monitor_status(self, qtbot, mocker):
         # Mock thread life cycle
         self.count = 0
 
@@ -103,7 +103,14 @@ class TestGrblSync:
         )
 
         # Call method under test
-        self.grbl_sync.monitor_worker.run()
+        with qtbot.waitSignals(
+            [
+                self.grbl_sync.monitor_worker.new_message,
+                self.grbl_sync.monitor_worker.new_status
+            ],
+            raising=True
+        ):
+            self.grbl_sync.monitor_worker.run()
 
         # Assertions
         assert mock_grbl_get_status.call_count == 3

@@ -337,7 +337,7 @@ class ControlView(QWidget):
             feedrate: float,
             spindle: float,
             tool_index: int
-        ):
+    ):
         self.status_monitor.set_status(status)
         self.status_monitor.set_feedrate(feedrate)
         self.status_monitor.set_spindle(spindle)

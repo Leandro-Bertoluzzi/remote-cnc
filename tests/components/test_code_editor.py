@@ -1,16 +1,19 @@
 from components.CodeEditor import CodeEditor
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import pytest
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestCodeEditor:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot):
+    def setup_method(self, qtbot: QtBot):
         # Create an instance of CodeEditor
         self.code_editor = CodeEditor()
         qtbot.addWidget(self.code_editor)
 
-    def test_code_editor_set_modified(self, qtbot):
+    def test_code_editor_set_modified(self, qtbot: QtBot):
         # Wait for signal to trigger
         with qtbot.waitSignal(self.code_editor.textChanged, raising=True):
             self.code_editor.setPlainText('new text')
@@ -18,7 +21,7 @@ class TestCodeEditor:
         # Assertions
         assert self.code_editor.modified
 
-    def test_code_editor_get_modified(self, qtbot):
+    def test_code_editor_get_modified(self, qtbot: QtBot):
         # Wait for signal to trigger
         with qtbot.waitSignal(self.code_editor.textChanged, raising=True):
             self.code_editor.setPlainText('new text')
@@ -29,7 +32,7 @@ class TestCodeEditor:
         # Assertions
         assert modified is True
 
-    def test_code_editor_get_File_path(self, qtbot):
+    def test_code_editor_get_File_path(self):
         # Set widget attributes
         self.code_editor.file_path = 'path/to/file.gcode'
 
@@ -48,7 +51,7 @@ class TestCodeEditor:
                 (True, True)
             ]
         )
-    def test_code_editor_new_file(self, mocker, modified, accept):
+    def test_code_editor_new_file(self, mocker: MockerFixture, modified, accept):
         # Mock other methods
         mock_ask_to_save_changes = mocker.patch.object(
             CodeEditor,
@@ -78,7 +81,7 @@ class TestCodeEditor:
                 (True, True)
             ]
         )
-    def test_code_editor_import_file(self, mocker, modified, accept):
+    def test_code_editor_import_file(self, mocker: MockerFixture, modified, accept):
         # Mock dialog methods
         file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
@@ -117,7 +120,7 @@ class TestCodeEditor:
             mocked_open.assert_called_with(file_path, "r")
 
     @pytest.mark.parametrize("file_path", ['', 'path/to/file.gcode'])
-    def test_code_editor_export_file(self, mocker, file_path):
+    def test_code_editor_export_file(self, mocker: MockerFixture, file_path):
         # Mock attributes
         self.code_editor.file_path = file_path
 
@@ -137,7 +140,7 @@ class TestCodeEditor:
         if file_path:
             mocked_open.assert_called_with(file_path, "w")
 
-    def test_code_editor_export_file_as(self, mocker):
+    def test_code_editor_export_file_as(self, mocker: MockerFixture):
         # Mock dialog methods
         file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
@@ -172,7 +175,7 @@ class TestCodeEditor:
         )
     def test_code_editor_ask_to_save_changes(
         self,
-        mocker,
+        mocker: MockerFixture,
         msg_box_response,
         save_file_response,
         expected_result
@@ -193,3 +196,34 @@ class TestCodeEditor:
         # Validate function calls
         assert mock_save_file.call_count == (1 if msg_box_response == QMessageBox.Yes else 0)
         assert result == expected_result
+
+    def test_code_editor_render_line_numbers(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock paint event handler
+        mock_line_number_paint = mocker.patch.object(
+            self.code_editor.lineNumberArea,
+            'update'
+        )
+
+        # Wait for signal to trigger
+        with qtbot.waitSignal(self.code_editor.updateRequest, raising=True):
+            self.code_editor.setPlainText('Line 1\nLine 2\nLine 3')
+
+        # Assertions
+        assert mock_line_number_paint.call_count >= 1
+
+    def test_code_editor_highlight_current_line(self, qtbot: QtBot):
+        # Wait for signal to trigger
+        with qtbot.waitSignal(self.code_editor.cursorPositionChanged, raising=True):
+            self.code_editor.setPlainText('Line 1')
+            self.code_editor.appendPlainText('Line 2')
+            self.code_editor.appendPlainText('Line 3')
+
+        # Move the cursor to the last line
+        qtbot.keyClick(self.code_editor, Qt.Key.Key_Down)
+        qtbot.keyClick(self.code_editor, Qt.Key.Key_Down)
+
+        # Assertions
+        highlighted_lines = self.code_editor.extraSelections().__len__()
+        line_number = self.code_editor.extraSelections().pop().cursor.blockNumber() + 1
+        assert highlighted_lines == 1
+        assert line_number == 3

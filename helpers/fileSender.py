@@ -70,7 +70,7 @@ class FileSender:
 
                 line = gcode.readline()
 
-                #EOF
+                # EOF
                 if not line:
                     gcode.close()
                     self.stop()
