@@ -1,7 +1,9 @@
 from PyQt5.QtCore import QRect, QSize, Qt
-from PyQt5.QtGui import QPainter, QColor, QTextFormat, QPaintEvent, QResizeEvent
+from PyQt5.QtGui import QPainter, QColor, QTextFormat, QPaintEvent, \
+    QResizeEvent, QSyntaxHighlighter, QFontDatabase, QTextCharFormat, QFont
 from PyQt5.QtWidgets import QPushButton, QFileDialog, QMessageBox, \
     QPlainTextEdit, QTextEdit, QWidget
+import re
 
 
 class LineNumberArea(QWidget):
@@ -15,6 +17,78 @@ class LineNumberArea(QWidget):
     def paintEvent(self, event: QPaintEvent):
         self.codeEditor.lineNumberAreaPaintEvent(event)
 
+class GCodeHighlighter(QSyntaxHighlighter):
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+
+        self._mappings = {}
+        self.setDocument(editor.document())
+        self.setup()
+
+    def add_mapping(self, pattern, format):
+        self._mappings[pattern] = format
+
+    def highlightBlock(self, text):
+        for pattern, format in self._mappings.items():
+            for match in re.finditer(pattern, text):
+                start, end = match.span()
+                self.setFormat(start, end - start, format)
+
+    def setup(self):
+        mword_format = QTextCharFormat()
+        mword_format.setFontWeight(QFont.Bold)
+        mword_format.setForeground(Qt.green)
+        pattern = r'[Mm]\d{1,2}'
+        self.add_mapping(pattern, mword_format)
+
+        gword_format = QTextCharFormat()
+        gword_format.setFontWeight(QFont.Bold)
+        gword_format.setForeground(Qt.blue)
+        pattern = r'[Gg]\d{1,2}'
+        self.add_mapping(pattern, gword_format)
+
+        comment_format = QTextCharFormat()
+        comment_format.setForeground(QColor("#117506"))
+        self.add_mapping(r'\(.+\)', comment_format)
+        self.add_mapping(r';.+$', comment_format)
+
+        speed_feed_format = QTextCharFormat()
+        speed_feed_format.setForeground(Qt.blue)
+        speed_pattern = r'([Ss])\s?\d+'
+        feed_pattern = r'([EeFf])\s?\.?\d+(\.\d*)?'
+        self.add_mapping(speed_pattern, speed_feed_format)
+        self.add_mapping(feed_pattern, speed_feed_format)
+
+        program_format = QTextCharFormat()
+        program_format.setForeground(QColor("#69ad4c"))
+        line_number_pattern = r'^[N]\d+'
+        self.add_mapping(line_number_pattern, program_format)
+
+        xyz_format = QTextCharFormat()
+        xyz_format.setForeground(QColor("#b0791a"))
+        xyz_pattern = r'[XxYyZz]\s?\-?\d*\.?\d+\.?'
+        self.add_mapping(xyz_pattern, xyz_format)
+
+        ijk_format = QTextCharFormat()
+        ijk_format.setForeground(QColor("#d4490d"))
+        ijk_pattern = r'[IiJjKk]\s?\-?\d*\.?\d+\.?'
+        self.add_mapping(ijk_pattern, ijk_format)
+
+        params_format = QTextCharFormat()
+        params_format.setForeground(QColor("#8b4cad"))
+        radius_pattern = r'[R]\s?\-?\d*\.?\d+\.?'
+        dwell_time_pattern = r'[P]\s?\d?\.?\d+\.?'
+        tool_pattern = r'[T]\s?\d+'
+        self.add_mapping(radius_pattern, params_format)
+        self.add_mapping(dwell_time_pattern, params_format)
+        self.add_mapping(tool_pattern, params_format)
+
+        grbl_format = QTextCharFormat()
+        grbl_format.setFontWeight(QFont.Bold)
+        grbl_format.setForeground(Qt.gray)
+        grbl_pattern = r'^\$[a-zA-Z\$#]'
+        self.add_mapping(grbl_pattern, grbl_format)
+
 
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent=None):
@@ -26,6 +100,7 @@ class CodeEditor(QPlainTextEdit):
 
         # Custom UI management
         self.lineNumberArea = LineNumberArea(self)
+        self.highlighter = GCodeHighlighter(self)
 
         # Custom events
         self.textChanged.connect(self.set_modified)
@@ -33,6 +108,7 @@ class CodeEditor(QPlainTextEdit):
         self.updateRequest.connect(self.updateLineNumberArea)
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
 
+        # Initialize UI
         self.updateLineNumberAreaWidth(0)
 
         # Apply custom styles
@@ -211,6 +287,8 @@ class CodeEditor(QPlainTextEdit):
 
         # Just to make sure I use the right font
         height = self.fontMetrics().height()
+
+        # Draw numbers
         while block.isValid() and (top <= event.rect().bottom()):
             if block.isVisible() and (bottom >= event.rect().top()):
                 number = str(blockNumber + 1)
