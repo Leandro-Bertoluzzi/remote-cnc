@@ -9,6 +9,7 @@ from core.database.repositories.taskRepository import TaskRepository
 from core.grbl.grblController import GrblController
 from helpers.grblSync import GrblSync
 from helpers.fileSender import FileSender
+from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
 from views.ControlView import ControlView
@@ -113,6 +114,16 @@ class TestControlView:
         assert self.parent.removeToolBar.call_count == (1 if device_busy else 2)
         self.parent.backToMenu.assert_called_once()
 
+    def test_control_view_close_event(self, mocker):
+        # Mock methods
+        mock_disconnect = mocker.patch.object(ControlView, 'disconnect_device')
+
+        # Call method under test
+        self.control_view.closeEvent(QCloseEvent())
+
+        # Assertions
+        assert mock_disconnect.call_count == 1
+
     def test_control_view_set_selected_port(self):
         # Mock attributes
         self.control_view.port_selected = ''
@@ -148,6 +159,8 @@ class TestControlView:
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
         mock_start_monitor = mocker.patch.object(GrblSync, 'start_monitor')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
+        mock_stop_sending_file = mocker.patch.object(FileSender, 'stop')
+        mock_stop_monitor = mocker.patch.object(GrblSync, 'stop_monitor')
 
         # Call method under test
         self.control_view.toggle_connected()
@@ -159,6 +172,8 @@ class TestControlView:
         assert mock_start_monitor.call_count == (1 if should_connect else 0)
         assert mock_write_to_terminal.call_count == (1 if should_connect else 0)
         assert mock_grbl_disconnect.call_count == (1 if should_disconnect else 0)
+        assert mock_stop_sending_file.call_count == (1 if should_disconnect else 0)
+        assert mock_stop_monitor.call_count == (1 if should_disconnect else 0)
         connect_btn_text = self.control_view.connect_button.text()
         assert connect_btn_text == ('Desconectar' if should_connect else 'Conectar')
         if should_connect:
@@ -240,11 +255,7 @@ class TestControlView:
         assert mock_stop_monitor.call_count == 1
         assert mock_enable_serial_widgets.call_count == 0
 
-    @pytest.mark.parametrize(
-        "show_in_terminal",
-        [True, False]
-    )
-    def test_control_view_query_settings(self, mocker, show_in_terminal):
+    def test_control_view_query_settings(self, mocker):
         # Mock attributes
         self.control_view.device_settings = {}
         grbl_settings = {
@@ -268,18 +279,13 @@ class TestControlView:
             'getGrblSettings',
             return_value=grbl_settings
         )
-        mock_write_to_terminal = mocker.patch.object(
-            ControlView,
-            'write_to_terminal'
-        )
 
         # Call method under test
-        self.control_view.query_device_settings(show_in_terminal)
+        self.control_view.query_device_settings()
 
         # Assertions
         assert mock_grbl_query_settings.call_count == 1
         assert self.control_view.device_settings == grbl_settings
-        assert mock_write_to_terminal.call_count == (2 if show_in_terminal else 0)
 
     def test_run_homing_cycle(self, mocker):
         # Mock methods

@@ -12,6 +12,13 @@ class TestFileSender:
         # Create an instance of Terminal
         self.file_sender = FileSender(self.grbl_controller)
 
+    def test_file_set_file_path(self):
+        # Call method under test
+        self.file_sender.set_file('/path/to/file.nc')
+
+        # Assertions
+        assert self.file_sender.file_path == '/path/to/file.nc'
+
     @pytest.mark.parametrize("file_path", ['', '/path/to/file.gcode'])
     @pytest.mark.parametrize("running", [False, True])
     def test_file_sender_start(self, mocker, file_path, running):

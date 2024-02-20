@@ -1,3 +1,4 @@
+from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QComboBox, QGridLayout, QMessageBox, QToolBar, QToolButton, QWidget
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
@@ -68,7 +69,6 @@ class ControlView(QWidget):
         self.status_monitor = ControllerStatus(parent=self)
         controller_commands = ButtonGrid([
             ('Home', self.run_homing_cycle),
-            ('Ver configuración', self.query_device_settings),
             ('Configurar GRBL', self.configure_grbl),
             # TODO: Habilitar modo chequeo sólo en estado IDLE
             ('Modo chequeo', self.toggle_check_mode),
@@ -122,6 +122,10 @@ class ControlView(QWidget):
 
     def __del__(self):
         self.disconnect_device()
+
+    def closeEvent(self, event: QCloseEvent):
+        self.disconnect_device()
+        return super().closeEvent(event)
 
     def createToolBars(self):
         """Adds the tool bars to the Main window
@@ -241,6 +245,7 @@ class ControlView(QWidget):
             )
             return
         self.connected = False
+        self.file_sender.stop()
         self.grbl_sync.stop_monitor()
         try:
             self.connect_button.setText('Conectar')
@@ -256,14 +261,8 @@ class ControlView(QWidget):
 
     # GRBL Actions
 
-    def query_device_settings(self, show_in_terminal=True):
+    def query_device_settings(self):
         self.device_settings = self.grbl_controller.getGrblSettings()
-
-        if not show_in_terminal:
-            return
-
-        for key, setting in self.device_settings.items():
-            self.write_to_terminal(f"{key}={setting['value']}")
 
     def run_homing_cycle(self):
         self.grbl_controller.handleHomingCycle()
@@ -312,7 +311,7 @@ class ControlView(QWidget):
     # Interaction with other widgets
 
     def configure_grbl(self):
-        self.query_device_settings(False)
+        self.query_device_settings()
         configurationDialog = GrblConfigurationDialog(self.device_settings)
 
         if configurationDialog.exec():
