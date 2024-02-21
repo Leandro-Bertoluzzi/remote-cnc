@@ -4,12 +4,11 @@ import time
 from typing import Optional
 
 # Constants
-STATUS_POLL = 0.25  # seconds
-COMMANDS_POLL = 0.25  # seconds
+STATUS_POLL = 0.10  # seconds
+COMMANDS_POLL = 0.10  # seconds
 
 
 class Worker(QObject):
-    finished = pyqtSignal()
     new_message = pyqtSignal(str)
     new_status = pyqtSignal(dict, float, float, int)
 
@@ -85,8 +84,8 @@ class GrblSync:
         if not self.monitor_thread:
             return
         self.monitor_worker.stop()
-        self.monitor_thread.quit()
-        self.monitor_thread.wait()
+        #self.monitor_thread.quit()
+        #self.monitor_thread.wait()
 
     def message_received(self, message: str):
         if message:

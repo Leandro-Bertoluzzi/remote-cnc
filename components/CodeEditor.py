@@ -38,14 +38,14 @@ class GCodeHighlighter(QSyntaxHighlighter):
         mword_format = QTextCharFormat()
         mword_format.setFontWeight(QFont.Bold)
         mword_format.setForeground(Qt.green)
-        pattern = r'[Mm]\d{1,2}'
-        self.add_mapping(pattern, mword_format)
+        mword_pattern = r'[Mm]\d{1,2}(?=\s|$)'
+        self.add_mapping(mword_pattern, mword_format)
 
         gword_format = QTextCharFormat()
         gword_format.setFontWeight(QFont.Bold)
         gword_format.setForeground(Qt.blue)
-        pattern = r'[Gg]\d{1,2}'
-        self.add_mapping(pattern, gword_format)
+        gword_pattern = r'[Gg]\d{1,2}(?=\s|$)'
+        self.add_mapping(gword_pattern, gword_format)
 
         comment_format = QTextCharFormat()
         comment_format.setForeground(QColor("#117506"))
@@ -101,6 +101,7 @@ class CodeEditor(QPlainTextEdit):
         # Custom UI management
         self.lineNumberArea = LineNumberArea(self)
         self.highlighter = GCodeHighlighter(self)
+        self.executedLines = 0
 
         # Custom events
         self.textChanged.connect(self.set_modified)
@@ -288,11 +289,16 @@ class CodeEditor(QPlainTextEdit):
         # Just to make sure I use the right font
         height = self.fontMetrics().height()
 
+        # Font color for already executed lines
+        painter.setPen(Qt.darkYellow)
+
         # Draw numbers
         while block.isValid() and (top <= event.rect().bottom()):
+            if blockNumber + 1 > self.executedLines:
+                painter.setPen(Qt.black)
+
             if block.isVisible() and (bottom >= event.rect().top()):
                 number = str(blockNumber + 1)
-                painter.setPen(Qt.black)
                 painter.drawText(
                     0,
                     int(top),
@@ -318,3 +324,11 @@ class CodeEditor(QPlainTextEdit):
         selection.cursor = self.textCursor()
         selection.cursor.clearSelection()
         self.setExtraSelections([selection])
+
+    def resetProcessedLines(self):
+        self.executedLines = 0
+        self.update()
+
+    def markProcessedLines(self, count: int):
+        self.executedLines = count
+        self.update()

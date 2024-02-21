@@ -31,16 +31,12 @@ class TestGrblSync:
 
         # Mock thread
         mock_worker_stop = mocker.patch.object(Worker, 'stop')
-        mock_thread_quit = mocker.patch.object(QThread, 'quit')
-        mock_thread_wait = mocker.patch.object(QThread, 'wait')
 
         # Call method under test
         self.grbl_sync.stop_monitor()
 
         # Assertions
         assert mock_worker_stop.call_count == (1 if running else 0)
-        assert mock_thread_quit.call_count == (1 if running else 0)
-        assert mock_thread_wait.call_count == (1 if running else 0)
 
     def test_grbl_sync_message_received(self, mocker):
         # Mock control view methods

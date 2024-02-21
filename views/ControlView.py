@@ -63,7 +63,7 @@ class ControlView(QWidget):
         self.grbl_sync = GrblSync(self)
 
         # FILE SENDER
-        self.file_sender = FileSender(self.grbl_controller)
+        self.file_sender = FileSender(self)
 
         # VIEW STRUCTURE
         self.status_monitor = ControllerStatus(parent=self)
@@ -155,8 +155,8 @@ class ControlView(QWidget):
 
         exec_options = [
             ('Ejecutar', self.start_file_stream),
-            ('Detener', self.file_sender.stop),
-            ('Pausar', self.file_sender.toggle_paused),
+            ('Detener', self.stop_file_stream),
+            ('Pausar', self.pause_file_stream),
         ]
 
         for (label, action) in exec_options:
@@ -293,6 +293,12 @@ class ControlView(QWidget):
         file_path = self.code_editor.get_file_path()
 
         if not file_path:
+            QMessageBox.warning(
+                self,
+                'Cambios sin guardar',
+                'Por favor guarde el archivo antes de continuar',
+                QMessageBox.Ok
+            )
             return
 
         # Check if the file has changes without saving
@@ -305,8 +311,27 @@ class ControlView(QWidget):
             )
             return
 
+        self.code_editor.setReadOnly(True)
+        self.code_editor.resetProcessedLines()
         self.file_sender.set_file(file_path)
+        self.file_sender.resume()
         self.file_sender.start()
+
+    def pause_file_stream(self):
+        self.file_sender.toggle_paused()
+
+    def stop_file_stream(self):
+        self.code_editor.setReadOnly(False)
+        self.file_sender.stop()
+
+    def finished_file_stream(self):
+        self.code_editor.setReadOnly(False)
+        QMessageBox.information(
+            self,
+            'Archivo enviado',
+            'Se terminó de enviar el archivo para su ejecución, por favor espere a que termine',
+            QMessageBox.Ok
+        )
 
     # Interaction with other widgets
 
@@ -342,6 +367,9 @@ class ControlView(QWidget):
         self.status_monitor.set_feedrate(feedrate)
         self.status_monitor.set_spindle(spindle)
         self.status_monitor.set_tool(tool_index)
+
+    def update_already_read_lines(self, count: int):
+        self.code_editor.markProcessedLines(count)
 
     def empty(self):
         pass

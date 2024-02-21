@@ -352,6 +352,7 @@ class TestControlView:
 
         # Mock file sender methods
         mock_set_file_to_stream = mocker.patch.object(FileSender, 'set_file')
+        mock_resume_file_stream = mocker.patch.object(FileSender, 'resume')
         mock_start_file_stream = mocker.patch.object(FileSender, 'start')
 
         # Mock QMessageBox methods
@@ -363,8 +364,9 @@ class TestControlView:
         # Assertions
         assert mock_get_file_path.call_count == 1
         assert mock_get_file_modified.call_count == (1 if file_path else 0)
-        assert mock_popup.call_count == (1 if modified and file_path else 0)
+        assert mock_popup.call_count == (1 if modified or not file_path else 0)
         assert mock_set_file_to_stream.call_count == (1 if not modified and file_path else 0)
+        assert mock_resume_file_stream.call_count == (1 if not modified and file_path else 0)
         assert mock_start_file_stream.call_count == (1 if not modified and file_path else 0)
 
     @pytest.mark.parametrize(

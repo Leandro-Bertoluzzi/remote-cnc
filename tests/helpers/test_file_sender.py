@@ -1,4 +1,5 @@
-from helpers.fileSender import FileSender
+from helpers.fileSender import FileSender, Worker
+from PyQt5.QtCore import QThread
 import pytest
 import threading
 
@@ -17,35 +18,28 @@ class TestFileSender:
         self.file_sender.set_file('/path/to/file.nc')
 
         # Assertions
-        assert self.file_sender.file_path == '/path/to/file.nc'
+        assert self.file_sender.file_worker.file_path == '/path/to/file.nc'
 
-    @pytest.mark.parametrize("file_path", ['', '/path/to/file.gcode'])
-    @pytest.mark.parametrize("running", [False, True])
-    def test_file_sender_start(self, mocker, file_path, running):
-        # Mock attributes
-        self.file_sender.file_path = file_path
-        self.file_sender.running = running
-
+    def test_file_sender_start(self, mocker):
         # Mock thread
-        mock_thread_create = mocker.patch.object(threading.Thread, '__init__', return_value=None)
-        mock_thread_start = mocker.patch.object(threading.Thread, 'start')
+        mock_worker_move_to_thread = mocker.patch.object(Worker, 'moveToThread')
+        mock_thread_start = mocker.patch.object(QThread, 'start')
 
         # Call method under test
         self.file_sender.start()
 
         # Assertions
-        assert mock_thread_create.call_count == (1 if file_path and not running else 0)
-        assert mock_thread_start.call_count == (1 if file_path and not running else 0)
-        assert self.file_sender.running is (False if not file_path and not running else True)
+        assert mock_worker_move_to_thread.call_count == 1
+        assert mock_thread_start.call_count == 1
 
     @pytest.mark.parametrize("running", [False, True])
     def test_file_sender_pause(self, mocker, running):
         # Set attributes for test
-        self.file_sender.running = running
+        self.file_sender.file_worker._running = running
 
         # Mock GRBL methods
         mock_grbl_pause = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'setPaused'
         )
 
@@ -53,7 +47,7 @@ class TestFileSender:
         self.file_sender.pause()
 
         # Assertions
-        assert self.file_sender.paused == running
+        assert self.file_sender.file_worker._paused == running
         assert mock_grbl_pause.call_count == (1 if running else 0)
         if running:
             mock_grbl_pause.assert_called_with(True)
@@ -62,12 +56,12 @@ class TestFileSender:
     @pytest.mark.parametrize("paused", [False, True])
     def test_file_sender_resume(self, mocker, running, paused):
         # Set attributes for test
-        self.file_sender.running = running
-        self.file_sender.paused = paused
+        self.file_sender.file_worker._running = running
+        self.file_sender.file_worker._paused = paused
 
         # Mock GRBL methods
         mock_grbl_pause = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'setPaused'
         )
 
@@ -75,7 +69,7 @@ class TestFileSender:
         self.file_sender.resume()
 
         # Assertions
-        assert self.file_sender.paused == (True if paused and not running else False)
+        assert self.file_sender.file_worker._paused == (True if paused and not running else False)
         assert mock_grbl_pause.call_count == (1 if running else 0)
         if running:
             mock_grbl_pause.assert_called_with(False)
@@ -84,12 +78,12 @@ class TestFileSender:
     @pytest.mark.parametrize("paused", [False, True])
     def test_file_sender_toggle_paused(self, mocker, running, paused):
         # Set attributes for test
-        self.file_sender.running = running
-        self.file_sender.paused = paused
+        self.file_sender.file_worker._running = running
+        self.file_sender.file_worker._paused = paused
 
         # Mock GRBL methods
         mock_grbl_pause = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'setPaused'
         )
 
@@ -98,7 +92,7 @@ class TestFileSender:
 
         # Assertions
         # final_p = not(p) r + p not(r) = p xor r
-        assert self.file_sender.paused == (True if paused ^ running else False)
+        assert self.file_sender.file_worker._paused == (True if paused ^ running else False)
         assert mock_grbl_pause.call_count == (1 if running else 0)
         if running:
             mock_grbl_pause.assert_called_with(not paused)
@@ -109,21 +103,20 @@ class TestFileSender:
 
         # Assertions
         assert self.file_sender.file_thread is None
-        assert self.file_sender.running is False
+        assert self.file_sender.file_worker._running is False
 
     def test_file_sender_send_whole_file(self, mocker):
         # Mock attributes
-        self.file_sender.file_thread = threading.Thread()
-        self.file_sender.file_path = 'path/to/file'
+        self.file_sender.set_file('path/to/file')
 
         # Mock GRBL methods
         mock_grbl_get_buffer_fill = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'getBufferFill',
             return_value=10.0
         )
         mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'sendCommand'
         )
 
@@ -132,26 +125,26 @@ class TestFileSender:
         mocker.patch('builtins.open', mocked_file_data)
 
         # Call method under test
-        self.file_sender.send_commands()
+        self.file_sender.file_worker.run()
 
         # Assertions
         assert mock_grbl_get_buffer_fill.call_count == 4
         assert mock_grbl_send_command.call_count == 3
-        assert self.file_sender.file_thread is None
+        assert self.file_sender.file_worker._running is False
 
     def test_file_sender_avoids_filling_buffer(self, mocker):
         # Mock attributes
         self.file_sender.file_thread = threading.Thread()
-        self.file_sender.file_path = 'path/to/file'
+        self.file_sender.set_file('path/to/file')
 
         # Mock GRBL methods
         mock_grbl_get_buffer_fill = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'getBufferFill',
             side_effect=[20.0, 20.0, 100.0, 100.0, 20.0, 20.0]
         )
         mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'sendCommand'
         )
 
@@ -160,17 +153,17 @@ class TestFileSender:
         mocker.patch('builtins.open', mocked_file_data)
 
         # Call method under test
-        self.file_sender.send_commands()
+        self.file_sender.file_worker.run()
 
         # Assertions
         assert mock_grbl_get_buffer_fill.call_count == 6
         assert mock_grbl_send_command.call_count == 3
-        assert self.file_sender.file_thread is None
+        assert self.file_sender.file_worker._running is False
 
     def test_file_sender_thread_stopped(self, mocker):
         # Mock attributes
         self.file_sender.file_thread = threading.Thread()
-        self.file_sender.file_path = 'path/to/file'
+        self.file_sender.set_file('path/to/file')
 
         # Mock thread life cycle
         self.count = 0
@@ -178,16 +171,16 @@ class TestFileSender:
         def manage_thread(ignore: str):
             self.count = self.count + 1
             if self.count == 2:
-                self.file_sender.file_thread = None
+                self.file_sender.stop()
 
         # Mock GRBL methods
         mock_grbl_get_buffer_fill = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'getBufferFill',
             return_value=10.0
         )
         mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
+            self.file_sender.file_worker.grbl_controller,
             'sendCommand',
             side_effect=manage_thread
         )
@@ -197,9 +190,9 @@ class TestFileSender:
         mocker.patch('builtins.open', mocked_file_data)
 
         # Call method under test
-        self.file_sender.send_commands()
+        self.file_sender.file_worker.run()
 
         # Assertions
         assert mock_grbl_get_buffer_fill.call_count == 2
         assert mock_grbl_send_command.call_count == 2
-        assert self.file_sender.file_thread is None
+        assert self.file_sender.file_worker._running is False
