@@ -6,6 +6,7 @@ from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
 from core.database.base import Session as SessionLocal
+from core.database.models import TASK_IN_PROGRESS_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
@@ -90,10 +91,14 @@ class TasksView(QWidget):
 
         self.layout.addWidget(MenuButton('Crear tarea', onClick=self.createTask))
 
+        # Check if there is a task in progress
+        device_running = any(TASK_IN_PROGRESS_STATUS in task.status for task in tasks)
+
         for task in tasks:
             self.layout.addWidget(
                 TaskCard(
                     task,
+                    device_running,
                     self.files,
                     self.tools,
                     self.materials,

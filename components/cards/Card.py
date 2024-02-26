@@ -14,11 +14,11 @@ class Card(QWidget):
         self.layout_buttons = QVBoxLayout()
 
         # Create and set layout
-        self.layout = QHBoxLayout()
-        self.layout.addWidget(self.label_description)
-        self.layout.addLayout(self.layout_buttons)
-        self.layout.setAlignment(Qt.AlignLeft)
-        self.setLayout(self.layout)
+        layout = QHBoxLayout()
+        layout.addWidget(self.label_description)
+        layout.addLayout(self.layout_buttons)
+        layout.setAlignment(Qt.AlignLeft)
+        self.setLayout(layout)
 
         # Apply custom styles
         stylesheet = getFileNameInFolder(__file__, "Card.qss")

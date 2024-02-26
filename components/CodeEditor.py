@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QRect, QSize, Qt
 from PyQt5.QtGui import QPainter, QColor, QTextFormat, QPaintEvent, \
-    QResizeEvent, QSyntaxHighlighter, QFontDatabase, QTextCharFormat, QFont
+    QResizeEvent, QSyntaxHighlighter, QTextCharFormat, QFont
 from PyQt5.QtWidgets import QPushButton, QFileDialog, QMessageBox, \
     QPlainTextEdit, QTextEdit, QWidget
 import re
@@ -16,6 +16,7 @@ class LineNumberArea(QWidget):
 
     def paintEvent(self, event: QPaintEvent):
         self.codeEditor.lineNumberAreaPaintEvent(event)
+
 
 class GCodeHighlighter(QSyntaxHighlighter):
     def __init__(self, editor: QPlainTextEdit):

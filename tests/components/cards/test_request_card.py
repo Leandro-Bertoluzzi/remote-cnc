@@ -31,18 +31,19 @@ class TestRequestCard:
         assert self.card.layout is not None
 
     @pytest.mark.parametrize(
-            "msgBoxResponse,expected_updated",
+            "msgBoxApprove,msgBoxRun",
             [
-                (QMessageBox.Yes, True),
-                (QMessageBox.Cancel, False)
+                (QMessageBox.Yes, QMessageBox.Yes),
+                (QMessageBox.Yes, QMessageBox.No),
+                (QMessageBox.Cancel, None)
             ]
         )
     @pytest.mark.parametrize("task_in_progress", [True, False])
     def test_request_card_approve_task(
         self,
         mocker,
-        msgBoxResponse,
-        expected_updated,
+        msgBoxApprove,
+        msgBoxRun,
         task_in_progress
     ):
         # Mock DB methods
@@ -52,8 +53,13 @@ class TestRequestCard:
             'are_there_tasks_in_progress',
             return_value=task_in_progress
         )
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
+        # Mock message box methods
+        mocker.patch.object(
+            QMessageBox,
+            'exec',
+            side_effect=[msgBoxApprove, msgBoxRun]
+        )
+        mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.executeTask.delay')
 
@@ -61,6 +67,7 @@ class TestRequestCard:
         self.card.approveTask()
 
         # Validate DB calls
+        expected_updated = (msgBoxApprove == QMessageBox.Yes)
         assert mock_update_task_status.call_count == (1 if expected_updated else 0)
         if expected_updated:
             update_task_params = {
@@ -71,8 +78,10 @@ class TestRequestCard:
             mock_update_task_status.assert_called_with(*update_task_params.values())
 
         # Validate call to tasks manager
-        expected_call_to_worker = expected_updated and not task_in_progress
-        assert mock_add_task_in_queue.call_count == (1 if expected_call_to_worker else 0)
+        accepted_run = (msgBoxRun == QMessageBox.Yes)
+        expected_run = expected_updated and not task_in_progress and accepted_run
+        assert mock_add_task_in_queue.call_count == (1 if expected_run else 0)
+        assert mock_popup.call_count == (1 if expected_run else 0)
 
     @pytest.mark.parametrize(
             'update_error,search_tasks_error',
