@@ -4,7 +4,7 @@ from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from core.database.models import Task
+from core.database.models import Task, TASK_ON_HOLD_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
@@ -43,14 +43,16 @@ class TestTaskCard:
             [
                 ('pending_approval', 2),
                 ('on_hold', 2),
-                ('finished', 0),
-                ('rejected', 1),
-                ('cancelled', 1)
+                ('in_progress', 0),
+                ('finished', 1),
+                ('rejected', 2),
+                ('cancelled', 2)
             ]
         )
     def test_task_card_init(
         self,
         qtbot: QtBot,
+        mocker: MockerFixture,
         helpers,
         status,
         expected_buttons
@@ -58,6 +60,9 @@ class TestTaskCard:
         # Mock task status
         self.task.status = status
         self.task.id = 1
+
+        # Mock card's auxiliary methods
+        mock_show_progress = mocker.patch.object(TaskCard, 'show_task_progress')
 
         # Instantiate card
         card = TaskCard(self.task, False)
@@ -68,26 +73,11 @@ class TestTaskCard:
         assert card.layout() is not None
         assert card.label_description.text() == f'Tarea 1: Example task\nEstado: {status}'
         assert helpers.count_widgets(card.layout_buttons, QPushButton) == expected_buttons
+        assert mock_show_progress.call_count == (1 if status == 'in_progress' else 0)
 
-    @pytest.mark.parametrize(
-            "status,expected_buttons",
-            [
-                ('pending_approval', 2),
-                ('on_hold', 1),
-                ('finished', 0),
-                ('rejected', 1),
-                ('cancelled', 1)
-            ]
-        )
-    def test_task_card_init_device_busy(
-        self,
-        qtbot: QtBot,
-        helpers,
-        status,
-        expected_buttons
-    ):
+    def test_task_card_init_device_busy(self, qtbot: QtBot):
         # Mock task status
-        self.task.status = status
+        self.task.status = TASK_ON_HOLD_STATUS
         self.task.id = 1
 
         # Instantiate card
@@ -95,10 +85,10 @@ class TestTaskCard:
         qtbot.addWidget(card)
 
         # Assertions
-        assert card.task == self.task
-        assert card.layout() is not None
-        assert card.label_description.text() == f'Tarea 1: Example task\nEstado: {status}'
-        assert helpers.count_widgets(card.layout_buttons, QPushButton) == expected_buttons
+        while card.layout().count():
+            child = card.layout().takeAt(0)
+            if isinstance(child.widget(), QPushButton):
+                assert child.widget().isEnabled() is False
 
     @pytest.mark.parametrize(
             "dialogResponse,expected_updated",
@@ -214,6 +204,53 @@ class TestTaskCard:
         assert mock_popup.call_count == 1
 
     @pytest.mark.parametrize(
+            "msgBoxResponse,expectedMethodCalls",
+            [
+                (QMessageBox.Yes, 1),
+                (QMessageBox.Cancel, 0)
+            ]
+        )
+    def test_task_card_restore_task(
+        self,
+        setup_method,
+        mocker: MockerFixture,
+        msgBoxResponse,
+        expectedMethodCalls
+    ):
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
+
+        # Mock DB method
+        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
+
+        # Call the removeTask method
+        self.card.restoreTask()
+
+        # Validate DB calls
+        assert mock_update_task_status.call_count == expectedMethodCalls
+
+    def test_task_card_restore_task_db_error(self, setup_method, mocker: MockerFixture):
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+
+        # Mock DB method
+        mock_update_task_status = mocker.patch.object(
+            TaskRepository,
+            'update_task_status',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the removeTask method
+        self.card.restoreTask()
+
+        # Validate DB calls
+        assert mock_update_task_status.call_count == 1
+        assert mock_popup.call_count == 1
+
+    @pytest.mark.parametrize(
             "status",
             [
                 'pending_approval',
@@ -228,7 +265,6 @@ class TestTaskCard:
         self,
         qtbot: QtBot,
         mocker: MockerFixture,
-        helpers,
         status
     ):
         # Mock task status
@@ -266,7 +302,6 @@ class TestTaskCard:
             assert card.label_description.text() == expected_text
             assert mock_query_task.call_count == 1
             assert mock_query_task_info.call_count == 2
-            assert helpers.count_widgets(card.layout_buttons, QPushButton) == 0
             return
 
         assert card.label_description.text() == f'Tarea 1: Example task\nEstado: {status}'
@@ -322,6 +357,70 @@ class TestTaskCard:
 
         # Validate DB calls
         assert mock_update_task_status.call_count == 1
+        assert mock_popup.call_count == 1
+
+    @pytest.mark.parametrize(
+            "dialogResponse,expected_updated",
+            [
+                (QDialog.Accepted, True),
+                (QDialog.Rejected, False)
+            ]
+        )
+    def test_task_card_repeat_task(
+        self,
+        setup_method,
+        mocker: MockerFixture,
+        dialogResponse,
+        expected_updated
+    ):
+        # Mock TaskDataDialog methods
+        mock_input = 2, 3, 4, 'Repeated task', 'Just a simple description'
+        mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
+        mocker.patch.object(TaskDataDialog, 'exec', return_value=dialogResponse)
+        mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_input)
+
+        # Mock DB method
+        mock_create_task = mocker.patch.object(TaskRepository, 'create_task')
+
+        # Call the updateTask method
+        self.card.repeatTask()
+
+        # Validate DB calls
+        assert mock_create_task.call_count == (1 if expected_updated else 0)
+
+        if expected_updated:
+            update_task_params = {
+                'user_id': 1,
+                'file_id': 2,
+                'tool_id': 3,
+                'material_id': 4,
+                'name': 'Repeated task',
+                'note': 'Just a simple description'
+            }
+            mock_create_task.assert_called_with(*update_task_params.values())
+
+    def test_task_card_repeat_task_db_error(self, setup_method, mocker: MockerFixture):
+        # Mock TaskDataDialog methods
+        mock_input = 2, 3, 4, 'Repeated task', 'Just a simple description'
+        mocker.patch.object(TaskDataDialog, '__init__', return_value=None)
+        mocker.patch.object(TaskDataDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(TaskDataDialog, 'getInputs', return_value=mock_input)
+
+        # Mock DB method
+        mock_create_task = mocker.patch.object(
+            TaskRepository,
+            'create_task',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the updateTask method
+        self.card.repeatTask()
+
+        # Validate DB calls
+        assert mock_create_task.call_count == 1
         assert mock_popup.call_count == 1
 
     @pytest.mark.parametrize(
