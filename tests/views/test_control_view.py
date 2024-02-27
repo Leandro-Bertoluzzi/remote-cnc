@@ -22,11 +22,11 @@ class TestControlView:
         self.parent = MainWindow()
 
         # Mock parent methods
-        self.parent.addToolBar = mocker.Mock()
-        self.parent.removeToolBar = mocker.Mock()
-        self.parent.backToMenu = mocker.Mock()
+        self.mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
+        self.mock_remove_toolbar = mocker.patch.object(MainWindow, 'removeToolBar')
+        self.mock_back_to_menu = mocker.patch.object(MainWindow, 'backToMenu')
 
-        # Mock view methods
+        # Mock DB methods
         mocker.patch.object(
             TaskRepository,
             'are_there_tasks_with_status',
@@ -39,13 +39,10 @@ class TestControlView:
 
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_control_view_init(self, qtbot, mocker, helpers, device_busy):
-        # Create an instance of the parent
-        parent = MainWindow()
-
         # Mock parent methods
-        parent.addToolBar = mocker.Mock()
+        mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
 
-        # Mock other functions
+        # Mock DB methods
         mock_check_tasks_in_progress = mocker.patch.object(
             TaskRepository,
             'are_there_tasks_with_status',
@@ -53,19 +50,19 @@ class TestControlView:
         )
 
         # Create an instance of ControlView
-        control_view = ControlView(parent)
+        control_view = ControlView(self.parent)
         qtbot.addWidget(control_view)
 
         # Validate amount of each type of widget
-        layout = control_view.layout
-        assert helpers.count_widgets(layout, MenuButton) == 1
-        assert helpers.count_widgets(layout, ControllerActions) == 1
-        assert helpers.count_widgets(layout, CodeEditor) == 1
-        assert helpers.count_widgets(layout, ControllerStatus) == (0 if device_busy else 1)
-        assert helpers.count_widgets(layout, Terminal) == 1
+        layout = control_view.layout()
+        assert helpers.count_grid_widgets(layout, MenuButton) == 1
+        assert helpers.count_grid_widgets(layout, ControllerActions) == 1
+        assert helpers.count_grid_widgets(layout, CodeEditor) == 1
+        assert helpers.count_grid_widgets(layout, ControllerStatus) == (0 if device_busy else 1)
+        assert helpers.count_grid_widgets(layout, Terminal) == 1
 
         # More assertions
-        assert parent.addToolBar.call_count == (1 if device_busy else 2)
+        assert mock_add_toolbar.call_count == (1 if device_busy else 2)
         assert mock_check_tasks_in_progress.call_count == 1
 
     def test_control_view_init_db_error(self, qtbot, mocker, helpers):
@@ -73,7 +70,7 @@ class TestControlView:
         parent = MainWindow()
 
         # Mock parent methods
-        parent.addToolBar = mocker.Mock()
+        mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
 
         # Mock other functions
         mock_check_tasks_in_progress = mocker.patch.object(
@@ -90,16 +87,16 @@ class TestControlView:
         qtbot.addWidget(control_view)
 
         # Validate amount of each type of widget
-        layout = control_view.layout
-        assert helpers.count_widgets(layout, MenuButton) == 1
-        assert helpers.count_widgets(layout, ControllerActions) == 1
-        assert helpers.count_widgets(layout, CodeEditor) == 1
-        assert helpers.count_widgets(layout, ControllerStatus) == 0
-        assert helpers.count_widgets(layout, Terminal) == 1
+        layout = control_view.layout()
+        assert helpers.count_grid_widgets(layout, MenuButton) == 1
+        assert helpers.count_grid_widgets(layout, ControllerActions) == 1
+        assert helpers.count_grid_widgets(layout, CodeEditor) == 1
+        assert helpers.count_grid_widgets(layout, ControllerStatus) == 0
+        assert helpers.count_grid_widgets(layout, Terminal) == 1
 
         # More assertions
         mock_popup.assert_called_once()
-        assert parent.addToolBar.call_count == 1
+        assert mock_add_toolbar.call_count == 1
         mock_check_tasks_in_progress.assert_called_once()
 
     @pytest.mark.parametrize("device_busy", [False, True])
@@ -111,8 +108,8 @@ class TestControlView:
         self.control_view.backToMenu()
 
         # Assertions
-        assert self.parent.removeToolBar.call_count == (1 if device_busy else 2)
-        self.parent.backToMenu.assert_called_once()
+        assert self.mock_remove_toolbar.call_count == (1 if device_busy else 2)
+        self.mock_back_to_menu.assert_called_once()
 
     def test_control_view_close_event(self, mocker):
         # Mock methods

@@ -32,9 +32,9 @@ class ControlView(QWidget):
     def __init__(self, parent=None):
         super(ControlView, self).__init__(parent)
 
-        self.layout = QGridLayout()
-        self.layout.setAlignment(Qt.AlignCenter)
-        self.setLayout(self.layout)
+        layout = QGridLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
 
         # STATE MANAGEMENT
         self.connected = False
@@ -76,10 +76,10 @@ class ControlView(QWidget):
             ('Desactivar alarma', self.disable_alarm),
         ], width=3, parent=self)
         controller_macros = ButtonList([
-            ('Sonda Z', self.empty),
-            ('Buscar centro', self.empty),
-            ('Cambiar herramienta', self.empty),
-            ('Dibujar círculo', self.empty),
+            ('Sonda Z', lambda: None),
+            ('Buscar centro', lambda: None),
+            ('Cambiar herramienta', lambda: None),
+            ('Dibujar círculo', lambda: None),
         ], parent=self)
         controller_jog = JogController(self.grbl_controller, parent=self)
         self.control_panel = ControllerActions(
@@ -108,13 +108,13 @@ class ControlView(QWidget):
         self.createToolBars()
         panel_row = 0
         if not self.device_busy:
-            self.layout.addWidget(self.status_monitor, 0, 0, 3, 1)
+            self.layout().addWidget(self.status_monitor, 0, 0, 3, 1)
             panel_row = 3
-        self.layout.addWidget(self.code_editor, 0, 1, 3, 1)
-        self.layout.addWidget(self.control_panel, panel_row, 0)
-        self.layout.addWidget(self.terminal, 3, 1)
+        self.layout().addWidget(self.code_editor, 0, 1, 3, 1)
+        self.layout().addWidget(self.control_panel, panel_row, 0)
+        self.layout().addWidget(self.terminal, 3, 1)
 
-        self.layout.addWidget(
+        self.layout().addWidget(
             MenuButton('Volver al menú', onClick=self.backToMenu),
             5, 0, 1, 2,
             alignment=Qt.AlignCenter
@@ -370,6 +370,3 @@ class ControlView(QWidget):
 
     def update_already_read_lines(self, count: int):
         self.code_editor.markProcessedLines(count)
-
-    def empty(self):
-        pass
