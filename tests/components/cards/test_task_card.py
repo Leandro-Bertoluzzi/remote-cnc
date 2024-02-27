@@ -427,7 +427,7 @@ class TestTaskCard:
             "msgBoxRun",
             [
                 QMessageBox.Yes,
-                QMessageBox.No
+                QMessageBox.Cancel
             ]
         )
     @pytest.mark.parametrize("task_in_progress", [True, False])
@@ -471,7 +471,8 @@ class TestTaskCard:
         expected_run = not task_in_progress and accepted_run
         assert mock_add_task_in_queue.call_count == (1 if expected_run else 0)
         assert mock_info_popup.call_count == (1 if expected_run else 0)
-        assert mock_error_popup.call_count == (1 if task_in_progress else 0)
+        expected_error = task_in_progress and accepted_run
+        assert mock_error_popup.call_count == (1 if expected_error else 0)
 
     def test_task_card_run_task_db_error(
         self,

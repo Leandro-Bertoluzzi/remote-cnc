@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QPushButton, QMessageBox
+from PyQt5.QtWidgets import QPushButton
 from components.cards.Card import Card
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.base import Session as SessionLocal
 from core.database.repositories.materialRepository import MaterialRepository
+from helpers.utils import needs_confirmation
 
 
 class MaterialCard(Card):
@@ -23,36 +24,32 @@ class MaterialCard(Card):
 
     def updateMaterial(self):
         materialDialog = MaterialDataDialog(materialInfo=self.material)
-        if materialDialog.exec():
-            name, description = materialDialog.getInputs()
-            try:
-                db_session = SessionLocal()
-                repository = MaterialRepository(db_session)
-                repository.update_material(self.material.id, name, description)
-            except Exception as error:
-                self.showError(
-                    'Error de base de datos',
-                    str(error)
-                )
-                return
-            self.parent().refreshLayout()
+        if not materialDialog.exec():
+            return
 
+        name, description = materialDialog.getInputs()
+        try:
+            db_session = SessionLocal()
+            repository = MaterialRepository(db_session)
+            repository.update_material(self.material.id, name, description)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+        self.parent().refreshLayout()
+
+    @needs_confirmation('¿Realmente desea eliminar el material?', 'Eliminar material')
     def removeMaterial(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Realmente desea eliminar el material?')
-        confirmation.setWindowTitle('Eliminar material')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
-
-        if confirmation.exec() == QMessageBox.Yes:
-            try:
-                db_session = SessionLocal()
-                repository = MaterialRepository(db_session)
-                repository.remove_material(self.material.id)
-            except Exception as error:
-                self.showError(
-                    'Error de base de datos',
-                    str(error)
-                )
-                return
-            self.parent().refreshLayout()
+        try:
+            db_session = SessionLocal()
+            repository = MaterialRepository(db_session)
+            repository.remove_material(self.material.id)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+        self.parent().refreshLayout()

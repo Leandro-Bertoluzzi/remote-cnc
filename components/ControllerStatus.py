@@ -1,6 +1,6 @@
 from core.database.base import Session as SessionLocal
 from core.database.repositories.toolRepository import ToolRepository
-from core.utils.files import getFileNameInFolder
+from helpers.utils import applyStylesheet
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
 
@@ -39,9 +39,7 @@ class ControllerStatus(QWidget):
         layout.addWidget(self.feedrate)
         layout.addWidget(self.spindle)
 
-        stylesheet = getFileNameInFolder(__file__, 'ControllerStatus.qss')
-        with open(stylesheet, 'r') as styles:
-            self.setStyleSheet(styles.read())
+        applyStylesheet(self, __file__, 'ControllerStatus.qss')
 
     def set_status(self, status):
         self.status.setText(status['activeState'].upper())

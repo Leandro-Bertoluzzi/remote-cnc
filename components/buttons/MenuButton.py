@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QPushButton
-from core.utils.files import getFileNameInFolder
+from helpers.utils import applyStylesheet
 
 
 class MenuButton(QPushButton):
@@ -14,9 +14,7 @@ class MenuButton(QPushButton):
         if onClick:
             self.clicked.connect(onClick)
 
-        stylesheet = getFileNameInFolder(__file__, "MenuButton.qss")
-        with open(stylesheet, "r") as styles:
-            self.setStyleSheet(styles.read())
+        applyStylesheet(self, __file__, "MenuButton.qss")
 
     def redirectToView(self):
         self.parent().redirectToView(self.view)

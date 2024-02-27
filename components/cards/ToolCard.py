@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QPushButton, QMessageBox
+from PyQt5.QtWidgets import QPushButton
 from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from core.database.base import Session as SessionLocal
 from core.database.repositories.toolRepository import ToolRepository
+from helpers.utils import needs_confirmation
 
 
 class ToolCard(Card):
@@ -23,36 +24,32 @@ class ToolCard(Card):
 
     def updateTool(self):
         toolDialog = ToolDataDialog(toolInfo=self.tool)
-        if toolDialog.exec():
-            name, description = toolDialog.getInputs()
-            try:
-                db_session = SessionLocal()
-                repository = ToolRepository(db_session)
-                repository.update_tool(self.tool.id, name, description)
-            except Exception as error:
-                self.showError(
-                    'Error de base de datos',
-                    str(error)
-                )
-                return
-            self.parent().refreshLayout()
+        if not toolDialog.exec():
+            return
 
+        name, description = toolDialog.getInputs()
+        try:
+            db_session = SessionLocal()
+            repository = ToolRepository(db_session)
+            repository.update_tool(self.tool.id, name, description)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+        self.parent().refreshLayout()
+
+    @needs_confirmation('¿Realmente desea eliminar la herramienta?', 'Eliminar herramienta')
     def removeTool(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Realmente desea eliminar la herramienta?')
-        confirmation.setWindowTitle('Eliminar herramienta')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
-
-        if confirmation.exec() == QMessageBox.Yes:
-            try:
-                db_session = SessionLocal()
-                repository = ToolRepository(db_session)
-                repository.remove_tool(self.tool.id)
-            except Exception as error:
-                self.showError(
-                    'Error de base de datos',
-                    str(error)
-                )
-                return
-            self.parent().refreshLayout()
+        try:
+            db_session = SessionLocal()
+            repository = ToolRepository(db_session)
+            repository.remove_tool(self.tool.id)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+        self.parent().refreshLayout()

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QMessageBox
+from PyQt5.QtWidgets import QPushButton
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
@@ -6,6 +6,7 @@ from core.database.base import Session as SessionLocal
 from core.database.repositories.fileRepository import DuplicatedFileNameError
 from core.database.repositories.fileRepository import FileRepository
 from core.utils.files import renameFile, deleteFile
+from helpers.utils import needs_confirmation
 
 
 class FileCard(Card):
@@ -26,80 +27,76 @@ class FileCard(Card):
 
     def updateFile(self):
         fileDialog = FileDataDialog(self.file)
-        if fileDialog.exec():
-            name, path = fileDialog.getInputs()
+        if not fileDialog.exec():
+            return
 
-            if name == self.file.file_name:
-                return
+        name, path = fileDialog.getInputs()
 
-            # Checks if the file is repeated
-            try:
-                db_session = SessionLocal()
-                repository = FileRepository(db_session)
-                repository.check_file_exists(USER_ID, name, 'impossible-hash')
-            except DuplicatedFileNameError:
-                self.showWarning(
-                    'Nombre repetido',
-                    f'Ya existe un archivo con el nombre <<{name}>>, pruebe renombrarlo'
-                )
-                return
+        if name == self.file.file_name:
+            return
 
-            # Update file in the file system
-            try:
-                renameFile(
-                    self.file.user_id,
-                    self.file.file_name,
-                    name
-                )
-            except Exception as error:
-                self.showError(
-                    'Error de guardado',
-                    str(error)
-                )
-                return
+        # Checks if the file is repeated
+        try:
+            db_session = SessionLocal()
+            repository = FileRepository(db_session)
+            repository.check_file_exists(USER_ID, name, 'impossible-hash')
+        except DuplicatedFileNameError:
+            self.showWarning(
+                'Nombre repetido',
+                f'Ya existe un archivo con el nombre <<{name}>>, pruebe renombrarlo'
+            )
+            return
 
-            # Update the entry for the file in the DB
-            try:
-                db_session = SessionLocal()
-                repository = FileRepository(db_session)
-                repository.update_file(self.file.id, self.file.user_id, name)
-            except Exception as error:
-                self.showError(
-                    'Error de base de datos',
-                    str(error)
-                )
-                return
+        # Update file in the file system
+        try:
+            renameFile(
+                self.file.user_id,
+                self.file.file_name,
+                name
+            )
+        except Exception as error:
+            self.showError(
+                'Error de guardado',
+                str(error)
+            )
+            return
 
-            self.parent().refreshLayout()
+        # Update the entry for the file in the DB
+        try:
+            db_session = SessionLocal()
+            repository = FileRepository(db_session)
+            repository.update_file(self.file.id, self.file.user_id, name)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
 
+        self.parent().refreshLayout()
+
+    @needs_confirmation('¿Realmente desea eliminar el archivo?', 'Eliminar archivo')
     def removeFile(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Realmente desea eliminar el archivo?')
-        confirmation.setWindowTitle('Eliminar archivo')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
+        # Remove the file from the file system
+        try:
+            deleteFile(self.file.user_id, self.file.file_name)
+        except Exception as error:
+            self.showError(
+                'Error de borrado',
+                str(error)
+            )
+            return
 
-        if confirmation.exec() == QMessageBox.Yes:
-            # Remove the file from the file system
-            try:
-                deleteFile(self.file.user_id, self.file.file_name)
-            except Exception as error:
-                self.showError(
-                    'Error de borrado',
-                    str(error)
-                )
-                return
+        # Remove the entry for the file in the DB
+        try:
+            db_session = SessionLocal()
+            repository = FileRepository(db_session)
+            repository.remove_file(self.file.id)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
 
-            # Remove the entry for the file in the DB
-            try:
-                db_session = SessionLocal()
-                repository = FileRepository(db_session)
-                repository.remove_file(self.file.id)
-            except Exception as error:
-                self.showError(
-                    'Error de base de datos',
-                    str(error)
-                )
-                return
-
-            self.parent().refreshLayout()
+        self.parent().refreshLayout()

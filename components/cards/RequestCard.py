@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QMessageBox
+from PyQt5.QtWidgets import QPushButton
 from config import USER_ID, Globals, PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
@@ -6,6 +6,7 @@ from core.database.base import Session as SessionLocal
 from core.database.models import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from core.worker.tasks import executeTask
+from helpers.utils import needs_confirmation
 
 
 class RequestCard(Card):
@@ -24,16 +25,8 @@ class RequestCard(Card):
         self.addButton(approveTaskBtn)
         self.addButton(rejectTaskBtn)
 
+    @needs_confirmation('¿Realmente desea aprobar la solicitud?', 'Aprobar solicitud')
     def approveTask(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Realmente desea aprobar la solicitud?')
-        confirmation.setWindowTitle('Aprobar solicitud')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
-
-        if confirmation.exec() != QMessageBox.Yes:
-            return
-
         try:
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
@@ -42,19 +35,7 @@ class RequestCard(Card):
                 self.parent().refreshLayout()
                 return
 
-            confirmation.setText('¿Desea ejecutar la tarea ahora? En caso contrario, '
-                                 'puede ejecutarla manualmente en cualquier momento.')
-            confirmation.setWindowTitle('Ejecutar tarea')
-            confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            if confirmation.exec() == QMessageBox.Yes:
-                task = executeTask.delay(USER_ID, PROJECT_ROOT, SERIAL_PORT, SERIAL_BAUDRATE)
-                Globals.set_current_task_id(task.task_id)
-                QMessageBox.information(
-                    self,
-                    'Tarea enviada',
-                    'Se envió la tarea al equipo para su ejecución',
-                    QMessageBox.Ok
-                )
+            self.runTask()
         except Exception as error:
             self.showError(
                 'Error de base de datos',
@@ -62,6 +43,19 @@ class RequestCard(Card):
             )
             return
         self.parent().refreshLayout()
+
+    @needs_confirmation(
+        '¿Desea ejecutar la tarea ahora? En caso contrario, '
+        'puede ejecutarla manualmente en cualquier momento.',
+        'Ejecutar tarea'
+    )
+    def runTask(self):
+        task = executeTask.delay(USER_ID, PROJECT_ROOT, SERIAL_PORT, SERIAL_BAUDRATE)
+        Globals.set_current_task_id(task.task_id)
+        self.showInformation(
+            'Tarea enviada',
+            'Se envió la tarea al equipo para su ejecución'
+        )
 
     def rejectTask(self):
         rejectDialog = TaskCancelDialog(origin=FROM_REJECT)

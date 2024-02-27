@@ -1,5 +1,5 @@
 from core.grbl.grblController import GrblController
-from core.utils.files import getFileNameInFolder
+from helpers.utils import applyStylesheet
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
 
@@ -25,9 +25,7 @@ class Terminal(QWidget):
         layout.addWidget(self.input)
 
         # Apply custom styles
-        stylesheet = getFileNameInFolder(__file__, 'Terminal.qss')
-        with open(stylesheet, 'r') as styles:
-            self.setStyleSheet(styles.read())
+        applyStylesheet(self, __file__, 'Terminal.qss')
 
     def display_text(self, text):
         self.display_screen.insertPlainText(text + '\n')

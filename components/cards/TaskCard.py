@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QMessageBox
+from PyQt5.QtWidgets import QPushButton
 from celery.result import AsyncResult
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
@@ -10,6 +10,7 @@ from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_IN_PROGRESS_S
     TASK_FINISHED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from core.worker.tasks import executeTask
+from helpers.utils import needs_confirmation
 
 
 class TaskCard(Card):
@@ -135,16 +136,8 @@ class TaskCard(Card):
             return
         self.parent().refreshLayout()
 
+    @needs_confirmation('¿Realmente desea eliminar la tarea?', 'Eliminar tarea')
     def removeTask(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Realmente desea eliminar la tarea?')
-        confirmation.setWindowTitle('Eliminar tarea')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
-
-        if confirmation.exec() != QMessageBox.Yes:
-            return
-
         try:
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
@@ -157,17 +150,12 @@ class TaskCard(Card):
             return
         self.parent().refreshLayout()
 
+    @needs_confirmation(
+            '¿Realmente desea restaurar la tarea?'
+            'Esto la devolverá al estado inicial, pendiente de aprobación',
+            'Restaurar tarea'
+    )
     def restoreTask(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Realmente desea restaurar la tarea?'
-                             'Esto la devolverá al estado inicial, pendiente de aprobación')
-        confirmation.setWindowTitle('Restaurar tarea')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
-
-        if confirmation.exec() != QMessageBox.Yes:
-            return
-
         try:
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
@@ -231,13 +219,8 @@ class TaskCard(Card):
             return
         self.parent().refreshLayout()
 
+    @needs_confirmation('¿Desea ejecutar la tarea ahora?', 'Ejecutar tarea')
     def runTask(self):
-        confirmation = QMessageBox()
-        confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Desea ejecutar la tarea ahora?')
-        confirmation.setWindowTitle('Ejecutar tarea')
-        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
-
         try:
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
@@ -247,16 +230,12 @@ class TaskCard(Card):
                     'Ejecución cancelada: Ya hay una tarea en progreso'
                 )
                 return
-            if confirmation.exec() != QMessageBox.Yes:
-                return
 
             task = executeTask.delay(USER_ID, PROJECT_ROOT, SERIAL_PORT, SERIAL_BAUDRATE)
             Globals.set_current_task_id(task.task_id)
-            QMessageBox.information(
-                self,
+            self.showInformation(
                 'Tarea enviada',
-                'Se envió la tarea al equipo para su ejecución',
-                QMessageBox.Ok
+                'Se envió la tarea al equipo para su ejecución'
             )
         except Exception as error:
             self.showError(

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
-from core.utils.files import getFileNameInFolder
+from helpers.utils import applyStylesheet
 
 
 class Card(QWidget):
@@ -21,9 +21,7 @@ class Card(QWidget):
         self.setLayout(layout)
 
         # Apply custom styles
-        stylesheet = getFileNameInFolder(__file__, "Card.qss")
-        with open(stylesheet, "r") as styles:
-            self.setStyleSheet(styles.read())
+        applyStylesheet(self, __file__, "Card.qss")
 
     def setDescription(self, description: str) -> None:
         self.label_description.setText(description)
@@ -32,6 +30,9 @@ class Card(QWidget):
         self.layout_buttons.addWidget(button)
 
     # Notifications
+
+    def showInformation(self, title, text):
+        QMessageBox.information(self, title, text, QMessageBox.Ok)
 
     def showWarning(self, title, text):
         QMessageBox.warning(self, title, text, QMessageBox.Ok)
