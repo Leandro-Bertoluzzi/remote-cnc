@@ -103,11 +103,11 @@ class TaskCard(Card):
                 task_info.get('total_lines'),
                 task_info.get('percentage')
             )
+            self.setDescription(description)
 
         if task_status == 'FAILURE':
             description = f'Tarea {task_id}: {task_name}\nEstado: {task_status_db} (FAILED)'
-
-        self.setDescription(description)
+            self.setDescription(description)
 
     def updateTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)

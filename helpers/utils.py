@@ -13,7 +13,7 @@ def applyStylesheet(self: QWidget, current_file: str, styles_file: str):
 # Decorators
 def needs_confirmation(text, title):
     def decorator(fun):
-        def wrapper(*args, **kwargs):
+        def wrapper(*args):
             confirmation = QMessageBox()
             confirmation.setIcon(QMessageBox.Question)
             confirmation.setText(text)
@@ -22,6 +22,8 @@ def needs_confirmation(text, title):
             if confirmation.exec() != QMessageBox.Yes:
                 return
 
-            return fun(*args, **kwargs)
+            # We only send the 'self' argument, ignoring all possible
+            # additional arguments added by the function being a slot
+            return fun(args[0])
         return wrapper
     return decorator
