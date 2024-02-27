@@ -265,6 +265,3 @@ class TaskCard(Card):
             )
             return
         self.parent().refreshLayout()
-
-    def showError(self, title, text):
-        QMessageBox.critical(self, title, text, QMessageBox.Ok)

@@ -62,8 +62,8 @@ class TestTasksView:
         self.mock_get_all_tasks.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 3
+        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 3
 
     def test_tasks_view_init_with_no_tasks(self, mocker, helpers):
         mock_get_all_tasks = mocker.patch.object(
@@ -76,9 +76,9 @@ class TestTasksView:
         mock_get_all_tasks.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(tasks_view.layout, TaskCard) == 0
-        assert helpers.count_widgets(tasks_view.layout, MsgCard) == 1
+        assert helpers.count_widgets(tasks_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(tasks_view.layout(), TaskCard) == 0
+        assert helpers.count_widgets(tasks_view.layout(), MsgCard) == 1
 
     @pytest.mark.parametrize(
             'files_error,materials_error,tools_error,tasks_error',
@@ -160,12 +160,9 @@ class TestTasksView:
         assert mock_get_all_tools.call_count == (1 if should_query_tools else 0)
         assert mock_get_all_tasks.call_count == (1 if should_query_tasks else 0)
         assert mock_popup.call_count == 1
-        if not should_query_tasks:
-            assert tasks_view.layout() is None
-            return
-        assert helpers.count_widgets(tasks_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(tasks_view.layout, TaskCard) == 0
-        assert helpers.count_widgets(tasks_view.layout, MsgCard) == 0
+        assert helpers.count_widgets(tasks_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(tasks_view.layout(), TaskCard) == 0
+        assert helpers.count_widgets(tasks_view.layout(), MsgCard) == 0
 
     def test_tasks_view_refresh_layout(self, helpers):
         # We remove a task
@@ -178,8 +175,8 @@ class TestTasksView:
         assert self.mock_get_all_tasks.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 2
+        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 2
 
     def test_tasks_view_refresh_layout_db_error(self, mocker, helpers):
         mock_get_all_tasks = mocker.patch.object(
@@ -201,8 +198,8 @@ class TestTasksView:
         # Assertions
         assert mock_get_all_tasks.call_count == 2
         assert mock_popup.call_count == 1
-        assert helpers.count_widgets(tasks_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(tasks_view.layout, TaskCard) == 0
+        assert helpers.count_widgets(tasks_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(tasks_view.layout(), TaskCard) == 0
 
     def test_tasks_view_create_task(self, mocker, helpers):
         # Mock TaskDataDialog methods
@@ -247,8 +244,8 @@ class TestTasksView:
         assert self.mock_get_all_tasks.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 4
+        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 4
 
     def test_tasks_view_create_task_db_error(self, mocker, helpers):
         # Mock TaskDataDialog methods
@@ -275,5 +272,5 @@ class TestTasksView:
         assert mock_popup.call_count == 1
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.tasks_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.tasks_view.layout, TaskCard) == 3
+        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 3

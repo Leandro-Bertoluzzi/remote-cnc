@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
 from core.utils.files import getFileNameInFolder
 
@@ -30,3 +30,11 @@ class Card(QWidget):
 
     def addButton(self, button: QPushButton) -> None:
         self.layout_buttons.addWidget(button)
+
+    # Notifications
+
+    def showWarning(self, title, text):
+        QMessageBox.warning(self, title, text, QMessageBox.Ok)
+
+    def showError(self, title, text):
+        QMessageBox.critical(self, title, text, QMessageBox.Ok)

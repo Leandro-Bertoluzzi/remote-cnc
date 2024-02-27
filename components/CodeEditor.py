@@ -22,7 +22,7 @@ class GCodeHighlighter(QSyntaxHighlighter):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-        self._mappings = {}
+        self._mappings: dict[str, QTextCharFormat] = {}
         self.setDocument(editor.document())
         self.setup()
 

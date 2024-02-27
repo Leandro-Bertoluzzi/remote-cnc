@@ -450,8 +450,16 @@ class TestTaskCard:
             'exec',
             return_value=msgBoxRun
         )
-        mock_info_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
-        mock_error_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        mock_info_popup = mocker.patch.object(
+            QMessageBox,
+            'information',
+            return_value=QMessageBox.Ok
+        )
+        mock_error_popup = mocker.patch.object(
+            QMessageBox,
+            'critical',
+            return_value=QMessageBox.Ok
+        )
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.executeTask.delay')
 

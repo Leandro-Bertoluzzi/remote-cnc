@@ -1,4 +1,3 @@
-from core.database.repositories.userRepository import UserRepository
 from MainWindow import MainWindow
 from views.MainMenu import MainMenu
 from views.UsersView import UsersView
@@ -20,7 +19,7 @@ class TestMainWindow:
         qtbot.addWidget(window)
 
         # Test changing view to 'users'
-        mocker.patch.object(UserRepository, 'get_all_users')
+        mocker.patch.object(UsersView, 'refreshLayout')
         window.changeView(UsersView)
         assert type(window.centralWidget()) is UsersView
 

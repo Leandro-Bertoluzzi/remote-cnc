@@ -103,9 +103,3 @@ class FileCard(Card):
                 return
 
             self.parent().refreshLayout()
-
-    def showWarning(self, title, text):
-        QMessageBox.warning(self, title, text, QMessageBox.Ok)
-
-    def showError(self, title, text):
-        QMessageBox.critical(self, title, text, QMessageBox.Ok)

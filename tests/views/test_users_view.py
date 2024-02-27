@@ -35,8 +35,8 @@ class TestUsersView:
         self.mock_get_all_users.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.users_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.users_view.layout, UserCard) == 3
+        assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.users_view.layout(), UserCard) == 3
 
     def test_users_view_init_db_error(self, mocker, helpers):
         mock_get_all_users = mocker.patch.object(
@@ -54,8 +54,8 @@ class TestUsersView:
         # Assertions
         mock_get_all_users.assert_called_once()
         mock_popup.assert_called_once()
-        assert helpers.count_widgets(users_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(users_view.layout, UserCard) == 0
+        assert helpers.count_widgets(users_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(users_view.layout(), UserCard) == 0
 
     def test_users_view_refresh_layout(self, helpers):
         # We remove a user
@@ -68,8 +68,8 @@ class TestUsersView:
         assert self.mock_get_all_users.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.users_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.users_view.layout, UserCard) == 2
+        assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.users_view.layout(), UserCard) == 2
 
     def test_users_view_refresh_layout_db_error(self, mocker, helpers):
         # Mock DB methods to simulate error(s)
@@ -94,8 +94,8 @@ class TestUsersView:
         # Assertions
         assert mock_get_all_users.call_count == 2
         assert mock_popup.call_count == 1
-        assert helpers.count_widgets(users_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(users_view.layout, UserCard) == 0
+        assert helpers.count_widgets(users_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(users_view.layout(), UserCard) == 0
 
     def test_users_view_create_user(self, mocker, helpers):
         # Mock UserDataDialog methods
@@ -128,8 +128,8 @@ class TestUsersView:
         assert self.mock_get_all_users.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.users_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.users_view.layout, UserCard) == 4
+        assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.users_view.layout(), UserCard) == 4
 
     def test_users_view_create_user_db_error(self, mocker, helpers):
         # Mock UserDataDialog methods
@@ -154,5 +154,5 @@ class TestUsersView:
         assert mock_create_user.call_count == 1
         assert self.mock_get_all_users.call_count == 1
         assert mock_popup.call_count == 1
-        assert helpers.count_widgets(self.users_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.users_view.layout, UserCard) == 3
+        assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.users_view.layout(), UserCard) == 3

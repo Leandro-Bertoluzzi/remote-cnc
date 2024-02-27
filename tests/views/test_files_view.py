@@ -47,8 +47,8 @@ class TestFilesView:
         self.mock_get_all_files.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout, FileCard) == 3
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
     def test_files_view_init_with_no_files(self, mocker, helpers):
         mock_get_all_files = mocker.patch.object(
@@ -61,9 +61,9 @@ class TestFilesView:
         mock_get_all_files.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(files_view.layout, FileCard) == 0
-        assert helpers.count_widgets(files_view.layout, MsgCard) == 1
+        assert helpers.count_widgets(files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(files_view.layout(), FileCard) == 0
+        assert helpers.count_widgets(files_view.layout(), MsgCard) == 1
 
     def test_files_view_init_db_error(self, mocker, helpers):
         mock_get_all_files = mocker.patch.object(
@@ -81,9 +81,9 @@ class TestFilesView:
         # Assertions
         mock_get_all_files.assert_called_once()
         mock_popup.assert_called_once()
-        assert helpers.count_widgets(files_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(files_view.layout, FileCard) == 0
-        assert helpers.count_widgets(files_view.layout, MsgCard) == 0
+        assert helpers.count_widgets(files_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(files_view.layout(), FileCard) == 0
+        assert helpers.count_widgets(files_view.layout(), MsgCard) == 0
 
     def test_files_view_refresh_layout(self, helpers):
         # We remove a file
@@ -96,8 +96,8 @@ class TestFilesView:
         assert self.mock_get_all_files.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout, FileCard) == 2
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 2
 
     def test_files_view_refresh_layout_db_error(self, mocker, helpers):
         # Mock DB methods to simulate error(s)
@@ -122,8 +122,8 @@ class TestFilesView:
         # Assertions
         assert mock_get_all_files.call_count == 2
         assert mock_popup.call_count == 1
-        assert helpers.count_widgets(files_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(files_view.layout, FileCard) == 0
+        assert helpers.count_widgets(files_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(files_view.layout(), FileCard) == 0
 
     def test_files_view_create_file(self, mocker, helpers):
         # Mock FileDataDialog methods
@@ -160,8 +160,8 @@ class TestFilesView:
         assert self.mock_get_all_files.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout, FileCard) == 4
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 4
 
     def test_files_view_create_file_repeated_name(self, mocker, helpers):
         # Mock FileDataDialog methods
@@ -190,8 +190,8 @@ class TestFilesView:
         assert mock_create_file.call_count == 0
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
-        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout, FileCard) == 3
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
     def test_files_view_create_file_duplicated(self, mocker, helpers):
         # Mock FileDataDialog methods
@@ -220,8 +220,8 @@ class TestFilesView:
         assert mock_create_file.call_count == 0
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
-        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout, FileCard) == 3
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
     def test_files_view_create_file_fs_error(self, mocker, helpers):
         # Mock FileDataDialog methods
@@ -249,8 +249,8 @@ class TestFilesView:
         assert mock_create_file.call_count == 0
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
-        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout, FileCard) == 3
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
     def test_files_view_create_file_db_error(self, mocker, helpers):
         # Mock FileDataDialog methods
@@ -279,5 +279,5 @@ class TestFilesView:
         assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
-        assert helpers.count_widgets(self.files_view.layout, MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout, FileCard) == 3
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3

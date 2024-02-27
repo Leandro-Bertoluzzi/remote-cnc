@@ -56,8 +56,8 @@ class TestRequestsView:
         self.mock_get_all_tasks.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.requests_view.layout, MenuButton) == 1
-        assert helpers.count_widgets(self.requests_view.layout, RequestCard) == 3
+        assert helpers.count_widgets(self.requests_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.requests_view.layout(), RequestCard) == 3
 
     def test_requests_view_init_with_no_requests(self, mocker, helpers):
         mock_get_all_tasks = mocker.patch.object(
@@ -70,9 +70,9 @@ class TestRequestsView:
         mock_get_all_tasks.assert_called_once()
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(requests_view.layout, MenuButton) == 1
-        assert helpers.count_widgets(requests_view.layout, RequestCard) == 0
-        assert helpers.count_widgets(requests_view.layout, MsgCard) == 1
+        assert helpers.count_widgets(requests_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(requests_view.layout(), RequestCard) == 0
+        assert helpers.count_widgets(requests_view.layout(), MsgCard) == 1
 
     def test_requests_view_init_db_error(self, mocker, helpers):
         mock_get_all_tasks = mocker.patch.object(
@@ -90,9 +90,9 @@ class TestRequestsView:
         # Assertions
         mock_get_all_tasks.assert_called_once()
         mock_popup.assert_called_once()
-        assert helpers.count_widgets(requests_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(requests_view.layout, RequestCard) == 0
-        assert helpers.count_widgets(requests_view.layout, MsgCard) == 0
+        assert helpers.count_widgets(requests_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(requests_view.layout(), RequestCard) == 0
+        assert helpers.count_widgets(requests_view.layout(), MsgCard) == 0
 
     def test_requests_view_refresh_layout(self, helpers):
         # We remove a task
@@ -105,8 +105,8 @@ class TestRequestsView:
         assert self.mock_get_all_tasks.call_count == 2
 
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.requests_view.layout, MenuButton) == 1
-        assert helpers.count_widgets(self.requests_view.layout, RequestCard) == 2
+        assert helpers.count_widgets(self.requests_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.requests_view.layout(), RequestCard) == 2
 
     def test_requests_view_refresh_layout_db_error(self, mocker, helpers):
         # Mock DB methods to simulate error(s)
@@ -131,5 +131,5 @@ class TestRequestsView:
         # Assertions
         assert mock_get_all_tasks.call_count == 2
         assert mock_popup.call_count == 1
-        assert helpers.count_widgets(requests_view.layout, MenuButton) == 0
-        assert helpers.count_widgets(requests_view.layout, RequestCard) == 0
+        assert helpers.count_widgets(requests_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(requests_view.layout(), RequestCard) == 0
