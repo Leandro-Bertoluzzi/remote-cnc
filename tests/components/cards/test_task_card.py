@@ -466,7 +466,7 @@ class TestTaskCard:
             return_value=QMessageBox.Ok
         )
         # Mock task manager methods
-        mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.executeTask.delay')
+        mock_add_task_in_queue = mocker.patch('components.cards.TaskCard.send_task_to_worker')
 
         # Call the approveTask method
         self.card.runTask()
@@ -498,7 +498,7 @@ class TestTaskCard:
         )
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
         # Mock task manager methods
-        mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.executeTask.delay')
+        mock_add_task_in_queue = mocker.patch('components.cards.TaskCard.send_task_to_worker')
 
         # Call the approveTask method
         self.card.runTask()

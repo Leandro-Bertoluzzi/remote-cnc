@@ -53,6 +53,7 @@ class TestRequestCard:
             'are_there_tasks_in_progress',
             return_value=task_in_progress
         )
+
         # Mock message box methods
         mocker.patch.object(
             QMessageBox,
@@ -60,8 +61,9 @@ class TestRequestCard:
             side_effect=[msgBoxApprove, msgBoxRun]
         )
         mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
+
         # Mock task manager methods
-        mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.executeTask.delay')
+        mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.send_task_to_worker')
 
         # Call the approveTask method
         self.card.approveTask()
@@ -112,7 +114,7 @@ class TestRequestCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
         # Mock task manager methods
-        mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.executeTask.delay')
+        mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.send_task_to_worker')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)

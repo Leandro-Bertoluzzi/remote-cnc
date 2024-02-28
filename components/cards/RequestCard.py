@@ -1,16 +1,15 @@
 from PyQt5.QtWidgets import QPushButton
-from config import USER_ID, Globals, PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
+from config import USER_ID
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
 from core.database.base import Session as SessionLocal
-from core.database.models import TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
+from core.database.models import Task, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
-from core.worker.tasks import executeTask
-from helpers.utils import needs_confirmation
+from helpers.utils import needs_confirmation, send_task_to_worker
 
 
 class RequestCard(Card):
-    def __init__(self, task, parent=None):
+    def __init__(self, task: Task, parent=None):
         super(RequestCard, self).__init__(parent)
 
         self.task = task
@@ -50,8 +49,7 @@ class RequestCard(Card):
         'Ejecutar tarea'
     )
     def runTask(self):
-        task = executeTask.delay(USER_ID, PROJECT_ROOT, SERIAL_PORT, SERIAL_BAUDRATE)
-        Globals.set_current_task_id(task.task_id)
+        send_task_to_worker(self.task.id)
         self.showInformation(
             'Tarea enviada',
             'Se envió la tarea al equipo para su ejecución'

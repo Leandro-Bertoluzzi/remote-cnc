@@ -19,16 +19,3 @@ def suppressQtWarnings():
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     os.environ["QT_SCREEN_SCALE_FACTORS"] = "1"
     os.environ["QT_SCALE_FACTOR"] = "1"
-
-
-# Global state management
-class Globals:
-    current_task_id = 'abc-123'
-
-    @classmethod
-    def set_current_task_id(cls, id: str):
-        cls.current_task_id = id
-
-    @classmethod
-    def get_current_task_id(cls) -> str:
-        return cls.current_task_id

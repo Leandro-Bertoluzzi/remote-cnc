@@ -3,14 +3,13 @@ from celery.result import AsyncResult
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from config import USER_ID, Globals, PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_IN_PROGRESS_STATUS, \
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS, \
     TASK_FINISHED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
-from core.worker.tasks import executeTask
-from helpers.utils import needs_confirmation
+from core.utils.storage import get_value_from_id
+from helpers.utils import needs_confirmation, send_task_to_worker
 
 
 class TaskCard(Card):
@@ -84,7 +83,7 @@ class TaskCard(Card):
         if self.task.status != TASK_IN_PROGRESS_STATUS:
             return
 
-        task_id = Globals.get_current_task_id()
+        task_id = get_value_from_id('task', self.task.id)
         task_state = AsyncResult(task_id)
 
         task_info = task_state.info
@@ -240,8 +239,7 @@ class TaskCard(Card):
                 )
                 return
 
-            task = executeTask.delay(USER_ID, PROJECT_ROOT, SERIAL_PORT, SERIAL_BAUDRATE)
-            Globals.set_current_task_id(task.task_id)
+            send_task_to_worker(self.task.id)
             self.showInformation(
                 'Tarea enviada',
                 'Se envió la tarea al equipo para su ejecución'
