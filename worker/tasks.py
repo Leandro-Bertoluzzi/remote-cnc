@@ -1,5 +1,6 @@
-from celery import Celery
+from celery import Celery, Task
 from celery.utils.log import get_task_logger
+import time
 
 ###########################################################
 #      Allow importing modules from parent directory      #
@@ -41,10 +42,15 @@ app = Celery(
     backend=CELERY_RESULT_BACKEND
 )
 
+# Constants
+SEND_INTERVAL = 0.10    # Seconds
+STATUS_POLL = 0.10      # Seconds
+MAX_BUFFER_FILL = 75    # Percentage
+
 
 @app.task(name='worker.tasks.executeTask', bind=True)
 def executeTask(
-    self,
+    self: Task,
     admin_id: int,
     base_path: str,
     serial_port: str,
@@ -54,7 +60,7 @@ def executeTask(
     repository = TaskRepository(db_session)
     # 1. Check if there is a task currently in progress, in which case return an exception
     if repository.are_there_tasks_in_progress():
-        raise Exception("There is a task currently in progress, please wait until finished")
+        raise Exception('There is a task currently in progress, please wait until finished')
 
     # 2. Instantiate a GrblController object and start communication with Arduino
     task_logger = get_task_logger(__name__)
@@ -67,36 +73,97 @@ def executeTask(
         file_path = getFilePath(base_path, task.file.user_id, task.file.file_name)
 
         # Task progress
-        progress = 0
+        sent_lines = 0
+        processed_lines = 0
         total_lines = 0
+        finished_sending = False
+        # Initial CNC state
+        status = cnc.getStatusReport()
+        parserstate = cnc.getGcodeParserState()
+        cnc.restartCommandsCount()
 
-        # Get the file lenght
-        with open(file_path, "r") as file:
-            total_lines = len(file.readlines())
+        # Get the file lenght, while checking if it exists in the first place
+        try:
+            with open(file_path, 'r') as file:
+                total_lines = len(file.readlines())
+        except Exception as error:
+            cnc.disconnect()
+            raise error
 
         # Once sure the file exists, mark the task as 'in progress' in the DB
         repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
         task_logger.info('Started execution of file: %s', file_path)
 
         # 4. Send G-code lines in a loop, until either the file is finished or there is an error
-        with open(file_path, "r") as file:
-            for line in file:
-                cnc.sendCommand(line)
-                # update task progress
-                progress = progress + 1
-                percentage = int((progress * 100) / float(total_lines))
+        ts = tp = time.time()  # last time a command was sent and info was queried
+        gcode = open(file_path, 'r')
+
+        while True:
+            t = time.time()
+
+            # Refresh machine position?
+            if t - tp > STATUS_POLL:
                 status = cnc.getStatusReport()
                 parserstate = cnc.getGcodeParserState()
+                processed_lines = cnc.getCommandsCount()
                 self.update_state(
                     state='PROGRESS',
                     meta={
-                        'percentage': percentage,
-                        'progress': progress,
+                        'sent_lines': sent_lines,
+                        'processed_lines': processed_lines,
                         'total_lines': total_lines,
                         'status': status,
                         'parserstate': parserstate
                     }
                 )
+
+                if cnc.alarm():
+                    cnc.disconnect()
+                    raise Exception(
+                        f'An alarm was triggered (code: {cnc.alarm_code}) '
+                        f'while executing line: {cnc.error_line}'
+                    )
+
+                if cnc.failed():
+                    cnc.disconnect()
+                    raise Exception(f'There was an error when executing line: {cnc.error_line}')
+
+                # GRBL finished executing file
+                if processed_lines >= total_lines and finished_sending:
+                    break
+
+                tp = t
+
+            # Send new command?
+            if t - ts > SEND_INTERVAL and not finished_sending:
+                # Try not to fill the GRBL buffer
+                if cnc.getBufferFill() > MAX_BUFFER_FILL:
+                    continue
+
+                line = gcode.readline()
+
+                # EOF
+                if not line:
+                    gcode.close()
+                    finished_sending = True
+                    continue
+
+                cnc.sendCommand(line)
+
+                # update task progress
+                sent_lines = sent_lines + 1
+                self.update_state(
+                    state='PROGRESS',
+                    meta={
+                        'sent_lines': sent_lines,
+                        'processed_lines': processed_lines,
+                        'total_lines': total_lines,
+                        'status': status,
+                        'parserstate': parserstate
+                    }
+                )
+
+                ts = t
 
         # 5. When the file finishes, mark it as 'finished' in the DB and check
         # if there is a queued task in DB.

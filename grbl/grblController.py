@@ -105,15 +105,13 @@ class GrblController:
         self._alarm = False         # Display alarm message
         self._sumcline = 0          # Amount of bytes in GRBL buffer
         self._checkmode = False     # Check mode enabled
+        self.commands_count = 0     # Amount of already processed commands
 
     def connect(self, port: str, baudrate: int) -> dict[str, str]:
         """Starts the GRBL device connected to the given port.
         """
         try:
             response = self.serial.startConnection(port, baudrate, SERIAL_TIMEOUT)
-            self.grbl_monitor.info(
-                f'Started USB connection at port {port} with a baudrate of {baudrate}'
-            )
         except SerialException:
             self.grbl_monitor.critical(
                 f'Failed opening serial port {port} with a baudrate of {baudrate}',
@@ -123,6 +121,9 @@ class GrblController:
                 f'Failed opening serial port {port}, '
                 'verify and close any other connection you may have'
             )
+        self.grbl_monitor.info(
+            f'Started USB connection at port {port} with a baudrate of {baudrate}'
+        )
 
         # Handle response
         msgType, payload = GrblLineParser.parse(response)
@@ -140,7 +141,14 @@ class GrblController:
         # All g-code commands and some ‘$’ are blocked until the alarm state is cancelled
         # via homing $H or unlocking $X.
         # Only appears immediately after the Grbl welcome message when initialized with an alarm.
-        response = self.serial.readLine()
+        try:
+            response = self.serial.readLine()
+        except SerialException:
+            self.grbl_monitor.critical(
+                f'Error reading response from GRBL: {str(sys.exc_info()[1])}'
+            )
+            self.serial.stopConnection()
+            return
         msgType, payload = GrblLineParser.parse(response)
 
         if (msgType == GRBL_MSG_FEEDBACK) and ('$H' in payload['message']):
@@ -150,6 +158,7 @@ class GrblController:
 
         # State variables
         self.connected = True
+        self.commands_count = 0
 
         # Start serial communication
         self.serial_thread = threading.Thread(target=self.serialIO)
@@ -188,13 +197,14 @@ class GrblController:
         # Process parsed response
         if msgType == GRBL_RESULT_OK:
             removeProcessedCommand()
+            self.commands_count += 1
             return
 
         if msgType == GRBL_RESULT_ERROR:
             self._stop = True
             self.error_line = removeProcessedCommand()
             self.grbl_monitor.error(
-                f'Error: {payload['message']}. Description: {payload['description']}'
+                f"Error: {payload['message']}. Description: {payload['description']}"
             )
             return
 
@@ -204,7 +214,7 @@ class GrblController:
             self.alarm_code = int(payload['code'])
             self.error_line = removeProcessedCommand()
             self.grbl_monitor.critical(
-                f'Alarm activated: {payload['message']}. Description: {payload['description']}'
+                f"Alarm activated: {payload['message']}. Description: {payload['description']}"
             )
             return
 
@@ -235,7 +245,7 @@ class GrblController:
             del payload['raw']
             self.state['parserstate'].update(payload)
             self.grbl_monitor.debug(
-                f'Parser state was successfully updated to {self.state['parserstate']}'
+                f"Parser state was successfully updated to {self.state['parserstate']}"
             )
             return
 
@@ -243,7 +253,7 @@ class GrblController:
             del payload['raw']
             self.state['status'].update(payload)
             self.grbl_monitor.debug(
-                f'Device status was successfully updated to {self.state['status']}'
+                f"Device status was successfully updated to {self.state['status']}"
             )
             return
 
@@ -262,6 +272,8 @@ class GrblController:
         # Response to alarm disable
         if (msgType == GRBL_MSG_FEEDBACK) and ('Caution: Unlocked' in payload['message']):
             self._alarm = False
+            self.alarm_code = None
+            self.error_line = None
             self.grbl_monitor.info('Alarm was successfully disabled')
             return
 
@@ -284,6 +296,26 @@ class GrblController:
 
     def setPaused(self, paused: bool):
         self._paused = paused
+
+    def restartCommandsCount(self):
+        """Restart the count of already processed commands.
+        """
+        self.commands_count = 0
+
+    def getCommandsCount(self):
+        """Get the count of already processed commands.
+        """
+        return self.commands_count
+
+    def alarm(self) -> bool:
+        """Checks if an alarm was triggered.
+        """
+        return self._alarm
+
+    def failed(self) -> bool:
+        """Checks if the controller has encountered an error.
+        """
+        return not not self.error_line
 
     # ACTIONS
 
@@ -349,7 +381,15 @@ class GrblController:
     def queryStatusReport(self):
         """Queries the GRBL device's current status.
         """
-        self.serial.sendBytes(b'?')
+        try:
+            self.serial.sendBytes(b'?')
+        except SerialException:
+            self.grbl_monitor.error(
+                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+            )
+            self.emptyQueue()
+            self.disconnect()
+            return
         self.grbl_monitor.sent('?', debug=True)
 
     # QUERIES
@@ -539,7 +579,7 @@ class GrblController:
             if self.serial.waiting() or tosend is None:
                 try:
                     response = self.serial.readLine()
-                except Exception:
+                except SerialException:
                     self.grbl_monitor.error(
                         f'Error reading response from GRBL: {str(sys.exc_info()[1])}'
                     )
@@ -563,7 +603,15 @@ class GrblController:
             if tosend is not None and sum(cline) < RX_BUFFER_SIZE:
                 self._sumcline = sum(cline)
 
-                self.serial.sendLine(tosend)
+                try:
+                    self.serial.sendLine(tosend)
+                except SerialException:
+                    self.grbl_monitor.error(
+                        f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+                    )
+                    self.emptyQueue()
+                    self.disconnect()
+                    return
                 self.grbl_monitor.sent(tosend)
 
                 tosend = None

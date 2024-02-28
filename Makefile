@@ -1,5 +1,5 @@
 tests:
-	pytest -s --cov-config=setup.cfg
+	pytest -s
 	flake8
 	mypy .
 

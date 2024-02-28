@@ -196,6 +196,26 @@ class TestGrblController:
         assert mock_command_send.call_count == 1
         mock_command_send.assert_called_with(b'?')
 
+    def test_query_status_report_error(self, mocker):
+        # Mock GRBL methods
+        mock_command_send = mocker.patch.object(
+            SerialService,
+            'sendBytes',
+            side_effect=SerialException('mocked-error')
+        )
+        mock_disconnect = mocker.patch.object(GrblController, 'disconnect')
+
+        # Mock monitor methods
+        mock_monitor_error = mocker.patch.object(GrblMonitor, 'error')
+
+        # Call the method under test
+        self.grbl_controller.queryStatusReport()
+
+        # Assertions
+        assert mock_command_send.call_count == 1
+        assert mock_monitor_error.call_count == 1
+        assert mock_disconnect.call_count == 1
+
     def test_query_parser_state(self, mocker):
         # Mock GRBL methods
         mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
@@ -725,7 +745,8 @@ class TestGrblController:
         assert self.grbl_controller._alarm is True
         assert mock_monitor_critical.call_count == 1
         mock_monitor_critical.assert_called_with(
-            'Alarm activated: Homing fail. Description: Homing fail. The active homing cycle was reset.'
+            'Alarm activated: Homing fail. Description: Homing fail. '
+            'The active homing cycle was reset.'
         )
 
     # SERIAL I/O
@@ -808,9 +829,19 @@ class TestGrblController:
         assert mock_serial_send_line.call_count == (0 if paused else 2)
         assert mock_monitor_sent.call_count == (0 if paused else 2)
 
-    def test_serial_io_serial_error(self, mocker):
+    @pytest.mark.parametrize(
+        'error_read,error_send',
+        [
+            (True, False),
+            (False, True)
+        ]
+    )
+    def test_serial_io_serial_error(self, mocker, error_read, error_send):
         # Mock attributes
         self.grbl_controller.serial_thread = threading.Thread()
+
+        # Mock queue contents
+        self.grbl_controller.queue.put('Command')
 
         # Mock controller methods
         mocker.patch.object(GrblController, 'queryStatusReport')
@@ -821,12 +852,17 @@ class TestGrblController:
         mock_serial_waiting = mocker.patch.object(
             SerialService,
             'waiting',
-            return_value=True
+            return_value=error_read
         )
         mock_serial_read_line = mocker.patch.object(
             SerialService,
             'readLine',
-            side_effect=Exception('mocked-error')
+            side_effect=SerialException('mocked-error')
+        )
+        mock_serial_send_line = mocker.patch.object(
+            SerialService,
+            'sendLine',
+            side_effect=SerialException('mocked-error')
         )
 
         # Mock monitor methods
@@ -837,7 +873,8 @@ class TestGrblController:
 
         # Assertions
         assert mock_serial_waiting.call_count == 1
-        assert mock_serial_read_line.call_count == 1
+        assert mock_serial_read_line.call_count == (1 if error_read else 0)
+        assert mock_serial_send_line.call_count == (1 if error_send else 0)
         assert mock_parse_response.call_count == 0
         assert mock_monitor_error.call_count == 1
         assert mock_disconnect.call_count == 1
