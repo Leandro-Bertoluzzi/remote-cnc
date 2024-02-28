@@ -28,13 +28,6 @@ def test_execute_tasks(mocker: MockerFixture):
     mock_get_next_task = mocker.patch.object(TaskRepository, 'get_next_task')
     mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
 
-    queued_tasks = 2
-    mock_ask_for_pending_tasks = mocker.patch.object(
-        TaskRepository,
-        'are_there_pending_tasks',
-        side_effect=[True, True, False]
-    )
-
     # Mock GRBL methods
     mock_start_connect = mocker.patch.object(GrblController, 'connect')
     mock_start_disconnect = mocker.patch.object(GrblController, 'disconnect')
@@ -82,43 +75,41 @@ def test_execute_tasks(mocker: MockerFixture):
     # Assertions
     assert response is True
     assert mock_start_connect.call_count == 1
-    assert mock_ask_for_pending_tasks.call_count == queued_tasks + 1
-    assert mock_get_next_task.call_count == queued_tasks
-    assert mock_get_grbl_buffer_fill.call_count == 4 * queued_tasks
-    assert mock_stream_line.call_count == 3 * queued_tasks
+    assert mock_get_next_task.call_count == 1
+    assert mock_get_grbl_buffer_fill.call_count == 4
+    assert mock_stream_line.call_count == 3
     mocked_update_state.assert_called()
-    assert mock_update_task_status.call_count == 2 * queued_tasks
+    assert mock_update_task_status.call_count == 2
     assert mock_start_disconnect.call_count == 1
 
 
 def test_no_tasks_to_execute(mocker: MockerFixture):
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
-    mock_get_next_task = mocker.patch.object(TaskRepository, 'get_next_task')
-    mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
-    mock_ask_for_pending_tasks = mocker.patch.object(
+    mock_get_next_task = mocker.patch.object(
         TaskRepository,
-        'are_there_pending_tasks',
-        return_value=False
+        'get_next_task',
+        return_value=None
     )
+    mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
 
     # Mock GRBL methods
     mock_start_connection = mocker.patch.object(GrblController, 'connect')
     mock_stream_line = mocker.patch.object(GrblController, 'sendCommand')
 
     # Call method under test
-    response = executeTask(
-        admin_id=1,
-        base_path='path/to/project',
-        serial_port='test-port',
-        serial_baudrate=115200
-    )
+    with pytest.raises(Exception) as error:
+        executeTask(
+            admin_id=1,
+            base_path='path/to/project',
+            serial_port='test-port',
+            serial_baudrate=115200
+        )
 
     # Assertions
-    assert response is True
-    assert mock_start_connection.call_count == 1
-    assert mock_ask_for_pending_tasks.call_count == 1
-    assert mock_get_next_task.call_count == 0
+    assert str(error.value) == 'There are no pending tasks to process'
+    assert mock_get_next_task.call_count == 1
+    assert mock_start_connection.call_count == 0
     assert mock_stream_line.call_count == 0
     assert mock_update_task_status.call_count == 0
 
@@ -153,11 +144,6 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
     mock_get_next_task = mocker.patch.object(TaskRepository, 'get_next_task')
     mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
-    mock_ask_for_pending_tasks = mocker.patch.object(
-        TaskRepository,
-        'are_there_pending_tasks',
-        return_value=True
-    )
 
     # Mock GRBL methods
     mock_start_connect = mocker.patch.object(GrblController, 'connect')
@@ -184,7 +170,6 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
 
     # Assertions
     assert mock_start_connect.call_count == 1
-    assert mock_ask_for_pending_tasks.call_count == 1
     assert mock_get_next_task.call_count == 1
     assert mock_start_disconnect.call_count == 1
     assert mock_update_task_status.call_count == 0
@@ -210,11 +195,6 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
     mocker.patch.object(TaskRepository, 'get_next_task')
     mocker.patch.object(TaskRepository, 'update_task_status')
-    mocker.patch.object(
-        TaskRepository,
-        'are_there_pending_tasks',
-        side_effect=[True, False]
-    )
 
     # Mock GRBL methods
     mocker.patch.object(GrblController, 'connect')
@@ -277,11 +257,6 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm, is_error):
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
     mocker.patch.object(TaskRepository, 'get_next_task')
     mocker.patch.object(TaskRepository, 'update_task_status')
-    mocker.patch.object(
-        TaskRepository,
-        'are_there_pending_tasks',
-        side_effect=[True, False]
-    )
 
     # Mock GRBL error methods
     mocker.patch.object(GrblController, 'alarm', return_value=is_alarm)

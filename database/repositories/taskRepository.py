@@ -79,13 +79,15 @@ class TaskRepository:
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tasks from the DB: {e}')
 
-    def get_next_task(self):
+    def get_next_task(self) -> Optional[Task]:
         try:
             tasks = self._get_filtered_tasks(
                 user_id=None,
                 status=TASK_ON_HOLD_STATUS,
                 order_criterion=Task.priority.desc()
             )
+            if not tasks:
+                return None
             return tasks[0]
         except SQLAlchemyError as e:
             raise Exception(f'Error retrieving tasks from the DB: {e}')

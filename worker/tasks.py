@@ -62,115 +62,115 @@ def executeTask(
     if repository.are_there_tasks_in_progress():
         raise Exception('There is a task currently in progress, please wait until finished')
 
-    # 2. Instantiate a GrblController object and start communication with Arduino
+    # 2. Get the file for the next task in the queue
+    task = repository.get_next_task()
+    if not task:
+        raise Exception('There are no pending tasks to process')
+
+    file_path = getFilePath(base_path, task.file.user_id, task.file.file_name)
+
+    # 3. Instantiate a GrblController object and start communication with Arduino
     task_logger = get_task_logger(__name__)
     cnc = GrblController(logger=task_logger)
     cnc.connect(serial_port, serial_baudrate)
 
-    while repository.are_there_pending_tasks():
-        # 3. Get the file for the next task in the queue
-        task = repository.get_next_task()
-        file_path = getFilePath(base_path, task.file.user_id, task.file.file_name)
+    # Task progress
+    sent_lines = 0
+    processed_lines = 0
+    total_lines = 0
+    finished_sending = False
+    # Initial CNC state
+    status = cnc.getStatusReport()
+    parserstate = cnc.getGcodeParserState()
+    cnc.restartCommandsCount()
 
-        # Task progress
-        sent_lines = 0
-        processed_lines = 0
-        total_lines = 0
-        finished_sending = False
-        # Initial CNC state
-        status = cnc.getStatusReport()
-        parserstate = cnc.getGcodeParserState()
-        cnc.restartCommandsCount()
+    # Get the file lenght, while checking if it exists in the first place
+    try:
+        with open(file_path, 'r') as file:
+            total_lines = len(file.readlines())
+    except Exception as error:
+        cnc.disconnect()
+        raise error
 
-        # Get the file lenght, while checking if it exists in the first place
-        try:
-            with open(file_path, 'r') as file:
-                total_lines = len(file.readlines())
-        except Exception as error:
-            cnc.disconnect()
-            raise error
+    # Once sure the file exists, mark the task as 'in progress' in the DB
+    repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
+    task_logger.info('Started execution of file: %s', file_path)
 
-        # Once sure the file exists, mark the task as 'in progress' in the DB
-        repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS, admin_id)
-        task_logger.info('Started execution of file: %s', file_path)
+    # 4. Send G-code lines in a loop, until either the file is finished or there is an error
+    ts = tp = time.time()  # last time a command was sent and info was queried
+    gcode = open(file_path, 'r')
 
-        # 4. Send G-code lines in a loop, until either the file is finished or there is an error
-        ts = tp = time.time()  # last time a command was sent and info was queried
-        gcode = open(file_path, 'r')
+    while True:
+        t = time.time()
 
-        while True:
-            t = time.time()
+        # Refresh machine position?
+        if t - tp > STATUS_POLL:
+            status = cnc.getStatusReport()
+            parserstate = cnc.getGcodeParserState()
+            processed_lines = cnc.getCommandsCount()
+            self.update_state(
+                state='PROGRESS',
+                meta={
+                    'sent_lines': sent_lines,
+                    'processed_lines': processed_lines,
+                    'total_lines': total_lines,
+                    'status': status,
+                    'parserstate': parserstate
+                }
+            )
 
-            # Refresh machine position?
-            if t - tp > STATUS_POLL:
-                status = cnc.getStatusReport()
-                parserstate = cnc.getGcodeParserState()
-                processed_lines = cnc.getCommandsCount()
-                self.update_state(
-                    state='PROGRESS',
-                    meta={
-                        'sent_lines': sent_lines,
-                        'processed_lines': processed_lines,
-                        'total_lines': total_lines,
-                        'status': status,
-                        'parserstate': parserstate
-                    }
+            if cnc.alarm():
+                cnc.disconnect()
+                raise Exception(
+                    f'An alarm was triggered (code: {cnc.alarm_code}) '
+                    f'while executing line: {cnc.error_line}'
                 )
 
-                if cnc.alarm():
-                    cnc.disconnect()
-                    raise Exception(
-                        f'An alarm was triggered (code: {cnc.alarm_code}) '
-                        f'while executing line: {cnc.error_line}'
-                    )
+            if cnc.failed():
+                cnc.disconnect()
+                raise Exception(f'There was an error when executing line: {cnc.error_line}')
 
-                if cnc.failed():
-                    cnc.disconnect()
-                    raise Exception(f'There was an error when executing line: {cnc.error_line}')
+            # GRBL finished executing file
+            if processed_lines >= total_lines and finished_sending:
+                break
 
-                # GRBL finished executing file
-                if processed_lines >= total_lines and finished_sending:
-                    break
+            tp = t
 
-                tp = t
+        # Send new command?
+        if t - ts > SEND_INTERVAL and not finished_sending:
+            # Try not to fill the GRBL buffer
+            if cnc.getBufferFill() > MAX_BUFFER_FILL:
+                continue
 
-            # Send new command?
-            if t - ts > SEND_INTERVAL and not finished_sending:
-                # Try not to fill the GRBL buffer
-                if cnc.getBufferFill() > MAX_BUFFER_FILL:
-                    continue
+            line = gcode.readline()
 
-                line = gcode.readline()
+            # EOF
+            if not line:
+                gcode.close()
+                finished_sending = True
+                continue
 
-                # EOF
-                if not line:
-                    gcode.close()
-                    finished_sending = True
-                    continue
+            cnc.sendCommand(line)
 
-                cnc.sendCommand(line)
+            # update task progress
+            sent_lines = sent_lines + 1
+            self.update_state(
+                state='PROGRESS',
+                meta={
+                    'sent_lines': sent_lines,
+                    'processed_lines': processed_lines,
+                    'total_lines': total_lines,
+                    'status': status,
+                    'parserstate': parserstate
+                }
+            )
 
-                # update task progress
-                sent_lines = sent_lines + 1
-                self.update_state(
-                    state='PROGRESS',
-                    meta={
-                        'sent_lines': sent_lines,
-                        'processed_lines': processed_lines,
-                        'total_lines': total_lines,
-                        'status': status,
-                        'parserstate': parserstate
-                    }
-                )
+            ts = t
 
-                ts = t
-
-        # 5. When the file finishes, mark it as 'finished' in the DB and check
-        # if there is a queued task in DB.
-        # If there is none, close the connection and return
-        task_logger.info('Finished execution of file: %s', file_path)
-        repository.update_task_status(task.id, TASK_FINISHED_STATUS, admin_id)
-        # 6. If there is a pending task, go to step 3 and repeat
+    # 5. When the file finishes, mark it as 'finished' in the DB
+    # and disconnect
+    task_logger.info('Finished execution of file: %s', file_path)
+    repository.update_task_status(task.id, TASK_FINISHED_STATUS, admin_id)
 
     cnc.disconnect()
     return True
