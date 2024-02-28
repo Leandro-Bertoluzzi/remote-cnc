@@ -42,6 +42,23 @@ class TaskRepository:
             self.session.rollback()
             raise Exception(f'Error creating the task in the DB: {e}')
 
+    def get_task_by_id(self, id: int):
+        try:
+            query = select(
+                Task
+            ).options(
+                joinedload(Task.file),
+                joinedload(Task.material),
+                joinedload(Task.tool),
+                joinedload(Task.user)
+            )
+            task = self.session.scalars(
+                query.where(Task.id == id)
+            ).unique().first()
+            return task
+        except SQLAlchemyError as e:
+            raise Exception(f'Error looking for task with ID {id} in the DB: {e}')
+
     def _get_filtered_tasks(
             self,
             user_id: Optional[int],

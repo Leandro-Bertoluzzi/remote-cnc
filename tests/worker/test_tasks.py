@@ -25,7 +25,7 @@ def test_execute_tasks(mocker: MockerFixture):
 
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
-    mock_get_next_task = mocker.patch.object(TaskRepository, 'get_next_task')
+    mock_get_task_by_id = mocker.patch.object(TaskRepository, 'get_task_by_id')
     mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
 
     # Mock GRBL methods
@@ -66,6 +66,7 @@ def test_execute_tasks(mocker: MockerFixture):
 
     # Call method under test
     response = executeTask(
+        task_id=1,
         admin_id=1,
         base_path='path/to/project',
         serial_port='test-port',
@@ -75,7 +76,7 @@ def test_execute_tasks(mocker: MockerFixture):
     # Assertions
     assert response is True
     assert mock_start_connect.call_count == 1
-    assert mock_get_next_task.call_count == 1
+    assert mock_get_task_by_id.call_count == 1
     assert mock_get_grbl_buffer_fill.call_count == 4
     assert mock_stream_line.call_count == 3
     mocked_update_state.assert_called()
@@ -86,9 +87,9 @@ def test_execute_tasks(mocker: MockerFixture):
 def test_no_tasks_to_execute(mocker: MockerFixture):
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
-    mock_get_next_task = mocker.patch.object(
+    mock_get_task_by_id = mocker.patch.object(
         TaskRepository,
-        'get_next_task',
+        'get_task_by_id',
         return_value=None
     )
     mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
@@ -100,6 +101,7 @@ def test_no_tasks_to_execute(mocker: MockerFixture):
     # Call method under test
     with pytest.raises(Exception) as error:
         executeTask(
+            task_id=1,
             admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',
@@ -108,7 +110,7 @@ def test_no_tasks_to_execute(mocker: MockerFixture):
 
     # Assertions
     assert str(error.value) == 'There are no pending tasks to process'
-    assert mock_get_next_task.call_count == 1
+    assert mock_get_task_by_id.call_count == 1
     assert mock_start_connection.call_count == 0
     assert mock_stream_line.call_count == 0
     assert mock_update_task_status.call_count == 0
@@ -121,6 +123,7 @@ def test_task_in_progress_exception(mocker: MockerFixture):
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
         executeTask(
+            task_id=1,
             admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',
@@ -134,15 +137,15 @@ def test_task_missing_arguments():
     with pytest.raises(Exception) as error:
         executeTask()
     assert str(error.value) == (
-        "executeTask() missing 4 required positional arguments: "
-        "'admin_id', 'base_path', 'serial_port', and 'serial_baudrate'"
+        "executeTask() missing 5 required positional arguments: "
+        "'task_id', 'admin_id', 'base_path', 'serial_port', and 'serial_baudrate'"
     )
 
 
 def test_execute_tasks_file_error(mocker: MockerFixture):
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
-    mock_get_next_task = mocker.patch.object(TaskRepository, 'get_next_task')
+    mock_get_task_by_id = mocker.patch.object(TaskRepository, 'get_task_by_id')
     mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
 
     # Mock GRBL methods
@@ -162,6 +165,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     # Call method under test
     with pytest.raises(Exception):
         executeTask(
+            task_id=1,
             admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',
@@ -170,7 +174,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
 
     # Assertions
     assert mock_start_connect.call_count == 1
-    assert mock_get_next_task.call_count == 1
+    assert mock_get_task_by_id.call_count == 1
     assert mock_start_disconnect.call_count == 1
     assert mock_update_task_status.call_count == 0
 
@@ -193,7 +197,7 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
 
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
-    mocker.patch.object(TaskRepository, 'get_next_task')
+    mocker.patch.object(TaskRepository, 'get_task_by_id')
     mocker.patch.object(TaskRepository, 'update_task_status')
 
     # Mock GRBL methods
@@ -234,6 +238,7 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
 
     # Call method under test
     executeTask(
+        task_id=1,
         admin_id=1,
         base_path='path/to/project',
         serial_port='test-port',
@@ -246,21 +251,17 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
 
 
 @pytest.mark.parametrize(
-    'is_alarm,is_error',
-    [
-        (True, False),
-        (False, True)
-    ]
+    'is_alarm', [False, True]
 )
-def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm, is_error):
+def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
-    mocker.patch.object(TaskRepository, 'get_next_task')
+    mocker.patch.object(TaskRepository, 'get_task_by_id')
     mocker.patch.object(TaskRepository, 'update_task_status')
 
     # Mock GRBL error methods
+    mocker.patch.object(GrblController, 'failed', return_value=True)
     mocker.patch.object(GrblController, 'alarm', return_value=is_alarm)
-    mocker.patch.object(GrblController, 'failed', return_value=is_error)
 
     # Mock other GRBL methods
     mocker.patch.object(GrblController, 'connect')
@@ -283,6 +284,7 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm, is_error):
     # Call method under test
     with pytest.raises(Exception) as error:
         executeTask(
+            task_id=1,
             admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',

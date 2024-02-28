@@ -51,6 +51,7 @@ MAX_BUFFER_FILL = 75    # Percentage
 @app.task(name='worker.tasks.executeTask', bind=True)
 def executeTask(
     self: Task,
+    task_id: int,
     admin_id: int,
     base_path: str,
     serial_port: str,
@@ -62,8 +63,8 @@ def executeTask(
     if repository.are_there_tasks_in_progress():
         raise Exception('There is a task currently in progress, please wait until finished')
 
-    # 2. Get the file for the next task in the queue
-    task = repository.get_next_task()
+    # 2. Get the file for the requested task
+    task = repository.get_task_by_id(task_id)
     if not task:
         raise Exception('There are no pending tasks to process')
 
@@ -119,15 +120,14 @@ def executeTask(
                 }
             )
 
-            if cnc.alarm():
-                cnc.disconnect()
-                raise Exception(
-                    f'An alarm was triggered (code: {cnc.alarm_code}) '
-                    f'while executing line: {cnc.error_line}'
-                )
-
             if cnc.failed():
                 cnc.disconnect()
+
+                if cnc.alarm():
+                    raise Exception(
+                        f'An alarm was triggered (code: {cnc.alarm_code}) '
+                        f'while executing line: {cnc.error_line}'
+                    )
                 raise Exception(f'There was an error when executing line: {cnc.error_line}')
 
             # GRBL finished executing file
