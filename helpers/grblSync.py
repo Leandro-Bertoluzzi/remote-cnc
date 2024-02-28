@@ -1,7 +1,10 @@
 from core.grbl.grblController import GrblController
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import time
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from views.ControlView import ControlView   # pragma: no cover
 
 # Constants
 STATUS_POLL = 0.10  # seconds
@@ -59,7 +62,7 @@ class GrblSync:
     """Utility class to sync a GRBL device with the control view's widgets.
     It updates both the controller's status and the sent/received commands.
     """
-    def __init__(self, control_view):
+    def __init__(self, control_view: 'ControlView'):
         # Attributes definition
         self.control_view = control_view
         self.grbl_controller: GrblController = control_view.grbl_controller
@@ -67,6 +70,9 @@ class GrblSync:
         # Thread configuration
         self.monitor_thread: Optional[QThread] = None
         self.monitor_worker = Worker(self.grbl_controller)
+
+    def __del__(self):
+        self.stop_monitor()
 
     def start_monitor(self):
         # Create a QThread object
@@ -84,8 +90,6 @@ class GrblSync:
         if not self.monitor_thread:
             return
         self.monitor_worker.stop()
-        #self.monitor_thread.quit()
-        #self.monitor_thread.wait()
 
     def message_received(self, message: str):
         if message:

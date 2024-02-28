@@ -70,7 +70,7 @@ See [Development](./docs/development.md) docs.
 ### Unit tests
 
 ```bash
-$ pytest -s --cov-config=setup.cfg
+$ pytest -s
 ```
 
 The coverage report is available in the folder `/htmlcov`.
@@ -104,7 +104,7 @@ docker compose -f docker-compose.app.yml up
 ```
 
 or together with the other services:
-(uncomment the mysql dependency in `docker-compose.app.yml`)
+(uncomment the postgresql dependency in `docker-compose.app.yml`)
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.app.yml up

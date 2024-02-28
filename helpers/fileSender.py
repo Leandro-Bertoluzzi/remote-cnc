@@ -1,7 +1,10 @@
 from core.grbl.grblController import GrblController
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import time
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from views.ControlView import ControlView   # pragma: no cover
 
 # Constants
 SEND_INTERVAL = 0.10    # Seconds
@@ -82,7 +85,7 @@ class Worker(QObject):
 class FileSender:
     """Utility class to open a file and send it to the GRBL device, line by line.
     """
-    def __init__(self, control_view):
+    def __init__(self, control_view: 'ControlView'):
         # Attributes definition
         self.control_view = control_view
         self.grbl_controller: GrblController = control_view.grbl_controller
@@ -120,8 +123,6 @@ class FileSender:
 
     def stop(self):
         self.file_worker.stop()
-        #self.file_thread.quit()
-        #self.file_thread.wait()
 
     def line_sent(self, line: int):
         self.control_view.update_already_read_lines(line)

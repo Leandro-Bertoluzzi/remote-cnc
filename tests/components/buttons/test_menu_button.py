@@ -12,7 +12,7 @@ class TestMenuButton:
         assert button.receivers(button.clicked) == 0
 
     def test_menu_button_on_click(self, qtbot, mocker):
-        mock_on_click = mocker.MagicMock()
+        mock_on_click = mocker.Mock()
 
         button = MenuButton('Test Button', onClick=mock_on_click)
         qtbot.addWidget(button)

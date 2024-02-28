@@ -274,8 +274,8 @@ class TestTaskCard:
         task_metadata = {
             'status': 'PROGRESS',
             'result': {
-                'percentage': 50,
-                'progress': 10,
+                'sent_lines': 15,
+                'processed_lines': 10,
                 'total_lines': 20
             }
         }
@@ -298,7 +298,12 @@ class TestTaskCard:
 
         # Assertions
         if status == 'in_progress':
-            expected_text = 'Tarea 1: Example task\nEstado: in_progress\nProgreso: 10/20 (50%)'
+            expected_text = (
+                'Tarea 1: Example task\n'
+                'Estado: in_progress\n'
+                'Enviado: 15/20 (75%)\n'
+                'Ejecutado: 10/20 (50%)'
+            )
             assert card.label_description.text() == expected_text
             assert mock_query_task.call_count == 1
             assert mock_query_task_info.call_count == 2

@@ -16,7 +16,8 @@ dependencies:
   - pytest-cov=4.1.*
   - pytest-env=1.1.*
   - pytest-mock=3.10.*
-  - pytest-qt=4.2.*
+  - pytest-qt=4.4.*
+  - python=3.9
   - python-dotenv
   - sqlalchemy=2.0.*
   - watchdog

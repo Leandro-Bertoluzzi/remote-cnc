@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 
 # Take environment variables from .env.
-load_dotenv()
+load_dotenv(override=True)
 
 # Get environment variables
 USER_ID = int(os.environ.get('USER_ID') or '0')

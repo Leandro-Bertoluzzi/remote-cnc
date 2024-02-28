@@ -1,9 +1,13 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
+from typing import Callable
+
+
+ButtonInfo = tuple[str, Callable[[], None]]
 
 
 class ButtonList(QWidget):
-    def __init__(self, options=[], parent=None):
+    def __init__(self, options: list[ButtonInfo] = [], parent=None):
         super(ButtonList, self).__init__(parent)
 
         layout = QVBoxLayout()

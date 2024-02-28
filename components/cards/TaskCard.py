@@ -95,18 +95,27 @@ class TaskCard(Card):
         task_status_db = self.task.status
 
         if task_status == 'PROGRESS':
-            description = 'Tarea {0}: {1}\nEstado: {2}\nProgreso: {3}/{4} ({5}%)'.format(
-                task_id,
-                task_name,
-                task_status_db,
-                task_info.get('progress'),
-                task_info.get('total_lines'),
-                task_info.get('percentage')
+            sent_lines = task_info.get('sent_lines')
+            processed_lines = task_info.get('processed_lines')
+            total_lines = task_info.get('total_lines')
+
+            sent = int((sent_lines * 100) / float(total_lines))
+            executed = int((processed_lines * 100) / float(total_lines))
+
+            description = (
+                f'Tarea {task_id}: {task_name}\n'
+                f'Estado: {task_status_db}\n'
+                f'Enviado: {sent_lines}/{total_lines} ({sent}%)\n'
+                f'Ejecutado: {processed_lines}/{total_lines} ({executed}%)'
             )
             self.setDescription(description)
 
         if task_status == 'FAILURE':
-            description = f'Tarea {task_id}: {task_name}\nEstado: {task_status_db} (FAILED)'
+            error_msg = task_info
+            description = (
+                f'Tarea {task_id}: {task_name}\nEstado: {task_status_db} (FAILED)\n'
+                f'Error: {error_msg}'
+            )
             self.setDescription(description)
 
     def updateTask(self):

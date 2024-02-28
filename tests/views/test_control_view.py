@@ -12,12 +12,14 @@ from helpers.fileSender import FileSender
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 from views.ControlView import ControlView
 
 
 class TestControlView:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture):
         # Create an instance of the parent
         self.parent = MainWindow()
 
@@ -38,7 +40,13 @@ class TestControlView:
         qtbot.addWidget(self.control_view)
 
     @pytest.mark.parametrize("device_busy", [False, True])
-    def test_control_view_init(self, qtbot, mocker, helpers, device_busy):
+    def test_control_view_init(
+        self,
+        qtbot: QtBot,
+        mocker: MockerFixture,
+        helpers,
+        device_busy
+    ):
         # Mock parent methods
         mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
 
@@ -65,7 +73,12 @@ class TestControlView:
         assert mock_add_toolbar.call_count == (1 if device_busy else 2)
         assert mock_check_tasks_in_progress.call_count == 1
 
-    def test_control_view_init_db_error(self, qtbot, mocker, helpers):
+    def test_control_view_init_db_error(
+        self,
+        qtbot: QtBot,
+        mocker: MockerFixture,
+        helpers
+    ):
         # Create an instance of the parent
         parent = MainWindow()
 
@@ -111,7 +124,7 @@ class TestControlView:
         assert self.mock_remove_toolbar.call_count == (1 if device_busy else 2)
         self.mock_back_to_menu.assert_called_once()
 
-    def test_control_view_close_event(self, mocker):
+    def test_control_view_close_event(self, mocker: MockerFixture):
         # Mock methods
         mock_disconnect = mocker.patch.object(ControlView, 'disconnect_device')
 
@@ -140,7 +153,12 @@ class TestControlView:
             ('PORTx', True),
         ]
     )
-    def test_control_view_toggle_connected_device(self, mocker, port, connected):
+    def test_control_view_toggle_connected_device(
+        self,
+        mocker: MockerFixture,
+        port,
+        connected
+    ):
         # Mock attributes
         self.control_view.port_selected = port
         self.control_view.connected = connected
@@ -176,7 +194,7 @@ class TestControlView:
         if should_connect:
             mock_write_to_terminal.assert_called_with(grbl_init_message)
 
-    def test_control_view_connect_device_serial_error(self, mocker):
+    def test_control_view_connect_device_serial_error(self, mocker: MockerFixture):
         # Mock attributes
         self.control_view.port_selected = 'PORTx'
         self.control_view.connected = False
@@ -203,7 +221,7 @@ class TestControlView:
         assert self.control_view.connect_button.text() == 'Conectar'
         mock_popup.assert_called_once()
 
-    def test_control_view_disconnect_device_serial_error(self, mocker):
+    def test_control_view_disconnect_device_serial_error(self, mocker: MockerFixture):
         # Mock attributes
         self.control_view.port_selected = 'PORTx'
         self.control_view.connected = True
@@ -229,7 +247,7 @@ class TestControlView:
         assert self.control_view.connect_button.text() == 'Desconectar'
         mock_popup.assert_called_once()
 
-    def test_control_view_disconnect_device_runtime_error(self, mocker):
+    def test_control_view_disconnect_device_runtime_error(self, mocker: MockerFixture):
         # Mock attributes
         self.control_view.connected = True
 
@@ -252,7 +270,7 @@ class TestControlView:
         assert mock_stop_monitor.call_count == 1
         assert mock_enable_serial_widgets.call_count == 0
 
-    def test_control_view_query_settings(self, mocker):
+    def test_control_view_query_settings(self, mocker: MockerFixture):
         # Mock attributes
         self.control_view.device_settings = {}
         grbl_settings = {
@@ -284,7 +302,7 @@ class TestControlView:
         assert mock_grbl_query_settings.call_count == 1
         assert self.control_view.device_settings == grbl_settings
 
-    def test_run_homing_cycle(self, mocker):
+    def test_run_homing_cycle(self, mocker: MockerFixture):
         # Mock methods
         mock_grbl_home_cyle = mocker.patch.object(
             GrblController,
@@ -301,7 +319,7 @@ class TestControlView:
         assert mock_grbl_home_cyle.call_count == 1
         assert mock_popup.call_count == 1
 
-    def test_disable_alarm(self, mocker):
+    def test_disable_alarm(self, mocker: MockerFixture):
         # Mock methods
         mock_grbl_disable_alarm = mocker.patch.object(
             GrblController,
@@ -314,7 +332,7 @@ class TestControlView:
         # Assertions
         assert mock_grbl_disable_alarm.call_count == 1
 
-    def test_toggle_check_mode(self, mocker):
+    def test_toggle_check_mode(self, mocker: MockerFixture):
         # Mock methods
         mock_grbl_toggle_checkmode = mocker.patch.object(
             GrblController,
@@ -334,7 +352,12 @@ class TestControlView:
 
     @pytest.mark.parametrize("file_path", ['', '/path/to/file.gcode'])
     @pytest.mark.parametrize("modified", [False, True])
-    def test_start_file_stream(self, mocker, file_path, modified):
+    def test_start_file_stream(
+        self,
+        mocker: MockerFixture,
+        file_path,
+        modified
+    ):
         # Mock code editor methods
         mock_get_file_path = mocker.patch.object(
             CodeEditor,
@@ -373,7 +396,12 @@ class TestControlView:
                 (QDialog.Rejected, False)
             ]
         )
-    def test_configure_grbl(self, mocker, dialogResponse, expected_updated):
+    def test_configure_grbl(
+        self,
+        mocker: MockerFixture,
+        dialogResponse,
+        expected_updated
+    ):
         # Mock methods
         mock_query_settings = mocker.patch.object(
             ControlView,
@@ -403,7 +431,7 @@ class TestControlView:
         assert mock_grbl_set_settings.call_count == (1 if expected_updated else 0)
         assert mock_popup.call_count == (1 if expected_updated else 0)
 
-    def test_configure_grbl_no_changes(self, mocker):
+    def test_configure_grbl_no_changes(self, mocker: MockerFixture):
         # Mock methods
         mock_query_settings = mocker.patch.object(
             ControlView,
@@ -433,7 +461,7 @@ class TestControlView:
         assert mock_grbl_set_settings.call_count == 0
         assert mock_popup.call_count == 0
 
-    def test_control_view_write_to_terminal(self, mocker):
+    def test_control_view_write_to_terminal(self, mocker: MockerFixture):
         # Mock methods
         mock_display_text = mocker.patch.object(Terminal, 'display_text')
 
@@ -444,7 +472,7 @@ class TestControlView:
         assert mock_display_text.call_count == 1
         mock_display_text.assert_called_with('some text')
 
-    def test_control_view_update_device_status(self, mocker):
+    def test_control_view_update_device_status(self, mocker: MockerFixture):
         # Mock methods
         mock_set_status = mocker.patch.object(ControllerStatus, 'set_status')
         mock_set_feedrate = mocker.patch.object(ControllerStatus, 'set_feedrate')

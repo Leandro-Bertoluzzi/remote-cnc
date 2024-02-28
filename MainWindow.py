@@ -12,6 +12,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("background-color:#666666;")
 
     def changeView(self, widget):
+        self.centralWidget().deleteLater()
         self.setCentralWidget(widget(self))
 
     def backToMenu(self):
