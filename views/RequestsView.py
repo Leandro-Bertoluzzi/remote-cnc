@@ -3,10 +3,14 @@ from core.database.base import Session as SessionLocal
 from core.database.models import TASK_PENDING_APPROVAL_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from views.BaseListView import BaseListView
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 class RequestsView(BaseListView):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(RequestsView, self).__init__(parent)
         self.setItemListFromValues(
             'SOLICITUDES',

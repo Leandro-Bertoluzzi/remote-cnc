@@ -4,7 +4,8 @@ from components.cards.RequestCard import RequestCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from core.database.models import Task, User, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
-from views.RequestsView import RequestsView
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestRequestCard:
@@ -17,13 +18,13 @@ class TestRequestCard:
     )
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
-        mocker.patch.object(RequestsView, 'refreshLayout')
-
-        self.parent = RequestsView()
+    def setup_method(self, qtbot: QtBot, mock_view):
+        # Update task
         self.task.id = 1
         self.task.user = User('John Doe', 'john@doe.com', 'password', 'user')
-        self.card = RequestCard(self.task, parent=self.parent)
+
+        # Instantiate card
+        self.card = RequestCard(self.task, parent=mock_view)
         qtbot.addWidget(self.card)
 
     def test_request_card_init(self):
@@ -41,7 +42,7 @@ class TestRequestCard:
     @pytest.mark.parametrize("task_in_progress", [True, False])
     def test_request_card_approve_task(
         self,
-        mocker,
+        mocker: MockerFixture,
         msgBoxApprove,
         msgBoxRun,
         task_in_progress
@@ -92,7 +93,12 @@ class TestRequestCard:
                 (True, False)
             ]
     )
-    def test_request_card_approve_task_db_error(self, mocker, update_error, search_tasks_error):
+    def test_request_card_approve_task_db_error(
+        self,
+        mocker: MockerFixture,
+        update_error,
+        search_tasks_error
+    ):
         # Mock DB methods
         mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
         if update_error:
@@ -135,7 +141,12 @@ class TestRequestCard:
                 (QDialog.Rejected, False)
             ]
         )
-    def test_request_card_reject_task(self, mocker, dialogResponse, expected_updated):
+    def test_request_card_reject_task(
+        self,
+        mocker: MockerFixture,
+        dialogResponse,
+        expected_updated
+    ):
         # Mock DB methods
         mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
         # Mock TaskCancelDialog methods
@@ -158,7 +169,7 @@ class TestRequestCard:
             }
             mock_update_task_status.assert_called_with(*update_task_params.values())
 
-    def test_request_card_reject_task_db_error(self, mocker):
+    def test_request_card_reject_task_db_error(self, mocker: MockerFixture):
         # Mock TaskCancelDialog methods
         mock_input = 'A valid cancellation reason'
         mocker.patch.object(TaskCancelDialog, 'exec', return_value=QDialog.Accepted)

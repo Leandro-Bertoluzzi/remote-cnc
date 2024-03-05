@@ -3,10 +3,14 @@ from components.dialogs.UserDataDialog import UserDataDialog
 from core.database.base import Session as SessionLocal
 from core.database.repositories.userRepository import UserRepository
 from views.BaseListView import BaseListView
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 class UsersView(BaseListView):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(UsersView, self).__init__(parent)
         self.setItemListFromValues(
             'USUARIOS',

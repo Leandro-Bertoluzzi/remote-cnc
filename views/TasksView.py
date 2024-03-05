@@ -8,10 +8,14 @@ from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
 from views.BaseListView import BaseListView
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 class TasksView(BaseListView):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(TasksView, self).__init__(parent)
 
         try:

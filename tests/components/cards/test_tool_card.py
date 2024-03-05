@@ -4,19 +4,20 @@ from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from core.database.models import Tool
 from core.database.repositories.toolRepository import ToolRepository
-from views.InventoryView import InventoryView
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestToolCard:
     tool = Tool(name='Example tool', description='Just a tool')
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
-        mocker.patch.object(InventoryView, 'refreshLayout')
-
-        self.parent = InventoryView()
+    def setup_method(self, qtbot: QtBot, mock_view):
+        # Update tool
         self.tool.id = 1
-        self.card = ToolCard(self.tool, parent=self.parent)
+
+        # Instantiate card
+        self.card = ToolCard(self.tool, parent=mock_view)
         qtbot.addWidget(self.card)
 
     def test_tool_card_init(self):
@@ -30,7 +31,12 @@ class TestToolCard:
                 (QDialog.Rejected, False)
             ]
         )
-    def test_tool_card_update_tool(self, mocker, dialogResponse, expected_updated):
+    def test_tool_card_update_tool(
+        self,
+        mocker: MockerFixture,
+        dialogResponse,
+        expected_updated
+    ):
         # Mock ToolDataDialog methods
         mock_input = 'Updated tool', 'Updated description'
         mocker.patch.object(ToolDataDialog, 'exec', return_value=dialogResponse)
@@ -53,7 +59,7 @@ class TestToolCard:
             }
             mock_update_tool.assert_called_with(*update_tool_params.values())
 
-    def test_tool_card_update_tool_db_error(self, mocker):
+    def test_tool_card_update_tool_db_error(self, mocker: MockerFixture):
         # Mock ToolDataDialog methods
         mock_input = 'Updated tool', 'Updated description'
         mocker.patch.object(ToolDataDialog, 'exec', return_value=QDialog.Accepted)
@@ -83,7 +89,12 @@ class TestToolCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_tool_card_remove_tool(self, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_tool_card_remove_tool(
+        self,
+        mocker: MockerFixture,
+        msgBoxResponse,
+        expectedMethodCalls
+    ):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
@@ -96,7 +107,7 @@ class TestToolCard:
         # Validate DB calls
         assert mock_remove_tool.call_count == expectedMethodCalls
 
-    def test_tool_card_remove_tool_db_error(self, mocker):
+    def test_tool_card_remove_tool_db_error(self, mocker: MockerFixture):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 

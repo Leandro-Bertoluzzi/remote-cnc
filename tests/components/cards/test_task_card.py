@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QWidget
+from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
 from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
@@ -25,7 +25,7 @@ class TestTaskCard:
     )
 
     @pytest.fixture(scope='function')
-    def setup_method(self, qtbot: QtBot, mocker: MockerFixture):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window):
         mocker.patch.object(TasksView, 'refreshLayout')
 
         # Patch the DB methods
@@ -37,8 +37,7 @@ class TestTaskCard:
         mocker.patch.object(TaskCard, 'set_task_description')
 
         # Mock parent widget
-        self.window = QWidget()
-        self.window.startWorkerMonitor = mocker.Mock()
+        self.window = mock_window
         self.parent = TasksView(self.window)
 
         # Create an instance of the card

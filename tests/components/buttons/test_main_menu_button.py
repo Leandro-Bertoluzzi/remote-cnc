@@ -1,8 +1,10 @@
 from components.buttons.MainMenuButton import MainMenuButton, QSvgRenderer, QPainter
 from PyQt5.QtCore import QEvent
 from PyQt5.QtGui import QPaintEvent, QRegion
+from PyQt5.QtWidgets import QWidget
 import pytest
-from views.MainMenu import MainMenu
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestMainMenuButton:
@@ -13,7 +15,12 @@ class TestMainMenuButton:
                 'image.svg'
             ]
         )
-    def test_main_menu_button_init(self, qtbot, mocker, image_name):
+    def test_main_menu_button_init(
+        self,
+        qtbot: QtBot,
+        mocker: MockerFixture,
+        image_name
+    ):
         # Mock SVG creation
         mocker.patch.object(QSvgRenderer, '__init__', return_value=None)
 
@@ -38,7 +45,13 @@ class TestMainMenuButton:
                 ('image.svg', True)
             ]
         )
-    def test_main_menu_button_paint_event(self, qtbot, mocker, image_name, is_hover):
+    def test_main_menu_button_paint_event(
+        self,
+        qtbot: QtBot,
+        mocker: MockerFixture,
+        image_name,
+        is_hover
+    ):
         # Mock SVG creation
         mocker.patch.object(QSvgRenderer, '__init__', return_value=None)
 
@@ -66,7 +79,7 @@ class TestMainMenuButton:
         assert mock_painter_draw_text.call_count == 1
         assert mock_painter_draw_rect.call_count == (1 if is_hover else 0)
 
-    def test_main_menu_button_hover(self, qtbot):
+    def test_main_menu_button_hover(self, qtbot: QtBot):
         # Create test button
         button = MainMenuButton('Test Button', 'an-image.png')
         qtbot.addWidget(button)
@@ -86,16 +99,17 @@ class TestMainMenuButton:
         # Assertions
         assert button.hover is False
 
-    def test_main_menu_button_go_to_view(self, qtbot, mocker):
-        parent = MainMenu()
+    def test_main_menu_button_go_to_view(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock parent
+        parent = QWidget()
+        parent.redirectToView = mocker.Mock()
+
+        # Instantiate button
         button = MainMenuButton('Test Button', 'image.png', goToView='Test view', parent=parent)
         qtbot.addWidget(button)
-
-        # Mock parent's method
-        mock_main_menu_redirects_to_view = mocker.patch.object(MainMenu, 'redirectToView')
 
         # User interaction
         button.click()
 
         # Assertions
-        assert mock_main_menu_redirects_to_view.call_count == 1
+        parent.redirectToView.assert_called_once()

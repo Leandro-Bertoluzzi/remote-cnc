@@ -1,9 +1,11 @@
 from components.buttons.MenuButton import MenuButton
-from views.MainMenu import MainMenu
+from PyQt5.QtWidgets import QWidget
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestMenuButton:
-    def test_menu_button_init(self, qtbot):
+    def test_menu_button_init(self, qtbot: QtBot):
         button = MenuButton('Test Button')
         qtbot.addWidget(button)
 
@@ -20,16 +22,17 @@ class TestMenuButton:
 
         assert mock_on_click.call_count == 1
 
-    def test_menu_button_go_to_view(self, qtbot, mocker):
-        parent = MainMenu()
+    def test_menu_button_go_to_view(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock parent
+        parent = QWidget()
+        parent.redirectToView = mocker.Mock()
+
+        # Instantiate button
         button = MenuButton('Test Button', goToView='Test view', parent=parent)
         qtbot.addWidget(button)
-
-        # Mock parent's method
-        mock_main_menu_redirects_to_view = mocker.patch.object(MainMenu, 'redirectToView')
 
         # User interaction
         button.click()
 
         # Validate method call
-        assert mock_main_menu_redirects_to_view.call_count == 1
+        parent.redirectToView.assert_called_once()

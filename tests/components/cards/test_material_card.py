@@ -1,22 +1,23 @@
-import pytest
-from PyQt5.QtWidgets import QDialog, QMessageBox
 from components.cards.MaterialCard import MaterialCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.models import Material
 from core.database.repositories.materialRepository import MaterialRepository
-from views.InventoryView import InventoryView
+from PyQt5.QtWidgets import QDialog, QMessageBox
+import pytest
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestMaterialCard:
     material = Material(name='Example material', description='Just a material')
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
-        mocker.patch.object(InventoryView, 'refreshLayout')
-
-        self.parent = InventoryView()
+    def setup_method(self, qtbot: QtBot, mock_view):
+        # Update material
         self.material.id = 1
-        self.card = MaterialCard(self.material, parent=self.parent)
+
+        # Instantiate card
+        self.card = MaterialCard(self.material, parent=mock_view)
         qtbot.addWidget(self.card)
 
     def test_material_card_init(self):
@@ -30,7 +31,12 @@ class TestMaterialCard:
                 (QDialog.Rejected, False)
             ]
         )
-    def test_material_card_update_material(self, mocker, dialogResponse, expected_updated):
+    def test_material_card_update_material(
+        self,
+        mocker: MockerFixture,
+        dialogResponse,
+        expected_updated
+    ):
         # Mock MaterialDataDialog methods
         mock_input = 'Updated material', 'Updated description'
         mocker.patch.object(MaterialDataDialog, 'exec', return_value=dialogResponse)
@@ -53,7 +59,7 @@ class TestMaterialCard:
             }
             mock_update_material.assert_called_with(*update_material_params.values())
 
-    def test_material_card_update_material_db_error(self, mocker):
+    def test_material_card_update_material_db_error(self, mocker: MockerFixture):
         # Mock MaterialDataDialog methods
         mock_input = 'Updated material', 'Updated description'
         mocker.patch.object(MaterialDataDialog, 'exec', return_value=QDialog.Accepted)
@@ -83,7 +89,12 @@ class TestMaterialCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_material_card_remove_material(self, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_material_card_remove_material(
+        self,
+        mocker: MockerFixture,
+        msgBoxResponse,
+        expectedMethodCalls
+    ):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
@@ -96,7 +107,7 @@ class TestMaterialCard:
         # Validate DB calls
         assert mock_remove_material.call_count == expectedMethodCalls
 
-    def test_material_card_remove_material_db_error(self, mocker):
+    def test_material_card_remove_material_db_error(self, mocker: MockerFixture):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 

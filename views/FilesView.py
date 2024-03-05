@@ -6,10 +6,14 @@ from core.database.repositories.fileRepository import DuplicatedFileError, \
     DuplicatedFileNameError, FileRepository
 from core.utils.files import computeSHA256, copyFile
 from views.BaseListView import BaseListView
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 class FilesView(BaseListView):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(FilesView, self).__init__(parent)
         self.setItemListFromValues(
             'ARCHIVOS',

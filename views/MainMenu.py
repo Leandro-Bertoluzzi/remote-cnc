@@ -7,10 +7,14 @@ from views.InventoryView import InventoryView
 from views.RequestsView import RequestsView
 from views.UsersView import UsersView
 from views.TasksView import TasksView
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 class MainMenu(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(MainMenu, self).__init__(parent)
 
         # Buttons

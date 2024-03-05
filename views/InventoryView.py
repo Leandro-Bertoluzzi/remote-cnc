@@ -6,10 +6,14 @@ from core.database.base import Session as SessionLocal
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.toolRepository import ToolRepository
 from views.BaseListView import BaseListView
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 class InventoryView(BaseListView):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(InventoryView, self).__init__(parent)
 
         self.setItemListFromValues(

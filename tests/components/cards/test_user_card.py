@@ -4,19 +4,20 @@ from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
 from core.database.models import User
 from core.database.repositories.userRepository import UserRepository
-from views.UsersView import UsersView
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestUserCard:
     user = User(name='John Doe', email='test@testing.com', password='1234', role='user')
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
-        mocker.patch.object(UsersView, 'refreshLayout')
-
-        self.parent = UsersView()
+    def setup_method(self, qtbot: QtBot, mock_view):
+        # Update user
         self.user.id = 1
-        self.card = UserCard(self.user, parent=self.parent)
+
+        # Instantiate card
+        self.card = UserCard(self.user, parent=mock_view)
         qtbot.addWidget(self.card)
 
     def test_user_card_init(self):
@@ -30,7 +31,12 @@ class TestUserCard:
                 (QDialog.Rejected, False)
             ]
         )
-    def test_user_card_update_user(self, mocker, dialogResponse, expected_updated):
+    def test_user_card_update_user(
+        self,
+        mocker: MockerFixture,
+        dialogResponse,
+        expected_updated
+    ):
         # Mock UserDataDialog methods
         mock_input = 'Updated Name', 'updated@email.com', 'updatedpassword', 'admin'
         mocker.patch.object(UserDataDialog, 'exec', return_value=dialogResponse)
@@ -54,7 +60,7 @@ class TestUserCard:
             }
             mock_update_user.assert_called_with(*update_user_params.values())
 
-    def test_user_card_update_user_db_error(self, mocker):
+    def test_user_card_update_user_db_error(self, mocker: MockerFixture):
         # Mock UserDataDialog methods
         mock_input = 'Updated Name', 'updated@email.com', 'updatedpassword', 'admin'
         mocker.patch.object(UserDataDialog, 'exec', return_value=QDialog.Accepted)
@@ -84,7 +90,12 @@ class TestUserCard:
                 (QMessageBox.Cancel, 0)
             ]
         )
-    def test_user_card_remove_user(self, mocker, msgBoxResponse, expectedMethodCalls):
+    def test_user_card_remove_user(
+        self,
+        mocker: MockerFixture,
+        msgBoxResponse,
+        expectedMethodCalls
+    ):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
@@ -97,7 +108,7 @@ class TestUserCard:
         # Validate DB calls
         assert mock_remove_user.call_count == expectedMethodCalls
 
-    def test_user_card_remove_user_db_error(self, mocker):
+    def test_user_card_remove_user_db_error(self, mocker: MockerFixture):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
