@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
+from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QWidget
 from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
@@ -11,6 +11,7 @@ from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
+from typing import Union
 from views.TasksView import TasksView
 
 
@@ -32,9 +33,16 @@ class TestTaskCard:
         mocker.patch.object(ToolRepository, 'get_all_tools', return_value=[])
         mocker.patch.object(MaterialRepository, 'get_all_materials', return_value=[])
 
-        self.parent = TasksView()
-        self.task.id = 1
+        # Mock card's auxiliary methods
+        mocker.patch.object(TaskCard, 'set_task_description')
 
+        # Mock parent widget
+        self.window = QWidget()
+        self.window.startWorkerMonitor = mocker.Mock()
+        self.parent = TasksView(self.window)
+
+        # Create an instance of the card
+        self.task.id = 1
         self.card = TaskCard(self.task, False, parent=self.parent)
         qtbot.addWidget(self.card)
 
@@ -62,7 +70,7 @@ class TestTaskCard:
         self.task.id = 1
 
         # Mock card's auxiliary methods
-        mock_show_progress = mocker.patch.object(TaskCard, 'show_task_progress')
+        mock_set_task_description = mocker.patch.object(TaskCard, 'set_task_description')
 
         # Instantiate card
         card = TaskCard(self.task, False)
@@ -71,14 +79,16 @@ class TestTaskCard:
         # Assertions
         assert card.task == self.task
         assert card.layout() is not None
-        assert card.label_description.text() == f'Tarea 1: Example task\nEstado: {status}'
         assert helpers.count_widgets(card.layout_buttons, QPushButton) == expected_buttons
-        assert mock_show_progress.call_count == (1 if status == 'in_progress' else 0)
+        assert mock_set_task_description.call_count == 1
 
-    def test_task_card_init_device_busy(self, qtbot: QtBot):
+    def test_task_card_init_device_busy(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock task status
         self.task.status = TASK_ON_HOLD_STATUS
         self.task.id = 1
+
+        # Mock card's auxiliary methods
+        mocker.patch.object(TaskCard, 'set_task_description')
 
         # Instantiate card
         card = TaskCard(self.task, True)
@@ -251,34 +261,50 @@ class TestTaskCard:
         assert mock_popup.call_count == 1
 
     @pytest.mark.parametrize(
-            "status",
+            "status_db,worker_task_id,status_worker",
             [
-                'pending_approval',
-                'on_hold',
-                'in_progress',
-                'finished',
-                'rejected',
-                'cancelled'
+                ('pending_approval', '', ''),
+                ('on_hold', '', ''),
+                ('in_progress', 'abc', 'PENDING'),
+                ('in_progress', 'abc', 'PROGRESS'),
+                ('in_progress', 'abc', 'FAILURE'),
+                ('finished', 'def', 'SUCCESS'),
+                ('rejected', '', ''),
+                ('cancelled', '', ''),
+                ('cancelled', 'xyz', 'FAILURE')
             ]
         )
-    def test_task_card_show_task_progress(
+    def test_task_card_set_task_description(
         self,
         qtbot: QtBot,
         mocker: MockerFixture,
-        status
+        status_db,
+        worker_task_id,
+        status_worker
     ):
         # Mock task status
-        self.task.status = status
+        self.task.status = status_db
 
         # Mock Celery task metadata
-        task_metadata = {
-            'status': 'PROGRESS',
-            'result': {
+        task_info: Union[str, dict[str, int]] = ''
+        if status_worker == 'FAILURE':
+            task_info = 'Mocked error message'
+        if status_worker == 'PROGRESS':
+            task_info = {
                 'sent_lines': 15,
                 'processed_lines': 10,
                 'total_lines': 20
             }
+        task_metadata = {
+            'status': status_worker,
+            'result': task_info
         }
+
+        # Mock Redis methods
+        mocker.patch(
+            'components.cards.TaskCard.get_value_from_id',
+            return_value=worker_task_id
+        )
 
         # Mock Celery methods
         mock_query_task = mocker.patch.object(
@@ -297,21 +323,26 @@ class TestTaskCard:
         qtbot.addWidget(card)
 
         # Assertions
-        if status == 'in_progress':
+        expected_text = f'Tarea 1: Example task\nEstado: {status_db}'
+
+        if status_worker == 'PROGRESS':
             expected_text = (
                 'Tarea 1: Example task\n'
-                'Estado: in_progress\n'
+                f'Estado: {status_db}\n'
                 'Enviado: 15/20 (75%)\n'
                 'Ejecutado: 10/20 (50%)'
             )
-            assert card.label_description.text() == expected_text
-            assert mock_query_task.call_count == 1
-            assert mock_query_task_info.call_count == 2
-            return
 
-        assert card.label_description.text() == f'Tarea 1: Example task\nEstado: {status}'
-        assert mock_query_task.call_count == 0
-        assert mock_query_task_info.call_count == 0
+        if status_worker == 'FAILURE':
+            expected_text = (
+                'Tarea 1: Example task\n'
+                f'Estado: {status_db} (FAILED)\n'
+                'Error: Mocked error message'
+            )
+
+        assert card.label_description.text() == expected_text
+        assert mock_query_task.call_count == (1 if worker_task_id else 0)
+        assert mock_query_task_info.call_count == (2 if worker_task_id else 0)
 
     @pytest.mark.parametrize(
             "dialogResponse,expected_updated",
@@ -475,6 +506,7 @@ class TestTaskCard:
         accepted_run = (msgBoxRun == QMessageBox.Yes)
         expected_run = not task_in_progress and accepted_run
         assert mock_add_task_in_queue.call_count == (1 if expected_run else 0)
+        assert self.window.startWorkerMonitor.call_count == (1 if expected_run else 0)
         assert mock_info_popup.call_count == (1 if expected_run else 0)
         expected_error = task_in_progress and accepted_run
         assert mock_error_popup.call_count == (1 if expected_error else 0)

@@ -1,6 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
 from helpers.utils import applyStylesheet
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 class Card(QWidget):
@@ -23,11 +27,16 @@ class Card(QWidget):
         # Apply custom styles
         applyStylesheet(self, __file__, "Card.qss")
 
+    # Utilities
+
     def setDescription(self, description: str) -> None:
         self.label_description.setText(description)
 
     def addButton(self, button: QPushButton) -> None:
         self.layout_buttons.addWidget(button)
+
+    def getWindow(self) -> 'MainWindow':
+        return self.parent().parent()  # type: ignore
 
     # Notifications
 

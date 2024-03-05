@@ -14,7 +14,7 @@ def applyStylesheet(self: QWidget, current_file: str, styles_file: str):
         self.setStyleSheet(styles.read())
 
 
-def send_task_to_worker(db_task_id: int):
+def send_task_to_worker(db_task_id: int) -> str:
     """Request the task to be executed by the worker.
     """
     worker_task = executeTask.delay(
@@ -25,6 +25,8 @@ def send_task_to_worker(db_task_id: int):
         SERIAL_BAUDRATE
     )
     add_value_with_id('task', id=db_task_id, value=worker_task.task_id)
+
+    return worker_task.task_id
 
 
 # Decorators

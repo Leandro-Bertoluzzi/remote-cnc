@@ -1,20 +1,21 @@
-import pytest
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-
-from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from core.database.repositories.fileRepository import DuplicatedFileError, \
     DuplicatedFileNameError, FileRepository
+from MainWindow import MainWindow
+from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
+import pytest
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 from views.FilesView import FilesView
 from core.database.models import File, User
 
 
 class TestFilesView:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         file_1 = File(user_id=1, file_name='example-file-1', file_hash='hashed-file-1')
         file_2 = File(user_id=1, file_name='example-file-2', file_hash='hashed-file-2')
         file_3 = File(user_id=1, file_name='example-file-3', file_hash='hashed-file-3')
@@ -38,8 +39,8 @@ class TestFilesView:
         )
 
         # Create an instance of FilesView
-        self.parent = MainWindow()
-        self.files_view = FilesView(parent=self.parent)
+        self.parent = mock_window
+        self.files_view = FilesView(self.parent)
         qtbot.addWidget(self.files_view)
 
     def test_files_view_init(self, helpers):
@@ -56,7 +57,7 @@ class TestFilesView:
             'get_all_files',
             return_value=[]
         )
-        files_view = FilesView(parent=self.parent)
+        files_view = FilesView(self.parent)
         # Validate DB calls
         mock_get_all_files.assert_called_once()
 
@@ -76,7 +77,7 @@ class TestFilesView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Create test view
-        files_view = FilesView(parent=self.parent)
+        files_view = FilesView(self.parent)
 
         # Assertions
         mock_get_all_files.assert_called_once()
@@ -116,7 +117,7 @@ class TestFilesView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Call the method under test
-        files_view = FilesView(parent=self.parent)
+        files_view = FilesView(self.parent)
         files_view.refreshLayout()
 
         # Assertions

@@ -4,9 +4,8 @@ from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from core.database.base import Session as SessionLocal
-from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_IN_PROGRESS_STATUS, \
-    TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS, \
-    TASK_FINISHED_STATUS
+from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
+    TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from core.utils.storage import get_value_from_id
 from helpers.utils import needs_confirmation, send_task_to_worker
@@ -35,11 +34,7 @@ class TaskCard(Card):
 
         # Populate card
         self.addButtons(task.status)
-        description = f'Tarea {task.id}: {task.name}\nEstado: {task.status}'
-        self.setDescription(description)
-
-        if task.status == TASK_IN_PROGRESS_STATUS:
-            self.show_task_progress()
+        self.set_task_description()
 
     def addButtons(self, status: str):
         """Adds buttons according to task status:
@@ -79,19 +74,23 @@ class TaskCard(Card):
             repeatTaskBtn.clicked.connect(self.repeatTask)
             self.addButton(repeatTaskBtn)
 
-    def show_task_progress(self):
-        if self.task.status != TASK_IN_PROGRESS_STATUS:
-            return
-
-        task_id = get_value_from_id('task', self.task.id)
-        task_state = AsyncResult(task_id)
-
-        task_info = task_state.info
-        task_status = task_state.status
-
+    def set_task_description(self):
+        # Default
         task_id = self.task.id
         task_name = self.task.name
         task_status_db = self.task.status
+        description = f'Tarea {task_id}: {task_name}\nEstado: {task_status_db}'
+
+        # Check if it has a worker task ID
+        task_worker_id = get_value_from_id('task', self.task.id)
+        if not task_worker_id:
+            self.setDescription(description)
+            return
+
+        # Get status in worker
+        task_state = AsyncResult(task_worker_id)
+        task_info = task_state.info
+        task_status = task_state.status
 
         if task_status == 'PROGRESS':
             sent_lines = task_info.get('sent_lines')
@@ -107,7 +106,6 @@ class TaskCard(Card):
                 f'Enviado: {sent_lines}/{total_lines} ({sent}%)\n'
                 f'Ejecutado: {processed_lines}/{total_lines} ({executed}%)'
             )
-            self.setDescription(description)
 
         if task_status == 'FAILURE':
             error_msg = task_info
@@ -115,7 +113,8 @@ class TaskCard(Card):
                 f'Tarea {task_id}: {task_name}\nEstado: {task_status_db} (FAILED)\n'
                 f'Error: {error_msg}'
             )
-            self.setDescription(description)
+
+        self.setDescription(description)
 
     def updateTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
@@ -239,7 +238,8 @@ class TaskCard(Card):
                 )
                 return
 
-            send_task_to_worker(self.task.id)
+            worker_task_id = send_task_to_worker(self.task.id)
+            self.getWindow().startWorkerMonitor(worker_task_id)
             self.showInformation(
                 'Tarea enviada',
                 'Se envió la tarea al equipo para su ejecución'

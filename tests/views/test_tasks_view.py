@@ -1,22 +1,23 @@
-import pytest
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-
-from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
 from components.cards.MsgCard import MsgCard
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
+from core.database.models import Task
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
+from MainWindow import MainWindow
+from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
+import pytest
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 from views.TasksView import TasksView
-from core.database.models import Task
 
 
 class TestTasksView:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         task_1 = Task(
             user_id=1,
             file_id=1,
@@ -52,9 +53,12 @@ class TestTasksView:
             return_value=self.tasks_list
         )
 
+        # Patch the constructor of UI components
+        mocker.patch.object(TaskCard, 'set_task_description')
+
         # Create an instance of TasksView
-        self.parent = MainWindow()
-        self.tasks_view = TasksView(parent=self.parent)
+        self.parent = mock_window
+        self.tasks_view = TasksView(self.parent)
         qtbot.addWidget(self.tasks_view)
 
     def test_tasks_view_init(self, helpers):
@@ -65,13 +69,13 @@ class TestTasksView:
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 3
 
-    def test_tasks_view_init_with_no_tasks(self, mocker, helpers):
+    def test_tasks_view_init_with_no_tasks(self, mocker: MockerFixture, helpers):
         mock_get_all_tasks = mocker.patch.object(
             TaskRepository,
             'get_all_tasks_from_user',
             return_value=[]
         )
-        tasks_view = TasksView(parent=self.parent)
+        tasks_view = TasksView(self.parent)
         # Validate DB calls
         mock_get_all_tasks.assert_called_once()
 
@@ -147,7 +151,7 @@ class TestTasksView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Create test view
-        tasks_view = TasksView(parent=self.parent)
+        tasks_view = TasksView(self.parent)
 
         # Helper flags
         should_query_materials = not files_error
@@ -178,7 +182,7 @@ class TestTasksView:
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 2
 
-    def test_tasks_view_refresh_layout_db_error(self, mocker, helpers):
+    def test_tasks_view_refresh_layout_db_error(self, mocker: MockerFixture, helpers):
         mock_get_all_tasks = mocker.patch.object(
             TaskRepository,
             'get_all_tasks_from_user',
@@ -192,7 +196,7 @@ class TestTasksView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Call the method under test
-        tasks_view = TasksView(parent=self.parent)
+        tasks_view = TasksView(self.parent)
         tasks_view.refreshLayout()
 
         # Assertions
@@ -201,7 +205,7 @@ class TestTasksView:
         assert helpers.count_widgets(tasks_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(tasks_view.layout(), TaskCard) == 0
 
-    def test_tasks_view_create_task(self, mocker, helpers):
+    def test_tasks_view_create_task(self, mocker: MockerFixture, helpers):
         # Mock TaskDataDialog methods
         mock_inputs = 2, 3, 4, 'Example task 4', 'Just a simple description'
         mocker.patch.object(TaskDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -247,7 +251,7 @@ class TestTasksView:
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 4
 
-    def test_tasks_view_create_task_db_error(self, mocker, helpers):
+    def test_tasks_view_create_task_db_error(self, mocker: MockerFixture, helpers):
         # Mock TaskDataDialog methods
         mock_inputs = 2, 3, 4, 'Example task 4', 'Just a simple description'
         mocker.patch.object(TaskDataDialog, 'exec', return_value=QDialogButtonBox.Save)

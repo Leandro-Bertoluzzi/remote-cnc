@@ -1,23 +1,23 @@
-import pytest
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-
-from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
 from components.cards.MsgCard import MsgCard
 from components.cards.ToolCard import ToolCard
 from components.cards.MaterialCard import MaterialCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
+from core.database.models import Material, Tool
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.toolRepository import ToolRepository
+from MainWindow import MainWindow
+from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
+import pytest
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 from views.InventoryView import InventoryView
-from core.database.models import Tool
-from core.database.models import Material
 
 
 class TestInventoryView:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         tool_1 = Tool(name='Example tool 1', description='It is the first tool')
         tool_2 = Tool(name='Example tool 2', description='It is the second tool')
         tool_3 = Tool(name='Example tool 3', description='It is the third tool')
@@ -43,8 +43,8 @@ class TestInventoryView:
         )
 
         # Create an instance of InventoryView
-        self.parent = MainWindow()
-        self.inventory_view = InventoryView(parent=self.parent)
+        self.parent = mock_window
+        self.inventory_view = InventoryView(self.parent)
         qtbot.addWidget(self.inventory_view)
 
     def test_inventory_view_init(self, helpers):
@@ -68,7 +68,7 @@ class TestInventoryView:
             'get_all_materials',
             return_value=[]
         )
-        inventory_view = InventoryView(parent=self.parent)
+        inventory_view = InventoryView(self.parent)
 
         # Validate DB calls
         mock_get_all_tools.assert_called_once()
@@ -117,7 +117,7 @@ class TestInventoryView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Create test view
-        inventory_view = InventoryView(parent=self.parent)
+        inventory_view = InventoryView(self.parent)
 
         # Assertions
         assert mock_get_all_tools.call_count == 1
@@ -196,7 +196,7 @@ class TestInventoryView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Call the method under test
-        inventory_view = InventoryView(parent=self.parent)
+        inventory_view = InventoryView(self.parent)
         inventory_view.refreshLayout()
 
         # Assertions

@@ -4,8 +4,11 @@ from PyQt5.QtCore import Qt
 from components.cards.MsgCard import MsgCard
 from components.buttons.MenuButton import MenuButton
 from core.database.models import Base
-from typing import List, Callable
+from typing import List, Callable, TYPE_CHECKING
 from typing_extensions import TypedDict
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 
 ViewList = TypedDict('ViewList', {
@@ -19,7 +22,7 @@ ViewList = TypedDict('ViewList', {
 
 
 class BaseListView(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(BaseListView, self).__init__(parent)
 
         layout = QVBoxLayout()
@@ -107,4 +110,4 @@ class BaseListView(QWidget):
 
     @abstractmethod
     def getItems(self) -> list[Base]:
-        pass
+        pass    # pragma: no cover

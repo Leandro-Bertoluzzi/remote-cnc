@@ -1,4 +1,3 @@
-from MainWindow import MainWindow
 from components.buttons.MenuButton import MenuButton
 from containers.ControllerActions import ControllerActions
 from components.CodeEditor import CodeEditor
@@ -9,6 +8,7 @@ from core.database.repositories.taskRepository import TaskRepository
 from core.grbl.grblController import GrblController
 from helpers.grblSync import GrblSync
 from helpers.fileSender import FileSender
+from MainWindow import MainWindow
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
@@ -19,15 +19,7 @@ from views.ControlView import ControlView
 
 class TestControlView:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot: QtBot, mocker: MockerFixture):
-        # Create an instance of the parent
-        self.parent = MainWindow()
-
-        # Mock parent methods
-        self.mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
-        self.mock_remove_toolbar = mocker.patch.object(MainWindow, 'removeToolBar')
-        self.mock_back_to_menu = mocker.patch.object(MainWindow, 'backToMenu')
-
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock DB methods
         mocker.patch.object(
             TaskRepository,
@@ -36,6 +28,7 @@ class TestControlView:
         )
 
         # Create an instance of ControlView
+        self.parent = mock_window
         self.control_view = ControlView(self.parent)
         qtbot.addWidget(self.control_view)
 
@@ -47,8 +40,8 @@ class TestControlView:
         helpers,
         device_busy
     ):
-        # Mock parent methods
-        mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
+        # Reset parent mocks call count
+        self.parent.addToolBar.reset_mock()
 
         # Mock DB methods
         mock_check_tasks_in_progress = mocker.patch.object(
@@ -70,7 +63,7 @@ class TestControlView:
         assert helpers.count_grid_widgets(layout, Terminal) == 1
 
         # More assertions
-        assert mock_add_toolbar.call_count == (1 if device_busy else 2)
+        assert self.parent.addToolBar.call_count == (1 if device_busy else 2)
         assert mock_check_tasks_in_progress.call_count == 1
 
     def test_control_view_init_db_error(
@@ -79,11 +72,8 @@ class TestControlView:
         mocker: MockerFixture,
         helpers
     ):
-        # Create an instance of the parent
-        parent = MainWindow()
-
-        # Mock parent methods
-        mock_add_toolbar = mocker.patch.object(MainWindow, 'addToolBar')
+        # Reset parent mocks call count
+        self.parent.addToolBar.reset_mock()
 
         # Mock other functions
         mock_check_tasks_in_progress = mocker.patch.object(
@@ -96,7 +86,7 @@ class TestControlView:
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
         # Create an instance of ControlView
-        control_view = ControlView(parent)
+        control_view = ControlView(self.parent)
         qtbot.addWidget(control_view)
 
         # Validate amount of each type of widget
@@ -109,7 +99,7 @@ class TestControlView:
 
         # More assertions
         mock_popup.assert_called_once()
-        assert mock_add_toolbar.call_count == 1
+        self.parent.addToolBar.assert_called_once()
         mock_check_tasks_in_progress.assert_called_once()
 
     @pytest.mark.parametrize("device_busy", [False, True])
@@ -121,8 +111,8 @@ class TestControlView:
         self.control_view.backToMenu()
 
         # Assertions
-        assert self.mock_remove_toolbar.call_count == (1 if device_busy else 2)
-        self.mock_back_to_menu.assert_called_once()
+        self.parent.removeToolBar.call_count == (1 if device_busy else 2)
+        self.parent.backToMenu.assert_called_once()
 
     def test_control_view_close_event(self, mocker: MockerFixture):
         # Mock methods

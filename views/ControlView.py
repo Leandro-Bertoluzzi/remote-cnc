@@ -20,6 +20,10 @@ from core.utils.serial import SerialService
 from helpers.fileSender import FileSender
 from helpers.grblSync import GrblSync
 import logging
+from typing import cast, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MainWindow import MainWindow   # pragma: no cover
 
 GRBL_STATUS_DISCONNECTED = {
     'activeState': 'disconnected',
@@ -29,7 +33,7 @@ GRBL_STATUS_DISCONNECTED = {
 
 
 class ControlView(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MainWindow'):
         super(ControlView, self).__init__(parent)
 
         layout = QGridLayout(self)
@@ -108,13 +112,13 @@ class ControlView(QWidget):
         self.createToolBars()
         panel_row = 0
         if not self.device_busy:
-            self.layout().addWidget(self.status_monitor, 0, 0, 3, 1)
+            self.getLayout().addWidget(self.status_monitor, 0, 0, 3, 1)
             panel_row = 3
-        self.layout().addWidget(self.code_editor, 0, 1, 3, 1)
-        self.layout().addWidget(self.control_panel, panel_row, 0)
-        self.layout().addWidget(self.terminal, 3, 1)
+        self.getLayout().addWidget(self.code_editor, 0, 1, 3, 1)
+        self.getLayout().addWidget(self.control_panel, panel_row, 0)
+        self.getLayout().addWidget(self.terminal, 3, 1)
 
-        self.layout().addWidget(
+        self.getLayout().addWidget(
             MenuButton('Volver al menú', onClick=self.backToMenu),
             5, 0, 1, 2,
             alignment=Qt.AlignCenter
@@ -122,6 +126,9 @@ class ControlView(QWidget):
 
     def __del__(self):
         self.disconnect_device()
+
+    def getLayout(self) -> QGridLayout:
+        return cast(QGridLayout, self.layout())
 
     def closeEvent(self, event: QCloseEvent):
         self.disconnect_device()
