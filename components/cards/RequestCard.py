@@ -5,6 +5,7 @@ from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
+from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.utils import needs_confirmation, send_task_to_worker
 
 
@@ -30,6 +31,9 @@ class RequestCard(Card):
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
             repository.update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
+            if not CncWorkerMonitor.is_device_enabled():
+                self.parent().refreshLayout()
+                return
             if repository.are_there_tasks_in_progress():
                 self.parent().refreshLayout()
                 return
@@ -49,7 +53,8 @@ class RequestCard(Card):
         'Ejecutar tarea'
     )
     def runTask(self):
-        send_task_to_worker(self.task.id)
+        worker_task_id = send_task_to_worker(self.task.id)
+        self.getWindow().startWorkerMonitor(worker_task_id)
         self.showInformation(
             'Tarea enviada',
             'Se envió la tarea al equipo para su ejecución'

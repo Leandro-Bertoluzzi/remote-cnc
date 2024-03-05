@@ -8,6 +8,7 @@ from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STAT
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from core.utils.storage import get_value_from_id
+from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.utils import needs_confirmation, send_task_to_worker
 
 
@@ -231,6 +232,13 @@ class TaskCard(Card):
         try:
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
+            if not CncWorkerMonitor.is_device_enabled():
+                self.showError(
+                    'Equipo deshabilitado',
+                    'Ejecución cancelada: El equipo está deshabilitado'
+                )
+                return
+
             if repository.are_there_tasks_in_progress():
                 self.showError(
                     'Equipo ocupado',

@@ -22,8 +22,12 @@ class MainWindow(QMainWindow):
 
         # Initial status
         self.status_bar.updateWorkerStatus('DESCONECTADO')
+        self.status_bar.updateDeviceStatus('---')
         if CncWorkerMonitor.is_worker_on():
+            self.status_bar.updateDeviceStatus('HABILITADO')
             self.status_bar.updateWorkerStatus('CONECTADO')
+            if CncWorkerMonitor.is_worker_running():
+                self.status_bar.updateDeviceStatus('TRABAJANDO...')
 
     # Navigation
 
@@ -53,6 +57,7 @@ class MainWindow(QMainWindow):
     # Slots
 
     def startWorkerMonitor(self, task_worker_id: str):
+        self.status_bar.updateDeviceStatus('TRABAJANDO...')
         self.worker_monitor.start_task_monitor(task_worker_id)
         self.status_bar.setTemporalStatusMessage('Iniciado el monitor del worker')
 

@@ -4,8 +4,10 @@ from components.cards.RequestCard import RequestCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from core.database.models import Task, User, TASK_APPROVED_STATUS, TASK_REJECTED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
+from helpers.cncWorkerMonitor import CncWorkerMonitor
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
+from views.RequestsView import RequestsView
 
 
 class TestRequestCard:
@@ -18,13 +20,15 @@ class TestRequestCard:
     )
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot: QtBot, mock_view):
+    def setup_method(self, qtbot: QtBot, mock_window):
         # Update task
         self.task.id = 1
         self.task.user = User('John Doe', 'john@doe.com', 'password', 'user')
 
         # Instantiate card
-        self.card = RequestCard(self.task, parent=mock_view)
+        self.window = mock_window
+        self.parent = RequestsView(self.window)
+        self.card = RequestCard(self.task, parent=self.parent)
         qtbot.addWidget(self.card)
 
     def test_request_card_init(self):
@@ -40,12 +44,14 @@ class TestRequestCard:
             ]
         )
     @pytest.mark.parametrize("task_in_progress", [True, False])
+    @pytest.mark.parametrize("device_enabled", [True, False])
     def test_request_card_approve_task(
         self,
         mocker: MockerFixture,
         msgBoxApprove,
         msgBoxRun,
-        task_in_progress
+        task_in_progress,
+        device_enabled
     ):
         # Mock DB methods
         mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
@@ -62,6 +68,9 @@ class TestRequestCard:
             side_effect=[msgBoxApprove, msgBoxRun]
         )
         mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
+
+        # Mock worker monitor methods
+        mocker.patch.object(CncWorkerMonitor, 'is_device_enabled', return_value=device_enabled)
 
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.send_task_to_worker')
@@ -82,8 +91,10 @@ class TestRequestCard:
 
         # Validate call to tasks manager
         accepted_run = (msgBoxRun == QMessageBox.Yes)
-        expected_run = expected_updated and not task_in_progress and accepted_run
+        can_run = not task_in_progress and device_enabled
+        expected_run = expected_updated and accepted_run and can_run
         assert mock_add_task_in_queue.call_count == (1 if expected_run else 0)
+        assert self.window.startWorkerMonitor.call_count == (1 if expected_run else 0)
         assert mock_popup.call_count == (1 if expected_run else 0)
 
     @pytest.mark.parametrize(

@@ -1,5 +1,6 @@
 from celery.result import AsyncResult
 from core.worker.tasks import app
+from functools import reduce
 from PyQt5.QtCore import QTimer
 from typing import TYPE_CHECKING
 
@@ -7,7 +8,7 @@ if TYPE_CHECKING:
     from MainWindow import MainWindow   # pragma: no cover
 
 # Constants
-STATUS_POLL = 60 * 1000  # miliseconds
+STATUS_POLL = 10 * 1000  # miliseconds
 
 
 class CncWorkerMonitor:
@@ -54,6 +55,22 @@ class CncWorkerMonitor:
     def is_worker_on(cls):
         try:
             return not not app.control.ping()
+        except Exception:
+            return False
+
+    @classmethod
+    def is_worker_running(cls):
+        inspector = app.control.inspect()
+        try:
+            active_tasks = inspector.active()
+            if not active_tasks:
+                return False
+            tasks_count = reduce(
+                lambda x, tasks: x + len(tasks),
+                active_tasks.values(),
+                0
+            )
+            return tasks_count > 0
         except Exception:
             return False
 

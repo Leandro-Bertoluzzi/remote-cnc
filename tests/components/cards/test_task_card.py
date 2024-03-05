@@ -9,6 +9,7 @@ from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
+from helpers.cncWorkerMonitor import CncWorkerMonitor
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 from typing import Union
@@ -466,12 +467,14 @@ class TestTaskCard:
             ]
         )
     @pytest.mark.parametrize("task_in_progress", [True, False])
+    @pytest.mark.parametrize("device_enabled", [False, True])
     def test_task_card_run_task(
         self,
         setup_method,
         mocker,
         msgBoxRun,
-        task_in_progress
+        task_in_progress,
+        device_enabled
     ):
         # Mock DB methods
         mocker.patch.object(
@@ -495,6 +498,9 @@ class TestTaskCard:
             'critical',
             return_value=QMessageBox.Ok
         )
+        # Mock worker monitor methods
+        mocker.patch.object(CncWorkerMonitor, 'is_device_enabled', return_value=device_enabled)
+
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.TaskCard.send_task_to_worker')
 
@@ -503,11 +509,11 @@ class TestTaskCard:
 
         # Validate call to tasks manager
         accepted_run = (msgBoxRun == QMessageBox.Yes)
-        expected_run = not task_in_progress and accepted_run
+        expected_run = not task_in_progress and accepted_run and device_enabled
         assert mock_add_task_in_queue.call_count == (1 if expected_run else 0)
         assert self.window.startWorkerMonitor.call_count == (1 if expected_run else 0)
         assert mock_info_popup.call_count == (1 if expected_run else 0)
-        expected_error = task_in_progress and accepted_run
+        expected_error = (task_in_progress or not device_enabled) and accepted_run
         assert mock_error_popup.call_count == (1 if expected_error else 0)
 
     def test_task_card_run_task_db_error(

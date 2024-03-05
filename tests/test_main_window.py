@@ -11,14 +11,17 @@ from pytestqt.qtbot import QtBot
 
 class TestMainWindow:
     @pytest.mark.parametrize("worker_on", [False, True])
+    @pytest.mark.parametrize("worker_running", [False, True])
     def test_main_window_init(
         self,
         qtbot: QtBot,
         mocker: MockerFixture,
-        worker_on
+        worker_on,
+        worker_running
     ):
         # Mock worker monitor methods
         mocker.patch.object(CncWorkerMonitor, 'is_worker_on', return_value=worker_on)
+        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=worker_running)
 
         # Mock QMessageBox method
         mocker.patch.object(
@@ -34,10 +37,23 @@ class TestMainWindow:
         # Assertions
         assert type(window.centralWidget()) is MainMenu
         assert window.windowTitle() == "CNC admin"
-        expected_worker_status = 'Worker : CONECTADO' if worker_on else 'Worker : DESCONECTADO'
+        expected_worker_status = (
+            'Worker : CONECTADO' if worker_on else 'Worker : DESCONECTADO'
+        )
         assert window.status_bar.label_worker.text() == expected_worker_status
 
+        expected_device_status = 'Dispositivo : ---'
+        if worker_on:
+            expected_device_status = (
+                'Dispositivo : TRABAJANDO...' if worker_running else 'Dispositivo : HABILITADO'
+            )
+        assert window.status_bar.label_device.text() == expected_device_status
+
     def test_main_window_changes_view(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock worker monitor methods
+        mocker.patch.object(CncWorkerMonitor, 'is_worker_on', return_value=False)
+        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
+
         # Instantiate window
         window = MainWindow()
         qtbot.addWidget(window)
@@ -72,6 +88,10 @@ class TestMainWindow:
         msgBoxResponse,
         expectedMethodCalls
     ):
+        # Mock worker monitor methods
+        mocker.patch.object(CncWorkerMonitor, 'is_worker_on', return_value=False)
+        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
+
         # Instantiate window
         window = MainWindow()
         qtbot.addWidget(window)
