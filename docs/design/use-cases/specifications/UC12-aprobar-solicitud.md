@@ -14,7 +14,28 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda v
 | :---        | :---        | :---        |
 | 1      | En la vista de "Solicitudes", selecciona una de ellas. |  |
 | 2      | Cliquea el botón de "Aprobar". |  |
-| 3      |  | Actualiza la DB y muestra una notificación de éxito. |
-| 4      |  | Si no hay tareas en progreso, notifica al CNC worker para su ejecución. |
-| 5      |  | Bloquea la conexión al equipo desde la vista de "Control manual y calibración". |
-| 6      |  | Quita la tarea aprobada del listado de solicitudes. |
+| 3      |  | Actualiza la DB. |
+| 4      |  | Pregunta si ejecutar la tarea ahora. |
+| 5      | Selecciona la opción "Sí". |  |
+| 6      |  | Envía la tarea a la cola de ejecución, actualiza estado del worker. |
+| 7      |  | Actualiza el estado del worker y la barra de estado. |
+| 8      |  | Quita la tarea aprobada del listado de solicitudes. |
+
+**Curso alternativo (decide no ejecutarla):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 5a      | Selecciona la opción "No". |  |
+| 5b      |  | Quita la tarea aprobada del listado de solicitudes. |
+
+**Curso alternativo (hay una tarea en ejecución):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 4a      |  | Quita la tarea aprobada del listado de solicitudes. |
+
+**Curso alternativo (el equipo está deshabilitado):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 4a      |  | Quita la tarea aprobada del listado de solicitudes. |

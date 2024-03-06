@@ -27,6 +27,5 @@ Este caso de uso describe los pasos necesarios para que el usuario pueda ver un 
 
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
-| 3a      |  | Recibe un listado vacío de la DB. |
-| 3b      |  | Consulta al CNC worker el estado de la ejecución de la tarea actual. |
-| 3c      |  | Muestra al usuario el listado de tareas pendientes de aprobación, en cola de espera y en ejecución, junto al estado de avance de la tarea en progreso. |
+| 3a      |  | Consulta al CNC worker el estado de la ejecución de la tarea actual. |
+| 3b      |  | Muestra al usuario el listado de tareas pendientes de aprobación, en cola de espera y en ejecución, junto al estado de avance de la tarea en progreso. |
