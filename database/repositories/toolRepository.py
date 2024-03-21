@@ -1,6 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from ..base import Session
+from ..exceptions import DatabaseError, EntityNotFoundError
 from ..models import Tool
 
 
@@ -19,16 +20,16 @@ class ToolRepository:
             return new_tool
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error creating the tool in the DB: {e}')
+            raise DatabaseError(f'Error creating the tool in the DB: {e}')
 
     def get_tool_by_id(self, id: int):
         try:
             tool = self.session.get(Tool, id)
             if not tool:
-                raise Exception(f'Tool with ID {id} was not found')
+                raise EntityNotFoundError(f'Tool with ID {id} was not found')
             return tool
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving the tool with ID {id}: {e}')
+            raise DatabaseError(f'Error retrieving the tool with ID {id}: {e}')
 
     def get_all_tools(self):
         try:
@@ -37,13 +38,13 @@ class ToolRepository:
             ).scalars().all()
             return tools
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving tools from the DB: {e}')
+            raise DatabaseError(f'Error retrieving tools from the DB: {e}')
 
     def update_tool(self, id: int, name: str, description: str):
         try:
             tool = self.session.get(Tool, id)
             if not tool:
-                raise Exception(f'Tool with ID {id} was not found')
+                raise EntityNotFoundError(f'Tool with ID {id} was not found')
 
             tool.name = name
             tool.description = description
@@ -51,19 +52,19 @@ class ToolRepository:
             return tool
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error updating the tool in the DB: {e}')
+            raise DatabaseError(f'Error updating the tool in the DB: {e}')
 
     def remove_tool(self, id: int):
         try:
             tool = self.session.get(Tool, id)
             if not tool:
-                raise Exception(f'Tool with ID {id} was not found')
+                raise EntityNotFoundError(f'Tool with ID {id} was not found')
 
             self.session.delete(tool)
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error removing the tool from the DB: {e}')
+            raise DatabaseError(f'Error removing the tool from the DB: {e}')
 
     def close_session(self):
         self.session.close()

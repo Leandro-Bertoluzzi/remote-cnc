@@ -18,4 +18,4 @@ class GrblParserGeneric:
             A tuple containing the message type and payload,
             or None if the line is not a valid GRBL message.
         """
-        pass
+        raise NotImplementedError

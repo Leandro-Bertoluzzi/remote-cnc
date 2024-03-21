@@ -4,9 +4,15 @@ from sqlalchemy import select
 from datetime import datetime
 from typing import Optional
 from ..base import Session
+from ..exceptions import DatabaseError, EntityNotFoundError, Unauthorized
 from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
     TASK_IN_PROGRESS_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_REJECTED_STATUS, \
     TASK_EMPTY_NOTE, VALID_STATUSES
+
+
+# Custom exceptions
+class InvalidTaskStatus(Exception):
+    pass
 
 
 class TaskRepository:
@@ -40,7 +46,7 @@ class TaskRepository:
             return new_task
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error creating the task in the DB: {e}')
+            raise DatabaseError(f'Error creating the task in the DB: {e}')
 
     def get_task_by_id(self, id: int):
         try:
@@ -57,7 +63,7 @@ class TaskRepository:
             ).unique().first()
             return task
         except SQLAlchemyError as e:
-            raise Exception(f'Error looking for task with ID {id} in the DB: {e}')
+            raise DatabaseError(f'Error looking for task with ID {id} in the DB: {e}')
 
     def _get_filtered_tasks(
             self,
@@ -87,14 +93,14 @@ class TaskRepository:
             tasks = self._get_filtered_tasks(user_id, status)
             return tasks
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving tasks from the DB: {e}')
+            raise DatabaseError(f'Error retrieving tasks from the DB: {e}')
 
     def get_all_tasks(self, status: str = 'all'):
         try:
             tasks = self._get_filtered_tasks(user_id=None, status=status)
             return tasks
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving tasks from the DB: {e}')
+            raise DatabaseError(f'Error retrieving tasks from the DB: {e}')
 
     def get_next_task(self) -> Optional[Task]:
         try:
@@ -107,7 +113,7 @@ class TaskRepository:
                 return None
             return tasks[0]
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving tasks from the DB: {e}')
+            raise DatabaseError(f'Error retrieving tasks from the DB: {e}')
 
     def are_there_tasks_with_status(self, status: str) -> bool:
         tasks = self.get_all_tasks(status=status)
@@ -133,7 +139,7 @@ class TaskRepository:
         try:
             task = self.session.get(Task, id)
             if not task or task.user_id != user_id:
-                raise Exception(f'Task with ID {id} was not found for this user')
+                raise EntityNotFoundError(f'Task with ID {id} was not found for this user')
 
             task.file_id = file_id or task.file_id
             task.tool_id = tool_id or task.tool_id
@@ -146,7 +152,7 @@ class TaskRepository:
             return task
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error updating task with ID {id} in DB: {e}')
+            raise DatabaseError(f'Error updating task with ID {id} in DB: {e}')
 
     def update_task_status(
         self,
@@ -156,12 +162,12 @@ class TaskRepository:
         cancellation_reason: str = "",
     ):
         if status not in VALID_STATUSES:
-            raise Exception(f'Status {status} is not valid')
+            raise InvalidTaskStatus(f'Status {status} is not valid')
 
         try:
             task = self.session.get(Task, id)
             if not task:
-                raise Exception(f'Task with ID {id} was not found')
+                raise EntityNotFoundError(f'Task with ID {id} was not found')
 
             if task.status == status:
                 return task
@@ -172,7 +178,7 @@ class TaskRepository:
 
             if approved or rejected:
                 if not admin_id:
-                    raise Exception('Admin level is required to perform the action')
+                    raise Unauthorized('Admin level is required to perform the action')
                 task.admin_id = admin_id
 
             if status == TASK_PENDING_APPROVAL_STATUS:
@@ -189,19 +195,19 @@ class TaskRepository:
             return task
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error updating the task status in the DB: {e}')
+            raise DatabaseError(f'Error updating the task status in the DB: {e}')
 
     def remove_task(self, id: int):
         try:
             task = self.session.get(Task, id)
             if not task:
-                raise Exception(f'Task with ID {id} was not found')
+                raise EntityNotFoundError(f'Task with ID {id} was not found')
 
             self.session.delete(task)
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error removing the task from the DB: {e}')
+            raise DatabaseError(f'Error removing the task from the DB: {e}')
 
     def close_session(self):
         self.session.close()

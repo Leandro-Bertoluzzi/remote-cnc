@@ -10,6 +10,16 @@ except ImportError:
 
 ALLOWED_FILE_EXTENSIONS = {'txt', 'gcode', 'nc'}
 
+# Custom exceptions
+
+
+class InvalidFile(Exception):
+    pass
+
+
+class FileSystemError(Exception):
+    pass
+
 
 def isAllowedFile(filename: str) -> bool:
     """
@@ -88,7 +98,7 @@ def saveFile(userId: int, file: BinaryIO, filename: str) -> Path:
 
     # Check if the file format is a valid one
     if not isAllowedFile(filename):
-        raise Exception(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+        raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
     try:
         # If FILES_FOLDER_PATH or the folder for the current user are not present, then create them
@@ -101,7 +111,7 @@ def saveFile(userId: int, file: BinaryIO, filename: str) -> Path:
         with open(full_file_path, "wb") as buffer:
             shutil.copyfileobj(file, buffer)
     except Exception as error:
-        raise Exception(f'There was an error writing the file in the file system: {error}')
+        raise FileSystemError(f'There was an error writing the file in the file system: {error}')
 
     return full_file_path
 
@@ -116,7 +126,7 @@ def copyFile(userId: int, original_path: str, fileName: str) -> Path:
 
     # Check if the file format is a valid one
     if not isAllowedFile(fileName):
-        raise Exception(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+        raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
     try:
         # If FILES_FOLDER_PATH or the folder for the current user are not present, then create them
@@ -128,7 +138,7 @@ def copyFile(userId: int, original_path: str, fileName: str) -> Path:
         full_file_path = user_files_folder_path / fileName
         shutil.copy(original_path, full_file_path)
     except Exception as error:
-        raise Exception(f'There was an error writing the file in the file system: {error}')
+        raise FileSystemError(f'There was an error writing the file in the file system: {error}')
 
     return full_file_path
 
@@ -146,7 +156,7 @@ def renameFile(userId: int, fileName: str, newFileName: str) -> Path:
 
     # Check if the file format is a valid one
     if not isAllowedFile(newFileName):
-        raise Exception(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+        raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
     try:
         # Rename the file
@@ -154,7 +164,7 @@ def renameFile(userId: int, fileName: str, newFileName: str) -> Path:
         full_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{newFileName}')
         current_file_path.rename(full_file_path)
     except Exception as error:
-        raise Exception(f'There was an error renaming the file in the file system: {error}')
+        raise FileSystemError(f'There was an error renaming the file in the file system: {error}')
 
     return full_file_path
 
@@ -173,4 +183,4 @@ def deleteFile(userId: int, fileName: str) -> None:
         file_whole_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
         file_whole_path.unlink()
     except Exception as error:
-        raise Exception(f'There was an error removing the file from the file system: {error}')
+        raise FileSystemError(f'There was an error removing the file from the file system: {error}')

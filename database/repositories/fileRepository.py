@@ -3,6 +3,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import select
 from typing import Optional
 from ..base import Session
+from ..exceptions import DatabaseError, EntityNotFoundError
 from ..models import File, User
 
 
@@ -57,14 +58,14 @@ class FileRepository:
             return new_file
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error creating the file in the DB: {e}')
+            raise DatabaseError(f'Error creating the file in the DB: {e}')
 
     def get_all_files_from_user(self, user_id: int):
         try:
             user = self.session.get(User, user_id)
 
             if not user:
-                raise Exception(f'User with ID {user_id} not found')
+                raise EntityNotFoundError(f'User with ID {user_id} not found')
 
             files = self.session.scalars(
                 select(File)
@@ -74,7 +75,7 @@ class FileRepository:
 
             return files
         except SQLAlchemyError as e:
-            raise Exception(f'Error looking for user in the DB: {e}')
+            raise DatabaseError(f'Error looking for user in the DB: {e}')
 
     def get_all_files(self):
         try:
@@ -84,22 +85,22 @@ class FileRepository:
 
             return files
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving files from the DB: {e}')
+            raise DatabaseError(f'Error retrieving files from the DB: {e}')
 
     def get_file_by_id(self, id: int):
         try:
             file = self.session.get(File, id)
             if not file:
-                raise Exception(f'File with ID {id} was not found')
+                raise EntityNotFoundError(f'File with ID {id} was not found')
             return file
         except SQLAlchemyError as e:
-            raise Exception(f'Error looking for file with ID {id} in the DB: {e}')
+            raise DatabaseError(f'Error looking for file with ID {id} in the DB: {e}')
 
     def update_file(self, id: int, user_id: int, file_name: str, file_hash: Optional[str] = None):
         try:
             file = self.session.get(File, id)
             if not file:
-                raise Exception(f'File with ID {id} was not found')
+                raise EntityNotFoundError(f'File with ID {id} was not found')
 
             file.user_id = user_id
             file.file_name = file_name
@@ -109,19 +110,19 @@ class FileRepository:
             return file
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error updating the file in the DB: {e}')
+            raise DatabaseError(f'Error updating the file in the DB: {e}')
 
     def remove_file(self, id: int):
         try:
             file = self.session.get(File, id)
             if not file:
-                raise Exception(f'File with ID {id} was not found')
+                raise EntityNotFoundError(f'File with ID {id} was not found')
 
             self.session.delete(file)
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error removing the file from the DB: {e}')
+            raise DatabaseError(f'Error removing the file from the DB: {e}')
 
     def close_session(self):
         self.session.close()

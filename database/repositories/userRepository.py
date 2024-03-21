@@ -1,11 +1,21 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from ..base import Session
+from ..exceptions import DatabaseError, EntityNotFoundError
 from ..models import User, VALID_ROLES
 try:
     from ...utils.security import hash_password
 except ImportError:
     from utils.security import hash_password
+
+
+# Custom exceptions
+class InvalidRole(Exception):
+    pass
+
+
+class DuplicatedUserError(Exception):
+    pass
 
 
 class UserRepository:
@@ -17,7 +27,7 @@ class UserRepository:
 
     def create_user(self, name: str, email: str, password: str, role: str):
         if role not in VALID_ROLES:
-            raise Exception(f'ERROR: Role {role} is not valid')
+            raise InvalidRole(f'ERROR: Role {role} is not valid')
 
         try:
             user = self.session.scalars(
@@ -26,7 +36,9 @@ class UserRepository:
                 limit(1)
             ).first()
             if user:
-                raise Exception(f'There is already a user registered with the email {email}')
+                raise DuplicatedUserError(
+                    f'There is already a user registered with the email {email}'
+                )
 
             hashed_password = hash_password(password)
 
@@ -36,16 +48,16 @@ class UserRepository:
             return new_user
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error creating the user in the DB: {e}')
+            raise DatabaseError(f'Error creating the user in the DB: {e}')
 
     def get_user_by_id(self, id: int):
         try:
             user = self.session.get(User, id)
             if not user:
-                raise Exception(f'User with ID {id} was not found')
+                raise EntityNotFoundError(f'User with ID {id} was not found')
             return user
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving the user with ID {id}: {e}')
+            raise DatabaseError(f'Error retrieving the user with ID {id}: {e}')
 
     def get_user_by_email(self, email: str):
         try:
@@ -56,7 +68,7 @@ class UserRepository:
             ).first()
             return user
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving the user with email {email}: {e}')
+            raise DatabaseError(f'Error retrieving the user with email {email}: {e}')
 
     def get_all_users(self):
         try:
@@ -65,16 +77,16 @@ class UserRepository:
             ).scalars().all()
             return users
         except SQLAlchemyError as e:
-            raise Exception(f'Error retrieving users from the DB: {e}')
+            raise DatabaseError(f'Error retrieving users from the DB: {e}')
 
     def update_user(self, id: int, name: str, email: str, role: str):
         if role not in VALID_ROLES:
-            raise Exception(f'ERROR: Role {role} is not valid')
+            raise InvalidRole(f'ERROR: Role {role} is not valid')
 
         try:
             user = self.session.get(User, id)
             if not user:
-                raise Exception(f'User with ID {id} was not found')
+                raise EntityNotFoundError(f'User with ID {id} was not found')
 
             user.name = name
             user.email = email
@@ -84,19 +96,19 @@ class UserRepository:
             return user
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error updating the user in the DB: {e}')
+            raise DatabaseError(f'Error updating the user in the DB: {e}')
 
     def remove_user(self, id: int):
         try:
             user = self.session.get(User, id)
             if not user:
-                raise Exception(f'User with ID {id} was not found')
+                raise EntityNotFoundError(f'User with ID {id} was not found')
 
             self.session.delete(user)
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise Exception(f'Error removing the user from the DB: {e}')
+            raise DatabaseError(f'Error removing the user from the DB: {e}')
 
     def close_session(self):
         self.session.close()
