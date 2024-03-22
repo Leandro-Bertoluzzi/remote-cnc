@@ -20,7 +20,9 @@ class TestRequestCard:
     )
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot: QtBot, mock_window):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window):
+        mocker.patch.object(RequestsView, 'refreshLayout')
+
         # Update task
         self.task.id = 1
         self.task.user = User('John Doe', 'john@doe.com', 'password', 'user')

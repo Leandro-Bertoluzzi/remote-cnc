@@ -1,26 +1,24 @@
-from PyQt5.QtWidgets import QPushButton
 from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
 from core.database.base import Session as SessionLocal
+from core.database.models import Tool
 from core.database.repositories.toolRepository import ToolRepository
 from helpers.utils import needs_confirmation
 
 
 class ToolCard(Card):
-    def __init__(self, tool, parent=None):
+    def __init__(self, tool: Tool, parent=None):
         super(ToolCard, self).__init__(parent)
 
         self.tool = tool
+        self.setup_ui()
 
-        description = f'Herramienta {tool.id}: {tool.name}'
-        editToolBtn = QPushButton("Editar")
-        editToolBtn.clicked.connect(self.updateTool)
-        removeToolBtn = QPushButton("Borrar")
-        removeToolBtn.clicked.connect(self.removeTool)
-
+    def setup_ui(self):
+        description = f'Herramienta {self.tool.id}: {self.tool.name}'
         self.setDescription(description)
-        self.addButton(editToolBtn)
-        self.addButton(removeToolBtn)
+
+        self.addButton("Editar", self.updateTool)
+        self.addButton("Borrar", self.removeTool)
 
     def updateTool(self):
         toolDialog = ToolDataDialog(toolInfo=self.tool)

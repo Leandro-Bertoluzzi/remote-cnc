@@ -54,7 +54,7 @@ class TestTasksView:
         )
 
         # Patch the constructor of UI components
-        mocker.patch.object(TaskCard, 'set_task_description')
+        mocker.patch.object(TaskCard, 'setup_ui')
 
         # Create an instance of TasksView
         self.parent = mock_window

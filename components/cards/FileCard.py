@@ -1,102 +1,96 @@
-from PyQt5.QtWidgets import QPushButton
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
 from core.database.base import Session as SessionLocal
+from core.database.exceptions import DatabaseError, EntityNotFoundError
+from core.database.models import File
 from core.database.repositories.fileRepository import DuplicatedFileNameError
 from core.database.repositories.fileRepository import FileRepository
-from core.utils.files import renameFile, deleteFile
+from core.utils.files import renameFile, deleteFile, InvalidFile, FileSystemError
 from helpers.utils import needs_confirmation
 
 
 class FileCard(Card):
-    def __init__(self, file, parent=None):
+    def __init__(self, file: File, parent=None):
         super(FileCard, self).__init__(parent)
 
         self.file = file
+        self.setup_ui()
 
-        description = f'Archivo {file.id}: {file.file_name}\nUsuario: {file.user.name}'
-        editFileBtn = QPushButton("Editar")
-        editFileBtn.clicked.connect(self.updateFile)
-        removeFileBtn = QPushButton("Borrar")
-        removeFileBtn.clicked.connect(self.removeFile)
-
+    def setup_ui(self):
+        description = (
+            f'Archivo {self.file.id}: {self.file.file_name}\n'
+            f'Usuario: {self.file.user.name}'
+        )
         self.setDescription(description)
-        self.addButton(editFileBtn)
-        self.addButton(removeFileBtn)
+
+        self.addButton("Editar", self.updateFile)
+        self.addButton("Borrar", self.removeFile)
 
     def updateFile(self):
         fileDialog = FileDataDialog(self.file)
         if not fileDialog.exec():
             return
 
-        name, path = fileDialog.getInputs()
+        name, _ = fileDialog.getInputs()
 
         if name == self.file.file_name:
             return
 
-        # Checks if the file is repeated
         try:
             db_session = SessionLocal()
             repository = FileRepository(db_session)
+            # Check if the file is repeated
             repository.check_file_exists(USER_ID, name, 'impossible-hash')
-        except DuplicatedFileNameError:
-            self.showWarning(
-                'Nombre repetido',
-                f'Ya existe un archivo con el nombre <<{name}>>, pruebe renombrarlo'
-            )
-            return
-
-        # Update file in the file system
-        try:
+            # Update file in the file system
             renameFile(
                 self.file.user_id,
                 self.file.file_name,
                 name
             )
-        except Exception as error:
+            # Update the entry for the file in the DB
+            repository.update_file(self.file.id, self.file.user_id, name)
+        except DuplicatedFileNameError:
+            self.showWarning(
+                'Nombre repetido',
+                f'Ya existe un archivo con el nombre <<{name}>>, pruebe renombrarlo'
+            )
+        except (InvalidFile, FileSystemError) as error:
             self.showError(
                 'Error de guardado',
                 str(error)
             )
-            return
-
-        # Update the entry for the file in the DB
-        try:
-            db_session = SessionLocal()
-            repository = FileRepository(db_session)
-            repository.update_file(self.file.id, self.file.user_id, name)
-        except Exception as error:
+        except (DatabaseError, EntityNotFoundError) as error:
             self.showError(
                 'Error de base de datos',
                 str(error)
             )
-            return
-
-        self.parent().refreshLayout()
+        except Exception as error:
+            self.showError(
+                'Error',
+                str(error)
+            )
+        else:
+            self.parent().refreshLayout()
 
     @needs_confirmation('¿Realmente desea eliminar el archivo?', 'Eliminar archivo')
     def removeFile(self):
-        # Remove the file from the file system
         try:
+            # Remove the file from the file system
             deleteFile(self.file.user_id, self.file.file_name)
-        except Exception as error:
+            # Remove the entry for the file in the DB
+            db_session = SessionLocal()
+            repository = FileRepository(db_session)
+            repository.remove_file(self.file.id)
+        except FileSystemError as error:
             self.showError(
                 'Error de borrado',
                 str(error)
             )
-            return
-
-        # Remove the entry for the file in the DB
-        try:
-            db_session = SessionLocal()
-            repository = FileRepository(db_session)
-            repository.remove_file(self.file.id)
-        except Exception as error:
+        except (DatabaseError, EntityNotFoundError) as error:
             self.showError(
                 'Error de base de datos',
                 str(error)
             )
-            return
-
-        self.parent().refreshLayout()
+        else:
+            self.parent().refreshLayout()

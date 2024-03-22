@@ -1,33 +1,31 @@
-from PyQt5.QtWidgets import QPushButton
 from components.cards.Card import Card
 from components.dialogs.UserDataDialog import UserDataDialog
 from core.database.base import Session as SessionLocal
+from core.database.models import User
 from core.database.repositories.userRepository import UserRepository
 from helpers.utils import needs_confirmation
 
 
 class UserCard(Card):
-    def __init__(self, user, parent=None):
+    def __init__(self, user: User, parent=None):
         super(UserCard, self).__init__(parent)
 
         self.user = user
+        self.setup_ui()
 
-        description = f'Usuario {user.id}: {user.name}'
-        editUserBtn = QPushButton("Editar")
-        editUserBtn.clicked.connect(self.updateUser)
-        removeUserBtn = QPushButton("Borrar")
-        removeUserBtn.clicked.connect(self.removeUser)
-
+    def setup_ui(self):
+        description = f'Usuario {self.user.id}: {self.user.name}'
         self.setDescription(description)
-        self.addButton(editUserBtn)
-        self.addButton(removeUserBtn)
+
+        self.addButton("Editar", self.updateUser)
+        self.addButton("Borrar", self.removeUser)
 
     def updateUser(self):
         userDialog = UserDataDialog(self.user)
         if not userDialog.exec():
             return
 
-        name, email, password, role = userDialog.getInputs()
+        name, email, _, role = userDialog.getInputs()
         try:
             db_session = SessionLocal()
             repository = UserRepository(db_session)

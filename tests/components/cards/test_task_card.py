@@ -4,6 +4,7 @@ from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
+from components.text.TaskLabel import TaskLabel
 from core.database.models import Task, TASK_ON_HOLD_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
@@ -35,7 +36,7 @@ class TestTaskCard:
         mocker.patch.object(MaterialRepository, 'get_all_materials', return_value=[])
 
         # Mock card's auxiliary methods
-        mocker.patch.object(TaskCard, 'set_task_description')
+        mocker.patch.object(TaskLabel, '__init__', return_value=None)
 
         # Mock parent widget
         self.window = mock_window
@@ -70,7 +71,7 @@ class TestTaskCard:
         self.task.id = 1
 
         # Mock card's auxiliary methods
-        mock_set_task_description = mocker.patch.object(TaskCard, 'set_task_description')
+        mock_set_task_description = mocker.patch.object(TaskLabel, '__init__', return_value=None)
 
         # Instantiate card
         card = TaskCard(self.task, False)
@@ -88,7 +89,7 @@ class TestTaskCard:
         self.task.id = 1
 
         # Mock card's auxiliary methods
-        mocker.patch.object(TaskCard, 'set_task_description')
+        mocker.patch.object(TaskLabel, '__init__', return_value=None)
 
         # Instantiate card
         card = TaskCard(self.task, True)
@@ -302,7 +303,7 @@ class TestTaskCard:
 
         # Mock Redis methods
         mocker.patch(
-            'components.cards.TaskCard.get_value_from_id',
+            'components.text.TaskLabel.get_value_from_id',
             return_value=worker_task_id
         )
 

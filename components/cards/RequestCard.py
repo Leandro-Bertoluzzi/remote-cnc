@@ -1,4 +1,3 @@
-from PyQt5.QtWidgets import QPushButton
 from config import USER_ID
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
@@ -14,16 +13,14 @@ class RequestCard(Card):
         super(RequestCard, self).__init__(parent)
 
         self.task = task
+        self.setup_ui()
 
-        description = f'Tarea {task.id}: {task.name}\nUsuario: {task.user.name}'
-        approveTaskBtn = QPushButton("Aprobar")
-        approveTaskBtn.clicked.connect(self.approveTask)
-        rejectTaskBtn = QPushButton("Rechazar")
-        rejectTaskBtn.clicked.connect(self.rejectTask)
-
+    def setup_ui(self):
+        description = f'Tarea {self.task.id}: {self.task.name}\nUsuario: {self.task.user.name}'
         self.setDescription(description)
-        self.addButton(approveTaskBtn)
-        self.addButton(rejectTaskBtn)
+
+        self.addButton("Aprobar", self.approveTask)
+        self.addButton("Rechazar", self.rejectTask)
 
     @needs_confirmation('¿Realmente desea aprobar la solicitud?', 'Aprobar solicitud')
     def approveTask(self):

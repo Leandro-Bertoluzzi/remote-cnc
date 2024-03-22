@@ -57,11 +57,8 @@ class ControlView(QWidget):
                 QMessageBox.Ok
             )
 
-        # GRBL CONTROLLER CONFIGURATION
-        grbl_logger = logging.getLogger('control_view_logger')
-        grbl_logger.setLevel(logging.INFO)
-        self.grbl_controller = GrblController(grbl_logger)
-        self.checkmode = self.grbl_controller.getCheckModeEnabled()
+        self.setup_grbl_controller()
+        self.setup_ui()
 
         # GRBL SYNC
         self.grbl_sync = GrblSync(self)
@@ -69,7 +66,17 @@ class ControlView(QWidget):
         # FILE SENDER
         self.file_sender = FileSender(self)
 
-        # VIEW STRUCTURE
+    def setup_grbl_controller(self):
+        """ Setup GRBL controller
+        """
+        grbl_logger = logging.getLogger('control_view_logger')
+        grbl_logger.setLevel(logging.INFO)
+        self.grbl_controller = GrblController(grbl_logger)
+        self.checkmode = self.grbl_controller.getCheckModeEnabled()
+
+    def setup_ui(self):
+        """ Setup UI
+        """
         self.status_monitor = ControllerStatus(parent=self)
         controller_commands = ButtonGrid([
             ('Home', self.run_homing_cycle),
@@ -346,19 +353,21 @@ class ControlView(QWidget):
         self.query_device_settings()
         configurationDialog = GrblConfigurationDialog(self.device_settings)
 
-        if configurationDialog.exec():
-            settings = configurationDialog.getModifiedInputs()
-            if not settings:
-                return
+        if not configurationDialog.exec():
+            return
 
-            self.grbl_controller.setSettings(settings)
+        settings = configurationDialog.getModifiedInputs()
+        if not settings:
+            return
 
-            QMessageBox.information(
-                self,
-                'Configuración de GRBL',
-                '¡La configuración de GRBL fue actualizada correctamente!',
-                QMessageBox.Ok
-            )
+        self.grbl_controller.setSettings(settings)
+
+        QMessageBox.information(
+            self,
+            'Configuración de GRBL',
+            '¡La configuración de GRBL fue actualizada correctamente!',
+            QMessageBox.Ok
+        )
 
     def write_to_terminal(self, text):
         self.terminal.display_text(text)

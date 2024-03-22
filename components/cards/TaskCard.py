@@ -1,13 +1,11 @@
-from PyQt5.QtWidgets import QPushButton
-from celery.result import AsyncResult
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
+from components.text.TaskLabel import TaskLabel
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS
 from core.database.repositories.taskRepository import TaskRepository
-from core.utils.storage import get_value_from_id
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.utils import needs_confirmation, send_task_to_worker
 
@@ -29,15 +27,16 @@ class TaskCard(Card):
         self.files = files
         self.tools = tools
         self.materials = materials
+        self.setup_ui()
 
         # Set "status" dynamic property for styling
         self.setProperty("status", task.status)
 
-        # Populate card
-        self.addButtons(task.status)
-        self.set_task_description()
+    def setup_ui(self):
+        self.add_buttons(self.task.status)
+        self.label_description = TaskLabel(self.task, self)
 
-    def addButtons(self, status: str):
+    def add_buttons(self, status: str):
         """Adds buttons according to task status:
 
         * pending validation -> | Edit | Cancel |
@@ -46,76 +45,31 @@ class TaskCard(Card):
         * cancelled / rejected -> | Remove | Restore |
         * finished -> | Repeat |
         """
-        if status == TASK_INITIAL_STATUS:
-            editTaskBtn = QPushButton("Editar")
-            editTaskBtn.clicked.connect(self.updateTask)
-            self.addButton(editTaskBtn)
 
-        if status == TASK_INITIAL_STATUS or status == TASK_ON_HOLD_STATUS:
-            cancelTaskBtn = QPushButton("Cancelar")
-            cancelTaskBtn.clicked.connect(self.cancelTask)
-            self.addButton(cancelTaskBtn)
+        button_info = {
+            TASK_INITIAL_STATUS: [
+                ("Editar", self.updateTask),
+                ("Cancelar", self.cancelTask)
+            ],
+            TASK_ON_HOLD_STATUS: [("Cancelar", self.cancelTask)],
+            TASK_CANCELLED_STATUS: [
+                ("Eliminar", self.removeTask),
+                ("Restaurar", self.restoreTask)
+            ],
+            TASK_REJECTED_STATUS: [
+                ("Eliminar", self.removeTask),
+                ("Restaurar", self.restoreTask)
+            ],
+            TASK_FINISHED_STATUS: [("Repetir", self.repeatTask)]
+        }
 
-        if status == TASK_CANCELLED_STATUS or status == TASK_REJECTED_STATUS:
-            removeTaskBtn = QPushButton("Eliminar")
-            removeTaskBtn.clicked.connect(self.removeTask)
-            self.addButton(removeTaskBtn)
-            restoreTaskBtn = QPushButton("Restaurar")
-            restoreTaskBtn.clicked.connect(self.restoreTask)
-            self.addButton(restoreTaskBtn)
+        for status_value, data in button_info.items():
+            if status == status_value:
+                for (button_text, callback) in data:
+                    self.addButton(button_text, callback)
 
         if status == TASK_ON_HOLD_STATUS:
-            runTaskBtn = QPushButton("Ejecutar")
-            runTaskBtn.clicked.connect(self.runTask)
-            runTaskBtn.setDisabled(self.device_busy)
-            self.addButton(runTaskBtn)
-
-        if status == TASK_FINISHED_STATUS:
-            repeatTaskBtn = QPushButton("Repetir")
-            repeatTaskBtn.clicked.connect(self.repeatTask)
-            self.addButton(repeatTaskBtn)
-
-    def set_task_description(self):
-        # Default
-        task_id = self.task.id
-        task_name = self.task.name
-        task_status_db = self.task.status
-        description = f'Tarea {task_id}: {task_name}\nEstado: {task_status_db}'
-
-        # Check if it has a worker task ID
-        task_worker_id = get_value_from_id('task', self.task.id)
-        if not task_worker_id:
-            self.setDescription(description)
-            return
-
-        # Get status in worker
-        task_state = AsyncResult(task_worker_id)
-        task_info = task_state.info
-        task_status = task_state.status
-
-        if task_status == 'PROGRESS':
-            sent_lines = task_info.get('sent_lines')
-            processed_lines = task_info.get('processed_lines')
-            total_lines = task_info.get('total_lines')
-
-            sent = int((sent_lines * 100) / float(total_lines))
-            executed = int((processed_lines * 100) / float(total_lines))
-
-            description = (
-                f'Tarea {task_id}: {task_name}\n'
-                f'Estado: {task_status_db}\n'
-                f'Enviado: {sent_lines}/{total_lines} ({sent}%)\n'
-                f'Ejecutado: {processed_lines}/{total_lines} ({executed}%)'
-            )
-
-        if task_status == 'FAILURE':
-            error_msg = task_info
-            description = (
-                f'Tarea {task_id}: {task_name}\nEstado: {task_status_db} (FAILED)\n'
-                f'Error: {error_msg}'
-            )
-
-        self.setDescription(description)
+            self.addButton("Ejecutar", self.runTask, not self.device_busy)
 
     def updateTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
@@ -164,19 +118,10 @@ class TaskCard(Card):
             'Restaurar tarea'
     )
     def restoreTask(self):
-        try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            repository.update_task_status(
-                self.task.id,
-                TASK_INITIAL_STATUS
-            )
-        except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
-            return
+        self.updateTaskStatus(
+            self.task.id,
+            TASK_INITIAL_STATUS
+        )
         self.parent().refreshLayout()
 
     def cancelTask(self):
@@ -185,12 +130,25 @@ class TaskCard(Card):
             return
 
         cancellation_reason = cancelDialog.getInput()
+        self.updateTaskStatus(
+            self.task.id,
+            TASK_CANCELLED_STATUS,
+            cancellation_reason
+        )
+        self.parent().refreshLayout()
+
+    def updateTaskStatus(
+        self,
+        task_id: int,
+        new_status: str,
+        cancellation_reason: str = ''
+    ):
         try:
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
             repository.update_task_status(
-                self.task.id,
-                TASK_CANCELLED_STATUS,
+                task_id,
+                new_status,
                 None,
                 cancellation_reason
             )
@@ -200,7 +158,6 @@ class TaskCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
 
     def repeatTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
@@ -229,33 +186,33 @@ class TaskCard(Card):
 
     @needs_confirmation('¿Desea ejecutar la tarea ahora?', 'Ejecutar tarea')
     def runTask(self):
+        if not CncWorkerMonitor.is_device_enabled():
+            self.showError(
+                'Equipo deshabilitado',
+                'Ejecución cancelada: El equipo está deshabilitado'
+            )
+            return
+
         try:
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
-            if not CncWorkerMonitor.is_device_enabled():
-                self.showError(
-                    'Equipo deshabilitado',
-                    'Ejecución cancelada: El equipo está deshabilitado'
-                )
-                return
-
             if repository.are_there_tasks_in_progress():
                 self.showError(
                     'Equipo ocupado',
                     'Ejecución cancelada: Ya hay una tarea en progreso'
                 )
                 return
-
-            worker_task_id = send_task_to_worker(self.task.id)
-            self.getWindow().startWorkerMonitor(worker_task_id)
-            self.showInformation(
-                'Tarea enviada',
-                'Se envió la tarea al equipo para su ejecución'
-            )
         except Exception as error:
             self.showError(
                 'Error de base de datos',
                 str(error)
             )
             return
+
+        worker_task_id = send_task_to_worker(self.task.id)
+        self.getWindow().startWorkerMonitor(worker_task_id)
+        self.showInformation(
+            'Tarea enviada',
+            'Se envió la tarea al equipo para su ejecución'
+        )
         self.parent().refreshLayout()

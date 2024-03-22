@@ -1,7 +1,9 @@
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
+from core.database.exceptions import DatabaseError
 from core.database.models import File, User
 from core.database.repositories.fileRepository import DuplicatedFileNameError, FileRepository
+from core.utils.files import FileSystemError
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
 from pytest_mock.plugin import MockerFixture
@@ -125,7 +127,7 @@ class TestFileCard:
         mocker.patch.object(FileRepository, 'check_file_exists')
         mock_rename_file = mocker.patch(
             'components.cards.FileCard.renameFile',
-            side_effect=Exception('mocked error')
+            side_effect=FileSystemError('mocked error')
         )
         mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
@@ -152,7 +154,7 @@ class TestFileCard:
         mock_update_file = mocker.patch.object(
             FileRepository,
             'update_file',
-            side_effect=Exception('mocked error')
+            side_effect=DatabaseError('mocked error')
         )
 
         # Mock QMessageBox methods
@@ -200,7 +202,7 @@ class TestFileCard:
         # Mock FS and DB methods
         mock_delete_file = mocker.patch(
             'components.cards.FileCard.deleteFile',
-            side_effect=Exception('mocked error')
+            side_effect=FileSystemError('mocked error')
         )
         mock_remove_file = mocker.patch.object(FileRepository, 'remove_file')
 
@@ -224,7 +226,7 @@ class TestFileCard:
         mock_remove_file = mocker.patch.object(
             FileRepository,
             'remove_file',
-            side_effect=Exception('mocked error')
+            side_effect=DatabaseError('mocked error')
         )
 
         # Mock QMessageBox methods

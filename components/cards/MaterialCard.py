@@ -1,26 +1,24 @@
-from PyQt5.QtWidgets import QPushButton
 from components.cards.Card import Card
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.base import Session as SessionLocal
+from core.database.models import Material
 from core.database.repositories.materialRepository import MaterialRepository
 from helpers.utils import needs_confirmation
 
 
 class MaterialCard(Card):
-    def __init__(self, material, parent=None):
+    def __init__(self, material: Material, parent=None):
         super(MaterialCard, self).__init__(parent)
 
         self.material = material
+        self.setup_ui()
 
-        description = f'Material {material.id}: {material.name}'
-        editMaterialBtn = QPushButton("Editar")
-        editMaterialBtn.clicked.connect(self.updateMaterial)
-        removeMaterialBtn = QPushButton("Borrar")
-        removeMaterialBtn.clicked.connect(self.removeMaterial)
-
+    def setup_ui(self):
+        description = f'Material {self.material.id}: {self.material.name}'
         self.setDescription(description)
-        self.addButton(editMaterialBtn)
-        self.addButton(removeMaterialBtn)
+
+        self.addButton("Editar", self.updateMaterial)
+        self.addButton("Borrar", self.removeMaterial)
 
     def updateMaterial(self):
         materialDialog = MaterialDataDialog(materialInfo=self.material)

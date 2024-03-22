@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import Qt
 from helpers.utils import applyStylesheet
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow   # pragma: no cover
@@ -32,7 +32,15 @@ class Card(QWidget):
     def setDescription(self, description: str) -> None:
         self.label_description.setText(description)
 
-    def addButton(self, button: QPushButton) -> None:
+    def addButton(
+        self,
+        text: str,
+        callback: Callable,
+        enabled: bool = True
+    ) -> None:
+        button = QPushButton(text)
+        button.clicked.connect(callback)
+        button.setEnabled(enabled)
         self.layout_buttons.addWidget(button)
 
     def getWindow(self) -> 'MainWindow':

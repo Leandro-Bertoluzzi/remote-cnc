@@ -71,7 +71,9 @@ class BaseListView(QWidget):
                     MsgCard(list_definition['empty_msg'], self)
                 )
 
-        self.layout().addWidget(MenuButton('Volver al menú', onClick=self.parent().backToMenu))
+        self.layout().addWidget(
+            MenuButton('Volver al menú', onClick=self.getWindow().backToMenu)
+        )
         self.update()
 
     # Attributes
@@ -106,8 +108,13 @@ class BaseListView(QWidget):
     def showError(self, title, text):
         QMessageBox.critical(self, title, text, QMessageBox.Ok)
 
+    # Helper methods
+
+    def getWindow(self) -> 'MainWindow':
+        return self.parent()    # type: ignore
+
     # Abstract methods
 
     @abstractmethod
     def getItems(self) -> list[Base]:
-        pass    # pragma: no cover
+        raise NotImplementedError    # pragma: no cover
