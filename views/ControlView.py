@@ -11,24 +11,24 @@ from components.ControllerStatus import ControllerStatus
 from components.JogController import JogController
 from components.Terminal import Terminal
 from config import SERIAL_BAUDRATE
-from core.database.base import Session as SessionLocal
-from core.database.models import TASK_IN_PROGRESS_STATUS
-from core.database.repositories.taskRepository import TaskRepository
 from core.grbl.grblController import GrblController
-from core.grbl.types import GrblSettings
+from core.grbl.types import GrblSettings, Status
 from core.utils.serial import SerialService
+from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.fileSender import FileSender
 from helpers.grblSync import GrblSync
 import logging
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow   # pragma: no cover
 
-GRBL_STATUS_DISCONNECTED = {
+GRBL_STATUS_DISCONNECTED: Status = {
     'activeState': 'disconnected',
     'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-    'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0}
+    'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
+    'ov': [0, 0, 0],
+    'wco': {'x': 0.0, 'y': 0.0, 'z': 0.0}
 }
 
 
@@ -36,26 +36,11 @@ class ControlView(QWidget):
     def __init__(self, parent: 'MainWindow'):
         super(ControlView, self).__init__(parent)
 
-        layout = QGridLayout(self)
-        layout.setAlignment(Qt.AlignCenter)
-        self.setLayout(layout)
-
         # STATE MANAGEMENT
         self.connected = False
         self.port_selected = ''
         self.device_settings: GrblSettings = {}
-        self.device_busy = True
-        try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            self.device_busy = repository.are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
-        except Exception as error:
-            QMessageBox.critical(
-                self,
-                'Error de base de datos',
-                str(error),
-                QMessageBox.Ok
-            )
+        self.device_busy = CncWorkerMonitor.is_worker_running()
 
         self.setup_grbl_controller()
         self.setup_ui()
@@ -77,6 +62,10 @@ class ControlView(QWidget):
     def setup_ui(self):
         """ Setup UI
         """
+        layout = QGridLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
+
         self.status_monitor = ControllerStatus(parent=self)
         controller_commands = ButtonGrid([
             ('Home', self.run_homing_cycle),
@@ -119,13 +108,13 @@ class ControlView(QWidget):
         self.createToolBars()
         panel_row = 0
         if not self.device_busy:
-            self.getLayout().addWidget(self.status_monitor, 0, 0, 3, 1)
+            layout.addWidget(self.status_monitor, 0, 0, 3, 1)
             panel_row = 3
-        self.getLayout().addWidget(self.code_editor, 0, 1, 3, 1)
-        self.getLayout().addWidget(self.control_panel, panel_row, 0)
-        self.getLayout().addWidget(self.terminal, 3, 1)
+        layout.addWidget(self.code_editor, 0, 1, 3, 1)
+        layout.addWidget(self.control_panel, panel_row, 0)
+        layout.addWidget(self.terminal, 3, 1)
 
-        self.getLayout().addWidget(
+        layout.addWidget(
             MenuButton('Volver al menú', onClick=self.backToMenu),
             5, 0, 1, 2,
             alignment=Qt.AlignCenter
@@ -134,8 +123,8 @@ class ControlView(QWidget):
     def __del__(self):
         self.disconnect_device()
 
-    def getLayout(self) -> QGridLayout:
-        return cast(QGridLayout, self.layout())
+    def getWindow(self) -> 'MainWindow':
+        return self.parent()    # type: ignore
 
     def closeEvent(self, event: QCloseEvent):
         self.disconnect_device()
@@ -146,7 +135,7 @@ class ControlView(QWidget):
         """
         self.tool_bar_files = QToolBar()
         self.tool_bar_files.setMovable(False)
-        self.parent().addToolBar(Qt.TopToolBarArea, self.tool_bar_files)
+        self.getWindow().addToolBar(Qt.TopToolBarArea, self.tool_bar_files)
 
         file_options = [
             ('Nuevo', self.code_editor.new_file),
@@ -165,7 +154,7 @@ class ControlView(QWidget):
 
         self.tool_bar_grbl = QToolBar()
         self.tool_bar_grbl.setMovable(False)
-        self.parent().addToolBar(Qt.TopToolBarArea, self.tool_bar_grbl)
+        self.getWindow().addToolBar(Qt.TopToolBarArea, self.tool_bar_grbl)
 
         exec_options = [
             ('Ejecutar', self.start_file_stream),
@@ -197,10 +186,10 @@ class ControlView(QWidget):
         """Removes the tool bar from the main window and goes back to the main menu
         """
         self.disconnect_device()
-        self.parent().removeToolBar(self.tool_bar_files)
+        self.getWindow().removeToolBar(self.tool_bar_files)
         if not self.device_busy:
-            self.parent().removeToolBar(self.tool_bar_grbl)
-        self.parent().backToMenu()
+            self.getWindow().removeToolBar(self.tool_bar_grbl)
+        self.getWindow().backToMenu()
 
     def set_selected_port(self, port):
         self.port_selected = port
@@ -374,7 +363,7 @@ class ControlView(QWidget):
 
     def update_device_status(
             self,
-            status,
+            status: Status,
             feedrate: float,
             spindle: float,
             tool_index: int

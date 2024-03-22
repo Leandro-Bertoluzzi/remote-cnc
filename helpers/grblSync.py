@@ -1,4 +1,5 @@
 from core.grbl.grblController import GrblController
+from core.grbl.types import Status
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import time
 from typing import Optional, TYPE_CHECKING
@@ -97,7 +98,7 @@ class GrblSync:
 
     def status_received(
             self,
-            status: dict,
+            status: Status,
             feedrate: float,
             spindle: float,
             tool_index_grbl: int

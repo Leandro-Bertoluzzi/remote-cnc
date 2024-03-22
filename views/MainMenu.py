@@ -4,6 +4,7 @@ from components.buttons.MainMenuButton import MainMenuButton
 from views.ControlView import ControlView
 from views.FilesView import FilesView
 from views.InventoryView import InventoryView
+from views.MonitorView import MonitorView
 from views.RequestsView import RequestsView
 from views.UsersView import UsersView
 from views.TasksView import TasksView
@@ -19,7 +20,7 @@ class MainMenu(QWidget):
 
         # Buttons
         btn_tasks = self.createButton('Tareas\n', 'tasks.svg', TasksView)
-        btn_monitor = self.createButton('Monitoreo\n', 'monitor.svg', None)
+        btn_monitor = self.createButton('Monitoreo\n', 'monitor.svg', MonitorView)
         btn_files = self.createButton('Archivos\n', 'files.svg', FilesView)
         btn_control = self.createButton('Control y\ncalibración', 'control.svg', ControlView)
         btn_requests = self.createButton('Solicitudes\n', 'requests.svg', RequestsView)

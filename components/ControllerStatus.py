@@ -1,5 +1,6 @@
 from core.database.base import Session as SessionLocal
 from core.database.repositories.toolRepository import ToolRepository
+from core.grbl.types import Status
 from helpers.utils import applyStylesheet
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
@@ -41,7 +42,7 @@ class ControllerStatus(QWidget):
 
         applyStylesheet(self, __file__, 'ControllerStatus.qss')
 
-    def set_status(self, status):
+    def set_status(self, status: Status):
         self.status.setText(status['activeState'].upper())
         self.x_pos.setText(f"X: {status['mpos']['x']} ({status['wpos']['x']})")
         self.y_pos.setText(f"Y: {status['mpos']['y']} ({status['wpos']['y']})")

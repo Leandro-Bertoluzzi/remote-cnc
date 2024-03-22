@@ -53,6 +53,8 @@ class CncWorkerMonitor:
 
     @classmethod
     def is_worker_on(cls):
+        """Returns whether the worker process is running.
+        """
         try:
             return not not app.control.ping()
         except Exception:
@@ -60,6 +62,8 @@ class CncWorkerMonitor:
 
     @classmethod
     def is_worker_running(cls):
+        """Returns whether the worker process is working on a task.
+        """
         inspector = app.control.inspect()
         try:
             active_tasks = inspector.active()

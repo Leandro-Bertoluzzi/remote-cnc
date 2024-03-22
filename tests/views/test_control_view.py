@@ -4,8 +4,8 @@ from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
 from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from components.Terminal import Terminal
-from core.database.repositories.taskRepository import TaskRepository
 from core.grbl.grblController import GrblController
+from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.grblSync import GrblSync
 from helpers.fileSender import FileSender
 from MainWindow import MainWindow
@@ -20,12 +20,8 @@ from views.ControlView import ControlView
 class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
-        # Mock DB methods
-        mocker.patch.object(
-            TaskRepository,
-            'are_there_tasks_with_status',
-            return_value=False
-        )
+        # Mock worker monitor methods
+        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
 
         # Create an instance of ControlView
         self.parent = mock_window
@@ -43,10 +39,10 @@ class TestControlView:
         # Reset parent mocks call count
         self.parent.addToolBar.reset_mock()
 
-        # Mock DB methods
+        # Mock worker monitor methods
         mock_check_tasks_in_progress = mocker.patch.object(
-            TaskRepository,
-            'are_there_tasks_with_status',
+            CncWorkerMonitor,
+            'is_worker_running',
             return_value=device_busy
         )
 
@@ -65,42 +61,6 @@ class TestControlView:
         # More assertions
         assert self.parent.addToolBar.call_count == (1 if device_busy else 2)
         assert mock_check_tasks_in_progress.call_count == 1
-
-    def test_control_view_init_db_error(
-        self,
-        qtbot: QtBot,
-        mocker: MockerFixture,
-        helpers
-    ):
-        # Reset parent mocks call count
-        self.parent.addToolBar.reset_mock()
-
-        # Mock other functions
-        mock_check_tasks_in_progress = mocker.patch.object(
-            TaskRepository,
-            'are_there_tasks_with_status',
-            side_effect=Exception('mocked-error')
-        )
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
-
-        # Create an instance of ControlView
-        control_view = ControlView(self.parent)
-        qtbot.addWidget(control_view)
-
-        # Validate amount of each type of widget
-        layout = control_view.layout()
-        assert helpers.count_grid_widgets(layout, MenuButton) == 1
-        assert helpers.count_grid_widgets(layout, ControllerActions) == 1
-        assert helpers.count_grid_widgets(layout, CodeEditor) == 1
-        assert helpers.count_grid_widgets(layout, ControllerStatus) == 0
-        assert helpers.count_grid_widgets(layout, Terminal) == 1
-
-        # More assertions
-        mock_popup.assert_called_once()
-        self.parent.addToolBar.assert_called_once()
-        mock_check_tasks_in_progress.assert_called_once()
 
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_control_view_goes_back_to_menu(self, device_busy):

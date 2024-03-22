@@ -1,21 +1,10 @@
-from PyQt5.QtCore import QRect, QSize, Qt
-from PyQt5.QtGui import QPainter, QColor, QTextFormat, QPaintEvent, \
-    QResizeEvent, QSyntaxHighlighter, QTextCharFormat, QFont
+from components.text.IndexedTextEdit import IndexedTextEdit
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QTextFormat, QSyntaxHighlighter, QTextCharFormat, \
+    QFont, QTextBlock
 from PyQt5.QtWidgets import QPushButton, QFileDialog, QMessageBox, \
-    QPlainTextEdit, QTextEdit, QWidget
+    QPlainTextEdit, QTextEdit
 import re
-
-
-class LineNumberArea(QWidget):
-    def __init__(self, editor):
-        super().__init__(editor)
-        self.codeEditor = editor
-
-    def sizeHint(self):
-        return QSize(self.codeEditor.lineNumberAreaWidth(), 0)
-
-    def paintEvent(self, event: QPaintEvent):
-        self.codeEditor.lineNumberAreaPaintEvent(event)
 
 
 class GCodeHighlighter(QSyntaxHighlighter):
@@ -91,7 +80,7 @@ class GCodeHighlighter(QSyntaxHighlighter):
         self.add_mapping(grbl_pattern, grbl_format)
 
 
-class CodeEditor(QPlainTextEdit):
+class CodeEditor(IndexedTextEdit):
     def __init__(self, parent=None):
         super(CodeEditor, self).__init__(parent)
 
@@ -100,18 +89,12 @@ class CodeEditor(QPlainTextEdit):
         self.file_path = ''
 
         # Custom UI management
-        self.lineNumberArea = LineNumberArea(self)
         self.highlighter = GCodeHighlighter(self)
         self.executedLines = 0
 
         # Custom events
         self.textChanged.connect(self.set_modified)
-        self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
-        self.updateRequest.connect(self.updateLineNumberArea)
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
-
-        # Initialize UI
-        self.updateLineNumberAreaWidth(0)
 
         # Apply custom styles
         self.setStyleSheet("background-color: 'white';")
@@ -167,7 +150,7 @@ class CodeEditor(QPlainTextEdit):
         if self.modified and not self.ask_to_save_changes():
             return
 
-        file_path, filter = QFileDialog.getOpenFileName(
+        file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Importar archivo",
             "C:\\",
@@ -196,7 +179,7 @@ class CodeEditor(QPlainTextEdit):
         """Saves the current text to the selected file, or a new one.
         Returns False when the user cancels the action, True otherwise.
         """
-        file_path, filter = QFileDialog.getSaveFileName(
+        file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Exportar archivo",
             "C:\\",
@@ -237,7 +220,7 @@ class CodeEditor(QPlainTextEdit):
 
     # UI methods
 
-    def lineNumberAreaWidth(self):
+    def indexAreaWidth(self):
         digits = 1
         count = max(1, self.blockCount())
         while count >= 10:
@@ -246,73 +229,16 @@ class CodeEditor(QPlainTextEdit):
         space = 3 + self.fontMetrics().width('9') * digits
         return space
 
-    def updateLineNumberAreaWidth(self, _):
-        self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
+    def setIndex(self, block: QTextBlock) -> str:
+        return str(block.blockNumber() + 1)
 
-    def updateLineNumberArea(self, rect: QRect, dy: int):
-        if dy:
-            self.lineNumberArea.scroll(0, dy)
-        else:
-            self.lineNumberArea.update(
-                0,
-                rect.y(),
-                self.lineNumberArea.width(),
-                rect.height()
-            )
-
-        if rect.contains(self.viewport().rect()):
-            self.updateLineNumberAreaWidth(0)
-
-    def resizeEvent(self, event: QResizeEvent):
-        super().resizeEvent(event)
-
-        cr = self.contentsRect()
-        self.lineNumberArea.setGeometry(
-            QRect(
-                cr.left(),
-                cr.top(),
-                self.lineNumberAreaWidth(),
-                cr.height()
-            )
-        )
-
-    def lineNumberAreaPaintEvent(self, event: QPaintEvent):
-        painter = QPainter(self.lineNumberArea)
-
-        # Line number column background color
-        painter.fillRect(event.rect(), Qt.lightGray)
-
-        block = self.firstVisibleBlock()
-        blockNumber = block.blockNumber()
-        top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
-        bottom = top + self.blockBoundingRect(block).height()
-
-        # Just to make sure I use the right font
-        height = self.fontMetrics().height()
+    def setIndexPenColor(self, block: QTextBlock) -> QColor:
+        # Font color for lines yet to be executed
+        if block.blockNumber() + 1 > self.executedLines:
+            return Qt.black
 
         # Font color for already executed lines
-        painter.setPen(Qt.darkYellow)
-
-        # Draw numbers
-        while block.isValid() and (top <= event.rect().bottom()):
-            if blockNumber + 1 > self.executedLines:
-                painter.setPen(Qt.black)
-
-            if block.isVisible() and (bottom >= event.rect().top()):
-                number = str(blockNumber + 1)
-                painter.drawText(
-                    0,
-                    int(top),
-                    self.lineNumberArea.width(),
-                    height,
-                    Qt.AlignRight,
-                    number
-                )
-
-            block = block.next()
-            top = bottom
-            bottom = top + self.blockBoundingRect(block).height()
-            blockNumber += 1
+        return Qt.darkYellow
 
     def highlightCurrentLine(self):
         if self.isReadOnly():
