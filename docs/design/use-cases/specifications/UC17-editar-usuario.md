@@ -1,4 +1,4 @@
-| **Caso de uso**      | **Eitar usuario** |
+| **Caso de uso**      | **Editar usuario** |
 | :---        | :---        |
 | **Identificador**      | UC17 |
 | **Actores**      | Administrador |

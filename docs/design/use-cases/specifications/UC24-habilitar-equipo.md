@@ -1,6 +1,6 @@
-| **Caso de uso**      | **Aprobar solicitud de ejecución** |
+| **Caso de uso**      | **Habilitar equipo** |
 | :---        | :---        |
-| **Identificador**      | UC12 |
+| **Identificador**      | UC24 |
 | **Actores**      | Administrador |
 | **Precondición**   | El equipo se encuentra deshabilitado. |
 | **Resultado**   | El usuario puede habilitar manualmente el equipo. |
