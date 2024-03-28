@@ -25,7 +25,7 @@ class TaskLabel(QLabel):
             return
 
         # Get status in worker
-        task_state = AsyncResult(task_worker_id)
+        task_state: AsyncResult = AsyncResult(task_worker_id)
         task_info = task_state.info
         task_status = task_state.status
 

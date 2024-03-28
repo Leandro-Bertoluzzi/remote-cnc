@@ -120,7 +120,13 @@ class TestCodeEditor:
             mocked_open.assert_called_with(file_path, "r")
 
     @pytest.mark.parametrize("file_path", ['', 'path/to/file.gcode'])
-    def test_code_editor_export_file(self, mocker: MockerFixture, file_path):
+    @pytest.mark.parametrize("exported_as", [False, True])
+    def test_code_editor_export_file(
+        self,
+        mocker: MockerFixture,
+        file_path,
+        exported_as
+    ):
         # Mock attributes
         self.code_editor.file_path = file_path
 
@@ -129,20 +135,25 @@ class TestCodeEditor:
         mocked_open = mocker.patch('builtins.open', mocked_file_data)
 
         # Mock other methods
-        mock_export_file_as = mocker.patch.object(CodeEditor, 'export_file_as')
+        mock_export_file_as = mocker.patch.object(
+            CodeEditor,
+            'export_file_as',
+            return_value=exported_as
+        )
 
         # Call method under test
-        self.code_editor.export_file()
+        exported = self.code_editor.export_file()
 
         # Assertions
+        assert exported == (not not file_path or exported_as)
         assert mock_export_file_as.call_count == (0 if file_path else 1)
         assert mocked_open.call_count == (1 if file_path else 0)
         if file_path:
             mocked_open.assert_called_with(file_path, "w")
 
-    def test_code_editor_export_file_as(self, mocker: MockerFixture):
+    @pytest.mark.parametrize("file_path", ['', 'path/to/file.gcode'])
+    def test_code_editor_export_file_as(self, mocker: MockerFixture, file_path):
         # Mock dialog methods
-        file_path = 'path/to/file.gcode'
         filters = 'G code files (*.txt *.gcode *.nc)'
         mock_select_file = mocker.patch.object(
             QFileDialog,
@@ -155,12 +166,14 @@ class TestCodeEditor:
         mocked_open = mocker.patch('builtins.open', mocked_file_data)
 
         # Call method under test
-        self.code_editor.export_file_as()
+        exported = self.code_editor.export_file_as()
 
         # Assertions
+        assert exported is (not not file_path)
         assert mock_select_file.call_count == 1
-        assert mocked_open.call_count == 1
-        mocked_open.assert_called_with(file_path, "w")
+        assert mocked_open.call_count == (1 if file_path else 0)
+        if file_path:
+            mocked_open.assert_called_with(file_path, "w")
 
     @pytest.mark.parametrize(
             "msg_box_response,save_file_response,expected_result",
@@ -200,13 +213,15 @@ class TestCodeEditor:
     def test_code_editor_render_line_numbers(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock paint event handler
         mock_line_number_paint = mocker.patch.object(
-            self.code_editor.lineNumberArea,
+            self.code_editor.indexArea,
             'update'
         )
 
         # Wait for signal to trigger
         with qtbot.waitSignal(self.code_editor.updateRequest, raising=True):
-            self.code_editor.setPlainText('Line 1\nLine 2\nLine 3')
+            self.code_editor.setPlainText(
+                'Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10'
+            )
 
         # Assertions
         assert mock_line_number_paint.call_count >= 1

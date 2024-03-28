@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton, QWidget
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton, QWidget
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
 from components.text.LogsViewer import LogsViewer
@@ -23,6 +24,9 @@ class MonitorView(QWidget):
 
         # GRBL/WORKER SYNC
         # self.grbl_sync = ?
+
+        # Start monitors
+        self.logs_viewer.start_watching()
 
     def setup_ui(self):
         """ Setup UI
@@ -69,7 +73,7 @@ class MonitorView(QWidget):
         file_options = [
             ('Ver logs', lambda: None),
             ('Exportar', lambda: None),
-            ('Pausar', lambda: None),
+            ('Pausar', self.pause_logs),
         ]
 
         for (label, action) in file_options:
@@ -79,7 +83,13 @@ class MonitorView(QWidget):
             self.tool_bar_log.addWidget(tool_button)
 
     def backToMenu(self):
+        self.getWindow().removeToolBar(self.tool_bar_log)
+        self.logs_viewer.stop()
         self.getWindow().backToMenu()
+
+    def closeEvent(self, event: QCloseEvent):
+        self.logs_viewer.stop()
+        return super().closeEvent(event)
 
     def update_device_status(
             self,
@@ -92,3 +102,6 @@ class MonitorView(QWidget):
         self.status_monitor.set_feedrate(feedrate)
         self.status_monitor.set_spindle(spindle)
         self.status_monitor.set_tool(tool_index)
+
+    def pause_logs(self):
+        self.logs_viewer.toggle_paused()

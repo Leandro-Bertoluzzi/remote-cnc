@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
 # Take environment variables from .env.
 load_dotenv(override=True)
@@ -11,6 +12,7 @@ SERIAL_BAUDRATE = int(os.environ.get('SERIAL_BAUDRATE', ''))
 
 # Generate global constants
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+GRBL_LOGS_FILE = Path.cwd() / Path('core', 'worker', 'grbl.log')
 
 
 # Utility functions

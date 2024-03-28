@@ -235,10 +235,10 @@ class CodeEditor(IndexedTextEdit):
     def setIndexPenColor(self, block: QTextBlock) -> QColor:
         # Font color for lines yet to be executed
         if block.blockNumber() + 1 > self.executedLines:
-            return Qt.black
+            return QColor(Qt.black)
 
         # Font color for already executed lines
-        return Qt.darkYellow
+        return QColor(Qt.darkYellow)
 
     def highlightCurrentLine(self):
         if self.isReadOnly():
