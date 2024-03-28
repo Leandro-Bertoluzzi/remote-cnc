@@ -78,4 +78,3 @@ class LogFileWatcher:
                 continue
 
             yield log
-

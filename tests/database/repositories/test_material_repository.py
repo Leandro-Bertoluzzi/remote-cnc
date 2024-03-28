@@ -19,6 +19,17 @@ class TestMaterialRepository:
         assert new_material.id is not None
         assert new_material.description == description
 
+    def test_get_material_by_id(self, mocked_session):
+        material_repository = MaterialRepository(mocked_session)
+
+        # Call method under test
+        material = material_repository.get_material_by_id(1)
+
+        # Assertions
+        assert isinstance(material, Material)
+        assert material.name == 'material 1'
+        assert material.description == 'It is a material'
+
     def test_get_all_materials(self, mocked_session):
         material_repository = MaterialRepository(mocked_session)
 
@@ -64,6 +75,24 @@ class TestMaterialRepository:
         with pytest.raises(Exception) as error:
             material_repository.create_material(name='name', description='description')
         assert 'Error creating the material in the DB' in str(error.value)
+
+    def test_error_get_non_existing_material(self, mocked_session):
+        material_repository = MaterialRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            material_repository.get_material_by_id(id=5000)
+        assert str(error.value) == 'Material with ID 5000 was not found'
+
+    def test_error_get_material_db_error(self, mocker, mocked_session):
+        # Mock DB method to simulate exception
+        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        material_repository = MaterialRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            material_repository.get_material_by_id(id=1)
+        assert 'Error retrieving the material with ID 1' in str(error.value)
 
     def test_error_get_all_materials_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception

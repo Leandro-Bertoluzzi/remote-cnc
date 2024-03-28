@@ -22,6 +22,15 @@ class MaterialRepository:
             self.session.rollback()
             raise DatabaseError(f'Error creating the material in the DB: {e}')
 
+    def get_material_by_id(self, id: int):
+        try:
+            material = self.session.get(Material, id)
+            if not material:
+                raise EntityNotFoundError(f'Material with ID {id} was not found')
+            return material
+        except SQLAlchemyError as e:
+            raise DatabaseError(f'Error retrieving the material with ID {id}: {e}')
+
     def get_all_materials(self):
         try:
             materials = self.session.execute(

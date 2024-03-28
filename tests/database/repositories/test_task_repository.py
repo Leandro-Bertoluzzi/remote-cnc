@@ -35,6 +35,13 @@ class TestTaskRepository:
         assert new_task.name == name
         assert new_task.note == note
 
+    def test_get_task_by_id(self, mocked_session):
+        task_repository = TaskRepository(mocked_session)
+
+        # Call method under test and assert result
+        task = task_repository.get_task_by_id(1)
+        assert isinstance(task, Task)
+
     def test_get_all_tasks_from_user(self, mocked_session):
         task_repository = TaskRepository(mocked_session)
 
@@ -54,21 +61,6 @@ class TestTaskRepository:
 
         tasks = task_repository.get_all_tasks(status='on_hold')
         assert isinstance(tasks, list)
-
-    def test_get_next_task(self, mocked_session):
-        task_repository = TaskRepository(mocked_session)
-
-        # Call method under test and assert result
-        task = task_repository.get_next_task()
-        assert isinstance(task, Task)
-        assert task.id is not None
-        assert task.user_id == 1
-        assert task.file_id == 1
-        assert task.tool_id == 1
-        assert task.material_id == 1
-        assert task.name == 'Task 2'
-        assert task.note == 'This is a note'
-        assert task.status == 'on_hold'
 
     def test_are_there_tasks_with_status(self, mocked_session):
         task_repository = TaskRepository(mocked_session)
@@ -201,6 +193,16 @@ class TestTaskRepository:
             )
         assert 'Error creating the task in the DB' in str(error.value)
 
+    def test_error_get_task_by_id_db_error(self, mocker, mocked_session):
+        # Mock DB method to simulate exception
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
+        task_repository = TaskRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            task_repository.get_task_by_id(1)
+        assert 'Error looking for task with ID 1 in the DB' in str(error.value)
+
     def test_error_get_all_tasks_from_user_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
@@ -219,16 +221,6 @@ class TestTaskRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             task_repository.get_all_tasks()
-        assert 'Error retrieving tasks from the DB' in str(error.value)
-
-    def test_error_get_next_task_db_error(self, mocker, mocked_session):
-        # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
-        task_repository = TaskRepository(mocked_session)
-
-        # Call the method under test and assert exception
-        with pytest.raises(Exception) as error:
-            task_repository.get_next_task()
         assert 'Error retrieving tasks from the DB' in str(error.value)
 
     def test_error_update_non_existing_task(self, mocked_session):

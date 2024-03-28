@@ -6,7 +6,7 @@ from typing import Optional
 from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError, Unauthorized
 from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
-    TASK_IN_PROGRESS_STATUS, TASK_ON_HOLD_STATUS, TASK_CANCELLED_STATUS, TASK_REJECTED_STATUS, \
+    TASK_IN_PROGRESS_STATUS, TASK_CANCELLED_STATUS, TASK_REJECTED_STATUS, \
     TASK_EMPTY_NOTE, VALID_STATUSES
 
 
@@ -99,19 +99,6 @@ class TaskRepository:
         try:
             tasks = self._get_filtered_tasks(user_id=None, status=status)
             return tasks
-        except SQLAlchemyError as e:
-            raise DatabaseError(f'Error retrieving tasks from the DB: {e}')
-
-    def get_next_task(self) -> Optional[Task]:
-        try:
-            tasks = self._get_filtered_tasks(
-                user_id=None,
-                status=TASK_ON_HOLD_STATUS,
-                order_criterion=Task.priority.desc()
-            )
-            if not tasks:
-                return None
-            return tasks[0]
         except SQLAlchemyError as e:
             raise DatabaseError(f'Error retrieving tasks from the DB: {e}')
 

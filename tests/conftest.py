@@ -3,6 +3,10 @@ from database.base import Base
 from datetime import datetime
 
 
+# Constants
+created_time = datetime(2023, 12, 25, 0, 0, 0)
+
+
 # Settings for mocking SQLAlchemy
 @pytest.fixture(scope="function")
 def sqlalchemy_declarative_base():
@@ -33,13 +37,13 @@ def sqlalchemy_mock_config():
                 "id": 1,
                 "name": "tool 1",
                 "description": "It is a tool",
-                "added_at": datetime.now()
+                "added_at": created_time
             },
             {
                 "id": 2,
                 "name": "tool 2",
                 "description": "It is also a tool",
-                "added_at": datetime.now()
+                "added_at": created_time
             }
         ]),
         ("materials", [
@@ -47,13 +51,13 @@ def sqlalchemy_mock_config():
                 "id": 1,
                 "name": "material 1",
                 "description": "It is a material",
-                "added_at": datetime.now()
+                "added_at": created_time
             },
             {
                 "id": 2,
                 "name": "material 2",
                 "description": "It is also a material",
-                "added_at": datetime.now()
+                "added_at": created_time
             }
         ]),
         ("files", [
@@ -62,14 +66,14 @@ def sqlalchemy_mock_config():
                 "user_id": 1,
                 "file_name": "file-1.gcode",
                 "file_hash": "hashed-content",
-                "created_at": datetime.now()
+                "created_at": created_time
             },
             {
                 "id": 2,
                 "user_id": 2,
                 "file_name": "file-2.gcode",
                 "file_hash": "hashed-content-2",
-                "created_at": datetime.now()
+                "created_at": created_time
             }
         ]),
         ("tasks", [
@@ -85,8 +89,8 @@ def sqlalchemy_mock_config():
                 "priority": 0,
                 "note": "This is a note",
                 "cancellation_reason": None,
-                "created_at": datetime.now(),
-                "status_updated_at": datetime.now()
+                "created_at": created_time,
+                "status_updated_at": created_time
             },
             {
                 "id": 2,
@@ -100,8 +104,8 @@ def sqlalchemy_mock_config():
                 "priority": 2,
                 "note": "This is a note",
                 "cancellation_reason": None,
-                "created_at": datetime.now(),
-                "status_updated_at": datetime.now()
+                "created_at": created_time,
+                "status_updated_at": created_time
             },
             {
                 "id": 3,
@@ -115,8 +119,8 @@ def sqlalchemy_mock_config():
                 "priority": 0,
                 "note": "This is a note",
                 "cancellation_reason": None,
-                "created_at": datetime.now(),
-                "status_updated_at": datetime.now()
+                "created_at": created_time,
+                "status_updated_at": created_time
             },
             {
                 "id": 4,
@@ -130,8 +134,8 @@ def sqlalchemy_mock_config():
                 "priority": 0,
                 "note": "This is a note",
                 "cancellation_reason": "It was necessary",
-                "created_at": datetime.now(),
-                "status_updated_at": datetime.now()
+                "created_at": created_time,
+                "status_updated_at": created_time
             },
         ])
     ]
