@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
-from typing import Optional
+import time
+from typing import Iterator, Optional
 import re
 
 # Custom types
@@ -55,9 +57,25 @@ class LogFileWatcher:
     def set_file_path(self, file_path: Path):
         self.file_path = file_path
 
-    def start_watching(self):
-        pass
-
     def stop_watching(self):
-        pass
+        self.is_watching = False
+
+    def watch(self) -> Iterator[Log]:
+        '''generator function that yields new lines in a file
+        '''
+        # seek the end of the file
+        file = open(self.file_path)
+        file.seek(0, os.SEEK_END)
+
+        # start loop
+        self.is_watching = True
+        while self.is_watching:
+            # read last line of file
+            line = file.readline()        # sleep if file hasn't been updated
+            log = LogsInterpreter.interpret_log(line)
+            if not log:
+                time.sleep(0.1)
+                continue
+
+            yield log
 
