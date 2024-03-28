@@ -1,18 +1,19 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton, QWidget
+from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
 from components.text.LogsViewer import LogsViewer
 from core.grbl.types import Status
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from typing import TYPE_CHECKING
+from views.BaseView import BaseView
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow   # pragma: no cover
 
 
-class MonitorView(QWidget):
+class MonitorView(BaseView):
     def __init__(self, parent: 'MainWindow'):
         super(MonitorView, self).__init__(parent)
 
@@ -59,9 +60,6 @@ class MonitorView(QWidget):
             5, 0, 1, 2,
             alignment=Qt.AlignCenter
         )
-
-    def getWindow(self) -> 'MainWindow':
-        return self.parent()    # type: ignore
 
     def createToolBars(self):
         """Adds the tool bars to the Main window

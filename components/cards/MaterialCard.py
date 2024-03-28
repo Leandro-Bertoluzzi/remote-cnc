@@ -36,7 +36,7 @@ class MaterialCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     @needs_confirmation('¿Realmente desea eliminar el material?', 'Eliminar material')
     def removeMaterial(self):
@@ -50,4 +50,4 @@ class MaterialCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()

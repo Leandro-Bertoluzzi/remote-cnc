@@ -4,7 +4,8 @@ from helpers.utils import applyStylesheet
 from typing import Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow               # pragma: no cover
+    from views.BaseListView import BaseListView     # pragma: no cover
 
 
 class Card(QWidget):
@@ -43,7 +44,14 @@ class Card(QWidget):
         button.setEnabled(enabled)
         self.layout_buttons.addWidget(button)
 
+    def getView(self) -> 'BaseListView':
+        """Get the view containing this card.
+        """
+        return self.parent()  # type: ignore
+
     def getWindow(self) -> 'MainWindow':
+        """Get the application's main window.
+        """
         return self.parent().parent()  # type: ignore
 
     # Notifications

@@ -31,6 +31,8 @@ def send_task_to_worker(db_task_id: int) -> str:
 
 # Decorators
 def needs_confirmation(text, title):
+    """[Decorator] Shows a confirmation dialog before executing the decorated function.
+    """
     def decorator(fun):
         def wrapper(*args):
             confirmation = QMessageBox()

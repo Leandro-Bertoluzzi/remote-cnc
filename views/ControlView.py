@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QComboBox, QGridLayout, QMessageBox, QToolBar, QToolButton, QWidget
+from PyQt5.QtWidgets import QComboBox, QGridLayout, QToolBar, QToolButton
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
@@ -19,6 +19,7 @@ from helpers.fileSender import FileSender
 from helpers.grblSync import GrblSync
 import logging
 from typing import TYPE_CHECKING
+from views.BaseView import BaseView
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow   # pragma: no cover
@@ -32,7 +33,7 @@ GRBL_STATUS_DISCONNECTED: Status = {
 }
 
 
-class ControlView(QWidget):
+class ControlView(BaseView):
     def __init__(self, parent: 'MainWindow'):
         super(ControlView, self).__init__(parent)
 
@@ -122,9 +123,6 @@ class ControlView(QWidget):
 
     def __del__(self):
         self.disconnect_device()
-
-    def getWindow(self) -> 'MainWindow':
-        return self.parent()    # type: ignore
 
     def closeEvent(self, event: QCloseEvent):
         self.disconnect_device()
@@ -217,12 +215,7 @@ class ControlView(QWidget):
         try:
             response = self.grbl_controller.connect(self.port_selected, SERIAL_BAUDRATE)
         except Exception as error:
-            QMessageBox.critical(
-                self,
-                'Error',
-                str(error),
-                QMessageBox.Ok
-            )
+            self.showError('Error', str(error))
             return
 
         self.connect_button.setText('Desconectar')
@@ -240,12 +233,7 @@ class ControlView(QWidget):
         try:
             self.grbl_controller.disconnect()
         except Exception as error:
-            QMessageBox.critical(
-                self,
-                'Error',
-                str(error),
-                QMessageBox.Ok
-            )
+            self.showError('Error', str(error))
             return
         self.connected = False
         self.file_sender.stop()
@@ -269,13 +257,7 @@ class ControlView(QWidget):
 
     def run_homing_cycle(self):
         self.grbl_controller.handleHomingCycle()
-
-        QMessageBox.warning(
-            self,
-            'Homing',
-            "Iniciando ciclo de home",
-            QMessageBox.Ok
-        )
+        self.showWarning('Homing', "Iniciando ciclo de home")
 
     def disable_alarm(self):
         self.grbl_controller.disableAlarm()
@@ -285,32 +267,26 @@ class ControlView(QWidget):
 
         # Update internal state
         self.checkmode = not self.checkmode
-        QMessageBox.information(
-            self,
+        self.showInfo(
             'Modo de prueba',
-            f"El modo de prueba fue {'activado' if self.checkmode else 'desactivado'}",
-            QMessageBox.Ok
+            f"El modo de prueba fue {'activado' if self.checkmode else 'desactivado'}"
         )
 
     def start_file_stream(self):
         file_path = self.code_editor.get_file_path()
 
         if not file_path:
-            QMessageBox.warning(
-                self,
+            self.showWarning(
                 'Cambios sin guardar',
-                'Por favor guarde el archivo antes de continuar',
-                QMessageBox.Ok
+                'Por favor guarde el archivo antes de continuar'
             )
             return
 
         # Check if the file has changes without saving
         if self.code_editor.get_modified():
-            QMessageBox.warning(
-                self,
+            self.showWarning(
                 'Cambios sin guardar',
-                'El archivo tiene cambios sin guardar en el editor, por favor guárdelos',
-                QMessageBox.Ok
+                'El archivo tiene cambios sin guardar en el editor, por favor guárdelos'
             )
             return
 
@@ -329,11 +305,9 @@ class ControlView(QWidget):
 
     def finished_file_stream(self):
         self.code_editor.setReadOnly(False)
-        QMessageBox.information(
-            self,
+        self.showInfo(
             'Archivo enviado',
-            'Se terminó de enviar el archivo para su ejecución, por favor espere a que termine',
-            QMessageBox.Ok
+            'Se terminó de enviar el archivo para su ejecución, por favor espere a que termine'
         )
 
     # Interaction with other widgets
@@ -350,12 +324,9 @@ class ControlView(QWidget):
             return
 
         self.grbl_controller.setSettings(settings)
-
-        QMessageBox.information(
-            self,
+        self.showInfo(
             'Configuración de GRBL',
-            '¡La configuración de GRBL fue actualizada correctamente!',
-            QMessageBox.Ok
+            '¡La configuración de GRBL fue actualizada correctamente!'
         )
 
     def write_to_terminal(self, text):

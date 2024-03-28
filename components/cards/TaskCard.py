@@ -96,7 +96,7 @@ class TaskCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     @needs_confirmation('¿Realmente desea eliminar la tarea?', 'Eliminar tarea')
     def removeTask(self):
@@ -110,7 +110,7 @@ class TaskCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     @needs_confirmation(
             '¿Realmente desea restaurar la tarea?'
@@ -122,7 +122,7 @@ class TaskCard(Card):
             self.task.id,
             TASK_INITIAL_STATUS
         )
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     def cancelTask(self):
         cancelDialog = TaskCancelDialog()
@@ -135,7 +135,7 @@ class TaskCard(Card):
             TASK_CANCELLED_STATUS,
             cancellation_reason
         )
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     def updateTaskStatus(
         self,
@@ -182,7 +182,7 @@ class TaskCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     @needs_confirmation('¿Desea ejecutar la tarea ahora?', 'Ejecutar tarea')
     def runTask(self):
@@ -215,4 +215,4 @@ class TaskCard(Card):
             'Tarea enviada',
             'Se envió la tarea al equipo para su ejecución'
         )
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()

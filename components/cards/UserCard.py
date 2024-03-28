@@ -36,7 +36,7 @@ class UserCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     @needs_confirmation('¿Realmente desea eliminar el usuario?', 'Eliminar usuario')
     def removeUser(self):
@@ -50,4 +50,4 @@ class UserCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()

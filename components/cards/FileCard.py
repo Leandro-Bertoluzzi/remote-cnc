@@ -71,7 +71,7 @@ class FileCard(Card):
                 str(error)
             )
         else:
-            self.parent().refreshLayout()
+            self.getView().refreshLayout()
 
     @needs_confirmation('¿Realmente desea eliminar el archivo?', 'Eliminar archivo')
     def removeFile(self):
@@ -93,4 +93,4 @@ class FileCard(Card):
                 str(error)
             )
         else:
-            self.parent().refreshLayout()
+            self.getView().refreshLayout()

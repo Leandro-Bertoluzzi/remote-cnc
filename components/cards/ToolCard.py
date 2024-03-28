@@ -36,7 +36,7 @@ class ToolCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     @needs_confirmation('¿Realmente desea eliminar la herramienta?', 'Eliminar herramienta')
     def removeTool(self):
@@ -50,4 +50,4 @@ class ToolCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()

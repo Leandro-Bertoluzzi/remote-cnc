@@ -1,11 +1,12 @@
 from abc import abstractmethod
-from PyQt5.QtWidgets import QLabel, QMessageBox, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from components.cards.MsgCard import MsgCard
 from components.buttons.MenuButton import MenuButton
 from core.database.models import Base
 from typing import List, Callable, TYPE_CHECKING
 from typing_extensions import TypedDict
+from views.BaseView import BaseView
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow   # pragma: no cover
@@ -21,7 +22,7 @@ ViewList = TypedDict('ViewList', {
 })
 
 
-class BaseListView(QWidget):
+class BaseListView(BaseView):
     def __init__(self, parent: 'MainWindow'):
         super(BaseListView, self).__init__(parent)
 
@@ -34,6 +35,8 @@ class BaseListView(QWidget):
         self.current_index = 0
 
     def refreshLayout(self):
+        """Re-draw the view, updating the inside widgets.
+        """
         while self.layout().count():
             child = self.layout().takeAt(0)
             if child.widget():
@@ -99,19 +102,6 @@ class BaseListView(QWidget):
             'items': items
         }
         self.setItemList(list_definition)
-
-    # Notifications
-
-    def showWarning(self, title, text):
-        QMessageBox.warning(self, title, text, QMessageBox.Ok)
-
-    def showError(self, title, text):
-        QMessageBox.critical(self, title, text, QMessageBox.Ok)
-
-    # Helper methods
-
-    def getWindow(self) -> 'MainWindow':
-        return self.parent()    # type: ignore
 
     # Abstract methods
 

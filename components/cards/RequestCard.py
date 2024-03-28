@@ -29,10 +29,10 @@ class RequestCard(Card):
             repository = TaskRepository(db_session)
             repository.update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
             if not CncWorkerMonitor.is_device_enabled():
-                self.parent().refreshLayout()
+                self.getView().refreshLayout()
                 return
             if repository.are_there_tasks_in_progress():
-                self.parent().refreshLayout()
+                self.getView().refreshLayout()
                 return
 
             self.runTask()
@@ -42,7 +42,7 @@ class RequestCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
 
     @needs_confirmation(
         '¿Desea ejecutar la tarea ahora? En caso contrario, '
@@ -78,4 +78,4 @@ class RequestCard(Card):
                 str(error)
             )
             return
-        self.parent().refreshLayout()
+        self.getView().refreshLayout()
