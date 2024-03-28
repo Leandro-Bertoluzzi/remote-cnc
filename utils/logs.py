@@ -53,9 +53,7 @@ class LogsInterpreter:
 class LogFileWatcher:
     def __init__(self, file_path: Path):
         self.file_path = file_path
-
-    def set_file_path(self, file_path: Path):
-        self.file_path = file_path
+        self.is_watching = False
 
     def stop_watching(self):
         self.is_watching = False
