@@ -19,6 +19,9 @@ class TestMonitorView:
         # Mock logs monitor methods
         mocker.patch.object(LogsViewer, 'start_watching')
 
+        # Mock other methods
+        mocker.patch.object(MonitorView, 'connect_worker')
+
         # Create an instance of MonitorView
         self.parent = mock_window
         self.monitor_view = MonitorView(self.parent)

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
 from components.text.LogsViewer import LogsViewer
-from core.grbl.types import Status
+from core.grbl.types import Status, ParserState
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from typing import TYPE_CHECKING
 from views.BaseView import BaseView
@@ -24,13 +24,15 @@ class MonitorView(BaseView):
         self.setup_ui()
 
         # GRBL/WORKER SYNC
-        # self.grbl_sync = ?
+        self.connect_worker()
 
         # Start monitors
         self.logs_viewer.start_watching()
 
+    # SETUP METHODS
+
     def setup_ui(self):
-        """ Setup UI
+        """Setup UI
         """
         layout = QGridLayout(self)
         layout.setAlignment(Qt.AlignCenter)
@@ -61,6 +63,12 @@ class MonitorView(BaseView):
             alignment=Qt.AlignCenter
         )
 
+    def connect_worker(self):
+        """Synchronizes the status monitor with the CNC worker.
+        """
+        if self.device_busy:
+            self.getWindow().worker_monitor.task_new_status.connect(self.update_task_status)
+
     def createToolBars(self):
         """Adds the tool bars to the Main window
         """
@@ -80,6 +88,8 @@ class MonitorView(BaseView):
             tool_button.clicked.connect(action)
             self.tool_bar_log.addWidget(tool_button)
 
+    # EVENTS
+
     def backToMenu(self):
         self.getWindow().removeToolBar(self.tool_bar_log)
         self.logs_viewer.stop()
@@ -88,6 +98,27 @@ class MonitorView(BaseView):
     def closeEvent(self, event: QCloseEvent):
         self.logs_viewer.stop()
         return super().closeEvent(event)
+
+    # UI METHODS
+
+    def update_task_status(
+        self,
+        sent_lines: int,
+        processed_lines: int,
+        total_lines: int,
+        controller_status: Status,
+        grbl_parserstate: ParserState
+    ):
+        # TODO: Agregar widget con estado de tarea, puede ser una barra de carga
+        # sent = int((sent_lines * 100) / float(total_lines))
+        # executed = int((processed_lines * 100) / float(total_lines))
+
+        self.update_device_status(
+            controller_status,
+            grbl_parserstate['feedrate'],
+            grbl_parserstate['spindle'],
+            grbl_parserstate['tool']
+        )
 
     def update_device_status(
             self,

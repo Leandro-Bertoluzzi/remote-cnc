@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("background-color:#666666;")
 
         # CNC tasks monitor
-        self.worker_monitor = CncWorkerMonitor(self)
+        self.worker_monitor = CncWorkerMonitor()
 
         # UI components
         self.status_bar = StatusBar(self)
@@ -56,12 +56,7 @@ class MainWindow(QMainWindow):
 
     # Slots
 
-    def startWorkerMonitor(self, task_worker_id: str):
-        self.status_bar.updateDeviceStatus('TRABAJANDO...')
-        self.worker_monitor.start_task_monitor(task_worker_id)
-        self.status_bar.setTemporalStatusMessage('Iniciado el monitor del worker')
-
-    def task_finished(self):
+    def on_task_finished(self):
         self.status_bar.updateDeviceStatus('DESHABILITADO')
         self.status_bar.setEnableBtnVisible(True)
         QMessageBox.information(
@@ -73,7 +68,7 @@ class MainWindow(QMainWindow):
             QMessageBox.Ok
         )
 
-    def task_failed(self, error_msg: str):
+    def on_task_failed(self, error_msg: str):
         self.status_bar.updateDeviceStatus('ERROR')
         QMessageBox.critical(
             self,
@@ -83,6 +78,15 @@ class MainWindow(QMainWindow):
             f'{error_msg}',
             QMessageBox.Ok
         )
+
+    # Other methods
+
+    def startWorkerMonitor(self, task_worker_id: str):
+        self.status_bar.updateDeviceStatus('TRABAJANDO...')
+        self.worker_monitor.start_task_monitor(task_worker_id)
+        self.worker_monitor.task_finished.connect(self.on_task_finished)
+        self.worker_monitor.task_failed.connect(self.on_task_failed)
+        self.status_bar.setTemporalStatusMessage('Iniciado el monitor del worker')
 
     def enable_device(self):
         self.worker_monitor.set_device_enabled(True)

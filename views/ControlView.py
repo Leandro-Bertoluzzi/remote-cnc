@@ -47,10 +47,12 @@ class ControlView(BaseView):
         self.setup_ui()
 
         # GRBL SYNC
-        self.grbl_sync = GrblSync(self)
+        self.grbl_sync = GrblSync(self.grbl_controller)
 
         # FILE SENDER
         self.file_sender = FileSender(self)
+
+    # SETUP METHODS
 
     def setup_grbl_controller(self):
         """ Setup GRBL controller
@@ -124,10 +126,6 @@ class ControlView(BaseView):
     def __del__(self):
         self.disconnect_device()
 
-    def closeEvent(self, event: QCloseEvent):
-        self.disconnect_device()
-        return super().closeEvent(event)
-
     def createToolBars(self):
         """Adds the tool bars to the Main window
         """
@@ -180,6 +178,8 @@ class ControlView(BaseView):
         combo_ports.currentTextChanged.connect(self.set_selected_port)
         self.tool_bar_grbl.addWidget(combo_ports)
 
+    # EVENTS
+
     def backToMenu(self):
         """Removes the tool bar from the main window and goes back to the main menu
         """
@@ -188,6 +188,12 @@ class ControlView(BaseView):
         if not self.device_busy:
             self.getWindow().removeToolBar(self.tool_bar_grbl)
         self.getWindow().backToMenu()
+
+    def closeEvent(self, event: QCloseEvent):
+        self.disconnect_device()
+        return super().closeEvent(event)
+
+    # SERIAL PORT ACTIONS
 
     def set_selected_port(self, port):
         self.port_selected = port
@@ -221,8 +227,12 @@ class ControlView(BaseView):
         self.connect_button.setText('Desconectar')
         self.connected = True
         self.enable_serial_widgets(True)
-        self.grbl_sync.start_monitor()
         self.write_to_terminal(response['raw'])
+
+        # Configure GRBL sync
+        self.grbl_sync.start_monitor()
+        self.grbl_sync.new_message.connect(self.write_to_terminal)
+        self.grbl_sync.new_status.connect(self.update_device_status)
 
     def disconnect_device(self):
         """Close the connection with the GRBL device.
@@ -250,7 +260,7 @@ class ControlView(BaseView):
         self.control_panel.setEnabled(enable)
         self.terminal.setEnabled(enable)
 
-    # GRBL Actions
+    # GRBL ACTIONS
 
     def query_device_settings(self):
         self.device_settings = self.grbl_controller.getGrblSettings()
@@ -271,6 +281,8 @@ class ControlView(BaseView):
             'Modo de prueba',
             f"El modo de prueba fue {'activado' if self.checkmode else 'desactivado'}"
         )
+
+    # FILE ACTIONS
 
     def start_file_stream(self):
         file_path = self.code_editor.get_file_path()
@@ -328,6 +340,8 @@ class ControlView(BaseView):
             'Configuración de GRBL',
             '¡La configuración de GRBL fue actualizada correctamente!'
         )
+
+    # SLOTS
 
     def write_to_terminal(self, text):
         self.terminal.display_text(text)

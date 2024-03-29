@@ -57,7 +57,6 @@ class Worker(QObject):
                 ts = t
                 current_line += 1
 
-        self._running = False
         gcode.close()
 
     def set_file(self, file_path: str):
@@ -122,7 +121,11 @@ class FileSender:
         self.file_worker.toggle_paused()
 
     def stop(self):
+        if not self.file_thread:
+            return
         self.file_worker.stop()
+        self.file_thread.quit()
+        self.file_thread.wait()
 
     def line_sent(self, line: int):
         self.control_view.update_already_read_lines(line)

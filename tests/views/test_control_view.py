@@ -5,6 +5,7 @@ from components.ControllerStatus import ControllerStatus
 from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from components.Terminal import Terminal
 from core.grbl.grblController import GrblController
+import core.mocks.grbl_mocks as grbl_mocks
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.grblSync import GrblSync
 from helpers.fileSender import FileSender
@@ -113,13 +114,11 @@ class TestControlView:
         self.control_view.port_selected = port
         self.control_view.connected = connected
 
-        grbl_init_message = 'Grbl 1.1h [\'$\' for help]'
-
         # Mock methods
         mock_grbl_connect = mocker.patch.object(
             GrblController,
             'connect',
-            return_value={'raw': grbl_init_message}
+            return_value={'raw': grbl_mocks.grbl_init_message}
         )
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
         mock_start_monitor = mocker.patch.object(GrblSync, 'start_monitor')
@@ -142,7 +141,7 @@ class TestControlView:
         connect_btn_text = self.control_view.connect_button.text()
         assert connect_btn_text == ('Desconectar' if should_connect else 'Conectar')
         if should_connect:
-            mock_write_to_terminal.assert_called_with(grbl_init_message)
+            mock_write_to_terminal.assert_called_with(grbl_mocks.grbl_init_message)
 
     def test_control_view_connect_device_serial_error(self, mocker: MockerFixture):
         # Mock attributes
@@ -223,26 +222,12 @@ class TestControlView:
     def test_control_view_query_settings(self, mocker: MockerFixture):
         # Mock attributes
         self.control_view.device_settings = {}
-        grbl_settings = {
-            '$0': {
-                'value': '10',
-                'message': 'Step pulse time',
-                'units': 'microseconds',
-                'description': 'Sets time length per step. Minimum 3usec.'
-            },
-            '$1': {
-                'value': '25',
-                'message': 'Step idle delay',
-                'units': 'milliseconds',
-                'description': 'Sets a short hold delay when stopping ...'
-            }
-        }
 
         # Mock methods
         mock_grbl_query_settings = mocker.patch.object(
             GrblController,
             'getGrblSettings',
-            return_value=grbl_settings
+            return_value=grbl_mocks.grbl_settings
         )
 
         # Call method under test
@@ -250,7 +235,7 @@ class TestControlView:
 
         # Assertions
         assert mock_grbl_query_settings.call_count == 1
-        assert self.control_view.device_settings == grbl_settings
+        assert self.control_view.device_settings == grbl_mocks.grbl_settings
 
     def test_run_homing_cycle(self, mocker: MockerFixture):
         # Mock methods

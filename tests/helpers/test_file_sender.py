@@ -1,12 +1,12 @@
 from helpers.fileSender import FileSender, Worker
 from PyQt5.QtCore import QThread
 import pytest
-import threading
+from pytest_mock.plugin import MockerFixture
 
 
 class TestFileSender:
     @pytest.fixture(autouse=True)
-    def setup_method(self, mocker):
+    def setup_method(self, mocker: MockerFixture):
         # Mock GRBL controller object
         self.grbl_controller = mocker.MagicMock()
 
@@ -20,7 +20,7 @@ class TestFileSender:
         # Assertions
         assert self.file_sender.file_worker.file_path == '/path/to/file.nc'
 
-    def test_file_sender_start(self, mocker):
+    def test_file_sender_start(self, mocker: MockerFixture):
         # Mock thread
         mock_worker_move_to_thread = mocker.patch.object(Worker, 'moveToThread')
         mock_thread_start = mocker.patch.object(QThread, 'start')
@@ -33,7 +33,7 @@ class TestFileSender:
         assert mock_thread_start.call_count == 1
 
     @pytest.mark.parametrize("running", [False, True])
-    def test_file_sender_pause(self, mocker, running):
+    def test_file_sender_pause(self, mocker: MockerFixture, running):
         # Set attributes for test
         self.file_sender.file_worker._running = running
 
@@ -54,7 +54,7 @@ class TestFileSender:
 
     @pytest.mark.parametrize("running", [False, True])
     @pytest.mark.parametrize("paused", [False, True])
-    def test_file_sender_resume(self, mocker, running, paused):
+    def test_file_sender_resume(self, mocker: MockerFixture, running, paused):
         # Set attributes for test
         self.file_sender.file_worker._running = running
         self.file_sender.file_worker._paused = paused
@@ -76,7 +76,7 @@ class TestFileSender:
 
     @pytest.mark.parametrize("running", [False, True])
     @pytest.mark.parametrize("paused", [False, True])
-    def test_file_sender_toggle_paused(self, mocker, running, paused):
+    def test_file_sender_toggle_paused(self, mocker: MockerFixture, running, paused):
         # Set attributes for test
         self.file_sender.file_worker._running = running
         self.file_sender.file_worker._paused = paused
@@ -97,15 +97,23 @@ class TestFileSender:
         if running:
             mock_grbl_pause.assert_called_with(not paused)
 
-    def test_file_sender_stop(self):
+    @pytest.mark.parametrize("running", [False, True])
+    def test_file_sender_stop(self, mocker: MockerFixture, running):
+        # Mock attributes
+        self.file_sender.file_thread = (QThread() if running else None)
+
+        # Mock thread
+        mock_worker_stop = mocker.patch.object(Worker, 'stop')
+        mocker.patch.object(QThread, 'quit')
+        mocker.patch.object(QThread, 'wait')
+
         # Call method under test
         self.file_sender.stop()
 
         # Assertions
-        assert self.file_sender.file_thread is None
-        assert self.file_sender.file_worker._running is False
+        assert mock_worker_stop.call_count == (1 if running else 0)
 
-    def test_file_sender_send_whole_file(self, mocker):
+    def test_file_sender_send_whole_file(self, mocker: MockerFixture):
         # Mock attributes
         self.file_sender.set_file('path/to/file')
 
@@ -132,9 +140,9 @@ class TestFileSender:
         assert mock_grbl_send_command.call_count == 3
         assert self.file_sender.file_worker._running is False
 
-    def test_file_sender_avoids_filling_buffer(self, mocker):
+    def test_file_sender_avoids_filling_buffer(self, mocker: MockerFixture):
         # Mock attributes
-        self.file_sender.file_thread = threading.Thread()
+        self.file_sender.file_thread = QThread()
         self.file_sender.set_file('path/to/file')
 
         # Mock GRBL methods
@@ -160,9 +168,9 @@ class TestFileSender:
         assert mock_grbl_send_command.call_count == 3
         assert self.file_sender.file_worker._running is False
 
-    def test_file_sender_thread_stopped(self, mocker):
+    def test_file_sender_thread_stopped(self, mocker: MockerFixture):
         # Mock attributes
-        self.file_sender.file_thread = threading.Thread()
+        self.file_sender.file_thread = QThread()
         self.file_sender.set_file('path/to/file')
 
         # Mock thread life cycle
