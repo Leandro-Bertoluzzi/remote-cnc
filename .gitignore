@@ -13,3 +13,8 @@ gcode_files/
 
 # Log files
 *.log
+
+# Video files for camera emulation
+*.mp4
+*.mkv
+*.mpeg

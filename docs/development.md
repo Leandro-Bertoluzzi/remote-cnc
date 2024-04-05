@@ -45,6 +45,17 @@ In case you don't have (or don't want to use) a DB and a message broker for Cele
 $ docker compose up -d
 ```
 
+### Initiate with mocked camera
+
+In addition, you can also add a mocked version of the camera web server, which streams the test file `/camera/video/mock.mp4` in a loop.
+
+```bash
+$ cp camera/.env.example camera/.env
+$ docker compose -f docker-compose.yml -f docker-compose.test.yml up
+```
+
+You can validate the camera web server works properly by visiting `http://localhost:8081` in your web browser.
+
 ## Run the app
 
 Once installed all dependencies and created the Python environment, every time you want to start the app you must run:
