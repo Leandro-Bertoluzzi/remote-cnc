@@ -1,7 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton
+from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QToolBar, QToolButton
 from components.buttons.MenuButton import MenuButton
+from components.CameraViewer import CameraViewer
 from components.ControllerStatus import ControllerStatus
 from components.text.LogsViewer import LogsViewer
 from core.grbl.types import Status, ParserState
@@ -40,22 +41,25 @@ class MonitorView(BaseView):
 
         self.status_monitor = ControllerStatus(parent=self)
         self.logs_viewer = LogsViewer(parent=self)
+        self.camera_viewer = CameraViewer(parent=self)
 
         ############################################
         # 0                  |                     #
         # 1      STATUS      |                     #
         # 2                  |        LOGS         #
         #   ---------------- |                     #
-        # 3        XXX       |                     #
+        # 3      CAMERA      |                     #
         #   -------------------------------------- #
         # 4               BTN_BACK                 #
         ############################################
 
         self.createToolBars()
-        layout.addWidget(self.status_monitor, 0, 0, Qt.AlignTop)
+        layout.addWidget(self.status_monitor, 0, 0, 1, 1, Qt.AlignTop)
         if not self.device_busy:
             self.status_monitor.setEnabled(False)
-        layout.addWidget(self.logs_viewer, 0, 1)
+        layout.addWidget(self.logs_viewer, 0, 1, 2, 1)
+        layout.addWidget(self.camera_viewer, 1, 0)
+        self.camera_viewer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         layout.addWidget(
             MenuButton('Volver al menú', onClick=self.backToMenu),
