@@ -1,6 +1,7 @@
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
+from components.TaskProgress import TaskProgress
 from components.text.TaskLabel import TaskLabel
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
@@ -8,7 +9,7 @@ from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STAT
 from core.database.repositories.taskRepository import TaskRepository
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.utils import needs_confirmation, send_task_to_worker
-
+from PyQt5.QtWidgets import QSizePolicy
 
 class TaskCard(Card):
     def __init__(
@@ -34,7 +35,12 @@ class TaskCard(Card):
 
     def setup_ui(self):
         self.add_buttons(self.task.status)
-        self.label_description = TaskLabel(self.task, self)
+        self.task_progress = TaskProgress(parent=self)
+        self.label_description = TaskLabel(self.task, self.task_progress, self)
+
+        # Update layout
+        self.task_progress.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.layout().addWidget(self.task_progress)
 
     def add_buttons(self, status: str):
         """Adds buttons according to task status:

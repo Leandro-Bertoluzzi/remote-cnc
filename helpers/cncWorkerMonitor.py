@@ -75,7 +75,7 @@ class CncWorkerMonitor(QObject):
         if task_status == 'FAILURE':
             self.set_device_enabled(False)
             self.stop_task_monitor()
-            self.task_failed.emit(task_info)
+            self.task_failed.emit(str(task_info))
 
     # STATIC METHODS
 

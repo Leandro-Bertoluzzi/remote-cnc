@@ -1,4 +1,5 @@
 from celery.result import AsyncResult
+from components.TaskProgress import TaskProgress
 from core.database.models import Task
 from core.utils.storage import get_value_from_id
 from PyQt5.QtWidgets import QLabel
@@ -9,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class TaskLabel(QLabel):
-    def __init__(self, task: Task, parent: 'TaskCard'):
+    def __init__(self, task: Task, taskProgress: TaskProgress, parent: 'TaskCard'):
         super(TaskLabel, self).__init__(parent)
 
         # Set desciption
@@ -17,6 +18,7 @@ class TaskLabel(QLabel):
         task_name = task.name
         task_status_db = task.status
         description = f'Tarea {task_id}: {task_name}\nEstado: {task_status_db}'
+        taskProgress.setVisible(False)
 
         # Check if it has a worker task ID
         task_worker_id = get_value_from_id('task', task.id)
@@ -34,15 +36,14 @@ class TaskLabel(QLabel):
             processed_lines = task_info.get('processed_lines')
             total_lines = task_info.get('total_lines')
 
-            sent = int((sent_lines * 100) / float(total_lines))
-            executed = int((processed_lines * 100) / float(total_lines))
-
             description = (
                 f'Tarea {task_id}: {task_name}\n'
                 f'Estado: {task_status_db}\n'
-                f'Enviado: {sent_lines}/{total_lines} ({sent}%)\n'
-                f'Ejecutado: {processed_lines}/{total_lines} ({executed}%)'
             )
+
+            taskProgress.set_total(total_lines)
+            taskProgress.set_progress(sent_lines, processed_lines)
+            taskProgress.setVisible(True)
 
         if task_status == 'FAILURE':
             error_msg = task_info

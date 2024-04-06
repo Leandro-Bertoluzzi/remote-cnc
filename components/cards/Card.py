@@ -19,10 +19,13 @@ class Card(QWidget):
         self.layout_buttons = QVBoxLayout()
 
         # Create and set layout
-        layout = QHBoxLayout()
-        layout.addWidget(self.label_description)
-        layout.addLayout(self.layout_buttons)
-        layout.setAlignment(Qt.AlignLeft)
+        h_layout = QHBoxLayout()
+        h_layout.addWidget(self.label_description)
+        h_layout.addLayout(self.layout_buttons)
+        h_layout.setAlignment(Qt.AlignLeft)
+
+        layout = QVBoxLayout()
+        layout.addLayout(h_layout)
         self.setLayout(layout)
 
         # Apply custom styles
