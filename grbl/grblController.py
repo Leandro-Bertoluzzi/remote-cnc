@@ -101,6 +101,7 @@ class GrblController:
         # State variables
         self.connected = False      # Machine is connected
         self._stop = False          # Raise to stop current run
+        self._finished = False      # Notification of program end (M2/M30)
         self._paused = False        # Machine is on Hold
         self._alarm = False         # Display alarm message
         self._sumcline = 0          # Amount of bytes in GRBL buffer
@@ -158,6 +159,7 @@ class GrblController:
 
         # State variables
         self.connected = True
+        self._finished = False
         self.commands_count = 0
 
         # Start serial communication
@@ -317,6 +319,11 @@ class GrblController:
         """
         return not not self.error_line
 
+    def finished(self) -> bool:
+        """Checks if the program has finished (M2/M30).
+        """
+        return self._finished
+
     # ACTIONS
 
     def sendCommand(self, command: str):
@@ -387,8 +394,6 @@ class GrblController:
             self.grbl_monitor.error(
                 f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
             )
-            self.emptyQueue()
-            self.disconnect()
             return
         self.grbl_monitor.sent('?', debug=True)
 
@@ -609,10 +614,19 @@ class GrblController:
                     self.grbl_monitor.error(
                         f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
                     )
+                    self.error_line = tosend
                     self.emptyQueue()
                     self.disconnect()
                     return
                 self.grbl_monitor.sent(tosend)
+
+                # Check if end of program
+                if tosend.strip() in ['M2', 'M02', 'M30']:
+                    self.grbl_monitor.info(f'A program end command was found: {tosend}')
+                    self._finished = True
+                    self.emptyQueue()
+                    self.disconnect()
+                    return
 
                 tosend = None
                 if t - tg > G_POLL:

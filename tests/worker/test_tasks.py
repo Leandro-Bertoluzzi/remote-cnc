@@ -11,11 +11,7 @@ def test_execute_tasks(mocker: MockerFixture):
     # Manage internal state
     commands_count = 0
 
-    def reset_commands_count():
-        nonlocal commands_count
-        commands_count = 0
-
-    def increment_commands_count(command):
+    def increment_commands_count(_):
         nonlocal commands_count
         commands_count += 1
 
@@ -31,11 +27,6 @@ def test_execute_tasks(mocker: MockerFixture):
     # Mock GRBL methods
     mock_start_connect = mocker.patch.object(GrblController, 'connect')
     mock_start_disconnect = mocker.patch.object(GrblController, 'disconnect')
-    mocker.patch.object(
-        GrblController,
-        'restartCommandsCount',
-        side_effect=reset_commands_count
-    )
     mock_stream_line = mocker.patch.object(
         GrblController,
         'sendCommand',
@@ -183,10 +174,6 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
     # Manage internal state
     commands_count = 0
 
-    def reset_commands_count():
-        nonlocal commands_count
-        commands_count = 0
-
     def increment_commands_count(command):
         nonlocal commands_count
         commands_count += 1
@@ -203,11 +190,6 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
     # Mock GRBL methods
     mocker.patch.object(GrblController, 'connect')
     mocker.patch.object(GrblController, 'disconnect')
-    mocker.patch.object(
-        GrblController,
-        'restartCommandsCount',
-        side_effect=reset_commands_count
-    )
     mock_stream_line = mocker.patch.object(
         GrblController,
         'sendCommand',
@@ -266,7 +248,6 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
     # Mock other GRBL methods
     mocker.patch.object(GrblController, 'connect')
     mock_disconnect = mocker.patch.object(GrblController, 'disconnect')
-    mocker.patch.object(GrblController, 'restartCommandsCount')
     mocker.patch.object(GrblController, 'sendCommand')
     mocker.patch.object(GrblController, 'getStatusReport')
     mocker.patch.object(GrblController, 'getGcodeParserState')

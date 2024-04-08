@@ -83,7 +83,6 @@ def executeTask(
     # Initial CNC state
     status = cnc.getStatusReport()
     parserstate = cnc.getGcodeParserState()
-    cnc.restartCommandsCount()
 
     # Get the file lenght, while checking if it exists in the first place
     try:
@@ -119,6 +118,10 @@ def executeTask(
                     'parserstate': parserstate
                 }
             )
+
+            # A 'program end' command was found (M2/M30)
+            if cnc.finished():
+                break
 
             if cnc.failed():
                 cnc.disconnect()

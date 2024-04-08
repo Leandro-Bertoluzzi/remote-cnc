@@ -203,7 +203,6 @@ class TestGrblController:
             'sendBytes',
             side_effect=SerialException('mocked-error')
         )
-        mock_disconnect = mocker.patch.object(GrblController, 'disconnect')
 
         # Mock monitor methods
         mock_monitor_error = mocker.patch.object(GrblMonitor, 'error')
@@ -214,7 +213,6 @@ class TestGrblController:
         # Assertions
         assert mock_command_send.call_count == 1
         assert mock_monitor_error.call_count == 1
-        assert mock_disconnect.call_count == 1
 
     def test_query_parser_state(self, mocker):
         # Mock GRBL methods
@@ -989,3 +987,32 @@ class TestGrblController:
         assert mock_sum.call_count == 1
         assert mock_send_line.call_count == 0
         assert mock_monitor_sent.call_count == 0
+
+    def test_serial_io_end_command(self, mocker):
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        # Mock queue contents
+        self.grbl_controller.queue.put('Command 1')
+        self.grbl_controller.queue.put('M30')
+
+        # Mock controller methods
+        mocker.patch.object(GrblController, 'queryStatusReport')
+        mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
+
+        # Mock serial methods
+        mocker.patch.object(SerialService, 'waiting', return_value=False)
+        mock_serial_send_line = mocker.patch.object(SerialService, 'sendLine')
+
+        # Mock monitor methods
+        mock_monitor_info = mocker.patch.object(GrblMonitor, 'info')
+
+        # Call method under test
+        self.grbl_controller.serialIO()
+
+        # Assertions
+        assert mock_serial_send_line.call_count == 2
+        assert mock_monitor_info.call_count == 1
+        mock_monitor_info.assert_called_with('A program end command was found: M30')
+        assert mock_grbl_disconnect.call_count == 1
+        assert self.grbl_controller._finished is True

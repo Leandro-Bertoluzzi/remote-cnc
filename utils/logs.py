@@ -40,6 +40,9 @@ class LogsInterpreter:
     def interpret_file(cls, file_path: Path) -> list[Log]:
         logs_list = []
 
+        if not os.path.exists(file_path):
+            return []
+
         with open(file_path, "r") as logs:
             for log in logs:
                 parsed = cls.interpret_log(log)
