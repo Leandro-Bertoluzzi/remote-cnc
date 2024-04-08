@@ -2,11 +2,11 @@ from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
 from core.database.base import Session as SessionLocal
-from core.database.models import TASK_IN_PROGRESS_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
+from helpers.cncWorkerMonitor import CncWorkerMonitor
 from views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 
@@ -39,7 +39,7 @@ class TasksView(BaseListView):
     def createTaskCard(self, task):
         return TaskCard(
             task,
-            self.device_running,
+            self.device_available,
             self.files,
             self.tools,
             self.materials,
@@ -52,7 +52,7 @@ class TasksView(BaseListView):
         tasks = repository.get_all_tasks_from_user(USER_ID, status='all')
 
         # Check if there is a task in progress
-        self.device_running = any(TASK_IN_PROGRESS_STATUS in task.status for task in tasks)
+        self.device_available = CncWorkerMonitor.is_device_available()
 
         return tasks
 

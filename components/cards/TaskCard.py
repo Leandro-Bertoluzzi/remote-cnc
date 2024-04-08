@@ -15,7 +15,7 @@ class TaskCard(Card):
     def __init__(
             self,
             task: Task,
-            device_busy: bool,
+            device_available: bool,
             files=[],
             tools=[],
             materials=[],
@@ -24,7 +24,7 @@ class TaskCard(Card):
         super(TaskCard, self).__init__(parent)
 
         self.task = task
-        self.device_busy = device_busy
+        self.device_available = device_available
         self.files = files
         self.tools = tools
         self.materials = materials
@@ -75,7 +75,7 @@ class TaskCard(Card):
                     self.addButton(button_text, callback)
 
         if status == TASK_ON_HOLD_STATUS:
-            self.addButton("Ejecutar", self.runTask, not self.device_busy)
+            self.addButton("Ejecutar", self.runTask, self.device_available)
 
     def updateTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)

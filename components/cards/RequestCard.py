@@ -28,10 +28,7 @@ class RequestCard(Card):
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
             repository.update_task_status(self.task.id, TASK_APPROVED_STATUS, USER_ID)
-            if not CncWorkerMonitor.is_device_enabled():
-                self.getView().refreshLayout()
-                return
-            if repository.are_there_tasks_in_progress():
+            if not CncWorkerMonitor.is_device_available():
                 self.getView().refreshLayout()
                 return
 

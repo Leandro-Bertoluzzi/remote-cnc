@@ -127,5 +127,11 @@ class CncWorkerMonitor(QObject):
         return cls.device_enabled
 
     @classmethod
+    def is_device_available(cls):
+        """Checks if device is ready for use (enabled + not running)
+        """
+        return cls.device_enabled and not cls.is_worker_running()
+
+    @classmethod
     def set_device_enabled(cls, enabled: bool):
         cls.device_enabled = enabled
