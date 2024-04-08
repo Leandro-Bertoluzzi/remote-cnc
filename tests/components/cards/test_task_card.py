@@ -4,7 +4,6 @@ from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from components.text.TaskLabel import TaskLabel
 from core.database.models import Task, TASK_ON_HOLD_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
@@ -36,7 +35,7 @@ class TestTaskCard:
         mocker.patch.object(MaterialRepository, 'get_all_materials', return_value=[])
 
         # Mock card's auxiliary methods
-        mocker.patch.object(TaskLabel, '__init__', return_value=None)
+        mocker.patch.object(TaskCard, 'check_task_status')
 
         # Mock parent widget
         self.window = mock_window
@@ -71,7 +70,7 @@ class TestTaskCard:
         self.task.id = 1
 
         # Mock card's auxiliary methods
-        mock_set_task_description = mocker.patch.object(TaskLabel, '__init__', return_value=None)
+        mock_set_task_description = mocker.patch.object(TaskCard, 'check_task_status')
 
         # Instantiate card
         card = TaskCard(self.task, False)
@@ -89,7 +88,7 @@ class TestTaskCard:
         self.task.id = 1
 
         # Mock card's auxiliary methods
-        mocker.patch.object(TaskLabel, '__init__', return_value=None)
+        mocker.patch.object(TaskCard, 'check_task_status')
 
         # Instantiate card
         card = TaskCard(self.task, True)
@@ -275,7 +274,7 @@ class TestTaskCard:
                 ('cancelled', 'xyz', 'FAILURE')
             ]
         )
-    def test_task_card_set_task_description(
+    def test_task_card_set_task_progress(
         self,
         qtbot: QtBot,
         mocker: MockerFixture,
@@ -303,7 +302,7 @@ class TestTaskCard:
 
         # Mock Redis methods
         mocker.patch(
-            'components.text.TaskLabel.get_value_from_id',
+            'components.cards.TaskCard.get_value_from_id',
             return_value=worker_task_id
         )
 
@@ -326,14 +325,6 @@ class TestTaskCard:
         # Assertions
         expected_text = f'Tarea 1: Example task\nEstado: {status_db}'
 
-        if status_worker == 'PROGRESS':
-            expected_text = (
-                'Tarea 1: Example task\n'
-                f'Estado: {status_db}\n'
-                'Enviado: 15/20 (75%)\n'
-                'Ejecutado: 10/20 (50%)'
-            )
-
         if status_worker == 'FAILURE':
             expected_text = (
                 'Tarea 1: Example task\n'
@@ -341,7 +332,14 @@ class TestTaskCard:
                 'Error: Mocked error message'
             )
 
+        expected_sent = expected_processed = 0
+        if status_worker == 'PROGRESS':
+            expected_sent = 15
+            expected_processed = 10
+
         assert card.label_description.text() == expected_text
+        assert card.task_progress.sent_progress.value() == expected_sent
+        assert card.task_progress.process_progress.value() == expected_processed
         assert mock_query_task.call_count == (1 if worker_task_id else 0)
         assert mock_query_task_info.call_count == (2 if worker_task_id else 0)
 
@@ -477,12 +475,6 @@ class TestTaskCard:
         task_in_progress,
         device_enabled
     ):
-        # Mock DB methods
-        mocker.patch.object(
-            TaskRepository,
-            'are_there_tasks_in_progress',
-            return_value=task_in_progress
-        )
         # Mock message box methods
         mocker.patch.object(
             QMessageBox,
@@ -501,6 +493,7 @@ class TestTaskCard:
         )
         # Mock worker monitor methods
         mocker.patch.object(CncWorkerMonitor, 'is_device_enabled', return_value=device_enabled)
+        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=task_in_progress)
 
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.TaskCard.send_task_to_worker')
@@ -516,31 +509,3 @@ class TestTaskCard:
         assert mock_info_popup.call_count == (1 if expected_run else 0)
         expected_error = (task_in_progress or not device_enabled) and accepted_run
         assert mock_error_popup.call_count == (1 if expected_error else 0)
-
-    def test_task_card_run_task_db_error(
-        self,
-        setup_method,
-        mocker
-    ):
-        # Mock DB methods
-        mocker.patch.object(
-            TaskRepository,
-            'are_there_tasks_in_progress',
-            side_effect=Exception('mocked-error')
-        )
-        # Mock message box methods
-        mocker.patch.object(
-            QMessageBox,
-            'exec',
-            return_value=QMessageBox.Yes
-        )
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
-        # Mock task manager methods
-        mock_add_task_in_queue = mocker.patch('components.cards.TaskCard.send_task_to_worker')
-
-        # Call the approveTask method
-        self.card.runTask()
-
-        # Validate call to tasks manager
-        assert mock_add_task_in_queue.call_count == 0
-        assert mock_popup.call_count == 1

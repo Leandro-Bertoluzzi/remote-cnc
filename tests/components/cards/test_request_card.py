@@ -38,30 +38,23 @@ class TestRequestCard:
         assert self.card.layout is not None
 
     @pytest.mark.parametrize(
-            "msgBoxApprove,msgBoxRun",
-            [
-                (QMessageBox.Yes, QMessageBox.Yes),
-                (QMessageBox.Yes, QMessageBox.No),
-                (QMessageBox.Cancel, None)
-            ]
-        )
-    @pytest.mark.parametrize("task_in_progress", [True, False])
-    @pytest.mark.parametrize("device_enabled", [True, False])
+        "msgBoxApprove,msgBoxRun",
+        [
+            (QMessageBox.Yes, QMessageBox.Yes),
+            (QMessageBox.Yes, QMessageBox.No),
+            (QMessageBox.Cancel, None)
+        ]
+    )
+    @pytest.mark.parametrize("device_available", [True, False])
     def test_request_card_approve_task(
         self,
         mocker: MockerFixture,
         msgBoxApprove,
         msgBoxRun,
-        task_in_progress,
-        device_enabled
+        device_available
     ):
         # Mock DB methods
         mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
-        mocker.patch.object(
-            TaskRepository,
-            'are_there_tasks_in_progress',
-            return_value=task_in_progress
-        )
 
         # Mock message box methods
         mocker.patch.object(
@@ -72,7 +65,11 @@ class TestRequestCard:
         mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
 
         # Mock worker monitor methods
-        mocker.patch.object(CncWorkerMonitor, 'is_device_enabled', return_value=device_enabled)
+        mocker.patch.object(
+            CncWorkerMonitor,
+            'is_device_available',
+            return_value=device_available
+        )
 
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.send_task_to_worker')
@@ -93,45 +90,24 @@ class TestRequestCard:
 
         # Validate call to tasks manager
         accepted_run = (msgBoxRun == QMessageBox.Yes)
-        can_run = not task_in_progress and device_enabled
-        expected_run = expected_updated and accepted_run and can_run
+        expected_run = expected_updated and accepted_run and device_available
         assert mock_add_task_in_queue.call_count == (1 if expected_run else 0)
         assert self.window.startWorkerMonitor.call_count == (1 if expected_run else 0)
         assert mock_popup.call_count == (1 if expected_run else 0)
 
-    @pytest.mark.parametrize(
-            'update_error,search_tasks_error',
-            [
-                (False, True),
-                (True, False)
-            ]
-    )
-    def test_request_card_approve_task_db_error(
-        self,
-        mocker: MockerFixture,
-        update_error,
-        search_tasks_error
-    ):
+    def test_request_card_approve_task_db_error(self, mocker: MockerFixture):
         # Mock DB methods
-        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
-        if update_error:
-            mock_update_task_status = mocker.patch.object(
-                TaskRepository,
-                'update_task_status',
-                side_effect=Exception('mocked error')
-            )
-        mock_validate_tasks_in_progress = mocker.patch.object(
+        mock_update_task_status = mocker.patch.object(
             TaskRepository,
-            'are_there_tasks_in_progress'
+            'update_task_status',
+            side_effect=Exception('mocked error')
         )
-        if search_tasks_error:
-            mock_validate_tasks_in_progress = mocker.patch.object(
-                TaskRepository,
-                'are_there_tasks_in_progress',
-                side_effect=Exception('mocked error')
-            )
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+
+        # Mock CNC worker monitor methods
+        mock_validate_availability = mocker.patch.object(CncWorkerMonitor, 'is_device_available')
+
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.RequestCard.send_task_to_worker')
 
@@ -143,17 +119,17 @@ class TestRequestCard:
 
         # Assertions
         assert mock_update_task_status.call_count == 1
-        assert mock_validate_tasks_in_progress.call_count == (0 if update_error else 1)
+        assert mock_validate_availability.call_count == 0
         assert mock_add_task_in_queue.call_count == 0
         assert mock_popup.call_count == 1
 
     @pytest.mark.parametrize(
-            "dialogResponse,expected_updated",
-            [
-                (QDialog.Accepted, True),
-                (QDialog.Rejected, False)
-            ]
-        )
+        "dialogResponse,expected_updated",
+        [
+            (QDialog.Accepted, True),
+            (QDialog.Rejected, False)
+        ]
+    )
     def test_request_card_reject_task(
         self,
         mocker: MockerFixture,

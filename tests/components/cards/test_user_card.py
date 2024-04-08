@@ -17,7 +17,8 @@ class TestUserCard:
         self.user.id = 1
 
         # Instantiate card
-        self.card = UserCard(self.user, parent=mock_view)
+        self.parent = mock_view
+        self.card = UserCard(self.user, parent=self.parent)
         qtbot.addWidget(self.card)
 
     def test_user_card_init(self):
@@ -73,8 +74,8 @@ class TestUserCard:
             side_effect=Exception('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the updateUser method
         self.card.updateUser()
@@ -119,8 +120,8 @@ class TestUserCard:
             side_effect=Exception('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the removeUser method
         self.card.removeUser()

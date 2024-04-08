@@ -27,7 +27,8 @@ class TestFileCard:
         self.file.user = self.user_test
 
         # Instantiate card
-        self.card = FileCard(self.file, parent=mock_view)
+        self.parent = mock_view
+        self.card = FileCard(self.file, parent=self.parent)
         qtbot.addWidget(self.card)
 
     def test_file_card_init(self):
@@ -106,8 +107,8 @@ class TestFileCard:
         mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
         mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showWarning')
 
         # Call the updateFile method
         self.card.updateFile()
@@ -131,8 +132,8 @@ class TestFileCard:
         )
         mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the updateFile method
         self.card.updateFile()
@@ -157,8 +158,8 @@ class TestFileCard:
             side_effect=DatabaseError('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the updateFile method
         self.card.updateFile()
@@ -206,8 +207,8 @@ class TestFileCard:
         )
         mock_remove_file = mocker.patch.object(FileRepository, 'remove_file')
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the removeFile method
         self.card.removeFile()
@@ -229,8 +230,8 @@ class TestFileCard:
             side_effect=DatabaseError('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the removeFile method
         self.card.removeFile()

@@ -17,7 +17,8 @@ class TestToolCard:
         self.tool.id = 1
 
         # Instantiate card
-        self.card = ToolCard(self.tool, parent=mock_view)
+        self.parent = mock_view
+        self.card = ToolCard(self.tool, parent=self.parent)
         qtbot.addWidget(self.card)
 
     def test_tool_card_init(self):
@@ -72,8 +73,8 @@ class TestToolCard:
             side_effect=Exception('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the updateTool method
         self.card.updateTool()
@@ -118,8 +119,8 @@ class TestToolCard:
             side_effect=Exception('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the removeTool method
         self.card.removeTool()

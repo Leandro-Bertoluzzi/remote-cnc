@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton, QMessageBox
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from helpers.utils import applyStylesheet
 from typing import Callable, TYPE_CHECKING
@@ -60,10 +60,10 @@ class Card(QWidget):
     # Notifications
 
     def showInformation(self, title, text):
-        QMessageBox.information(self, title, text, QMessageBox.Ok)
+        self.getView().showInfo(title, text)
 
     def showWarning(self, title, text):
-        QMessageBox.warning(self, title, text, QMessageBox.Ok)
+        self.getView().showWarning(title, text)
 
     def showError(self, title, text):
-        QMessageBox.critical(self, title, text, QMessageBox.Ok)
+        self.getView().showError(title, text)

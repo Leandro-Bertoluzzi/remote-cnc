@@ -1,5 +1,6 @@
 from components.text.LogsViewer import LogsViewer, Worker
 from core.utils.logs import LogsInterpreter, LogFileWatcher
+from operator import xor
 from PyQt5.QtCore import QThread
 import pytest
 from pytest_mock.plugin import MockerFixture
@@ -50,6 +51,63 @@ class TestLogsViewer:
         assert mock_thread_start.call_count == 1
 
     @pytest.mark.parametrize("running", [False, True])
+    @pytest.mark.parametrize("paused", [False, True])
+    def test_logs_viewer_pause(self, running, paused):
+        # Mock worker status
+        self.logs_viewer.logs_worker._running = running
+        self.logs_viewer.logs_worker._paused = paused
+
+        # Call method under test
+        self.logs_viewer.pause()
+
+        # Assertions
+        """|Running | Paused | Result |
+           | 0      | 0      |  0     |
+           | 0      | 1      |  1     |
+           | 1      | 0      |  1     |
+           | 1      | 1      |  1     |
+        """
+        assert self.logs_viewer.logs_worker._paused == (running or paused)
+
+    @pytest.mark.parametrize("running", [False, True])
+    @pytest.mark.parametrize("paused", [False, True])
+    def test_logs_viewer_resume(self, running, paused):
+        # Mock thread
+        self.logs_viewer.logs_worker._running = running
+        self.logs_viewer.logs_worker._paused = paused
+
+        # Call method under test
+        self.logs_viewer.resume()
+
+        # Assertions
+        """|Running | Paused | Result |
+           | 0      | 0      |  0     |
+           | 0      | 1      |  1     |
+           | 1      | 0      |  0     |
+           | 1      | 1      |  0     |
+        """
+        assert self.logs_viewer.logs_worker._paused == (not running and paused)
+
+    @pytest.mark.parametrize("running", [False, True])
+    @pytest.mark.parametrize("paused", [False, True])
+    def test_logs_viewer_toggle_paused(self, running, paused):
+        # Mock thread
+        self.logs_viewer.logs_worker._running = running
+        self.logs_viewer.logs_worker._paused = paused
+
+        # Call method under test
+        self.logs_viewer.toggle_paused()
+
+        # Assertions
+        """|Running | Paused | Result |
+           | 0      | 0      |  0     |
+           | 0      | 1      |  1     |
+           | 1      | 0      |  1     |
+           | 1      | 1      |  0     |
+        """
+        assert self.logs_viewer.logs_worker._paused == xor(running, paused)
+
+    @pytest.mark.parametrize("running", [False, True])
     def test_logs_viewer_stop_watching(self, mocker: MockerFixture, running):
         # Mock attributes
         self.logs_viewer.logs_thread = (QThread() if running else None)
@@ -92,7 +150,7 @@ class TestLogsViewer:
         assert self.logs_viewer.logs_worker._running is False
 
     def test_logs_viewer_watch_logs(self, qtbot: QtBot, mocker: MockerFixture):
-        def manage_thread(ignore):
+        def manage_thread(_):
             self.logs_viewer.stop()
 
         # Mock file watcher

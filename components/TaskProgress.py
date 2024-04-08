@@ -1,10 +1,10 @@
 from helpers.utils import applyStylesheet
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QProgressBar, QFormLayout, QWidget
-from typing import Optional
+
 
 class TaskProgress(QWidget):
-    def __init__(self, total_lines: Optional[int] = None, parent=None):
+    def __init__(self, parent=None):
         super(TaskProgress, self).__init__(parent)
 
         self.sent_progress = QProgressBar(self)
@@ -14,8 +14,6 @@ class TaskProgress(QWidget):
 
         self.sent_progress.setMinimum(0)
         self.process_progress.setMinimum(0)
-        if total_lines:
-            self.set_total(total_lines)
         self.set_progress(0, 0)
 
         layout = QFormLayout(self)

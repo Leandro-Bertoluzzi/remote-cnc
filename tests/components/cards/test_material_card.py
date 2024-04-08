@@ -17,7 +17,8 @@ class TestMaterialCard:
         self.material.id = 1
 
         # Instantiate card
-        self.card = MaterialCard(self.material, parent=mock_view)
+        self.parent = mock_view
+        self.card = MaterialCard(self.material, parent=self.parent)
         qtbot.addWidget(self.card)
 
     def test_material_card_init(self):
@@ -72,8 +73,8 @@ class TestMaterialCard:
             side_effect=Exception('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the updateMaterial method
         self.card.updateMaterial()
@@ -118,8 +119,8 @@ class TestMaterialCard:
             side_effect=Exception('mocked error')
         )
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+        # Mock parent methods
+        mock_popup = mocker.patch.object(self.parent, 'showError')
 
         # Call the removeMaterial method
         self.card.removeMaterial()

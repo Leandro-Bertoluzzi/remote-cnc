@@ -1,15 +1,17 @@
+from celery.result import AsyncResult
 from components.cards.Card import Card
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from components.TaskProgress import TaskProgress
-from components.text.TaskLabel import TaskLabel
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS
 from core.database.repositories.taskRepository import TaskRepository
+from core.utils.storage import get_value_from_id
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.utils import needs_confirmation, send_task_to_worker
 from PyQt5.QtWidgets import QSizePolicy
+
 
 class TaskCard(Card):
     def __init__(
@@ -33,14 +35,52 @@ class TaskCard(Card):
         # Set "status" dynamic property for styling
         self.setProperty("status", task.status)
 
+    # UI MANAGEMENT
+
     def setup_ui(self):
         self.add_buttons(self.task.status)
-        self.task_progress = TaskProgress(parent=self)
-        self.label_description = TaskLabel(self.task, self.task_progress, self)
 
-        # Update layout
-        self.task_progress.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        self.layout().addWidget(self.task_progress)
+        # Task description
+        task_id = self.task.id
+        task_name = self.task.name
+        task_status_db = self.task.status
+        self.setDescription(f'Tarea {task_id}: {task_name}\nEstado: {task_status_db}')
+
+        # Check task status and update if necessary
+        self.task_progress = TaskProgress()
+        self.check_task_status()
+
+    def check_task_status(self):
+        # Check if it has a worker task ID
+        task_worker_id = get_value_from_id('task', self.task.id)
+        if not task_worker_id:
+            return
+
+        # Get status in worker
+        task_state: AsyncResult = AsyncResult(task_worker_id)
+        task_info = task_state.info
+        task_status = task_state.status
+
+        if task_status == 'PROGRESS':
+            sent_lines = task_info.get('sent_lines')
+            processed_lines = task_info.get('processed_lines')
+            total_lines = task_info.get('total_lines')
+
+            # Progress bar
+            self.task_progress.set_total(total_lines)
+            self.task_progress.set_progress(sent_lines, processed_lines)
+
+            # Update card layout
+            self.task_progress.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+            self.layout().addWidget(self.task_progress)
+
+        if task_status == 'FAILURE':
+            error_msg = task_info
+            description_error = (
+                f'{self.label_description.text()} (FAILED)\n'
+                f'Error: {error_msg}'
+            )
+            self.setDescription(description_error)
 
     def add_buttons(self, status: str):
         """Adds buttons according to task status:
@@ -76,6 +116,8 @@ class TaskCard(Card):
 
         if status == TASK_ON_HOLD_STATUS:
             self.addButton("Ejecutar", self.runTask, self.device_available)
+
+    # ACTIONS
 
     def updateTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
@@ -199,19 +241,10 @@ class TaskCard(Card):
             )
             return
 
-        try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            if repository.are_there_tasks_in_progress():
-                self.showError(
-                    'Equipo ocupado',
-                    'Ejecución cancelada: Ya hay una tarea en progreso'
-                )
-                return
-        except Exception as error:
+        if CncWorkerMonitor.is_worker_running():
             self.showError(
-                'Error de base de datos',
-                str(error)
+                'Equipo ocupado',
+                'Ejecución cancelada: Ya hay una tarea en progreso'
             )
             return
 

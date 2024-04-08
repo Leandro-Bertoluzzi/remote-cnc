@@ -56,4 +56,6 @@ def mock_view(mocker: MockerFixture):
     """
     parent = QWidget()
     parent.refreshLayout = mocker.Mock()
+    parent.showWarning = mocker.Mock()
+    parent.showError = mocker.Mock()
     return cast(BaseListView, parent)

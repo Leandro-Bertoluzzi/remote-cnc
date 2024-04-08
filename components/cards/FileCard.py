@@ -65,11 +65,6 @@ class FileCard(Card):
                 'Error de base de datos',
                 str(error)
             )
-        except Exception as error:
-            self.showError(
-                'Error',
-                str(error)
-            )
         else:
             self.getView().refreshLayout()
 
