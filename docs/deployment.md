@@ -1,10 +1,22 @@
-# Set up app in production
+# Deployment (Raspberry Pi)
 
-In case you want to deploy to a Linux or Windows machine (x86), the steps are the same as in [development](./development.md) but using `requirements.txt` (or `conda/environment-prod.yml`) intead of the development requirements. This guide assumes you want to install and use the app in a Raspberry Pi.
+## Overview
+
+1. Introduction.
+1. Update Qt app.
+1. Update Docker containers.
+1. Database migration.
+1. Update CNC worker.
+
+# Introduction
+
+In case you want to deploy to a Linux or Windows machine (x86), the steps are the same as in [development](./development.md) but using `requirements.txt` (or `environment.yml`) intead of the development requirements. This guide assumes you want to install and use the app in a Raspberry Pi.
 
 The steps described in this guide were tested in the following device:
 - **Board:** Raspberry Pi 3B+
 - **OS:** Raspberry Pi OS (Bullseye, 32-bit)
+
+# Update Qt app
 
 ## Copy files to remote
 
@@ -13,76 +25,41 @@ In case you want to use just the strictly necessary files, the needed files and 
 - components
 - containers
 - core
+- helpers
 - views
 - config.py
 - docker-compose.yml
 - main.py
 - MainWindow.py
-- rpi/db_schema.sql
 - rpi/requirements.txt
 
-**NOTE:** A `requirements.txt` file ready to install in Raspberry Pi OS is in `rpi/requirements.txt`, and that is the one you should use.
+You can copy them by using [rsync](https://www.raspberrypi.com/documentation/computers/remote-access.html#using-rsync) or a FTP client like [FileZilla](https://docs.digitalocean.com/products/droplets/how-to/transfer-files/).
 
-## Install dependencies
+## Update requirements
 
-Before using the app for the first time you should run:
+In case you updated the `requirements` file:
 
 ```bash
-# Clone this project (unless you manually copied the files)
-$ git clone --recurse-submodules https://github.com/Leandro-Bertoluzzi/cnc-local-app
-
-# 1. Access the repository
+# If you haven't, enter the project folder and activate the environment
 $ cd cnc-local-app
-
-# 2. Install the needed global site-packages
-$ sudo apt-get update
-$ sudo apt-get install python3-pyqt5
-$ sudo apt-get install python3-pyqt5.qtsvg
-$ sudo apt-get install libpq5
-
-# 3. Set up your Python environment
-$ python -m venv --system-site-packages venv
 $ source venv/bin/activate
+
+# Install the missing or new requirements
 $ pip install -r rpi/requirements.txt
-
-# 4. Copy and configure the .env file
-cp .env.example .env
 ```
 
-## Initiate additional required services
+## Restart the Qt app
 
-In case you don't have (or don't want to use) a DB and a message broker for Celery, you can start a containerized version of both, plus an `adminer` instance, via `docker compose`.
+// TODO: (close the current app and start it again)
 
-```bash
-$ docker compose up -d
-```
+# Update Docker containers
 
-## Set up database
+// TODO: (how to stop and rebuild containers)
 
-Once opened the connection with the DB, you must update its schema by running the file `rpi/db_schema.sql`. You can run it with `adminer`.
+# Database migration
 
-# Start the app
+// TODO: (how to generate a SQL script from a migration and run it with adminer)
 
-## Run the Qt app
+# Update CNC worker
 
-Once installed all dependencies and created the Python environment, every time you want to start the app you must run:
-
-```bash
-# 1. Activate your Python environment
-$ source venv/bin/activate
-
-# 2. Start the app
-$ python main.py
-```
-
-## Start the Celery worker
-
-In order to execute tasks and scheduled tasks, you must start the CNC worker (Celery).
-
-```bash
-# 1. Move to worker folder
-$ cd core/worker
-
-# 2. Start Celery's worker server
-$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
-```
+// TODO: (stop and re-run the worker)

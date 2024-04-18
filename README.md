@@ -95,21 +95,6 @@ You can also run all tests together, by using the following command:
 $ make tests
 ```
 
-### Test compatibility with Python 3.9
-
-You can run the app in a container:
-
-```bash
-docker compose -f docker-compose.app.yml up
-```
-
-or together with the other services:
-(uncomment the postgresql dependency in `docker-compose.app.yml`)
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.app.yml up
-```
-
 ## :checkered_flag: Deployment
 
 See [Deployment](./docs/deployment.md) docs.
