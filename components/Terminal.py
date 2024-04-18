@@ -7,21 +7,21 @@ from PyQt5.QtCore import Qt
 class Terminal(QWidget):
     def __init__(self, grbl_controller: GrblController, parent=None):
         super(Terminal, self).__init__(parent)
+        self.grbl_controller = grbl_controller
+        self.setup_ui()
 
+    def setup_ui(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
-        # Attributes definition
-        self.grbl_controller = grbl_controller
-
         # Widget configuration
         self.display_screen = QPlainTextEdit()
         self.display_screen.setReadOnly(True)
+        layout.addWidget(self.display_screen)
+
         self.input = QLineEdit()
         self.input.returnPressed.connect(self.send_line)
-
-        layout.addWidget(self.display_screen)
         layout.addWidget(self.input)
 
         # Apply custom styles

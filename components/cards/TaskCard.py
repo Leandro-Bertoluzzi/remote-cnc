@@ -38,7 +38,7 @@ class TaskCard(Card):
     # UI MANAGEMENT
 
     def setup_ui(self):
-        self.add_buttons(self.task.status)
+        self.setup_buttons(self.task.status)
 
         # Task description
         task_id = self.task.id
@@ -62,27 +62,33 @@ class TaskCard(Card):
         task_status = task_state.status
 
         if task_status == 'PROGRESS':
-            sent_lines = task_info.get('sent_lines')
-            processed_lines = task_info.get('processed_lines')
-            total_lines = task_info.get('total_lines')
-
-            # Progress bar
-            self.task_progress.set_total(total_lines)
-            self.task_progress.set_progress(sent_lines, processed_lines)
-
-            # Update card layout
-            self.task_progress.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-            self.layout().addWidget(self.task_progress)
+            self.show_task_progress(task_info)
 
         if task_status == 'FAILURE':
-            error_msg = task_info
-            description_error = (
-                f'{self.label_description.text()} (FAILED)\n'
-                f'Error: {error_msg}'
-            )
-            self.setDescription(description_error)
+            self.show_task_failure(task_info)
 
-    def add_buttons(self, status: str):
+    def show_task_progress(self, task_info):
+        sent_lines = task_info.get('sent_lines')
+        processed_lines = task_info.get('processed_lines')
+        total_lines = task_info.get('total_lines')
+
+        # Progress bar
+        self.task_progress.set_total(total_lines)
+        self.task_progress.set_progress(sent_lines, processed_lines)
+
+        # Update card layout
+        self.task_progress.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.layout().addWidget(self.task_progress)
+
+    def show_task_failure(self, task_info):
+        error_msg = task_info
+        description_error = (
+            f'{self.label_description.text()} (FAILED)\n'
+            f'Error: {error_msg}'
+        )
+        self.setDescription(description_error)
+
+    def setup_buttons(self, status: str):
         """Adds buttons according to task status:
 
         * pending validation -> | Edit | Cancel |

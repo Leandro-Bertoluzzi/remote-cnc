@@ -9,6 +9,11 @@ from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QFormLayout, QFrame, Q
 
 
 class JogController(QWidget):
+    UNIT_MAPPING = {
+        1: {'suffix': ' mm', 'distance_unit': JOG_UNIT_MILIMETERS},
+        2: {'suffix': ' in', 'distance_unit': JOG_UNIT_INCHES}
+    }
+
     def __init__(
             self,
             grbl_controller: GrblController,
@@ -16,33 +21,21 @@ class JogController(QWidget):
     ):
         super(JogController, self).__init__(parent)
 
+        # Attributes definition
+        self.grbl_controller = grbl_controller
+        self.units = 1  # Default to millimeters
+        self.setup_ui()
+
+    # UI methods
+
+    def setup_ui(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
-        # Attributes definition
-        self.grbl_controller = grbl_controller
-
-        # State management
-        self.units = 'mm'
-
         # Widget structure and components definition
 
-        joystick = ButtonGrid(
-            [
-                (' ↖ ', self.make_incremental_move(-1, 1, 0)),
-                (' ↑ ', self.make_incremental_move(0, 1, 0)),
-                (' ↗ ', self.make_incremental_move(1, 1, 0)),
-                (' ← ', self.make_incremental_move(-1, 0, 0)),
-                ('   ', self.make_incremental_move(0, 0, 0)),
-                (' → ', self.make_incremental_move(1, 0, 0)),
-                (' ↙ ', self.make_incremental_move(-1, -1, 0)),
-                (' ↓ ', self.make_incremental_move(0, -1, 0)),
-                (' ↘ ', self.make_incremental_move(1, -1, 0)),
-            ],
-            width=3,
-            parent=self
-        )
+        joystick = self.create_joystick()
         layout.addWidget(joystick)
 
         self.layout_config = QFormLayout()
@@ -68,6 +61,41 @@ class JogController(QWidget):
         self.input_feedrate = self.create_double_spinbox(0, 1000, 25, 2)
         self.layout_config.addRow(label_feedrate, self.input_feedrate)
 
+        self.create_units_radio_buttons()
+
+        layout.addLayout(self.layout_config)
+
+        separator = self.create_separator()
+        layout.addWidget(separator)
+
+        layout.addWidget(QLabel('Mover a posición (absoluta): '))
+        self.abs_controls = self.create_abs_controls()
+        layout.addWidget(self.abs_controls)
+
+        layout.addWidget(btn_absolute_move := QPushButton('Mover'))
+        btn_absolute_move.clicked.connect(self.make_absolute_move)
+
+        # We ensure the correct units are shown in the widgets
+        self.control_units.buttons()[0].click()
+
+    def create_joystick(self) -> QWidget:
+        return ButtonGrid(
+            [
+                (' ↖ ', self.make_incremental_move(-1, 1, 0)),
+                (' ↑ ', self.make_incremental_move(0, 1, 0)),
+                (' ↗ ', self.make_incremental_move(1, 1, 0)),
+                (' ← ', self.make_incremental_move(-1, 0, 0)),
+                ('   ', self.make_incremental_move(0, 0, 0)),
+                (' → ', self.make_incremental_move(1, 0, 0)),
+                (' ↙ ', self.make_incremental_move(-1, -1, 0)),
+                (' ↓ ', self.make_incremental_move(0, -1, 0)),
+                (' ↘ ', self.make_incremental_move(1, -1, 0)),
+            ],
+            width=3,
+            parent=self
+        )
+
+    def create_units_radio_buttons(self):
         label_units = QLabel('Unidades:')
         radio_mm = QRadioButton('Milímetros')
         radio_in = QRadioButton('Pulgadas')
@@ -80,15 +108,13 @@ class JogController(QWidget):
         self.control_units.addButton(radio_in, 2)
         self.control_units.buttonClicked.connect(self.set_units)
 
-        layout.addLayout(self.layout_config)
-
+    def create_separator(self):
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        layout.addWidget(separator)
+        return separator
 
-        label_absolute = QLabel('Mover a posición (absoluta): ')
-        layout.addWidget(label_absolute)
+    def create_abs_controls(self):
         # TO DO -> Actualizar limites según la configuración de soft-limits de GRBL
         # (si es que están configurados)
         # $20=0 	Soft limits, boolean
@@ -98,37 +124,45 @@ class JogController(QWidget):
         self.input_abs_x = self.create_double_spinbox(0, 200, 0.25, 2)
         self.input_abs_y = self.create_double_spinbox(0, 200, 0.25, 2)
         self.input_abs_z = self.create_double_spinbox(0, 200, 0.25, 2)
-        self.abs_controls = WidgetsHList([
-            QLabel('X: '),
-            self.input_abs_x,
-            QLabel('Y: '),
-            self.input_abs_y,
-            QLabel('Z: '),
-            self.input_abs_z
+        return WidgetsHList([
+            QLabel('X: '), self.input_abs_x,
+            QLabel('Y: '), self.input_abs_y,
+            QLabel('Z: '), self.input_abs_z
         ])
-        layout.addWidget(self.abs_controls)
-        btn_absolute_move = QPushButton('Mover')
-        btn_absolute_move.clicked.connect(self.make_absolute_move)
-        layout.addWidget(btn_absolute_move)
-
-        # We ensure the correct units are shown in the widgets
-        radio_mm.click()
 
     def set_units(self, button):
         selected_id = self.control_units.id(button)
+        self.units = selected_id
 
-        if selected_id == 1:
-            self.units = 'mm'
-        if selected_id == 2:
-            self.units = 'in'
+        unit_info = self.UNIT_MAPPING[selected_id]
 
-        self.input_x.setSuffix(' ' + self.units)
-        self.input_y.setSuffix(' ' + self.units)
-        self.input_z.setSuffix(' ' + self.units)
-        self.input_feedrate.setSuffix(' ' + self.units + '/min')
-        self.input_abs_x.setSuffix(' ' + self.units)
-        self.input_abs_y.setSuffix(' ' + self.units)
-        self.input_abs_z.setSuffix(' ' + self.units)
+        for input in [
+            self.input_x,
+            self.input_y,
+            self.input_z,
+            self.input_abs_x,
+            self.input_abs_y,
+            self.input_abs_z,
+        ]:
+            input.setSuffix(unit_info['suffix'])
+
+        self.input_feedrate.setSuffix(unit_info['suffix'] + '/min')
+
+    def create_double_spinbox(
+            self,
+            limit_low: float,
+            limit_high: float,
+            step: float,
+            precision: int = 2
+    ):
+        spinbox = QDoubleSpinBox()
+        spinbox.setDecimals(precision)
+        spinbox.setRange(limit_low, limit_high)
+        spinbox.setSingleStep(step)
+
+        return spinbox
+
+    # GRBL controller interaction
 
     def make_incremental_move(self, x, y, z):
         def send_jog_incremental_move():
@@ -151,24 +185,10 @@ class JogController(QWidget):
 
     def send_jog_command(self, x, y, z, distance_mode):
         feedrate = round(self.input_feedrate.value(), 2)
-        units = JOG_UNIT_MILIMETERS if self.units == 'mm' else JOG_UNIT_INCHES
+        units_info = self.UNIT_MAPPING[self.units]
 
         self.grbl_controller.jog(
             x, y, z, feedrate,
-            units=units,
+            units=units_info['distance_unit'],
             distance_mode=distance_mode
         )
-
-    def create_double_spinbox(
-            self,
-            limit_low: float,
-            limit_high: float,
-            step: float,
-            precision: int = 2
-    ):
-        spinbox = QDoubleSpinBox()
-        spinbox.setDecimals(precision)
-        spinbox.setRange(limit_low, limit_high)
-        spinbox.setSingleStep(step)
-
-        return spinbox

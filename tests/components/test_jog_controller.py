@@ -26,13 +26,13 @@ class TestJogController:
 
     def test_jog_controller_set_units(self):
         # Mock attributes
-        self.jog_controller.units = 'mm'
+        self.jog_controller.units = 1
 
         # Trigger action under test
         self.jog_controller.control_units.button(2).click()
 
         # Assertions
-        assert self.jog_controller.units == 'in'
+        assert self.jog_controller.units == 2
         assert self.jog_controller.input_x.suffix() == ' in'
         assert self.jog_controller.input_y.suffix() == ' in'
         assert self.jog_controller.input_z.suffix() == ' in'
@@ -42,7 +42,7 @@ class TestJogController:
         self.jog_controller.control_units.button(1).click()
 
         # Assertions
-        assert self.jog_controller.units == 'mm'
+        assert self.jog_controller.units == 1
         assert self.jog_controller.input_x.suffix() == ' mm'
         assert self.jog_controller.input_y.suffix() == ' mm'
         assert self.jog_controller.input_z.suffix() == ' mm'
@@ -54,7 +54,7 @@ class TestJogController:
         self.jog_controller.input_y.setValue(1.3)
         self.jog_controller.input_z.setValue(1.2)
         self.jog_controller.input_feedrate.setValue(500.0)
-        self.jog_controller.units = 'mm'
+        self.jog_controller.units = 1
 
         # Mock method
         mock_send_jog_command = mocker.patch.object(JogController, 'send_jog_command')
@@ -79,7 +79,7 @@ class TestJogController:
         self.jog_controller.input_y.setValue(1.3)
         self.jog_controller.input_z.setValue(1.2)
         self.jog_controller.input_feedrate.setValue(500.0)
-        self.jog_controller.units = 'mm'
+        self.jog_controller.units = 1
 
         # Mock method
         mock_send_jog_command = mocker.patch.object(JogController, 'send_jog_command')
@@ -104,7 +104,7 @@ class TestJogController:
         self.jog_controller.input_abs_y.setValue(1.3)
         self.jog_controller.input_abs_z.setValue(1.2)
         self.jog_controller.input_feedrate.setValue(500.0)
-        self.jog_controller.units = 'mm'
+        self.jog_controller.units = 1
 
         # Mock method
         mock_send_jog_command = mocker.patch.object(JogController, 'send_jog_command')
@@ -126,7 +126,7 @@ class TestJogController:
     def test_send_jog_command(self):
         # Mock widget state
         self.jog_controller.input_feedrate.setValue(500.0)
-        self.jog_controller.units = 'mm'
+        self.jog_controller.units = 1
 
         # Trigger action under test
         self.jog_controller.send_jog_command(1.5, 1.3, 1.2, 'distance_absolute')

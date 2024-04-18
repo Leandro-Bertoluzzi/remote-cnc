@@ -7,18 +7,20 @@ from PyQt5.QtCore import Qt
 
 
 class ControllerStatus(QWidget):
+    DISCONNECTED = 'DISCONNECTED'
+
     def __init__(self, parent=None):
         super(ControllerStatus, self).__init__(parent)
+        self.tool_index = 0
+        self.setup_ui()
 
+    def setup_ui(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
-        # Attributes definition
-        self.tool_index = 0
-
         # Widget structure and components definition
-        self.status = QLabel('DISCONNECTED')
+        self.status = QLabel(ControllerStatus.DISCONNECTED)
         self.x_pos = QLabel('X: 0.0 (0.0)')
         self.y_pos = QLabel('Y: 0.0 (0.0)')
         self.z_pos = QLabel('Z: 0.0 (0.0)')
@@ -32,13 +34,11 @@ class ControllerStatus(QWidget):
         self.y_pos.setProperty('class', 'coordinates')
         self.z_pos.setProperty('class', 'coordinates')
 
-        layout.addWidget(self.status)
-        layout.addWidget(self.x_pos)
-        layout.addWidget(self.y_pos)
-        layout.addWidget(self.z_pos)
-        layout.addWidget(self.tool)
-        layout.addWidget(self.feedrate)
-        layout.addWidget(self.spindle)
+        for label in [
+            self.status, self.x_pos, self.y_pos, self.z_pos,
+            self.tool, self.feedrate, self.spindle
+        ]:
+            layout.addWidget(label)
 
         applyStylesheet(self, __file__, 'ControllerStatus.qss')
 
@@ -53,14 +53,17 @@ class ControllerStatus(QWidget):
             return
 
         try:
-            db_session = SessionLocal()
-            repository = ToolRepository(db_session)
-            tool_info = repository.get_tool_by_id(tool_index)
+            tool_info = self._get_tool_info(tool_index)
             self.tool.setText(f'Tool: {tool_index} ({tool_info.name})')
         except Exception:
             return
 
         self.tool_index = tool_index
+
+    def _get_tool_info(self, tool_index: int):
+        with SessionLocal() as db_session:
+            repository = ToolRepository(db_session)
+            return repository.get_tool_by_id(tool_index)
 
     def set_feedrate(self, feedrate: float):
         self.feedrate.setText(f'Feed rate: {feedrate}')
