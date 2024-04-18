@@ -64,7 +64,51 @@ $ python main.py
 
 ## Configure the Qt app at startup
 
-// TODO: (how to add Qt app to startup)
+1. Move the `start.sh` bash script to your user's root folder.
+
+```bash
+$ mv /home/{{username}}/cnc-local-app/start.sh /home/{{username}}/start.sh
+```
+Note: Replace `{{username}}` by your actual user's name.
+
+2. Assign execution permission to start script.
+
+```bash
+$ chmod +x start.sh
+```
+
+3. Create a `.desktop` file. A good explanation on why we use this method to run the app at startup, instead of others, can be found [here](https://learn.sparkfun.com/tutorials/how-to-run-a-raspberry-pi-program-on-startup/all).
+
+```bash
+$ mkdir /home/{{username}}/.config/autostart
+$ nano /home/{{username}}/.config/autostart/cncmanager.desktop
+```
+Note: Replace `{{username}}` by your actual user's name.
+
+4. Populate the `.desktop` file.
+
+Copy the following text into the `cncmanager.desktop` file:
+
+```bash
+[Desktop Entry]
+Version=1.0
+Name=CNC Manager
+Comment=Your comment
+Exec=/home/{{username}}/start.sh
+Icon=/usr/share/pixmaps/python3.xpm
+Path=/home/{{username}}/
+Terminal=false
+StartupNotify=true
+Type=Application
+Categories=Utility;Application;
+```
+Note: Replace `{{username}}` by your actual user's name.
+
+5. Reboot the device.
+
+```bash
+$ sudo reboot
+```
 
 # Set up database
 
