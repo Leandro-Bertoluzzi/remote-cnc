@@ -1,9 +1,11 @@
 from components.text.IndexedTextEdit import IndexedTextEdit
 from config import GRBL_LOGS_FILE
 from core.utils.logs import Log, LogsInterpreter, LogFileWatcher
+import csv
+import os
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
 from PyQt5.QtGui import QColor, QTextBlock
-from PyQt5.QtWidgets import QFileDialog
+import shutil
 import time
 from typing import Optional
 
@@ -21,6 +23,9 @@ class Worker(QObject):
         self._paused = False
 
     def run(self):
+        if not os.path.exists(GRBL_LOGS_FILE):
+            return
+
         tc = time.time()  # last time GRBL info was queried
         self._running = True
         self.logs = self.watcher.watch()
@@ -113,21 +118,19 @@ class LogsViewer(IndexedTextEdit):
 
     # File system methods
 
-    def export_logs(self):
+    def export_logs(self, output_path: str):
         """Saves the current text to the selected file, or a new one.
         """
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Exportar registro de actividad",
-            "C:\\",
-            "Log files (*.log *.csv *.txt)"
-        )
-        if file_path:
-            content = self.toPlainText()
-            with open(file_path, "w") as file:
-                file.write(content)
-                self.modified = False
-            self.file_path = file_path
+        if output_path.endswith('.csv'):
+            with open(output_path, "w", newline='') as outfile:
+                csv_writer = csv.writer(outfile, delimiter=";")
+                csv_writer.writerow(["DATETIME", "LEVEL", "TYPE", "Message"])
+                for log in self.logs:
+                    csv_writer.writerow([log[0], log[1], log[2], log[3]])
+            return
+
+        # As a plain text file
+        shutil.copy(GRBL_LOGS_FILE, output_path)
 
     # UI methods
 
@@ -147,6 +150,8 @@ class LogsViewer(IndexedTextEdit):
 
     def setIndex(self, block: QTextBlock) -> str:
         line_number = block.blockNumber()
+        if not self.logs:
+            return ''
         time = self.logs[line_number][0]
         return time
 

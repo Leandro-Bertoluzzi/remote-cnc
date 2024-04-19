@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem, QToolBar, QToolButton
+from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem, QToolBar, QToolButton, \
+    QFileDialog
 from components.buttons.MenuButton import MenuButton
 from components.CameraViewer import CameraViewer
 from components.ControllerStatus import ControllerStatus
@@ -90,7 +91,7 @@ class MonitorView(BaseView):
 
         options = [
             ('Ver logs', lambda: None),
-            ('Exportar', lambda: None),
+            ('Exportar', self.export_logs),
             ('Pausar', self.pause_logs),
         ]
 
@@ -152,6 +153,18 @@ class MonitorView(BaseView):
 
     def pause_logs(self):
         self.logs_viewer.toggle_paused()
+
+    def export_logs(self):
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Exportar registro de actividad",
+            "C:\\",
+            "Log files (*.log *.csv *.txt)"
+        )
+        if not file_path:
+            return
+
+        self.logs_viewer.export_logs(file_path)
 
     def toggle_camera(self):
         is_connected = self.camera_viewer.isVisible()
