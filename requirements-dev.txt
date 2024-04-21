@@ -1,4 +1,5 @@
 -r requirements.txt
+alembic==1.10.2
 celery-types==0.20.0
 flake8==6.0.0
 mypy==1.7.0
