@@ -48,13 +48,22 @@ $ source venv/bin/activate
 $ pip install -r rpi/requirements.txt
 ```
 
-## Restart the Qt app
-
-// TODO: (close the current app and start it again)
-
 # Update Docker containers
 
-// TODO: (how to stop and rebuild containers)
+1. If not logged, log in to your Docker account:
+```bash
+$ docker login
+```
+
+2. In the server, stop, update and restart the project in production mode:
+
+```bash
+$ cd ~/cnc-local-app
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml stop
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml rm -f
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml pull
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+```
 
 # Database migration
 
@@ -62,4 +71,22 @@ $ pip install -r rpi/requirements.txt
 
 # Update CNC worker
 
-// TODO: (stop and re-run the worker)
+## Build and push a multi-architecture Docker image
+
+If we have made changes to the code, we must generate a Docker image for the architecture of the Raspberry (ARM 32 v7) before starting our environment with `docker compose up`. The easiest method to achieve that is by [using buildx](https://docs.docker.com/build/building/multi-platform/#multiple-native-nodes).
+
+**The first time** we generate the image, we must create a custom builder.
+
+```bash
+docker buildx create --name raspberry --driver=docker-container
+```
+
+Then, the command to actually generate the image and update the remote repository is the following:
+
+```bash
+docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_user}}/cnc-worker:latest --builder=raspberry --target production --file core/Dockerfile.worker --push core
+```
+
+**NOTE:** You may have to log in with `docker login` previous to run the build command.
+
+Then, follow the guide to [update Docker containers](#update-docker-containers) in the Raspberry.

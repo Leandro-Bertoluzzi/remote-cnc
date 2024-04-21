@@ -30,9 +30,6 @@ services:
     container_name: cnc-admin-redis
 
   worker:
-    build:
-      context: ./core
-      dockerfile: ./Dockerfile.worker
     command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
     # To debug connection to serial port
     #command: picocom /dev/ttyUSB0

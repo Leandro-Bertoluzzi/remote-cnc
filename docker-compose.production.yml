@@ -1,0 +1,4 @@
+services:
+  worker:
+    image: leandrobertoluzzi/cnc-worker:latest
+    #platform: linux/arm/v7

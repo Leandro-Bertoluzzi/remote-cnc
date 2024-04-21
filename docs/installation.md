@@ -41,14 +41,6 @@ $ pip install -r rpi/requirements.txt
 cp .env.example .env
 ```
 
-## Initiate additional required services
-
-In case you don't have (or don't want to use) a DB and a message broker for Celery, you can start a containerized version of both, plus an `adminer` instance, via `docker compose`.
-
-```bash
-$ docker compose up -d
-```
-
 ## Run the Qt app
 
 Once installed all dependencies and created the Python environment, every time you want to start the app you must run:
@@ -107,6 +99,18 @@ Note: Replace `{{username}}` by your actual user's name.
 
 ```bash
 $ sudo reboot
+```
+
+## Initiate additional services
+
+You can start containers for the required services via `docker compose`:
+- PostgreSQL DB.
+- Message broker (Redis).
+- CNC worker.
+- DB admin (adminer).
+
+```bash
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
 ```
 
 # Set up database
