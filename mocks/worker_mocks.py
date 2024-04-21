@@ -1,4 +1,7 @@
-import mocks.grbl_mocks as grbl_mocks
+try:
+    from ..mocks import grbl_mocks
+except ImportError:
+    from mocks import grbl_mocks
 
 task_metadata_in_progress = {
     'status': 'PROGRESS',

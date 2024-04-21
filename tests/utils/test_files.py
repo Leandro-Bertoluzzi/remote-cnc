@@ -35,7 +35,7 @@ def test_getFileNameInFolder():
 def test_getFilePath():
     base_path = 'path/to/files/'
     file_name = 'file.txt'
-    expected = Path('path/to/files/files_folder/1/file.txt')
+    expected = Path('path/to/files/gcode_files/1/file.txt')
     assert getFilePath(base_path, 1, file_name) == expected
 
 
@@ -71,7 +71,7 @@ def test_saveFile(mocker, user_folder_exists):
     file = BinaryIO()
     file_name = 'file.gcode'
     user_id = 1
-    expected = Path('files_folder/1/file.gcode')
+    expected = Path('gcode_files/1/file.gcode')
 
     # Mock folder creation
     mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
@@ -133,7 +133,7 @@ def test_copyFile(mocker, user_folder_exists):
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
     user_id = 1
-    expected = Path('files_folder/1/file.gcode')
+    expected = Path('gcode_files/1/file.gcode')
 
     # Mock folder creation
     mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
@@ -192,7 +192,7 @@ def test_renameFile(mocker):
     file_name = 'file_20220610-192900.gcode'
     new_file_name = 'file-updated.gcode'
     user_id = 1
-    expected = Path('files_folder/1/file-updated.gcode')
+    expected = Path('gcode_files/1/file-updated.gcode')
 
     # Mock file update
     mocker.patch.object(time, 'strftime', return_value='20230720-192900')

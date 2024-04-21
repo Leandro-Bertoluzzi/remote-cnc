@@ -9,10 +9,12 @@ class TestGrblMonitor:
     @pytest.fixture(autouse=True)
     def setup_method(self, mocker):
         self.grbl_logger = logging.getLogger('test_logger')
-        self.grbl_monitor = GrblMonitor(self.grbl_logger)
 
         # Mock logger methods
         mocker.patch.object(self.grbl_logger, 'addHandler')
+
+        # Instantiate controller
+        self.grbl_monitor = GrblMonitor(self.grbl_logger)
 
     @pytest.mark.parametrize('queue', [False, True])
     def test_debug(self, mocker, queue):

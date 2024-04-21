@@ -4,7 +4,7 @@ from database.repositories.taskRepository import TaskRepository
 from grbl.grblController import GrblController
 from pytest_mock.plugin import MockerFixture
 from typing import TextIO
-from worker.tasks import executeTask
+from worker import executeTask
 
 
 def test_execute_tasks(mocker: MockerFixture):
@@ -48,7 +48,7 @@ def test_execute_tasks(mocker: MockerFixture):
     mocker.patch.object(GrblController, 'failed', return_value=False)
 
     # Mock FS methods
-    mocker.patch('worker.tasks.getFilePath')
+    mocker.patch('worker.getFilePath')
     mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
     mocker.patch('builtins.open', mocked_file_data)
 
@@ -146,7 +146,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     mocker.patch.object(GrblController, 'getGcodeParserState')
 
     # Mock FS methods
-    mocker.patch('worker.tasks.getFilePath')
+    mocker.patch('worker.getFilePath')
     mocker.patch(
         'builtins.open',
         # The 'logging' module uses the 'open' method internally
@@ -211,7 +211,7 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
     mocker.patch.object(GrblController, 'failed', return_value=False)
 
     # Mock FS methods
-    mocker.patch('worker.tasks.getFilePath')
+    mocker.patch('worker.getFilePath')
     mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
     mocker.patch('builtins.open', mocked_file_data)
 
@@ -255,7 +255,7 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
     mocker.patch.object(GrblController, 'getCommandsCount', return_value=0)
 
     # Mock FS methods
-    mocker.patch('worker.tasks.getFilePath')
+    mocker.patch('worker.getFilePath')
     mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
     mocker.patch('builtins.open', mocked_file_data)
 
