@@ -4,7 +4,6 @@
 
 1. Set up Qt app.
 1. Set up database.
-1. Set up CNC worker.
 
 # Introduction
 
@@ -113,21 +112,3 @@ $ sudo reboot
 # Set up database
 
 // TODO: (how to generate a SQL script from all migrations and run it with adminer)
-
-# Set up CNC worker
-
-## Start the CNC worker
-
-In order to execute tasks and scheduled tasks, you must start the CNC worker (Celery).
-
-```bash
-# 1. Move to worker folder
-$ cd core/worker
-
-# 2. Start Celery's worker server
-$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
-```
-
-## Configure the CNC worker at startup
-
-// TODO: see https://docs.celeryq.dev/en/stable/userguide/daemonizing.html

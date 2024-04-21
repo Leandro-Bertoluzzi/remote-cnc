@@ -12,8 +12,9 @@ SERIAL_BAUDRATE = int(os.environ.get('SERIAL_BAUDRATE', ''))
 CAMERA_URL = os.environ.get('CAMERA_URL', '')
 
 # Generate global constants
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-GRBL_LOGS_FILE = Path.cwd() / Path('core', 'worker', 'grbl.log')
+#PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = '/app'   # If worker runs inside container
+GRBL_LOGS_FILE = Path.cwd() / Path('core', 'worker', 'logs', 'grbl.log')
 
 
 # Utility functions

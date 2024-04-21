@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.9-buster
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install libgl1 -y
 
 # Install Python packages
-COPY ./pip/requirements.txt /app/requirements.txt
+COPY ./requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 # Copy application files

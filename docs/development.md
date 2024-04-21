@@ -1,4 +1,13 @@
-# Starting
+# Development
+
+## Overview
+
+1. [Install the Qt app](#install-the-qt-app).
+1. [Initiate additional services](#initiate-additional-services).
+1. [CNC worker](#start-the-celery-worker-manually).
+1. [Run tests](#run-tests).
+
+# Install the Qt app
 
 ## Install dependencies
 
@@ -35,27 +44,6 @@ $ .\env-dev\Scripts\activate
 $ pip install -r requirements-dev.txt
 ```
 
-## Initiate additional required services
-
-In case you don't have (or don't want to use) a DB and a message broker for Celery, you can start a containerized version of both, plus an `adminer` instance, via `docker compose`.
-
-```bash
-# 1. Run Docker to start the DB, adminer
-# and the Message broker (Redis)
-$ docker compose up -d
-```
-
-### Initiate with mocked camera
-
-In addition, you can also add a mocked version of the camera web server, which streams the test file `/camera/video/mock.mp4` in a loop.
-
-```bash
-$ cp camera/.env.example camera/.env
-$ docker compose -f docker-compose.yml -f docker-compose.test.yml up
-```
-
-You can validate the camera web server works properly by visiting `http://localhost:8081` in your web browser.
-
 ## Run the app
 
 Once installed all dependencies and created the Python environment, every time you want to start the app you must run:
@@ -72,9 +60,30 @@ $ source env-dev/bin/activate
 $ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
 ```
 
+# Initiate additional services
+
+In case you don't have (or don't want to use) a DB and a message broker for Celery, you can start a containerized version of both, plus an `adminer` instance, via `docker compose`.
+
+```bash
+# 1. Run Docker to start the DB, adminer,
+# the CNC worker and the Message broker (Redis)
+$ docker compose up -d
+```
+
+## Initiate with mocked camera
+
+In addition, you can also add a mocked version of the camera web server, which streams the test file `/camera/video/mock.mp4` in a loop.
+
+```bash
+$ cp camera/.env.example camera/.env
+$ docker compose -f docker-compose.yml -f docker-compose.test.yml up
+```
+
+You can validate the camera web server works properly by visiting `http://localhost:8081` in your web browser.
+
 # Manage database
 
-To see your database, you can either use the `adminer` container which renders an admin in `http://localhost:8080` when running the `docker-compose.yml`; or connect to it with a cliente like [DBeaver](https://dbeaver.io/).
+To see your database, you can either use the `adminer` container which renders an admin in `http://localhost:8080` when running the `docker-compose.yml`; or connect to it with a client like [DBeaver](https://dbeaver.io/).
 
 You can also manage database migrations by using the following commands inside the `core` folder.
 
@@ -92,9 +101,16 @@ $ alembic downgrade base
 
 More info about Alembic usage [here](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
 
-# Start the Celery worker
+# CNC worker
 
-In order to execute tasks and scheduled tasks, you must start the CNC worker (Celery).
+The CNC worker should start automatically when running `docker compose up`, with certain conditions:
+
+- It only works with Docker CE without Docker Desktop, because the latter can't mount devices. You can view a discussion about it [here](https://forums.docker.com/t/usb-devices-mapping-not-works-with-docker-desktop/132148).
+- Therefore, and given that devices in Windows work in a completely different way (there is no `/dev` folder), you won't be able to run the `worker` service on Windows. For that reason, in Windows you'll have to comment the `worker` service in `docker-compose.yml` and follow the steps in [Start the Celery worker manually (Windows)](#start-the-celery-worker-manually-windows).
+
+## Start the Celery worker manually (Linux)
+
+In case you don't use Docker or just want to run it manually (by commenting the `worker` service in `docker-compose.yml`), you can follow the next steps.
 
 ```bash
 # 1. Move to worker folder
@@ -114,7 +130,9 @@ $ cd core/worker
 $ watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
 ```
 
-### Windows
+**NOTE:** You also have to update the value of `PROJECT_ROOT` in `config.py`.
+
+## Start the Celery worker manually (Windows)
 
 Due to a known problem with Celery's default pool (prefork), it is not as straightforward to start the worker in Windows. In order to do so, we have to explicitly indicate Celery to use another pool. You can read more about this issue [here](https://celery.school/celery-on-windows).
 
@@ -142,4 +160,36 @@ $ pip install gevent
 
 # 2. Start Celery's worker server
 $ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
+```
+
+**NOTE:** You also have to update the value of `PROJECT_ROOT` in `config.py`.
+
+# Run tests
+
+### Unit tests
+
+```bash
+$ pytest -s
+```
+
+The coverage report is available in the folder `/htmlcov`.
+
+### Code style linter
+
+```bash
+$ flake8
+```
+
+### Type check
+
+```bash
+$ mypy .
+```
+
+### All tests
+
+You can also run all tests together, by using the following command:
+
+```bash
+$ make tests
 ```

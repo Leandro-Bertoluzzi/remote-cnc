@@ -23,9 +23,9 @@
   <a href="#sparkles-features">Features</a> &#xa0; | &#xa0;
   <a href="#rocket-technologies">Technologies</a> &#xa0; | &#xa0;
   <a href="#white_check_mark-requirements">Requirements</a> &#xa0; | &#xa0;
-  <a href="#checkered_flag-starting">Starting</a> &#xa0; | &#xa0;
-  <a href="#wrench-tests">Tests</a> &#xa0; | &#xa0;
-  <a href="#checkered_flag-deployment">Deployment</a> &#xa0; | &#xa0;
+  <a href="#checkered_flag-development">Development</a> &#xa0; | &#xa0;
+  <a href="#checkered_flag-installation">Installation</a> &#xa0; | &#xa0;
+  <a href="#rocket-deploy-changes">Deploy changes</a> &#xa0; | &#xa0;
   <a href="#memo-license">License</a> &#xa0; | &#xa0;
   <a href="https://github.com/Leandro-Bertoluzzi" target="_blank">Authors</a>
 </p>
@@ -61,41 +61,15 @@ The following tools were used in this project:
 
 Before starting :checkered_flag:, you need to have [Python](https://www.python.org/) installed.
 
-## :checkered_flag: Starting
+## :checkered_flag: Development
 
 See [Development](./docs/development.md) docs.
 
-## :wrench: Tests
+## :checkered_flag: Installation
 
-### Unit tests
+See [Installation](./docs/installation.md) docs.
 
-```bash
-$ pytest -s
-```
-
-The coverage report is available in the folder `/htmlcov`.
-
-### Code style linter
-
-```bash
-$ flake8
-```
-
-### Type check
-
-```bash
-$ mypy .
-```
-
-### All tests
-
-You can also run all tests together, by using the following command:
-
-```bash
-$ make tests
-```
-
-## :checkered_flag: Deployment
+## :rocket: Deploy changes
 
 See [Deployment](./docs/deployment.md) docs.
 

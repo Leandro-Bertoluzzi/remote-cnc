@@ -25,4 +25,4 @@ dependencies:
     - "celery[redis]"
     - celery-types
     - pytest-sqlalchemy-mock
-    - PyQtWebEngine=5.15.*
+    - PyQtWebEngine==5.15.*

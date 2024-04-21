@@ -1,4 +1,4 @@
-version: "3.8"
+name: cnc-manager
 
 services:
   postgresql:
@@ -29,11 +29,38 @@ services:
       - 6379:6379
     container_name: cnc-admin-redis
 
+  worker:
+    build:
+      context: ./core
+      dockerfile: ./Dockerfile.worker
+    command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
+    # To debug connection to serial port
+    #command: picocom /dev/ttyUSB0
+    depends_on:
+      - redis
+      - postgresql
+    device_cgroup_rules:
+      - 'c 188:* rmw'
+    env_file:
+      - ./core/.env
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=postgresql
+    volumes:
+      - ./gcode_files:/app/gcode_files
+      - ./core/worker/logs:/app/worker/logs
+      # Devices
+      - /dev:/dev
+      # Devices information
+      - /run/udev:/run/udev:ro
+    container_name: cnc-admin-worker
+
   flower:
     image: mher/flower
     command: celery --broker=redis://redis:6379/0 flower --port=5555
     depends_on:
       - redis
+      - worker
     ports:
       - 5555:5555
 
