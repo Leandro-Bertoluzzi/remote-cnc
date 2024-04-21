@@ -1,5 +1,5 @@
 from celery.result import AsyncResult
-from core.worker.tasks import app
+from core.cncworker.app import app
 from functools import reduce
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer
 

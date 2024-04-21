@@ -30,9 +30,7 @@ services:
     container_name: cnc-admin-redis
 
   worker:
-    command: celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
-    # To debug connection to serial port
-    #command: picocom /dev/ttyUSB0
+    command: celery --app worker worker --loglevel=INFO --logfile=logs/celery.log
     depends_on:
       - redis
       - postgresql
@@ -45,7 +43,7 @@ services:
       - DB_HOST=postgresql
     volumes:
       - ./gcode_files:/app/gcode_files
-      - ./core/worker/logs:/app/worker/logs
+      - ./core/logs:/app/logs
       # Devices
       - /dev:/dev
       # Devices information

@@ -1,7 +1,7 @@
 from config import USER_ID, PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
 from core.utils.files import getFileNameInFolder
 from core.utils.storage import add_value_with_id
-from core.worker.tasks import executeTask
+from core.worker import executeTask
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
 
