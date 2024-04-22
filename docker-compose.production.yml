@@ -2,3 +2,8 @@ services:
   worker:
     image: leandrobertoluzzi/cnc-worker:latest
     #platform: linux/arm/v7
+    volumes:
+      # Devices
+      - /dev:/dev
+      # Devices information
+      - /run/udev:/run/udev:ro

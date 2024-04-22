@@ -4,6 +4,7 @@
 
 1. [Install the Qt app](#install-the-qt-app).
 1. [Initiate additional services](#initiate-additional-services).
+1. [Mock external services](#mock-external-services)
 1. [CNC worker](#start-the-celery-worker-manually).
 1. [Run tests](#run-tests).
 
@@ -70,9 +71,11 @@ In case you don't have (or don't want to use) a DB and a message broker for Cele
 $ docker compose up -d
 ```
 
-## Initiate with mocked camera
+# Mock external services
 
-In addition, you can also add a mocked version of the camera web server, which streams the test file `/camera/video/mock.mp4` in a loop.
+In addition, you can also add:
+- A mocked version of the camera web server, which streams the test file `/camera/video/mock.mp4` in a loop.
+- A mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
 
 ```bash
 $ cp camera/.env.example camera/.env
@@ -80,6 +83,20 @@ $ docker compose -f docker-compose.yml -f docker-compose.test.yml up
 ```
 
 You can validate the camera web server works properly by visiting `http://localhost:8081` in your web browser.
+
+## Using GRBL simulator
+
+Update your environment to use a virtual port:
+
+```bash
+SERIAL_PORT=/dev/ttyUSBFAKE
+```
+
+Initiate the virtual port inside the worker's container:
+
+```bash
+docker exec -it cnc-admin-worker /bin/bash simport.sh
+```
 
 # Manage database
 

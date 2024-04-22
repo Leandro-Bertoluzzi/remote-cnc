@@ -10,3 +10,11 @@ services:
       - ./camera/motion/storage:/var/lib/motion
       - ./camera/video:/media/video
     container_name: cnc-camera
+
+  worker:
+    build:
+      context: ./core
+      dockerfile: ./Dockerfile.worker
+      target: development
+    environment:
+      - GRBL_SIMULATION=TRUE

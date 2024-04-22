@@ -44,10 +44,6 @@ services:
     volumes:
       - ./gcode_files:/app/gcode_files
       - ./core/logs:/app/logs
-      # Devices
-      - /dev:/dev
-      # Devices information
-      - /run/udev:/run/udev:ro
     container_name: cnc-admin-worker
 
   flower:
