@@ -14,6 +14,7 @@ REDIS_HOST = os.environ.get('REDIS_HOST')
 REDIS_PORT = int(os.environ.get('REDIS_PORT', ''))
 REDIS_DB_CELERY = int(os.environ.get('REDIS_DB_CELERY', ''))
 REDIS_DB_STORAGE = int(os.environ.get('REDIS_DB_STORAGE', ''))
+GRBL_SIMULATION = bool(os.environ.get('GRBL_SIMULATION', ''))
 
 # Generate global constants
 FILES_FOLDER_PATH = './gcode_files'

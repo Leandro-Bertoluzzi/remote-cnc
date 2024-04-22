@@ -1,7 +1,8 @@
 import logging
-from typing import Optional
 from .parsers.grblMsgTypes import GRBL_MSG_STATUS
+from pathlib import Path
 from queue import Empty, Queue
+from typing import Optional
 
 
 class GrblMonitor:
@@ -9,8 +10,11 @@ class GrblMonitor:
         # Configure logs queue for external monitor
         self.queue_log: Queue[str] = Queue()
 
+        # Location of logs file
+        file_path = Path(__file__).parent.parent / 'logs' / 'grbl.log'
+
         # Configure logger
-        file_handler = logging.FileHandler('logs/grbl.log', 'a', delay=True)
+        file_handler = logging.FileHandler(file_path, 'a', delay=True)
         file_format = logging.Formatter(
             '[%(asctime)s] %(levelname)s: %(message)s',
             datefmt='%d/%m/%Y %H:%M:%S'

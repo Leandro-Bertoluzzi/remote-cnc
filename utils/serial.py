@@ -59,7 +59,7 @@ class SerialService:
         response = ''
         retries = 0
         while not response and retries <= max_retries:
-            response = self.readLine()
+            response = self.readLine().strip()
             retries = retries + 1
         return response
 

@@ -16,8 +16,10 @@ from .types import GrblControllerState, GrblControllerParameters, \
     GrblSetting, GrblSettings, GrblBuildInfo
 
 try:
+    from ..config import GRBL_SIMULATION
     from ..utils.serial import SerialService
 except ImportError:
+    from config import GRBL_SIMULATION
     from utils.serial import SerialService
 
 # Constants
@@ -128,12 +130,14 @@ class GrblController:
 
         # Handle response
         msgType, payload = GrblLineParser.parse(response)
+        self.grbl_monitor.received(response, msgType, payload)
 
-        if msgType != GRBL_MSG_STARTUP:
-            self.grbl_monitor.critical('Failed starting connection with GRBL')
-            raise Exception('Failed starting connection with GRBL: ', payload)
+        if not GRBL_SIMULATION:
+            if msgType != GRBL_MSG_STARTUP:
+                self.grbl_monitor.critical('Failed starting connection with GRBL')
+                raise Exception('Failed starting connection with GRBL: ', payload)
+            self.build_info['version'] = payload['version']
 
-        self.build_info['version'] = payload['version']
         responsePayload = payload
 
         # -- Startup alarm message validation --
@@ -153,7 +157,6 @@ class GrblController:
         msgType, payload = GrblLineParser.parse(response)
 
         if (msgType == GRBL_MSG_FEEDBACK) and ('$H' in payload['message']):
-            # responsePayload['homing'] = True
             self.grbl_monitor.warning('Homing cycle required at startup, handling...')
             self.handleHomingCycle()
 
