@@ -83,7 +83,7 @@ class TaskCard(Card):
     def show_task_failure(self, task_info):
         error_msg = task_info
         description_error = (
-            f'{self.label_description.text()} (FAILED)\n'
+            f'{self.label_description.text()}\n'
             f'Error: {error_msg}'
         )
         self.setDescription(description_error)
