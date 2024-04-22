@@ -58,7 +58,6 @@ def test_execute_tasks(mocker: MockerFixture):
     # Call method under test
     response = executeTask(
         task_id=1,
-        admin_id=1,
         base_path='path/to/project',
         serial_port='test-port',
         serial_baudrate=115200
@@ -93,7 +92,6 @@ def test_no_tasks_to_execute(mocker: MockerFixture):
     with pytest.raises(Exception) as error:
         executeTask(
             task_id=1,
-            admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',
             serial_baudrate=115200
@@ -115,7 +113,6 @@ def test_task_in_progress_exception(mocker: MockerFixture):
     with pytest.raises(Exception) as error:
         executeTask(
             task_id=1,
-            admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',
             serial_baudrate=115200
@@ -128,8 +125,8 @@ def test_task_missing_arguments():
     with pytest.raises(Exception) as error:
         executeTask()
     assert str(error.value) == (
-        "executeTask() missing 5 required positional arguments: "
-        "'task_id', 'admin_id', 'base_path', 'serial_port', and 'serial_baudrate'"
+        "executeTask() missing 4 required positional arguments: "
+        "'task_id', 'base_path', 'serial_port', and 'serial_baudrate'"
     )
 
 
@@ -150,14 +147,13 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     mocker.patch(
         'builtins.open',
         # The 'logging' module uses the 'open' method internally
-        side_effect=[TextIO(), Exception('mocked-error')]
+        side_effect=Exception('mocked-error')
     )
 
     # Call method under test
     with pytest.raises(Exception):
         executeTask(
             task_id=1,
-            admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',
             serial_baudrate=115200
@@ -167,7 +163,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     assert mock_start_connect.call_count == 1
     assert mock_get_task_by_id.call_count == 1
     assert mock_start_disconnect.call_count == 1
-    assert mock_update_task_status.call_count == 0
+    assert mock_update_task_status.call_count == 1
 
 
 def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
@@ -221,7 +217,6 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
     # Call method under test
     executeTask(
         task_id=1,
-        admin_id=1,
         base_path='path/to/project',
         serial_port='test-port',
         serial_baudrate=115200
@@ -266,7 +261,6 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
     with pytest.raises(Exception) as error:
         executeTask(
             task_id=1,
-            admin_id=1,
             base_path='path/to/project',
             serial_port='test-port',
             serial_baudrate=115200

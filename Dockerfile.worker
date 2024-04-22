@@ -16,11 +16,8 @@ RUN apt-get update \
 RUN --mount=type=bind,source=cncworker/requirements.txt,target=/tmp/requirements.txt \
 pip install -r /tmp/requirements.txt
 
-FROM base as production
-
-# Create a non-root user
-RUN adduser --uid 1000 --gid 20 nonroot
-USER nonroot
+# Set work directory
+WORKDIR /app
 
 # Copy files into the container
 COPY ./config.py /app
@@ -30,8 +27,11 @@ COPY ./grbl /app/grbl
 COPY ./utils /app/utils
 COPY ./cncworker /app/cncworker
 
-# Set work directory
-WORKDIR /app
+FROM base as production
+
+# Create a non-root user
+RUN adduser --uid 1000 --gid 20 nonroot
+USER nonroot
 
 # Stage to build GRBL simulator from source code
 FROM debian:buster-slim as build
@@ -66,14 +66,3 @@ COPY ./cncworker/simport.sh /app
 RUN sed -i "s/\r//" /app/simport.sh
 # Ensure execution permissions
 RUN chmod +x /app/simport.sh
-
-# Copy files into the container
-COPY ./config.py /app
-COPY ./worker.py /app
-COPY ./database /app/database
-COPY ./grbl /app/grbl
-COPY ./utils /app/utils
-COPY ./cncworker /app/cncworker
-
-# Set work directory
-WORKDIR /app
