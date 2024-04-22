@@ -1,17 +1,17 @@
-"""Add cancelled status to tasks
+"""add failed status to tasks
 
-Revision ID: ef375042cb3f
-Revises: 161422f1d9c0
-Create Date: 2023-05-22 21:11:46.494408
+Revision ID: 3235826a58f1
+Revises: c5cba49f95bf
+Create Date: 2024-04-22 17:49:08.239310
 
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
 
 # revision identifiers, used by Alembic.
-revision = 'ef375042cb3f'
-down_revision = 'bb56f0eca8c5'
+revision = '3235826a58f1'
+down_revision = 'c5cba49f95bf'
 branch_labels = None
 depends_on = None
 
@@ -24,9 +24,10 @@ old_values = (
     "on_hold",
     "in_progress",
     "finished",
-    "rejected"
+    "rejected",
+    "cancelled"
 )
-new_values = ("cancelled", *old_values)
+new_values = ("failed", *old_values)
 old_type = sa.Enum(*old_values, name=enum_name)
 new_type = sa.Enum(*new_values, name=enum_name)
 temp_type = sa.Enum(*new_values, name=temp_enum_name)
@@ -38,9 +39,6 @@ column_name = "status"
 
 
 def upgrade() -> None:
-    # Add column for cancellation reason
-    op.add_column('tasks', sa.Column('cancellation_reason', sa.String(150)))
-
     # temp type to use instead of old one
     temp_type.create(op.get_bind(), checkfirst=False)
 
@@ -73,19 +71,19 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop column for cancellation reason
-    op.drop_column('tasks', 'cancellation_reason')
-
-    # Convert 'cancelled' status into 'rejected'
-    table = sa.sql.table('tasks', sa.Column('status'))
+    # Convert 'failed' status into 'cancelled'
+    table = sa.sql.table('tasks', sa.Column('status'), sa.Column('cancellation_reason'))
     op.execute(
         table
         .update()
-        .where(table.columns.status=='cancelled')
-        .values(status='rejected')
+        .where(table.columns.status=='failed')
+        .values(
+            status='cancelled',
+            cancellation_reason='FAILED'
+        )
     )
 
-    # Remove 'cancelled' value from type
+    # Remove 'failed' value from type
     temp_type.create(op.get_bind(), checkfirst=False)
 
     with op.batch_alter_table('tasks') as batch_op:
