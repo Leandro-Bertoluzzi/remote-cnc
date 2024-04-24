@@ -1,103 +1,168 @@
--- Adminer 4.8.1 PostgreSQL 16.1 dump
+BEGIN;
 
-\connect "cnc_db";
+CREATE TABLE alembic_version (
+    version_num VARCHAR(32) NOT NULL, 
+    CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+);
 
-DROP TABLE IF EXISTS "files";
-DROP SEQUENCE IF EXISTS files_id_seq;
-CREATE SEQUENCE files_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+-- Running upgrade  -> dda662b6775d
 
-CREATE TABLE "public"."files" (
-    "id" integer DEFAULT nextval('files_id_seq') NOT NULL,
-    "user_id" integer,
-    "file_name" character varying(150) NOT NULL,
-    "created_at" timestamp DEFAULT now() NOT NULL,
-    "file_hash" character varying(150),
-    CONSTRAINT "files_pkey" PRIMARY KEY ("id")
-) WITH (oids = false);
+CREATE TABLE users (
+    id SERIAL NOT NULL, 
+    name VARCHAR(50) NOT NULL, 
+    email VARCHAR(50) NOT NULL, 
+    password VARCHAR(150) NOT NULL, 
+    PRIMARY KEY (id)
+);
 
+CREATE TYPE role AS ENUM ('user', 'admin');
 
-DROP TABLE IF EXISTS "materials";
-DROP SEQUENCE IF EXISTS materials_id_seq;
-CREATE SEQUENCE materials_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+ALTER TABLE users ADD COLUMN role role NOT NULL;
 
-CREATE TABLE "public"."materials" (
-    "id" integer DEFAULT nextval('materials_id_seq') NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "description" character varying(150) NOT NULL,
-    "added_at" timestamp DEFAULT now() NOT NULL,
-    CONSTRAINT "materials_pkey" PRIMARY KEY ("id")
-) WITH (oids = false);
+INSERT INTO alembic_version (version_num) VALUES ('dda662b6775d') RETURNING alembic_version.version_num;
 
+-- Running upgrade dda662b6775d -> a4a5b53fb397
 
-DROP TABLE IF EXISTS "tasks";
-DROP SEQUENCE IF EXISTS tasks_id_seq;
-CREATE SEQUENCE tasks_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+CREATE TABLE files (
+    id SERIAL NOT NULL, 
+    user_id INTEGER, 
+    file_name VARCHAR(150) NOT NULL, 
+    file_path VARCHAR(150) NOT NULL, 
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
+    PRIMARY KEY (id)
+);
 
-CREATE TYPE task_status AS ENUM
-    (
-        'pending_approval',
-        'on_hold',
-        'in_progress',
-        'finished',
-        'rejected',
-        'cancelled'
-    );
+ALTER TABLE files ADD CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE;
 
-CREATE TABLE "public"."tasks" (
-    "id" integer DEFAULT nextval('tasks_id_seq') NOT NULL,
-    "created_at" timestamp NOT NULL,
-    "status_updated_at" timestamp,
-    "priority" integer NOT NULL,
-    "status" task_status NOT NULL,
-    "user_id" integer NOT NULL,
-    "file_id" integer NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "note" character varying(150),
-    "tool_id" integer NOT NULL,
-    "material_id" integer NOT NULL,
-    "admin_id" integer,
-    "cancellation_reason" character varying(150),
-    CONSTRAINT "tasks_pkey" PRIMARY KEY ("id")
-) WITH (oids = false);
+UPDATE alembic_version SET version_num='a4a5b53fb397' WHERE alembic_version.version_num = 'dda662b6775d';
 
+-- Running upgrade a4a5b53fb397 -> b45f388692dc
 
-DROP TABLE IF EXISTS "tools";
-DROP SEQUENCE IF EXISTS tools_id_seq;
-CREATE SEQUENCE tools_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+CREATE TABLE tasks (
+    id SERIAL NOT NULL, 
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+    status_updated_at TIMESTAMP WITHOUT TIME ZONE, 
+    priority INTEGER NOT NULL, 
+    PRIMARY KEY (id)
+);
 
-CREATE TABLE "public"."tools" (
-    "id" integer DEFAULT nextval('tools_id_seq') NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "description" character varying(150) NOT NULL,
-    "added_at" timestamp DEFAULT now() NOT NULL,
-    CONSTRAINT "tools_pkey" PRIMARY KEY ("id")
-) WITH (oids = false);
+CREATE TYPE task_status AS ENUM ('pending_approval', 'on_hold', 'in_progress', 'finished', 'rejected');
 
+ALTER TABLE tasks ADD COLUMN status task_status NOT NULL;
 
-DROP TABLE IF EXISTS "users";
-DROP SEQUENCE IF EXISTS users_id_seq;
-CREATE SEQUENCE users_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+UPDATE alembic_version SET version_num='b45f388692dc' WHERE alembic_version.version_num = 'a4a5b53fb397';
 
-CREATE TYPE role AS ENUM
-    ('user', 'admin');
+-- Running upgrade b45f388692dc -> 677cfe19a165
 
-CREATE TABLE "public"."users" (
-    "id" integer DEFAULT nextval('users_id_seq') NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "email" character varying(50) NOT NULL,
-    "password" character varying(150) NOT NULL,
-    "role" role NOT NULL,
-    CONSTRAINT "unique_users_email" UNIQUE ("email"),
-    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
-) WITH (oids = false);
+ALTER TABLE tasks ADD COLUMN user_id INTEGER NOT NULL;
 
+ALTER TABLE tasks ADD COLUMN file_id INTEGER NOT NULL;
 
-ALTER TABLE ONLY "public"."files" ADD CONSTRAINT "fk_user_id" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE tasks ADD CONSTRAINT fk_owner_id FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE;
 
-ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_admin_id" FOREIGN KEY (admin_id) REFERENCES users(id) NOT DEFERRABLE;
-ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_file_id" FOREIGN KEY (file_id) REFERENCES files(id) NOT DEFERRABLE;
-ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_material_id" FOREIGN KEY (material_id) REFERENCES materials(id) NOT DEFERRABLE;
-ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_owner_id" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
-ALTER TABLE ONLY "public"."tasks" ADD CONSTRAINT "fk_tool_id" FOREIGN KEY (tool_id) REFERENCES tools(id) NOT DEFERRABLE;
+ALTER TABLE tasks ADD CONSTRAINT fk_file_id FOREIGN KEY(file_id) REFERENCES files (id);
 
--- 2024-02-06 19:43:29.544543+00
+UPDATE alembic_version SET version_num='677cfe19a165' WHERE alembic_version.version_num = 'b45f388692dc';
+
+-- Running upgrade 677cfe19a165 -> 8475035ee19e
+
+CREATE TABLE tools (
+    id SERIAL NOT NULL, 
+    name VARCHAR(50) NOT NULL, 
+    description VARCHAR(150) NOT NULL, 
+    added_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
+    PRIMARY KEY (id)
+);
+
+UPDATE alembic_version SET version_num='8475035ee19e' WHERE alembic_version.version_num = '677cfe19a165';
+
+-- Running upgrade 8475035ee19e -> 47f8b3a7f591
+
+ALTER TABLE users ADD CONSTRAINT unique_users_email UNIQUE (email);
+
+UPDATE alembic_version SET version_num='47f8b3a7f591' WHERE alembic_version.version_num = '8475035ee19e';
+
+-- Running upgrade 47f8b3a7f591 -> f0fe8ee5571c
+
+CREATE TABLE materials (
+    id SERIAL NOT NULL, 
+    name VARCHAR(50) NOT NULL, 
+    description VARCHAR(150) NOT NULL, 
+    added_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
+    PRIMARY KEY (id)
+);
+
+UPDATE alembic_version SET version_num='f0fe8ee5571c' WHERE alembic_version.version_num = '47f8b3a7f591';
+
+-- Running upgrade f0fe8ee5571c -> 6d8972b34033
+
+ALTER TABLE tasks ADD COLUMN name VARCHAR(50) NOT NULL;
+
+ALTER TABLE tasks ADD COLUMN note VARCHAR(150);
+
+UPDATE alembic_version SET version_num='6d8972b34033' WHERE alembic_version.version_num = 'f0fe8ee5571c';
+
+-- Running upgrade 6d8972b34033 -> 8c8c413bf8ac
+
+ALTER TABLE tasks ADD COLUMN tool_id INTEGER NOT NULL;
+
+ALTER TABLE tasks ADD COLUMN material_id INTEGER NOT NULL;
+
+ALTER TABLE tasks ADD CONSTRAINT fk_tool_id FOREIGN KEY(tool_id) REFERENCES tools (id);
+
+ALTER TABLE tasks ADD CONSTRAINT fk_material_id FOREIGN KEY(material_id) REFERENCES materials (id);
+
+UPDATE alembic_version SET version_num='8c8c413bf8ac' WHERE alembic_version.version_num = '6d8972b34033';
+
+-- Running upgrade 8c8c413bf8ac -> bb56f0eca8c5
+
+ALTER TABLE tasks ADD COLUMN admin_id INTEGER;
+
+ALTER TABLE tasks ADD CONSTRAINT fk_admin_id FOREIGN KEY(admin_id) REFERENCES users (id);
+
+UPDATE alembic_version SET version_num='bb56f0eca8c5' WHERE alembic_version.version_num = '8c8c413bf8ac';
+
+-- Running upgrade bb56f0eca8c5 -> ef375042cb3f
+
+ALTER TABLE tasks ADD COLUMN cancellation_reason VARCHAR(150);
+
+CREATE TYPE temp_task_status AS ENUM ('cancelled', 'pending_approval', 'on_hold', 'in_progress', 'finished', 'rejected');
+
+ALTER TABLE tasks ALTER COLUMN status TYPE temp_task_status USING status::text::temp_task_status;
+
+DROP TYPE task_status;
+
+CREATE TYPE task_status AS ENUM ('cancelled', 'pending_approval', 'on_hold', 'in_progress', 'finished', 'rejected');
+
+ALTER TABLE tasks ALTER COLUMN status TYPE task_status USING status::text::task_status;
+
+DROP TYPE temp_task_status;
+
+UPDATE alembic_version SET version_num='ef375042cb3f' WHERE alembic_version.version_num = 'bb56f0eca8c5';
+
+-- Running upgrade ef375042cb3f -> c5cba49f95bf
+
+ALTER TABLE files DROP COLUMN file_path;
+
+ALTER TABLE files ADD COLUMN file_hash VARCHAR(150);
+
+UPDATE alembic_version SET version_num='c5cba49f95bf' WHERE alembic_version.version_num = 'ef375042cb3f';
+
+-- Running upgrade c5cba49f95bf -> 3235826a58f1
+
+CREATE TYPE temp_task_status AS ENUM ('failed', 'pending_approval', 'on_hold', 'in_progress', 'finished', 'rejected', 'cancelled');
+
+ALTER TABLE tasks ALTER COLUMN status TYPE temp_task_status USING status::text::temp_task_status;
+
+DROP TYPE task_status;
+
+CREATE TYPE task_status AS ENUM ('failed', 'pending_approval', 'on_hold', 'in_progress', 'finished', 'rejected', 'cancelled');
+
+ALTER TABLE tasks ALTER COLUMN status TYPE task_status USING status::text::task_status;
+
+DROP TYPE temp_task_status;
+
+UPDATE alembic_version SET version_num='3235826a58f1' WHERE alembic_version.version_num = 'c5cba49f95bf';
+
+COMMIT;
+

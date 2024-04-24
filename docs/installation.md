@@ -115,4 +115,4 @@ $ docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
 
 # Set up database
 
-// TODO: (how to generate a SQL script from all migrations and run it with adminer)
+You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](./db-management.md#execute-a-sql-script).
