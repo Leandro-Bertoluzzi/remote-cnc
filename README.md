@@ -81,9 +81,9 @@ $ pip install -r requirements-dev.txt
 # 3. Copy and configure the .env file
 cp .env.example .env
 
-# 4. Run Docker to start the DB, PHPMyAdmin, the
-# CNC worker (Celery) and its Message broker (Redis)
-$ docker compose -f docker-compose.yml -f docker-compose.worker.yml up -d
+# 4. Ask git to stop tracking log files
+$ git update-index --assume-unchanged logs/grbl.log
+$ git update-index --assume-unchanged logs/celery.log
 
 # 5. If you are starting a new DB, run DB migrations
 $ alembic upgrade head

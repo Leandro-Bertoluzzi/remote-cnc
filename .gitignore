@@ -10,6 +10,3 @@ venv/
 
 # User files
 gcode_files/
-
-# Log files
-*.log
