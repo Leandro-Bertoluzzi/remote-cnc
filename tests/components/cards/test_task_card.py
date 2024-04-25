@@ -267,7 +267,7 @@ class TestTaskCard:
                 ('on_hold', '', ''),
                 ('in_progress', 'abc', 'PENDING'),
                 ('in_progress', 'abc', 'PROGRESS'),
-                ('in_progress', 'abc', 'FAILURE'),
+                ('failed', 'abc', 'FAILURE'),
                 ('finished', 'def', 'SUCCESS'),
                 ('rejected', '', ''),
                 ('cancelled', '', ''),
@@ -328,7 +328,7 @@ class TestTaskCard:
         if status_worker == 'FAILURE':
             expected_text = (
                 'Tarea 1: Example task\n'
-                f'Estado: {status_db} (FAILED)\n'
+                f'Estado: {status_db}\n'
                 'Error: Mocked error message'
             )
 

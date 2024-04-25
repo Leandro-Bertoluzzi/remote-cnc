@@ -70,6 +70,7 @@ class MainWindow(QMainWindow):
 
     def on_task_failed(self, error_msg: str):
         self.status_bar.updateDeviceStatus('ERROR')
+        self.status_bar.setEnableBtnVisible(True)
         QMessageBox.critical(
             self,
             'Tarea interrumpida',
