@@ -5,7 +5,8 @@ from components.dialogs.TaskDataDialog import TaskDataDialog
 from components.TaskProgress import TaskProgress
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
-    TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS
+    TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS, \
+    TASK_FAILED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from core.utils.storage import get_value_from_id
 from helpers.cncWorkerMonitor import CncWorkerMonitor
@@ -96,6 +97,7 @@ class TaskCard(Card):
         * in progress -> No buttons
         * cancelled / rejected -> | Remove | Restore |
         * finished -> | Repeat |
+        * failed -> | Retry |
         """
 
         button_info = {
@@ -112,7 +114,8 @@ class TaskCard(Card):
                 ("Eliminar", self.removeTask),
                 ("Restaurar", self.restoreTask)
             ],
-            TASK_FINISHED_STATUS: [("Repetir", self.repeatTask)]
+            TASK_FINISHED_STATUS: [("Repetir", self.repeatTask)],
+            TASK_FAILED_STATUS: [("Reintentar", self.repeatTask)]
         }
 
         for status_value, data in button_info.items():

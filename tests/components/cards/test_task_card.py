@@ -53,6 +53,7 @@ class TestTaskCard:
                 ('on_hold', 2),
                 ('in_progress', 0),
                 ('finished', 1),
+                ('failed', 1),
                 ('rejected', 2),
                 ('cancelled', 2)
             ]
