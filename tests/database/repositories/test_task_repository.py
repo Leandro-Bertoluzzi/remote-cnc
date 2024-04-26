@@ -123,7 +123,6 @@ class TestTaskRepository:
             [
                 ('pending_approval', None, None),
                 ('on_hold', 1, None),
-                ('rejected', 1, 'This is a valid reason'),
                 ('cancelled', None, 'This is a valid reason')
             ]
     )

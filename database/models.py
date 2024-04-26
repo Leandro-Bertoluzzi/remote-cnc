@@ -10,7 +10,6 @@ TASK_ON_HOLD_STATUS = 'on_hold'
 TASK_IN_PROGRESS_STATUS = 'in_progress'
 TASK_FINISHED_STATUS = 'finished'
 TASK_FAILED_STATUS = 'failed'
-TASK_REJECTED_STATUS = 'rejected'
 TASK_CANCELLED_STATUS = 'cancelled'
 TASK_APPROVED_STATUS = TASK_ON_HOLD_STATUS
 
@@ -20,7 +19,6 @@ VALID_STATUSES = [
     TASK_IN_PROGRESS_STATUS,
     TASK_FINISHED_STATUS,
     TASK_FAILED_STATUS,
-    TASK_REJECTED_STATUS,
     TASK_CANCELLED_STATUS
 ]
 
@@ -38,7 +36,6 @@ StatusType = Literal[
     'in_progress',
     'finished',
     'failed',
-    'rejected',
     'cancelled'
 ]
 

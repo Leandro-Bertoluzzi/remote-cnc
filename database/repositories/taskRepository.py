@@ -6,8 +6,7 @@ from typing import Optional
 from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError, Unauthorized
 from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
-    TASK_IN_PROGRESS_STATUS, TASK_CANCELLED_STATUS, TASK_REJECTED_STATUS, \
-    TASK_EMPTY_NOTE, VALID_STATUSES
+    TASK_IN_PROGRESS_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, VALID_STATUSES
 
 
 # Custom exceptions
@@ -161,9 +160,8 @@ class TaskRepository:
 
             is_pending = task.status == TASK_PENDING_APPROVAL_STATUS
             approved = is_pending and status == TASK_APPROVED_STATUS
-            rejected = is_pending and status == TASK_REJECTED_STATUS
 
-            if approved or rejected:
+            if approved:
                 if not admin_id:
                     raise Unauthorized('Admin level is required to perform the action')
                 task.admin_id = admin_id
@@ -172,7 +170,7 @@ class TaskRepository:
                 task.admin_id = None
                 task.status_updated_at = None
 
-            if status == TASK_CANCELLED_STATUS or rejected:
+            if status == TASK_CANCELLED_STATUS:
                 task.cancellation_reason = cancellation_reason
 
             task.status = status

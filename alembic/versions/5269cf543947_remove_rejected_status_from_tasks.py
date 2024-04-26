@@ -1,8 +1,8 @@
-"""add failed status to tasks
+"""remove rejected status from tasks
 
-Revision ID: 3235826a58f1
-Revises: c5cba49f95bf
-Create Date: 2024-04-22 17:49:08.239310
+Revision ID: 5269cf543947
+Revises: 3235826a58f1
+Create Date: 2024-04-25 22:08:49.727388
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3235826a58f1'
-down_revision = 'c5cba49f95bf'
+revision = '5269cf543947'
+down_revision = '3235826a58f1'
 branch_labels = None
 depends_on = None
 
@@ -19,15 +19,15 @@ depends_on = None
 # Describing of enum
 enum_name = "task_status"
 temp_enum_name = f"temp_{enum_name}"
-old_values = (
+new_values = (
     "pending_approval",
     "on_hold",
     "in_progress",
     "finished",
-    "rejected",
-    "cancelled"
+    "cancelled",
+    "failed"
 )
-new_values = ("failed", *old_values)
+old_values = ("rejected", *new_values)
 old_type = sa.Enum(*old_values, name=enum_name)
 new_type = sa.Enum(*new_values, name=enum_name)
 temp_type = sa.Enum(*new_values, name=temp_enum_name)
@@ -41,6 +41,15 @@ column_name = "status"
 def upgrade() -> None:
     # temp type to use instead of old one
     temp_type.create(op.get_bind(), checkfirst=False)
+
+    # Convert 'rejected' status into 'cancelled'
+    table = sa.sql.table('tasks', sa.Column('status'))
+    op.execute(
+        table
+        .update()
+        .where(table.columns.status == 'rejected')
+        .values(status='cancelled')
+    )
 
     # changing of column type from old enum to new one.
     with op.batch_alter_table('tasks') as batch_op:
@@ -71,19 +80,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Convert 'failed' status into 'cancelled'
-    table = sa.sql.table('tasks', sa.Column('status'), sa.Column('cancellation_reason'))
-    op.execute(
-        table
-        .update()
-        .where(table.columns.status == 'failed')
-        .values(
-            status='cancelled',
-            cancellation_reason='FAILED'
-        )
-    )
-
-    # Remove 'failed' value from type
+    # Restore 'rejected' value in type
     temp_type.create(op.get_bind(), checkfirst=False)
 
     with op.batch_alter_table('tasks') as batch_op:

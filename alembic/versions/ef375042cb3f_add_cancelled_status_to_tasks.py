@@ -7,7 +7,6 @@ Create Date: 2023-05-22 21:11:46.494408
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'ef375042cb3f'
@@ -81,7 +80,7 @@ def downgrade() -> None:
     op.execute(
         table
         .update()
-        .where(table.columns.status=='cancelled')
+        .where(table.columns.status == 'cancelled')
         .values(status='rejected')
     )
 
