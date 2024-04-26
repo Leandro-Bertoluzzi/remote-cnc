@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC04 |
 | **Actores**      | Usuario |
-| **Precondición**   | Hay tareas pendientes de aprobación, creadas por el usuario. |
+| **Precondición**   | Hay tareas en estado "pendiente de aprobación", creadas por el usuario. |
 | **Resultado**   | El usuario puede editar una tarea. |
 
 **Resumen:**

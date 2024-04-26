@@ -2,7 +2,7 @@
 | :---        | :---        |
 | **Identificador**      | UC03 |
 | **Actores**      | Usuario |
-| **Precondición**   | Hay tareas en espera y/o pendientes de aprobación. |
+| **Precondición**   | Hay al menos una tarea en estado "en espera" o "pendiente de aprobación". |
 | **Resultado**   | El usuario quita una tarea de la cola de ejecución. |
 
 **Resumen:**
