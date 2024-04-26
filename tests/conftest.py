@@ -137,5 +137,35 @@ def sqlalchemy_mock_config():
                 "created_at": created_time,
                 "status_updated_at": created_time
             },
+            {
+                "id": 5,
+                "name": "Task 5",
+                "user_id": 1,
+                "file_id": 1,
+                "tool_id": 1,
+                "material_id": 1,
+                "admin_id": 1,
+                "status": "in_progress",
+                "priority": 3,
+                "note": "This is a note",
+                "cancellation_reason": None,
+                "created_at": created_time,
+                "status_updated_at": created_time
+            },
+            {
+                "id": 6,
+                "name": "Task 6",
+                "user_id": 1,
+                "file_id": 1,
+                "tool_id": 1,
+                "material_id": 1,
+                "admin_id": 1,
+                "status": "failed",
+                "priority": 0,
+                "note": "This is a note",
+                "cancellation_reason": None,
+                "created_at": created_time,
+                "status_updated_at": created_time
+            },
         ])
     ]

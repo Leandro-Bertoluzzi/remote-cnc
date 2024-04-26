@@ -7,6 +7,10 @@ from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError, Unauthorized
 from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
     TASK_IN_PROGRESS_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, VALID_STATUSES
+try:
+    from ...utils.validators import validate_transition
+except ImportError:
+    from utils.validators import validate_transition
 
 
 # Custom exceptions
@@ -158,6 +162,9 @@ class TaskRepository:
             if task.status == status:
                 return task
 
+            if not validate_transition(task.status, status):
+                raise InvalidTaskStatus(f'Transition from {task.status} to {status} is not valid')
+
             is_pending = task.status == TASK_PENDING_APPROVAL_STATUS
             approved = is_pending and status == TASK_APPROVED_STATUS
 
@@ -167,8 +174,8 @@ class TaskRepository:
                 task.admin_id = admin_id
 
             if status == TASK_PENDING_APPROVAL_STATUS:
+                task.cancellation_reason = None
                 task.admin_id = None
-                task.status_updated_at = None
 
             if status == TASK_CANCELLED_STATUS:
                 task.cancellation_reason = cancellation_reason

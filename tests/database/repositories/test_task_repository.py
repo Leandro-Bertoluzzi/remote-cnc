@@ -69,10 +69,6 @@ class TestTaskRepository:
         result = task_repository.are_there_tasks_with_status('pending_approval')
         assert result is True
 
-        # Call method under test and assert result
-        result = task_repository.are_there_tasks_with_status('in_progress')
-        assert result is False
-
     def test_are_there_pending_tasks(self, mocked_session):
         task_repository = TaskRepository(mocked_session)
 
@@ -85,7 +81,7 @@ class TestTaskRepository:
 
         # Call method under test and assert result
         result = task_repository.are_there_tasks_in_progress()
-        assert result is False
+        assert result is True
 
     def test_update_task(self, mocked_session):
         task_repository = TaskRepository(mocked_session)
@@ -119,17 +115,23 @@ class TestTaskRepository:
         assert updated_task.priority == priority
 
     @pytest.mark.parametrize(
-            'status,expected_admin_id,expected_cancellation_reason',
+            'status,new_status,expected_admin_id,expected_cancellation_reason',
             [
-                ('pending_approval', None, None),
-                ('on_hold', 1, None),
-                ('cancelled', None, 'This is a valid reason')
+                ('pending_approval', 'on_hold', 1, None),
+                ('pending_approval', 'cancelled', None, 'This is a valid reason'),
+                ('on_hold', 'in_progress', 1, None),
+                ('on_hold', 'cancelled', 1, 'This is a valid reason'),
+                ('in_progress', 'finished', 1, None),
+                ('in_progress', 'failed', 1, None),
+                ('failed', 'pending_approval', None, None),
+                ('cancelled', 'pending_approval', None, None)
             ]
     )
     def test_update_task_status(
         self,
         mocked_session,
         status,
+        new_status,
         expected_admin_id,
         expected_cancellation_reason
     ):
@@ -137,33 +139,46 @@ class TestTaskRepository:
         admin_id = 1
         cancellation_reason = 'This is a valid reason'
 
+        # We look for a task with the given initial status
+        task = task_repository.get_all_tasks(status)[0]
+
         # Call method under test
         updated_task = task_repository.update_task_status(
-            1,
-            status,
+            task.id,
+            new_status,
             admin_id,
             cancellation_reason
         )
 
         # Assertions
-        assert updated_task.status == status
+        assert updated_task.status == new_status
         assert updated_task.admin_id == expected_admin_id
         assert updated_task.cancellation_reason == expected_cancellation_reason
 
-    def test_update_task_status_back_to_pending(self, mocked_session):
+    @pytest.mark.parametrize(
+            'status',
+            [
+                'pending_approval',
+                'on_hold',
+                'in_progress',
+                'finished',
+                'failed',
+                'cancelled'
+            ]
+    )
+    def test_update_task_status_unchanged(self, mocked_session, status):
         task_repository = TaskRepository(mocked_session)
-        admin_id = 1
+
+        # We look for a task with the given initial status
+        task = task_repository.get_all_tasks(status)[0]
 
         # Call method under test
-        updated_task = task_repository.update_task_status(
-            2,
-            'pending_approval',
-            admin_id
-        )
+        updated_task = task_repository.update_task_status(task.id, status)
 
         # Assertions
-        assert updated_task.status == 'pending_approval'
-        assert updated_task.admin_id is None
+        assert updated_task.status == status
+        assert updated_task.admin_id == task.admin_id
+        assert updated_task.cancellation_reason == task.cancellation_reason
 
     def test_remove_task(self, mocked_session):
         task_repository = TaskRepository(mocked_session)
@@ -263,6 +278,49 @@ class TestTaskRepository:
         with pytest.raises(Exception) as error:
             task_repository.update_task_status(id=1, status='invalid_status')
         assert str(error.value) == 'Status invalid_status is not valid'
+
+    @pytest.mark.parametrize(
+            'status,new_status',
+            [
+                ('pending_approval', 'in_progress'),
+                ('pending_approval', 'finished'),
+                ('pending_approval', 'failed'),
+                ('on_hold', 'pending_approval'),
+                ('on_hold', 'finished'),
+                ('on_hold', 'failed'),
+                ('in_progress', 'pending_approval'),
+                ('in_progress', 'on_hold'),
+                ('in_progress', 'cancelled'),
+                ('finished', 'pending_approval'),
+                ('finished', 'on_hold'),
+                ('finished', 'in_progress'),
+                ('finished', 'failed'),
+                ('finished', 'cancelled'),
+                ('failed', 'on_hold'),
+                ('failed', 'in_progress'),
+                ('failed', 'finished'),
+                ('failed', 'cancelled'),
+                ('cancelled', 'on_hold'),
+                ('cancelled', 'in_progress'),
+                ('cancelled', 'finished'),
+                ('cancelled', 'failed')
+            ]
+    )
+    def test_error_update_non_valid_transition(
+        self,
+        mocked_session,
+        status,
+        new_status
+    ):
+        task_repository = TaskRepository(mocked_session)
+
+        # We look for a task with the given initial status
+        task = task_repository.get_all_tasks(status)[0]
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            task_repository.update_task_status(id=task.id, status=new_status)
+        assert str(error.value) == f'Transition from {status} to {new_status} is not valid'
 
     def test_error_update_needed_admin(self, mocked_session):
         task_repository = TaskRepository(mocked_session)

@@ -147,7 +147,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     mocker.patch(
         'builtins.open',
         # The 'logging' module uses the 'open' method internally
-        side_effect=Exception('mocked-error')
+        side_effect=[TextIO(), TextIO(), Exception('mocked-error')]
     )
 
     # Call method under test
