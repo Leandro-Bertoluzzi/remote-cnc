@@ -164,5 +164,23 @@ DROP TYPE temp_task_status;
 
 UPDATE alembic_version SET version_num='3235826a58f1' WHERE alembic_version.version_num = 'c5cba49f95bf';
 
+-- Running upgrade 3235826a58f1 -> 5269cf543947
+
+UPDATE tasks SET status='cancelled' WHERE tasks.status = 'rejected';
+
+CREATE TYPE temp_task_status AS ENUM ('pending_approval', 'on_hold', 'in_progress', 'finished', 'cancelled', 'failed');
+
+ALTER TABLE tasks ALTER COLUMN status TYPE temp_task_status USING status::text::temp_task_status;
+
+DROP TYPE task_status;
+
+CREATE TYPE task_status AS ENUM ('pending_approval', 'on_hold', 'in_progress', 'finished', 'cancelled', 'failed');
+
+ALTER TABLE tasks ALTER COLUMN status TYPE task_status USING status::text::task_status;
+
+DROP TYPE temp_task_status;
+
+UPDATE alembic_version SET version_num='5269cf543947' WHERE alembic_version.version_num = '3235826a58f1';
+
 COMMIT;
 

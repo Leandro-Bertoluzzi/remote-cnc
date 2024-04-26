@@ -5,7 +5,7 @@ from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from core.database.models import Task, TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, \
-    TASK_REJECTED_STATUS, TASK_INITIAL_STATUS, TASK_APPROVED_STATUS
+    TASK_INITIAL_STATUS, TASK_APPROVED_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
@@ -50,12 +50,11 @@ class TestTaskCard:
     @pytest.mark.parametrize(
             "status,expected_buttons",
             [
-                ('pending_approval', 4),
+                ('pending_approval', 3),
                 ('on_hold', 2),
                 ('in_progress', 0),
                 ('finished', 1),
                 ('failed', 1),
-                ('rejected', 2),
                 ('cancelled', 2)
             ]
         )
@@ -267,7 +266,6 @@ class TestTaskCard:
                 ('in_progress', 'abc', 'PROGRESS'),
                 ('failed', 'abc', 'FAILURE'),
                 ('finished', 'def', 'SUCCESS'),
-                ('rejected', '', ''),
                 ('cancelled', '', ''),
                 ('cancelled', 'xyz', 'FAILURE')
             ]
@@ -550,58 +548,5 @@ class TestTaskCard:
         self.card.approveTask()
 
         # Assertions
-        assert mock_update_task_status.call_count == 1
-        assert mock_popup.call_count == 1
-
-    @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
-    def test_task_card_reject_task(
-        self,
-        setup_method,
-        mocker: MockerFixture,
-        dialogResponse
-    ):
-        # Mock DB methods
-        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
-        # Mock TaskCancelDialog methods
-        mock_input = 'A valid cancellation reason'
-        mocker.patch.object(TaskCancelDialog, 'exec', return_value=dialogResponse)
-        mocker.patch.object(TaskCancelDialog, 'getInput', return_value=mock_input)
-
-        # Call the rejectTask method
-        self.card.rejectTask()
-
-        # Validate DB calls
-        expected_updated = (dialogResponse == QDialog.Accepted)
-        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
-
-        if expected_updated:
-            update_task_params = {
-                'id': 1,
-                'status': TASK_REJECTED_STATUS,
-                'admin_id': 1,
-                'cancellation_reason': 'A valid cancellation reason',
-            }
-            mock_update_task_status.assert_called_with(*update_task_params.values())
-
-    def test_task_card_reject_task_db_error(self, setup_method, mocker: MockerFixture):
-        # Mock TaskCancelDialog methods
-        mock_input = 'A valid cancellation reason'
-        mocker.patch.object(TaskCancelDialog, 'exec', return_value=QDialog.Accepted)
-        mocker.patch.object(TaskCancelDialog, 'getInput', return_value=mock_input)
-
-        # Mock DB method to simulate exception
-        mock_update_task_status = mocker.patch.object(
-            TaskRepository,
-            'update_task_status',
-            side_effect=Exception('mocked error')
-        )
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
-
-        # Call the rejectTask method
-        self.card.rejectTask()
-
-        # Validate DB calls
         assert mock_update_task_status.call_count == 1
         assert mock_popup.call_count == 1

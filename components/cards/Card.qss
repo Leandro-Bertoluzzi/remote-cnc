@@ -12,7 +12,6 @@ QLabel:hover {
 }
 
 QWidget[status="cancelled"] QLabel
-, QWidget[status="rejected"] QLabel
 , QWidget[status="failed"] QLabel {
     background-color: #DB6D72;
 }
@@ -27,7 +26,6 @@ QWidget[status="finished"] QLabel {
 }
 
 QWidget[status="cancelled"] QLabel:hover
-, QWidget[status="rejected"] QLabel:hover
 , QWidget[status="failed"] QLabel:hover {
     background-color: #ce383f;
 }
