@@ -4,7 +4,8 @@ from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from core.database.models import Task, TASK_ON_HOLD_STATUS
+from core.database.models import Task, TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, \
+    TASK_REJECTED_STATUS, TASK_INITIAL_STATUS, TASK_APPROVED_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
@@ -49,7 +50,7 @@ class TestTaskCard:
     @pytest.mark.parametrize(
             "status,expected_buttons",
             [
-                ('pending_approval', 2),
+                ('pending_approval', 4),
                 ('on_hold', 2),
                 ('in_progress', 0),
                 ('finished', 1),
@@ -101,19 +102,12 @@ class TestTaskCard:
             if isinstance(child.widget(), QPushButton):
                 assert child.widget().isEnabled() is False
 
-    @pytest.mark.parametrize(
-            "dialogResponse,expected_updated",
-            [
-                (QDialog.Accepted, True),
-                (QDialog.Rejected, False)
-            ]
-        )
+    @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
     def test_task_card_update_task(
         self,
         setup_method,
         mocker: MockerFixture,
-        dialogResponse,
-        expected_updated
+        dialogResponse
     ):
         # Mock TaskDataDialog methods
         mock_input = 2, 3, 4, 'Updated task', 'Just a simple description'
@@ -128,6 +122,7 @@ class TestTaskCard:
         self.card.updateTask()
 
         # Validate DB calls
+        expected_updated = (dialogResponse == QDialog.Accepted)
         assert mock_update_task.call_count == (1 if expected_updated else 0)
 
         if expected_updated:
@@ -214,19 +209,12 @@ class TestTaskCard:
         assert mock_remove_task.call_count == 1
         assert mock_popup.call_count == 1
 
-    @pytest.mark.parametrize(
-            "msgBoxResponse,expectedMethodCalls",
-            [
-                (QMessageBox.Yes, 1),
-                (QMessageBox.Cancel, 0)
-            ]
-        )
+    @pytest.mark.parametrize("msgBoxResponse", [QMessageBox.Yes, QMessageBox.Cancel])
     def test_task_card_restore_task(
         self,
         setup_method,
         mocker: MockerFixture,
-        msgBoxResponse,
-        expectedMethodCalls
+        msgBoxResponse
     ):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
@@ -238,7 +226,16 @@ class TestTaskCard:
         self.card.restoreTask()
 
         # Validate DB calls
-        assert mock_update_task_status.call_count == expectedMethodCalls
+        expected_updated = (msgBoxResponse == QMessageBox.Yes)
+        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
+        if expected_updated:
+            update_task_params = {
+                'id': 1,
+                'status': TASK_INITIAL_STATUS,
+                'admin_id': 1,
+                'cancellation_reason': '',
+            }
+            mock_update_task_status.assert_called_with(*update_task_params.values())
 
     def test_task_card_restore_task_db_error(self, setup_method, mocker: MockerFixture):
         # Mock confirmation dialog methods
@@ -344,19 +341,12 @@ class TestTaskCard:
         assert mock_query_task.call_count == (1 if worker_task_id else 0)
         assert mock_query_task_info.call_count == (2 if worker_task_id else 0)
 
-    @pytest.mark.parametrize(
-            "dialogResponse,expected_updated",
-            [
-                (QDialog.Accepted, True),
-                (QDialog.Rejected, False)
-            ]
-        )
+    @pytest.mark.parametrize("dialogResponse",  [QDialog.Accepted, QDialog.Rejected])
     def test_task_card_cancel_task(
         self,
         setup_method,
         mocker: MockerFixture,
-        dialogResponse,
-        expected_updated
+        dialogResponse
     ):
         # Mock TaskCancelDialog methods
         mock_input = 'A valid cancellation reason'
@@ -370,7 +360,16 @@ class TestTaskCard:
         self.card.cancelTask()
 
         # Validate DB calls
-        assert mock_update_task_status.call_count == expected_updated
+        expected_updated = (dialogResponse == QDialog.Accepted)
+        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
+        if expected_updated:
+            update_task_params = {
+                'id': 1,
+                'status': TASK_CANCELLED_STATUS,
+                'admin_id': 1,
+                'cancellation_reason': 'A valid cancellation reason',
+            }
+            mock_update_task_status.assert_called_with(*update_task_params.values())
 
     def test_task_card_cancel_task_db_error(self, setup_method, mocker: MockerFixture):
         # Mock TaskCancelDialog methods
@@ -395,19 +394,12 @@ class TestTaskCard:
         assert mock_update_task_status.call_count == 1
         assert mock_popup.call_count == 1
 
-    @pytest.mark.parametrize(
-            "dialogResponse,expected_updated",
-            [
-                (QDialog.Accepted, True),
-                (QDialog.Rejected, False)
-            ]
-        )
+    @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
     def test_task_card_repeat_task(
         self,
         setup_method,
         mocker: MockerFixture,
-        dialogResponse,
-        expected_updated
+        dialogResponse
     ):
         # Mock TaskDataDialog methods
         mock_input = 2, 3, 4, 'Repeated task', 'Just a simple description'
@@ -422,6 +414,7 @@ class TestTaskCard:
         self.card.repeatTask()
 
         # Validate DB calls
+        expected_updated = (dialogResponse == QDialog.Accepted)
         assert mock_create_task.call_count == (1 if expected_updated else 0)
 
         if expected_updated:
@@ -510,3 +503,105 @@ class TestTaskCard:
         assert mock_info_popup.call_count == (1 if expected_run else 0)
         expected_error = (task_in_progress or not device_enabled) and accepted_run
         assert mock_error_popup.call_count == (1 if expected_error else 0)
+
+    @pytest.mark.parametrize(
+        "msgBoxApprove",
+        [
+            (QMessageBox.Yes),
+            (QMessageBox.Cancel)
+        ]
+    )
+    def test_task_card_approve_task(self, setup_method, mocker: MockerFixture, msgBoxApprove):
+        # Mock DB methods
+        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
+
+        # Mock message box methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxApprove)
+
+        # Call the approveTask method
+        self.card.approveTask()
+
+        # Validate DB calls
+        expected_updated = (msgBoxApprove == QMessageBox.Yes)
+        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
+        if expected_updated:
+            update_task_params = {
+                'id': 1,
+                'status': TASK_APPROVED_STATUS,
+                'admin_id': 1,
+                'cancellation_reason': '',
+            }
+            mock_update_task_status.assert_called_with(*update_task_params.values())
+
+    def test_task_card_approve_task_db_error(self, setup_method, mocker: MockerFixture):
+        # Mock DB methods
+        mock_update_task_status = mocker.patch.object(
+            TaskRepository,
+            'update_task_status',
+            side_effect=Exception('mocked error')
+        )
+        # Mock confirmation dialog methods
+        mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the approveTask method
+        self.card.approveTask()
+
+        # Assertions
+        assert mock_update_task_status.call_count == 1
+        assert mock_popup.call_count == 1
+
+    @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
+    def test_task_card_reject_task(
+        self,
+        setup_method,
+        mocker: MockerFixture,
+        dialogResponse
+    ):
+        # Mock DB methods
+        mock_update_task_status = mocker.patch.object(TaskRepository, 'update_task_status')
+        # Mock TaskCancelDialog methods
+        mock_input = 'A valid cancellation reason'
+        mocker.patch.object(TaskCancelDialog, 'exec', return_value=dialogResponse)
+        mocker.patch.object(TaskCancelDialog, 'getInput', return_value=mock_input)
+
+        # Call the rejectTask method
+        self.card.rejectTask()
+
+        # Validate DB calls
+        expected_updated = (dialogResponse == QDialog.Accepted)
+        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
+
+        if expected_updated:
+            update_task_params = {
+                'id': 1,
+                'status': TASK_REJECTED_STATUS,
+                'admin_id': 1,
+                'cancellation_reason': 'A valid cancellation reason',
+            }
+            mock_update_task_status.assert_called_with(*update_task_params.values())
+
+    def test_task_card_reject_task_db_error(self, setup_method, mocker: MockerFixture):
+        # Mock TaskCancelDialog methods
+        mock_input = 'A valid cancellation reason'
+        mocker.patch.object(TaskCancelDialog, 'exec', return_value=QDialog.Accepted)
+        mocker.patch.object(TaskCancelDialog, 'getInput', return_value=mock_input)
+
+        # Mock DB method to simulate exception
+        mock_update_task_status = mocker.patch.object(
+            TaskRepository,
+            'update_task_status',
+            side_effect=Exception('mocked error')
+        )
+
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
+
+        # Call the rejectTask method
+        self.card.rejectTask()
+
+        # Validate DB calls
+        assert mock_update_task_status.call_count == 1
+        assert mock_popup.call_count == 1

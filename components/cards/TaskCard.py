@@ -1,12 +1,13 @@
 from celery.result import AsyncResult
 from components.cards.Card import Card
-from components.dialogs.TaskCancelDialog import TaskCancelDialog
+from components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_REJECT
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from components.TaskProgress import TaskProgress
+from config import USER_ID
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_REJECTED_STATUS, TASK_INITIAL_STATUS, \
-    TASK_FAILED_STATUS
+    TASK_FAILED_STATUS, TASK_APPROVED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from core.utils.storage import get_value_from_id
 from helpers.cncWorkerMonitor import CncWorkerMonitor
@@ -92,7 +93,7 @@ class TaskCard(Card):
     def setup_buttons(self, status: str):
         """Adds buttons according to task status:
 
-        * pending validation -> | Edit | Cancel |
+        * pending validation -> | Edit | Cancel | Aprobar | Rechazar |
         * on hold -> | Cancel | (Run) |
         * in progress -> No buttons
         * cancelled / rejected -> | Remove | Restore |
@@ -103,6 +104,8 @@ class TaskCard(Card):
         button_info = {
             TASK_INITIAL_STATUS: [
                 ("Editar", self.updateTask),
+                ("Cancelar", self.approveTask),
+                ("Cancelar", self.rejectTask),
                 ("Cancelar", self.cancelTask)
             ],
             TASK_ON_HOLD_STATUS: [("Cancelar", self.cancelTask)],
@@ -175,10 +178,7 @@ class TaskCard(Card):
             'Restaurar tarea'
     )
     def restoreTask(self):
-        self.updateTaskStatus(
-            self.task.id,
-            TASK_INITIAL_STATUS
-        )
+        self.updateTaskStatus(TASK_INITIAL_STATUS)
         self.getView().refreshLayout()
 
     def cancelTask(self):
@@ -187,16 +187,11 @@ class TaskCard(Card):
             return
 
         cancellation_reason = cancelDialog.getInput()
-        self.updateTaskStatus(
-            self.task.id,
-            TASK_CANCELLED_STATUS,
-            cancellation_reason
-        )
+        self.updateTaskStatus(TASK_CANCELLED_STATUS, cancellation_reason)
         self.getView().refreshLayout()
 
     def updateTaskStatus(
         self,
-        task_id: int,
         new_status: str,
         cancellation_reason: str = ''
     ):
@@ -204,9 +199,9 @@ class TaskCard(Card):
             db_session = SessionLocal()
             repository = TaskRepository(db_session)
             repository.update_task_status(
-                task_id,
+                self.task.id,
                 new_status,
-                None,
+                USER_ID,
                 cancellation_reason
             )
         except Exception as error:
@@ -263,4 +258,18 @@ class TaskCard(Card):
             'Tarea enviada',
             'Se envió la tarea al equipo para su ejecución'
         )
+        self.getView().refreshLayout()
+
+    @needs_confirmation('¿Realmente desea aprobar la solicitud?', 'Aprobar solicitud')
+    def approveTask(self):
+        self.updateTaskStatus(TASK_APPROVED_STATUS)
+        self.getView().refreshLayout()
+
+    def rejectTask(self):
+        rejectDialog = TaskCancelDialog(origin=FROM_REJECT)
+        if not rejectDialog.exec():
+            return
+
+        reject_reason = rejectDialog.getInput()
+        self.updateTaskStatus(TASK_REJECTED_STATUS, reject_reason)
         self.getView().refreshLayout()

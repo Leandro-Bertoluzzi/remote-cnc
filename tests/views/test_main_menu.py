@@ -16,7 +16,7 @@ class TestMainMenu:
 
     def test_main_menu_init(self, helpers):
         # Validate amount of each type of widget
-        assert helpers.count_widgets(self.main_menu.layout(), MainMenuButton) == 7
+        assert helpers.count_widgets(self.main_menu.layout(), MainMenuButton) == 6
 
     def test_main_menu_redirects_to_view(self):
         # Call redirectToView method
