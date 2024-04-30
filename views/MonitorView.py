@@ -1,9 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem, QToolBar, QToolButton, \
-    QFileDialog
+from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton, QFileDialog
 from components.buttons.MenuButton import MenuButton
-from components.CameraViewer import CameraViewer
 from components.ControllerStatus import ControllerStatus
 from components.TaskProgress import TaskProgress
 from components.text.LogsViewer import LogsViewer
@@ -44,17 +42,13 @@ class MonitorView(BaseView):
         self.status_monitor = ControllerStatus(parent=self)
         self.task_progress = TaskProgress(parent=self)
         self.logs_viewer = LogsViewer(parent=self)
-        self.camera_viewer = CameraViewer(parent=self)
 
         ############################################
-        # 0                  |                     #
-        # 1      STATUS      |                     #
-        #   ---------------- |                     #
-        # 2     PROGRESS     |        LOGS         #
-        #   ---------------- |                     #
-        # 3      CAMERA      |                     #
+        # 0      STATUS      |                     #
+        #   ---------------- |        LOGS         #
+        # 1     PROGRESS     |                     #
         #   -------------------------------------- #
-        # 4               BTN_BACK                 #
+        # 2               BTN_BACK                 #
         ############################################
 
         self.createToolBars()
@@ -64,11 +58,6 @@ class MonitorView(BaseView):
             self.status_monitor.setEnabled(False)
             self.task_progress.setEnabled(False)
         layout.addWidget(self.logs_viewer, 0, 1, 4, 1)
-        layout.addWidget(self.camera_viewer, 2, 0)
-        self.camera_viewer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # In case the camera view is not shown
-        self.camera_placeholder = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         layout.addWidget(
             MenuButton('Volver al menú', onClick=self.backToMenu),
@@ -100,13 +89,6 @@ class MonitorView(BaseView):
             tool_button.setText(label)
             tool_button.clicked.connect(action)
             self.tool_bar.addWidget(tool_button)
-
-        self.camera_button = QToolButton()
-        self.camera_button.setText('Cámara')
-        self.camera_button.clicked.connect(self.toggle_camera)
-        self.camera_button.setCheckable(True)
-        self.camera_button.setChecked(True)
-        self.tool_bar.addWidget(self.camera_button)
 
     # EVENTS
 
@@ -165,15 +147,3 @@ class MonitorView(BaseView):
             return
 
         self.logs_viewer.export_logs(file_path)
-
-    def toggle_camera(self):
-        is_connected = self.camera_viewer.isVisible()
-
-        if is_connected:
-            self.camera_viewer.disconnect()
-            self.camera_viewer.setVisible(False)
-            self.layout().addItem(self.camera_placeholder, 2, 0)
-            return
-        self.camera_viewer.connect()
-        self.camera_viewer.setVisible(True)
-        self.layout().removeItem(self.camera_placeholder)

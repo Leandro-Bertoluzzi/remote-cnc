@@ -73,16 +73,11 @@ $ docker compose up -d
 
 # Mock external services
 
-In addition, you can also add:
-- A mocked version of the camera web server, which streams the test file `/camera/video/mock.mp4` in a loop.
-- A mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
+In addition, you can also add a mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
 
 ```bash
-$ cp camera/.env.example camera/.env
 $ docker compose -f docker-compose.yml -f docker-compose.test.yml up
 ```
-
-You can validate the camera web server works properly by visiting `http://localhost:8081` in your web browser.
 
 ## Using GRBL simulator
 

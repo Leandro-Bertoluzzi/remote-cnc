@@ -1,16 +1,4 @@
 services:
-  camera:
-    image: motionproject/motion
-    env_file:
-      - ./camera/.env
-    ports:
-      - 8081:8081
-    volumes:
-      - ./camera/motion/config:/usr/local/etc/motion
-      - ./camera/motion/storage:/var/lib/motion
-      - ./camera/video:/media/video
-    container_name: cnc-camera
-
   worker:
     build:
       context: ./core

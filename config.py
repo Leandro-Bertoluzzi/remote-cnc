@@ -9,7 +9,6 @@ load_dotenv(override=True)
 USER_ID = int(os.environ.get('USER_ID') or '0')
 SERIAL_PORT = os.environ.get('SERIAL_PORT', '')
 SERIAL_BAUDRATE = int(os.environ.get('SERIAL_BAUDRATE', ''))
-CAMERA_URL = os.environ.get('CAMERA_URL', '')
 
 # Generate global constants
 # PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
