@@ -7,6 +7,7 @@ Create Date: 2024-04-25 22:08:49.727388
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql.expression import literal
 
 
 # revision identifiers, used by Alembic.
@@ -39,17 +40,17 @@ column_name = "status"
 
 
 def upgrade() -> None:
-    # temp type to use instead of old one
-    temp_type.create(op.get_bind(), checkfirst=False)
-
     # Convert 'rejected' status into 'cancelled'
     table = sa.sql.table('tasks', sa.Column('status'))
     op.execute(
         table
         .update()
         .where(table.columns.status == 'rejected')
-        .values(status='cancelled')
+        .values(status=literal('cancelled', type_=old_type))
     )
+
+    # temp type to use instead of old one
+    temp_type.create(op.get_bind(), checkfirst=False)
 
     # changing of column type from old enum to new one.
     with op.batch_alter_table('tasks') as batch_op:

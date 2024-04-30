@@ -7,6 +7,8 @@ Create Date: 2024-04-22 17:49:08.239310
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql.expression import literal
+from sqlalchemy.types import String
 
 
 # revision identifiers, used by Alembic.
@@ -78,8 +80,8 @@ def downgrade() -> None:
         .update()
         .where(table.columns.status == 'failed')
         .values(
-            status='cancelled',
-            cancellation_reason='FAILED'
+            status=literal('cancelled', type_=new_type),
+            cancellation_reason=literal('FAILED', type_=String)
         )
     )
 
