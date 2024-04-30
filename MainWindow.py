@@ -1,7 +1,7 @@
 from components.StatusBar import StatusBar
 from helpers.cncWorkerMonitor import CncWorkerMonitor
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
-from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication
 from views.MainMenu import MainMenu
 
 
@@ -19,6 +19,7 @@ class MainWindow(QMainWindow):
         # UI components
         self.status_bar = StatusBar(self)
         self.setStatusBar(self.status_bar)
+        self.initialized = 0
 
         # Initial status
         self.status_bar.updateWorkerStatus('DESCONECTADO')
@@ -28,6 +29,23 @@ class MainWindow(QMainWindow):
             self.status_bar.updateWorkerStatus('CONECTADO')
             if CncWorkerMonitor.is_worker_running():
                 self.status_bar.updateDeviceStatus('TRABAJANDO...')
+
+    # UI
+
+    def adjustWindowSize(self) -> None:
+        # Available space in screen
+        available = QApplication.desktop().availableGeometry()
+
+        # Calculate frame size (window title and borders)
+        frame_width = self.frameGeometry().width() - self.width()
+        frame_height = self.frameGeometry().height() - self.height()
+
+        # Size of window in full screen
+        width = available.width() - frame_width
+        height = available.height() - frame_height
+
+        # Limit size to full screen
+        self.setMaximumSize(width, height)
 
     # Navigation
 
@@ -53,6 +71,19 @@ class MainWindow(QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+
+        if self.initialized == 1:
+            self.adjustWindowSize()
+            self.initialized = 40
+
+        if self.initialized == 0:
+            self.initialized = 1
+
+    def showEvent(self, _: QShowEvent) -> None:
+        self.showMaximized()
 
     # Slots
 

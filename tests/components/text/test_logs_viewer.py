@@ -169,8 +169,8 @@ class TestLogsViewer:
         mocker.patch.object(QThread, 'wait')
 
         # Call method under test
-        with qtbot.waitSignal(
-            self.logs_viewer.logs_worker.new_log,
+        with qtbot.waitSignals(
+            [self.logs_viewer.logs_worker.new_log] * 3,
             raising=True
         ):
             self.logs_viewer.start_watching()

@@ -2,7 +2,7 @@ from core.database.base import Session as SessionLocal
 from core.database.repositories.toolRepository import ToolRepository
 from core.grbl.types import Status
 from helpers.utils import applyStylesheet
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
 
 
@@ -15,15 +15,25 @@ class ControllerStatus(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
+        ############################################
+        # 0      STATUS      |      TOOL           #
+        # 1        X         |      FEED RATE      #
+        # 1        Y         |      SPINDLE        #
+        # 1        Z         |                     #
+        ############################################
+
         # Widget structure and components definition
+        layout_panel = QVBoxLayout()
         self.status = QLabel(ControllerStatus.DISCONNECTED)
         self.x_pos = QLabel('X: 0.0 (0.0)')
         self.y_pos = QLabel('Y: 0.0 (0.0)')
         self.z_pos = QLabel('Z: 0.0 (0.0)')
+
+        layout_details = QVBoxLayout()
         self.tool = QLabel('Tool: xxx')
         self.feedrate = QLabel('Feed rate: 0')
         self.spindle = QLabel('Spindle: 0')
@@ -35,10 +45,16 @@ class ControllerStatus(QWidget):
         self.z_pos.setProperty('class', 'coordinates')
 
         for label in [
-            self.status, self.x_pos, self.y_pos, self.z_pos,
+            self.status, self.x_pos, self.y_pos, self.z_pos
+        ]:
+            layout_panel.addWidget(label)
+        layout.addLayout(layout_panel)
+
+        for label in [
             self.tool, self.feedrate, self.spindle
         ]:
-            layout.addWidget(label)
+            layout_details.addWidget(label)
+        layout.addLayout(layout_details)
 
         applyStylesheet(self, __file__, 'ControllerStatus.qss')
 

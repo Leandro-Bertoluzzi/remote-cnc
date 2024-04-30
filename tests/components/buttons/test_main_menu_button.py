@@ -33,8 +33,6 @@ class TestMainMenuButton:
         assert button.isVisible() is False
         assert hasattr(button, 'renderer') is (image_name == 'image.svg')
         assert button.receivers(button.clicked) == 0
-        assert button.sizeHint().height() >= 350
-        assert button.sizeHint().width() >= 350
 
     @pytest.mark.parametrize(
             "image_name,is_hover",

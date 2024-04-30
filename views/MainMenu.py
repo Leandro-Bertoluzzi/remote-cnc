@@ -18,12 +18,12 @@ class MainMenu(QWidget):
         super(MainMenu, self).__init__(parent)
 
         # Buttons
-        btn_tasks = self.createButton('Tareas\n', 'tasks.svg', TasksView)
-        btn_monitor = self.createButton('Monitoreo\n', 'monitor.svg', MonitorView)
-        btn_files = self.createButton('Archivos\n', 'files.svg', FilesView)
+        btn_tasks = self.createButton('Tareas', 'tasks.svg', TasksView)
+        btn_monitor = self.createButton('Monitoreo', 'monitor.svg', MonitorView)
+        btn_files = self.createButton('Archivos', 'files.svg', FilesView)
         btn_control = self.createButton('Control y\ncalibración', 'control.svg', ControlView)
-        btn_users = self.createButton('Usuarios\n', 'users.svg', UsersView)
-        btn_inventory = self.createButton('Inventario\n', 'inventory.svg', InventoryView)
+        btn_users = self.createButton('Usuarios', 'users.svg', UsersView)
+        btn_inventory = self.createButton('Inventario', 'inventory.svg', InventoryView)
 
         # Menu layout
         layout = QGridLayout()

@@ -1,7 +1,6 @@
 from components.ControllerStatus import ControllerStatus
 from core.database.models import Tool
 from core.database.repositories.toolRepository import ToolRepository
-from PyQt5.QtWidgets import QLabel
 import pytest
 
 
@@ -14,7 +13,6 @@ class TestControllerStatus:
 
     def test_controller_status_init(self, helpers):
         # Assertions
-        assert helpers.count_widgets(self.controller_status.layout(), QLabel) == 7
         assert self.controller_status.status.text() == 'DISCONNECTED'
         assert self.controller_status.x_pos.text() == 'X: 0.0 (0.0)'
         assert self.controller_status.y_pos.text() == 'Y: 0.0 (0.0)'

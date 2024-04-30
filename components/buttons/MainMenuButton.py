@@ -8,6 +8,7 @@ color_text = QColor('#2E1C1C')
 color_hover_border = QColor('black')
 color_hover_fill = QColor('#555555')
 color_hover_text = QColor('#6e0e0e')
+button_size = 240
 
 
 class MainMenuButton(QAbstractButton):
@@ -24,8 +25,8 @@ class MainMenuButton(QAbstractButton):
 
         # Customize button
         self.setText(text)
-        self.setMinimumSize(350, 350)
-        self.setMaximumSize(350, 350)
+        self.setMinimumSize(button_size, button_size)
+        self.setMaximumSize(button_size, button_size)
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.hover = False
 

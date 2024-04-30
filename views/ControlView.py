@@ -3,12 +3,12 @@ from PyQt5.QtWidgets import QComboBox, QGridLayout, QToolBar, QToolButton
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
+from components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
 from containers.ButtonGrid import ButtonGrid
-from containers.ButtonList import ButtonList
 from containers.ControllerActions import ControllerActions
 from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
-from components.JogController import JogController
+from components.Joystick import Joystick
 from components.Terminal import Terminal
 from config import SERIAL_BAUDRATE
 from core.grbl.grblController import GrblController
@@ -77,14 +77,15 @@ class ControlView(BaseView):
             ('Modo chequeo', self.toggle_check_mode),
             # TODO: Habilitar desactivación de alarma sólo en estado ALARM
             ('Desactivar alarma', self.disable_alarm),
-        ], width=3, parent=self)
-        controller_macros = ButtonList([
+            ('Mover a', self.move_absolute),
+        ], parent=self)
+        controller_macros = ButtonGrid([
             ('Sonda Z', lambda: None),
             ('Buscar centro', lambda: None),
             ('Cambiar herramienta', lambda: None),
             ('Dibujar círculo', lambda: None),
         ], parent=self)
-        controller_jog = JogController(self.grbl_controller, parent=self)
+        controller_jog = Joystick(self.grbl_controller, parent=self)
         self.control_panel = ControllerActions(
             [
                 (controller_commands, 'Acciones'),
@@ -99,27 +100,25 @@ class ControlView(BaseView):
         self.enable_serial_widgets(False)
 
         ############################################
-        # 0                  |                     #
-        # 1      STATUS      |     CODE_EDITOR     #
-        # 2                  |                     #
+        # 0      STATUS      |     CODE_EDITOR     #
         #   ---------------- | ------------------- #
-        # 3  CONTROL_PANEL   |      TERMINAL       #
+        # 1  CONTROL_PANEL   |      TERMINAL       #
         #   -------------------------------------- #
-        # 4               BTN_BACK                 #
+        # 2               BTN_BACK                 #
         ############################################
 
         self.createToolBars()
         panel_row = 0
         if not self.device_busy:
-            layout.addWidget(self.status_monitor, 0, 0, 3, 1)
-            panel_row = 3
-        layout.addWidget(self.code_editor, 0, 1, 3, 1)
+            layout.addWidget(self.status_monitor, 0, 0)
+            panel_row = 1
+        layout.addWidget(self.code_editor, 0, 1)
         layout.addWidget(self.control_panel, panel_row, 0)
-        layout.addWidget(self.terminal, 3, 1)
+        layout.addWidget(self.terminal, 1, 1)
 
         layout.addWidget(
             MenuButton('Volver al menú', onClick=self.backToMenu),
-            5, 0, 1, 2,
+            2, 0, 1, 2,
             alignment=Qt.AlignCenter
         )
 
@@ -340,6 +339,14 @@ class ControlView(BaseView):
             'Configuración de GRBL',
             '¡La configuración de GRBL fue actualizada correctamente!'
         )
+
+    def move_absolute(self):
+        dialog = AbsoluteMoveDialog(self.grbl_controller, parent=self)
+
+        if not dialog.exec():
+            return
+
+        dialog.make_absolute_move()
 
     # SLOTS
 
