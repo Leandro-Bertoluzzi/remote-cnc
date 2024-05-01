@@ -696,6 +696,7 @@ class TestGrblController:
         # Set test values
         cline = [1, 2, 3]
         sline = ['$H', 'G54', 'G00 X0 Y0']
+        self.grbl_controller._sumcline = 6  # sum([1, 2, 3])
 
         # Simulate getting responses from GRBL
         self.grbl_controller.parseResponse('ok', cline, sline)
@@ -703,6 +704,7 @@ class TestGrblController:
         # Assertions
         assert cline == [2, 3]
         assert sline == ['G54', 'G00 X0 Y0']
+        assert self.grbl_controller._sumcline == 5
 
     def test_parser_receive_error(self, mocker):
         # Set test values

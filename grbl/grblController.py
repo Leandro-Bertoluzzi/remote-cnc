@@ -202,6 +202,7 @@ class GrblController:
         # Process parsed response
         if msgType == GRBL_RESULT_OK:
             removeProcessedCommand()
+            self._sumcline = sum(cline)
             self.commands_count += 1
             return
 
