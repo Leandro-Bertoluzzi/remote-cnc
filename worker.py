@@ -10,6 +10,7 @@ try:
     from .database.repositories.taskRepository import TaskRepository
     from .grbl.grblController import GrblController
     from .utils.files import getFilePath
+    from .utils.storage import delete_value, get_value, set_value
 except ImportError:
     from cncworker.app import app
     from database.base import Session as SessionLocal
@@ -18,11 +19,16 @@ except ImportError:
     from database.repositories.taskRepository import TaskRepository
     from grbl.grblController import GrblController
     from utils.files import getFilePath
+    from utils.storage import delete_value, get_value, set_value
 
 # Constants
 SEND_INTERVAL = 0.10    # Seconds
 STATUS_POLL = 0.10      # Seconds
 MAX_BUFFER_FILL = 75    # Percentage
+WORKER_REQUEST_KEY = 'worker_request'
+WORKER_PAUSE_REQUEST = 'grbl_pause'
+WORKER_RESUME_REQUEST = 'grbl_resume'
+WORKER_IS_PAUSED_KEY = 'worker_paused'
 
 
 @app.task(name='worker.tasks.executeTask', bind=True)
@@ -56,6 +62,7 @@ def executeTask(
     processed_lines = 0
     total_lines = 0
     finished_sending = False
+    paused = False
     # Initial CNC state
     status = cnc.getStatusReport()
     parserstate = cnc.getGcodeParserState()
@@ -115,6 +122,26 @@ def executeTask(
         if t - ts > SEND_INTERVAL and not finished_sending:
             # Try not to fill the GRBL buffer
             if cnc.getBufferFill() > MAX_BUFFER_FILL:
+                continue
+
+            # Check if PAUSE or RESUME was requested
+            request = get_value(WORKER_REQUEST_KEY)
+
+            if request == WORKER_PAUSE_REQUEST:
+                cnc.setPaused(True)
+                delete_value(WORKER_REQUEST_KEY)
+                set_value(WORKER_IS_PAUSED_KEY, 'True')
+                paused = True
+                continue
+
+            if request == WORKER_RESUME_REQUEST:
+                cnc.setPaused(False)
+                delete_value(WORKER_REQUEST_KEY)
+                delete_value(WORKER_IS_PAUSED_KEY)
+                paused = False
+
+            if paused:
+                time.sleep(1)
                 continue
 
             line = gcode.readline()

@@ -1,13 +1,16 @@
-from ..config import REDIS_HOST, REDIS_PORT, REDIS_DB_STORAGE
+try:
+    from ..config import REDIS_HOST, REDIS_PORT, REDIS_DB_STORAGE
+except ImportError:
+    from config import REDIS_HOST, REDIS_PORT, REDIS_DB_STORAGE
 import redis
 
 
 def add_value_with_id(suffix: str, id: int, value: str):
     key = f'{suffix}:{id}'
-    add_value(key, value)
+    set_value(key, value)
 
 
-def add_value(key: str, value: str):
+def set_value(key: str, value: str):
     r = redis.Redis(
         host=REDIS_HOST,
         port=REDIS_PORT,
@@ -28,7 +31,9 @@ def get_value(key: str) -> str:
         db=REDIS_DB_STORAGE,
         decode_responses=True
     )
-    return str(r.get(key))
+
+    value = r.get(key)
+    return str(value) if value is not None else ''
 
 
 def get_all_values(suffix: str):
@@ -42,7 +47,8 @@ def get_all_values(suffix: str):
 
     keys_filter = f'{suffix}:*'
     for key in r.scan_iter(keys_filter):
-        response[key] = str(r.get(key))
+        value = r.get(key)
+        response[key] = str(value) if value is not None else ''
     return response
 
 

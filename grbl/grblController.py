@@ -300,8 +300,8 @@ class GrblController:
     def setState(self, state: str):
         self.state['status']['activeState'] = state
 
-    def setPaused(self, paused: bool):
-        self._paused = paused
+    def is_paused(self):
+        return self._paused
 
     def restartCommandsCount(self):
         """Restart the count of already processed commands.
@@ -330,10 +330,32 @@ class GrblController:
 
     # ACTIONS
 
+    def setPaused(self, paused: bool):
+        self._paused = paused
+
+        if self._paused:
+            self.grbl_pause()
+            return
+
+        self.grbl_resume()
+
     def sendCommand(self, command: str):
         """Adds a GCODE line or a GRBL command to the serial queue.
         """
-        self.queue.put(command)
+        tosend = command.strip()
+
+        if not tosend:
+            self.commands_count += 1
+            return
+
+        import re
+
+        comment_pattern = re.compile(r'(^\(.*\)$)|(^;.*)')
+        if comment_pattern.match(tosend):
+            self.commands_count += 1
+            return
+
+        self.queue.put(tosend)
 
     def handleHomingCycle(self):
         """Runs the GRBL device's homing cycle.
@@ -388,6 +410,34 @@ class GrblController:
             self.sendCommand(f'{key}={value}')
 
     # REAL TIME COMMANDS
+
+    def grbl_pause(self):
+        """Feed Hold: Places Grbl into a suspend or HOLD state.
+        If in motion, the machine will decelerate to a stop and then be suspended.
+        """
+        try:
+            self.serial.sendBytes(b'!')
+        except SerialException:
+            self.grbl_monitor.error(
+                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+            )
+            return
+        self.grbl_monitor.sent('!')
+        self.grbl_monitor.info('Requested PAUSE')
+
+    def grbl_resume(self):
+        """Cycle Start / Resume: Resumes a feed hold, a safety door/parking state
+        when the door is closed, and the M0 program pause states.
+        """
+        try:
+            self.serial.sendBytes(b'~')
+        except SerialException:
+            self.grbl_monitor.error(
+                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+            )
+            return
+        self.grbl_monitor.sent('~')
+        self.grbl_monitor.info('Requested RESUME')
 
     def queryStatusReport(self):
         """Queries the GRBL device's current status.

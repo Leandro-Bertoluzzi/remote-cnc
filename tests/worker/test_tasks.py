@@ -3,8 +3,9 @@ from celery.app.task import Task
 from database.repositories.taskRepository import TaskRepository
 from grbl.grblController import GrblController
 from pytest_mock.plugin import MockerFixture
+import time
 from typing import TextIO
-from worker import executeTask
+from worker import executeTask, WORKER_PAUSE_REQUEST, WORKER_RESUME_REQUEST
 
 
 def test_execute_tasks(mocker: MockerFixture):
@@ -18,6 +19,9 @@ def test_execute_tasks(mocker: MockerFixture):
     def get_commands_count():
         nonlocal commands_count
         return commands_count
+
+    # Mock Redis methods
+    mocker.patch('worker.get_value', return_value='')
 
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
@@ -178,6 +182,9 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
         nonlocal commands_count
         return commands_count
 
+    # Mock Redis methods
+    mocker.patch('worker.get_value', return_value='')
+
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
     mocker.patch.object(TaskRepository, 'get_task_by_id')
@@ -270,3 +277,73 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
     expected = 'An alarm was triggered' if is_alarm else 'There was an error when executing line'
     assert mock_disconnect.call_count == 1
     assert expected in str(error.value)
+
+
+def test_execute_tasks_pause(mocker: MockerFixture):
+    # Manage internal state
+    commands_count = 0
+
+    def increment_commands_count(command):
+        nonlocal commands_count
+        commands_count += 1
+
+    def get_commands_count():
+        nonlocal commands_count
+        return commands_count
+
+    # Mock Redis methods
+    mock_get_store_value = mocker.patch(
+        'worker.get_value',
+        side_effect=[WORKER_PAUSE_REQUEST, '', '', '', WORKER_RESUME_REQUEST, '', '', '', '']
+    )
+    mock_set_store_value = mocker.patch('worker.set_value')
+    mock_delete_store_value = mocker.patch('worker.delete_value')
+
+    # Mock DB methods
+    mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
+    mocker.patch.object(TaskRepository, 'get_task_by_id')
+    mocker.patch.object(TaskRepository, 'update_task_status')
+
+    # Mock GRBL methods
+    mocker.patch.object(GrblController, 'connect')
+    mocker.patch.object(GrblController, 'disconnect')
+    mock_stream_line = mocker.patch.object(
+        GrblController,
+        'sendCommand',
+        side_effect=increment_commands_count
+    )
+    mocker.patch.object(GrblController, 'getStatusReport')
+    mocker.patch.object(GrblController, 'getGcodeParserState')
+    mocker.patch.object(GrblController, 'getBufferFill', return_value=0)
+    mocker.patch.object(
+        GrblController,
+        'getCommandsCount',
+        side_effect=get_commands_count
+    )
+    mocker.patch.object(GrblController, 'alarm', return_value=False)
+    mocker.patch.object(GrblController, 'failed', return_value=False)
+
+    # Mock FS methods
+    mocker.patch('worker.getFilePath')
+    mocked_file_data = mocker.mock_open(read_data='G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
+    mocker.patch('builtins.open', mocked_file_data)
+
+    # Mock Celery class methods
+    mocker.patch.object(Task, 'update_state')
+
+    # Mock additional methods
+    mocker.patch.object(time, 'sleep')
+
+    # Call method under test
+    executeTask(
+        task_id=1,
+        base_path='path/to/project',
+        serial_port='test-port',
+        serial_baudrate=115200
+    )
+
+    # Assertions
+    assert mock_get_store_value.call_count == 8
+    assert mock_set_store_value.call_count == 1
+    assert mock_delete_store_value.call_count == 3
+    assert mock_stream_line.call_count == 3
