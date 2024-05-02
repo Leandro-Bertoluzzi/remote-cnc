@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QToolBar, QToolButton, QFileDialog
+from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem, QToolBar, QToolButton, \
+    QFileDialog
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
 from components.TaskProgress import TaskProgress
@@ -45,10 +46,12 @@ class MonitorView(BaseView):
 
         ############################################
         # 0      STATUS      |                     #
-        #   ---------------- |        LOGS         #
-        # 1     PROGRESS     |                     #
+        #   ---------------- |                     #
+        # 1     PROGRESS     |        LOGS         #
+        #   ---------------- |                     #
+        # 2                  |                     #
         #   -------------------------------------- #
-        # 2               BTN_BACK                 #
+        # 3               BTN_BACK                 #
         ############################################
 
         self.createToolBars()
@@ -58,6 +61,9 @@ class MonitorView(BaseView):
             self.status_monitor.setEnabled(False)
             self.task_progress.setEnabled(False)
         layout.addWidget(self.logs_viewer, 0, 1, 4, 1)
+
+        self.placeholder = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        layout.addItem(self.placeholder, 2, 0)
 
         layout.addWidget(
             MenuButton('Volver al menú', onClick=self.backToMenu),

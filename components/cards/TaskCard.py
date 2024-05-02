@@ -7,12 +7,14 @@ from config import USER_ID
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_INITIAL_STATUS, \
-    TASK_FAILED_STATUS, TASK_APPROVED_STATUS
+    TASK_FAILED_STATUS, TASK_APPROVED_STATUS, TASK_IN_PROGRESS_STATUS
 from core.database.repositories.taskRepository import TaskRepository
-from core.utils.storage import get_value_from_id
+from core.utils.storage import get_value_from_id, get_value, set_value
+from core.worker import WORKER_REQUEST_KEY, WORKER_PAUSE_REQUEST, WORKER_RESUME_REQUEST, \
+    WORKER_IS_PAUSED_KEY
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.utils import needs_confirmation, send_task_to_worker
-from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QSizePolicy, QPushButton
 
 
 class TaskCard(Card):
@@ -40,6 +42,10 @@ class TaskCard(Card):
     # UI MANAGEMENT
 
     def setup_ui(self):
+        self.paused = False
+        if self.task.status == TASK_IN_PROGRESS_STATUS:
+            self.paused = not not get_value(WORKER_IS_PAUSED_KEY)
+
         self.setup_buttons(self.task.status)
 
         # Task description
@@ -63,7 +69,7 @@ class TaskCard(Card):
         task_info = task_state.info
         task_status = task_state.status
 
-        if task_status == 'PROGRESS':
+        if task_status == 'PROGRESS' and self.task.status == TASK_IN_PROGRESS_STATUS:
             self.show_task_progress(task_info)
 
         if task_status == 'FAILURE':
@@ -95,7 +101,7 @@ class TaskCard(Card):
 
         * pending validation -> | Edit | Approve | Cancel |
         * on hold -> | Cancel | (Run) |
-        * in progress -> No buttons
+        * in progress -> | Pause/Resume |
         * cancelled -> | Remove | Restore |
         * finished -> | Repeat |
         * failed -> | Retry |
@@ -111,6 +117,9 @@ class TaskCard(Card):
             TASK_CANCELLED_STATUS: [
                 ("Eliminar", self.removeTask),
                 ("Restaurar", self.restoreTask)
+            ],
+            TASK_IN_PROGRESS_STATUS: [
+                ('Retomar' if self.paused else 'Pausar', self.pauseTask)
             ],
             TASK_FINISHED_STATUS: [("Repetir", self.repeatTask)],
             TASK_FAILED_STATUS: [("Reintentar", self.repeatTask)]
@@ -259,3 +268,16 @@ class TaskCard(Card):
     def approveTask(self):
         self.updateTaskStatus(TASK_APPROVED_STATUS)
         self.getView().refreshLayout()
+
+    def pauseTask(self):
+        for i in range(self.layout_buttons.count()):
+            widget = self.layout_buttons.itemAt(i).widget()
+            if isinstance(widget, QPushButton):
+                widget.setText('Pausar' if self.paused else 'Retomar')
+
+        if self.paused:
+            set_value(WORKER_REQUEST_KEY, WORKER_RESUME_REQUEST)
+        else:
+            set_value(WORKER_REQUEST_KEY, WORKER_PAUSE_REQUEST)
+
+        self.paused = not self.paused

@@ -10,6 +10,7 @@ from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
+from core.worker import WORKER_REQUEST_KEY, WORKER_PAUSE_REQUEST, WORKER_RESUME_REQUEST
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -52,7 +53,7 @@ class TestTaskCard:
             [
                 ('pending_approval', 3),
                 ('on_hold', 2),
-                ('in_progress', 0),
+                ('in_progress', 1),
                 ('finished', 1),
                 ('failed', 1),
                 ('cancelled', 2)
@@ -69,6 +70,9 @@ class TestTaskCard:
         # Mock task status
         self.task.status = status
         self.task.id = 1
+
+        # Mock Redis methods
+        mocker.patch('components.cards.TaskCard.get_value')
 
         # Mock card's auxiliary methods
         mock_set_task_description = mocker.patch.object(TaskCard, 'check_task_status')
@@ -301,6 +305,7 @@ class TestTaskCard:
             'components.cards.TaskCard.get_value_from_id',
             return_value=worker_task_id
         )
+        mocker.patch('components.cards.TaskCard.get_value')
 
         # Mock Celery methods
         mock_query_task = mocker.patch.object(
@@ -550,3 +555,28 @@ class TestTaskCard:
         # Assertions
         assert mock_update_task_status.call_count == 1
         assert mock_popup.call_count == 1
+
+    @pytest.mark.parametrize("paused", [False, True])
+    def test_task_card_pause_task(
+        self,
+        setup_method,
+        mocker: MockerFixture,
+        paused
+    ):
+        # Mock Redis methods
+        mock_set_value = mocker.patch('components.cards.TaskCard.set_value')
+
+        # Mock card status
+        self.card.paused = paused
+
+        # Call the approveTask method
+        self.card.pauseTask()
+
+        # Validate DB calls
+        assert mock_set_value.call_count == 1
+        set_value_params = {
+            'key': WORKER_REQUEST_KEY,
+            'value': WORKER_RESUME_REQUEST if paused else WORKER_PAUSE_REQUEST,
+        }
+        mock_set_value.assert_called_with(*set_value_params.values())
+        assert self.card.paused == (not paused)
