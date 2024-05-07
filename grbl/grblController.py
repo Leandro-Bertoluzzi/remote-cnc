@@ -57,7 +57,7 @@ class GrblController:
                 'spindle': 'M5',
                 'coolant': 'M9'
             },
-            'tool': 1,
+            'tool': 0,
             'feedrate': 0.0,
             'spindle': 0.0
         }
@@ -408,6 +408,11 @@ class GrblController:
         """
         for key, value in settings.items():
             self.sendCommand(f'{key}={value}')
+
+    def setTool(self, tool_index: int):
+        """Sets the GRBL device's current tool.
+        """
+        self.state['parserstate']['tool'] = tool_index
 
     # REAL TIME COMMANDS
 

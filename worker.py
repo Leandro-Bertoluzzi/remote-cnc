@@ -66,6 +66,7 @@ def executeTask(
     # Initial CNC state
     status = cnc.getStatusReport()
     parserstate = cnc.getGcodeParserState()
+    cnc.setTool(task.tool_id)
 
     # Get the file lenght, while checking if it exists in the first place
     try:
