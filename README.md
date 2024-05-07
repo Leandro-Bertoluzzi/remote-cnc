@@ -87,6 +87,8 @@ $ git update-index --assume-unchanged logs/celery.log
 
 # 5. If you are starting a new DB, run DB migrations
 $ alembic upgrade head
+# 6. (Optional) Seed DB with initial values
+$ python seeder.py
 ```
 
 ### Windows
