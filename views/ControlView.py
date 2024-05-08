@@ -50,7 +50,7 @@ class ControlView(BaseView):
         self.grbl_sync = GrblSync(self.grbl_controller)
 
         # FILE SENDER
-        self.file_sender = FileSender(self)
+        self.file_sender = FileSender(self.grbl_controller)
 
     # SETUP METHODS
 
@@ -303,8 +303,11 @@ class ControlView(BaseView):
 
         self.code_editor.setReadOnly(True)
         self.code_editor.resetProcessedLines()
+
+        # Configure file sender
         self.file_sender.set_file(file_path)
-        self.file_sender.resume()
+        self.file_sender.sent_line.connect(self.update_already_read_lines)
+        self.file_sender.finished.connect(self.finished_file_stream)
         self.file_sender.start()
 
     def pause_file_stream(self):

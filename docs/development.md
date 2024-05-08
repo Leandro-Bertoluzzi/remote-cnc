@@ -5,7 +5,8 @@
 1. [Install the Qt app](#install-the-qt-app).
 1. [Initiate additional services](#initiate-additional-services).
 1. [Mock external services](#mock-external-services)
-1. [CNC worker](#start-the-celery-worker-manually).
+1. [Manage database](#manage-database).
+1. [CNC worker](#cnc-worker).
 1. [Run tests](#run-tests).
 
 # Install the Qt app
@@ -111,6 +112,12 @@ $ alembic upgrade head
 $ alembic downgrade base
 ```
 
+- Seed DB with initial data:
+
+```bash
+$ python seeder.py
+```
+
 More info about Alembic usage [here](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
 
 # CNC worker
@@ -151,13 +158,13 @@ Due to a known problem with Celery's default pool (prefork), it is not as straig
 - **solo**: The solo pool is a simple, single-threaded execution pool. It simply executes incoming tasks in the same process and thread as the worker.
 
 ```bash
-$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=solo
+$ celery --app worker worker --loglevel=INFO --logfile=logs/celery.log --pool=solo
 ```
 
 - **threads**: The threads in the threads pool type are managed directly by the operating system kernel. As long as Python's ThreadPoolExecutor supports Windows threads, this pool type will work on Windows.
 
 ```bash
-$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=threads
+$ celery --app worker worker --loglevel=INFO --logfile=logs/celery.log --pool=threads
 ```
 
 - **gevent**: The [gevent package](http://www.gevent.org/) officially supports Windows, so it remains a suitable option for IO-bound task processing on Windows. Downside is that you have to install it first.
@@ -171,7 +178,7 @@ $ conda install -c anaconda gevent
 $ pip install gevent
 
 # 2. Start Celery's worker server
-$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
+$ celery --app worker worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
 **NOTE:** You also have to update the value of `PROJECT_ROOT` in `config.py`.

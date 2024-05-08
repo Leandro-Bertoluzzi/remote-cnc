@@ -307,7 +307,6 @@ class TestControlView:
 
         # Mock file sender methods
         mock_set_file_to_stream = mocker.patch.object(FileSender, 'set_file')
-        mock_resume_file_stream = mocker.patch.object(FileSender, 'resume')
         mock_start_file_stream = mocker.patch.object(FileSender, 'start')
 
         # Mock QMessageBox methods
@@ -317,12 +316,45 @@ class TestControlView:
         self.control_view.start_file_stream()
 
         # Assertions
+        should_stream = not modified and file_path
         assert mock_get_file_path.call_count == 1
         assert mock_get_file_modified.call_count == (1 if file_path else 0)
-        assert mock_popup.call_count == (1 if modified or not file_path else 0)
-        assert mock_set_file_to_stream.call_count == (1 if not modified and file_path else 0)
-        assert mock_resume_file_stream.call_count == (1 if not modified and file_path else 0)
-        assert mock_start_file_stream.call_count == (1 if not modified and file_path else 0)
+        assert mock_popup.call_count == (1 if not should_stream else 0)
+        assert mock_set_file_to_stream.call_count == (1 if should_stream else 0)
+        assert mock_start_file_stream.call_count == (1 if should_stream else 0)
+        assert self.control_view.code_editor.isReadOnly() is (True if should_stream else False)
+
+    def test_pause_file_stream(self, mocker: MockerFixture):
+        # Mock file sender methods
+        mock_toggle_paused = mocker.patch.object(FileSender, 'toggle_paused')
+
+        # Call method under test
+        self.control_view.pause_file_stream()
+
+        # Assertions
+        assert mock_toggle_paused.call_count == 1
+
+    def test_stop_file_stream(self, mocker: MockerFixture):
+        # Mock file sender methods
+        mock_stop = mocker.patch.object(FileSender, 'stop')
+
+        # Call method under test
+        self.control_view.stop_file_stream()
+
+        # Assertions
+        assert mock_stop.call_count == 1
+        assert self.control_view.code_editor.isReadOnly() is False
+
+    def test_finished_file_stream(self, mocker: MockerFixture):
+        # Mock QMessageBox methods
+        mock_popup = mocker.patch.object(QMessageBox, 'information', return_value=QMessageBox.Ok)
+
+        # Call method under test
+        self.control_view.finished_file_stream()
+
+        # Assertions
+        assert mock_popup.call_count == 1
+        assert self.control_view.code_editor.isReadOnly() is False
 
     @pytest.mark.parametrize(
             "dialogResponse,expected_updated",

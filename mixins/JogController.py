@@ -17,7 +17,7 @@ class JogController():
     def set_controller(self, grbl_controller: GrblController):
         self.grbl_controller = grbl_controller
 
-    def create_units_radio_buttons(self) -> QHBoxLayout:
+    def create_units_radio_buttons(self) -> tuple[QLabel, QHBoxLayout]:
         label_units = QLabel('Unidades:')
         radio_mm = QRadioButton('Milímetros')
         radio_in = QRadioButton('Pulgadas')
