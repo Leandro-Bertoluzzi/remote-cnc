@@ -2,6 +2,7 @@ import re
 from ..constants import GRBL_ERRORS
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_RESULT_ERROR
+from ..types import GrblError
 
 
 class GrblParserResultError(GrblParserGeneric):
@@ -25,8 +26,8 @@ class GrblParserResultError(GrblParserGeneric):
                 error = el
                 break
 
-        payload = {
-            'code': code,
+        payload: GrblError = {
+            'code': int(code),
             'message': error['message'] if error else '',
             'description': error['description'] if error else ''
         }

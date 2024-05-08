@@ -2,6 +2,7 @@ import re
 from ..constants import GRBL_ALARMS
 from ..parsers.grblParserGeneric import GrblParserGeneric
 from ..parsers.grblMsgTypes import GRBL_MSG_ALARM
+from ..types import GrblError
 
 
 class GrblParserMsgAlarm(GrblParserGeneric):
@@ -25,8 +26,8 @@ class GrblParserMsgAlarm(GrblParserGeneric):
                 alarm = el
                 break
 
-        payload = {
-            'code': code,
+        payload: GrblError = {
+            'code': int(code),
             'message': alarm['message'] if alarm else '',
             'description': alarm['description'] if alarm else ''
         }

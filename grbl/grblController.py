@@ -12,7 +12,7 @@ from queue import Empty, Queue
 import sys
 import threading
 import time
-from .types import GrblControllerState, GrblControllerParameters, \
+from .types import GrblControllerState, GrblControllerParameters, GrblError, \
     GrblSetting, GrblSettings, GrblBuildInfo
 
 try:
@@ -88,8 +88,8 @@ class GrblController:
     settings: GrblSettings = {}
 
     help_text = GRBL_HELP_MESSAGE
-    alarm_code: Optional[int] = None
     error_line: Optional[str] = None
+    error_data: Optional[GrblError] = None
 
     def __init__(self, logger: logging.Logger):
         # Configure serial interface
@@ -209,6 +209,8 @@ class GrblController:
         if msgType == GRBL_RESULT_ERROR:
             self._stop = True
             self.error_line = removeProcessedCommand()
+            del payload['raw']
+            self.error_data = payload
             self.grbl_monitor.error(
                 f"Error: {payload['message']}. Description: {payload['description']}"
             )
@@ -217,8 +219,9 @@ class GrblController:
         if msgType == GRBL_MSG_ALARM:
             self._alarm = True
             self._stop = True
-            self.alarm_code = int(payload['code'])
             self.error_line = removeProcessedCommand()
+            del payload['raw']
+            self.error_data = payload
             self.grbl_monitor.critical(
                 f"Alarm activated: {payload['message']}. Description: {payload['description']}"
             )
@@ -278,7 +281,7 @@ class GrblController:
         # Response to alarm disable
         if (msgType == GRBL_MSG_FEEDBACK) and ('Caution: Unlocked' in payload['message']):
             self._alarm = False
-            self.alarm_code = None
+            self.error_data = None
             self.error_line = None
             self.grbl_monitor.info('Alarm was successfully disabled')
             return
@@ -674,6 +677,11 @@ class GrblController:
                         f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
                     )
                     self.error_line = tosend
+                    self.error_data == {
+                        'code': 0,
+                        'message': 'Communication error',
+                        'description': str(sys.exc_info()[1])
+                    }
                     self.emptyQueue()
                     self.disconnect()
                     return
@@ -684,7 +692,6 @@ class GrblController:
                     self.grbl_monitor.info(f'A program end command was found: {tosend}')
                     self._finished = True
                     self.emptyQueue()
-                    self.disconnect()
                     return
 
                 tosend = None

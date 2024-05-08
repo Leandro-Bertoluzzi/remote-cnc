@@ -12,7 +12,7 @@ from grbl.grblLineParser import GrblLineParser
             (
                 'error:17',
                 ('GrblResultError', {
-                    'code': '17',
+                    'code': 17,
                     'message': 'Setting disabled',
                     'description': 'Laser mode requires PWM output.',
                     'raw': 'error:17'
@@ -21,7 +21,7 @@ from grbl.grblLineParser import GrblLineParser
             (
                 'ALARM:6',
                 ('GrblMsgAlarm', {
-                    'code': '6',
+                    'code': 6,
                     'message': 'Homing fail',
                     'description': 'Homing fail. The active homing cycle was reset.',
                     'raw': 'ALARM:6'

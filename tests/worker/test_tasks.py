@@ -246,6 +246,17 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
     # Mock GRBL error methods
     mocker.patch.object(GrblController, 'failed', return_value=True)
     mocker.patch.object(GrblController, 'alarm', return_value=is_alarm)
+    # Mock GRBL state
+    mock_error_line = mocker.PropertyMock(return_value='$H')
+    mocker.patch.object(GrblController, 'error_line', new_callable=mock_error_line)
+    mock_error_data = mocker.PropertyMock(
+        return_value={
+            'code': 6,
+            'message': 'Homing fail',
+            'description': 'Homing fail. The active homing cycle was reset.'
+        }
+    )
+    mocker.patch.object(GrblController, 'error_data', new_callable=mock_error_data)
 
     # Mock other GRBL methods
     mocker.patch.object(GrblController, 'connect')
@@ -274,7 +285,7 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
         )
 
     # Assertions
-    expected = 'An alarm was triggered' if is_alarm else 'There was an error when executing line'
+    expected = 'An alarm was triggered' if is_alarm else 'There was an error'
     assert mock_disconnect.call_count == 1
     assert expected in str(error.value)
 

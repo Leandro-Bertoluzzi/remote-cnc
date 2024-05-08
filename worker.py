@@ -106,10 +106,6 @@ def executeTask(
                 }
             )
 
-            # A 'program end' command was found (M2/M30)
-            if cnc.finished():
-                break
-
             if cnc.failed():
                 break
 
@@ -147,8 +143,8 @@ def executeTask(
 
             line = gcode.readline()
 
-            # EOF
-            if not line:
+            # EOF or end programm command
+            if not line or (line.strip() in ['M2', 'M02', 'M30']):
                 gcode.close()
                 finished_sending = True
                 continue
@@ -179,15 +175,16 @@ def executeTask(
         task_logger.critical('Failed execution of file: %s', file_path)
         repository.update_task_status(task.id, TASK_FAILED_STATUS)
 
-        if cnc.alarm():
-            alarm_message = (
-                f'An alarm was triggered (code: {cnc.alarm_code}) '
-                f'while executing line: {cnc.error_line}'
-            )
-            task_logger.critical(alarm_message)
-            raise Exception(alarm_message)
+        error_message = 'There was an error'
 
-        error_message = f'There was an error when executing line: {cnc.error_line}'
+        if cnc.alarm():
+            error_message = 'An alarm was triggered'
+
+        error_message = (
+                f'{error_message} (code: {cnc.error_data["code"]}) '
+                f'while executing line: {cnc.error_line}.'
+                f'{cnc.error_data["message"]}:{cnc.error_data["description"]}'
+            )
         task_logger.critical(error_message)
         raise Exception(error_message)
 

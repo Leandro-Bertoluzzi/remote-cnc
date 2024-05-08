@@ -414,18 +414,18 @@ class TestGrblController:
         assert checkmode == mock_checkmode
 
     @pytest.mark.parametrize(
-            'active_state',
-            [
-                GRBL_ACTIVE_STATE_IDLE,
-                GRBL_ACTIVE_STATE_RUN,
-                GRBL_ACTIVE_STATE_HOLD,
-                GRBL_ACTIVE_STATE_DOOR,
-                GRBL_ACTIVE_STATE_HOME,
-                GRBL_ACTIVE_STATE_SLEEP,
-                GRBL_ACTIVE_STATE_ALARM,
-                GRBL_ACTIVE_STATE_CHECK
-            ]
-        )
+        'active_state',
+        [
+            GRBL_ACTIVE_STATE_IDLE,
+            GRBL_ACTIVE_STATE_RUN,
+            GRBL_ACTIVE_STATE_HOLD,
+            GRBL_ACTIVE_STATE_DOOR,
+            GRBL_ACTIVE_STATE_HOME,
+            GRBL_ACTIVE_STATE_SLEEP,
+            GRBL_ACTIVE_STATE_ALARM,
+            GRBL_ACTIVE_STATE_CHECK
+        ]
+    )
     def test_checkers(self, active_state):
         # Set test value for controller's active state
         self.grbl_controller.state['status']['activeState'] = active_state
@@ -439,15 +439,15 @@ class TestGrblController:
         assert is_idle == (active_state == GRBL_ACTIVE_STATE_IDLE)
 
     @pytest.mark.parametrize(
-            'occupied,expected',
-            [
-                (0, 0.0),
-                (16, 12.5),
-                (32, 25.0),
-                (64, 50.0),
-                (128, 100.0)
-            ]
-        )
+        'occupied,expected',
+        [
+            (0, 0.0),
+            (16, 12.5),
+            (32, 25.0),
+            (64, 50.0),
+            (128, 100.0)
+        ]
+    )
     def test_get_buffer_fill(self, occupied, expected):
         # Set test value for controller's active state
         self.grbl_controller._sumcline = occupied
@@ -546,42 +546,42 @@ class TestGrblController:
         }
 
     @pytest.mark.parametrize(
-            'messages,expected',
-            [
-                (
-                    [
-                        '[VER:1.1d.20161014:]',
-                        '[OPT:VL,15,128]'
-                    ],
-                    {
-                        'version': '1.1d.20161014',
-                        'comment': '',
-                        'optionCode': 'VL',
-                        'blockBufferSize': 15,
-                        'rxBufferSize': 128
-                    }
-                ),
-                (
-                    [
-                        '[OPT:VL,15,128]'
-                    ],
-                    {
-                        'optionCode': 'VL',
-                        'blockBufferSize': 15,
-                        'rxBufferSize': 128
-                    }
-                ),
-                (
-                    [
-                        '[VER:1.1d.20161014:]'
-                    ],
-                    {
-                        'version': '1.1d.20161014',
-                        'comment': ''
-                    }
-                )
-            ]
-        )
+        'messages,expected',
+        [
+            (
+                [
+                    '[VER:1.1d.20161014:]',
+                    '[OPT:VL,15,128]'
+                ],
+                {
+                    'version': '1.1d.20161014',
+                    'comment': '',
+                    'optionCode': 'VL',
+                    'blockBufferSize': 15,
+                    'rxBufferSize': 128
+                }
+            ),
+            (
+                [
+                    '[OPT:VL,15,128]'
+                ],
+                {
+                    'optionCode': 'VL',
+                    'blockBufferSize': 15,
+                    'rxBufferSize': 128
+                }
+            ),
+            (
+                [
+                    '[VER:1.1d.20161014:]'
+                ],
+                {
+                    'version': '1.1d.20161014',
+                    'comment': ''
+                }
+            )
+        ]
+    )
     def test_parser_receive_grbl_build_info(self, messages, expected):
         # Set test values for controller's settings
         self.grbl_controller.build_info = {}
@@ -594,14 +594,14 @@ class TestGrblController:
         assert self.grbl_controller.build_info == expected
 
     @pytest.mark.parametrize(
-            'message,previous_state,expected_state',
-            [
-                ('[MSG:Enabled]', False, True),
-                ('[MSG:Disabled]', True, False),
-                ('[MSG:Enabled]', True, True),
-                ('[MSG:Disabled]', False, False)
-            ]
-        )
+        'message,previous_state,expected_state',
+        [
+            ('[MSG:Enabled]', False, True),
+            ('[MSG:Disabled]', True, False),
+            ('[MSG:Enabled]', True, True),
+            ('[MSG:Disabled]', False, False)
+        ]
+    )
     def test_parser_receive_checkmode_feedback(self, message, previous_state, expected_state):
         # Set test values for controller's status
         self.grbl_controller._checkmode == previous_state
@@ -740,8 +740,12 @@ class TestGrblController:
         # Assertions
         assert cline == [2, 3]
         assert sline == ['G54', 'G00 X0 Y0']
-        assert self.grbl_controller.alarm_code == 6
         assert self.grbl_controller.error_line == '$H'
+        assert self.grbl_controller.error_data == {
+            'code': 6,
+            'message': 'Homing fail',
+            'description': 'Homing fail. The active homing cycle was reset.'
+        }
         assert self.grbl_controller._alarm is True
         assert mock_monitor_critical.call_count == 1
         mock_monitor_critical.assert_called_with(
@@ -1000,7 +1004,6 @@ class TestGrblController:
 
         # Mock controller methods
         mocker.patch.object(GrblController, 'queryStatusReport')
-        mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
 
         # Mock serial methods
         mocker.patch.object(SerialService, 'waiting', return_value=False)
@@ -1016,5 +1019,4 @@ class TestGrblController:
         assert mock_serial_send_line.call_count == 2
         assert mock_monitor_info.call_count == 1
         mock_monitor_info.assert_called_with('A program end command was found: M30')
-        assert mock_grbl_disconnect.call_count == 1
         assert self.grbl_controller._finished is True
