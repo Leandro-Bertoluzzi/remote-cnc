@@ -34,7 +34,7 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda m
 | 2      | Selecciona el puerto serie del equipo y presiona "Conectar". |  |
 | 3      |  | Inicia la comunicación por puerto serie con el equipo. |
 | 4      |  | Habilita el uso del panel de control y el terminal. |
-| 5      | Va al panel de control y selecciona la pestaña de "jog". |  |
+| 5      | Va al panel de control y selecciona la pestaña de "Jog". |  |
 | 6      | Configura el "paso" en cada coordenada, y la velocidad de avance (feed rate). |  |
 | 7      | Cliquea uno de los botones de dirección. |  |
 | 8      |  | Genera el comando, lo escribe en el terminal y lo envía por puerto serie para su ejecución. |
@@ -59,10 +59,11 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda m
 | 2      | Selecciona el puerto serie del equipo y presiona "Conectar". |  |
 | 3      |  | Inicia la comunicación por puerto serie con el equipo. |
 | 4      |  | Habilita el uso del panel de control y el terminal. |
-| 5      | Va al panel de control y selecciona la pestaña de "jog". |  |
-| 6      | Indica la coordenada (absoluta) a la que debe desplazarse el cabezal. |  |
-| 7      | Presiona "Mover". |  |
-| 8      |  | Genera el comando, lo escribe en el terminal y lo envía por puerto serie para su ejecución. |
+| 5      | Va al panel de control y selecciona la pestaña de "Acciones". |  |
+| 6      | Presiona "Mover a". |  |
+| 7      | Indica la coordenada (absoluta) a la que debe desplazarse el cabezal. |  |
+| 8      | Presiona "Mover". |  |
+| 9      |  | Genera el comando, lo escribe en el terminal y lo envía por puerto serie para su ejecución. |
 
 ---
 

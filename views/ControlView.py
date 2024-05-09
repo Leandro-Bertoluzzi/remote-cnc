@@ -232,6 +232,7 @@ class ControlView(BaseView):
         self.grbl_sync.start_monitor()
         self.grbl_sync.new_message.connect(self.write_to_terminal)
         self.grbl_sync.new_status.connect(self.update_device_status)
+        self.grbl_sync.failed.connect(self.failed_command)
 
     def disconnect_device(self):
         """Close the connection with the GRBL device.
@@ -301,6 +302,18 @@ class ControlView(BaseView):
             )
             return
 
+        # Reset GRBL controller
+        if not self.grbl_controller.clearError():
+            self.showError(
+                'Alarma activa',
+                'Hay una alarma activa, debe desactivarla antes de continuar.'
+            )
+            return
+        if self.grbl_controller.is_paused():
+            self.grbl_controller.setPaused(False)
+        self.grbl_controller.restartCommandsCount()
+
+        # Update code editor
         self.code_editor.setReadOnly(True)
         self.code_editor.resetProcessedLines()
 
@@ -311,7 +324,12 @@ class ControlView(BaseView):
         self.file_sender.start()
 
     def pause_file_stream(self):
+        # Pause/Resume file streaming
         self.file_sender.toggle_paused()
+
+        # Pause/Resume GRBL controller
+        paused = self.file_sender.is_paused()
+        self.grbl_controller.setPaused(paused)
 
     def stop_file_stream(self):
         self.code_editor.setReadOnly(False)
@@ -370,3 +388,11 @@ class ControlView(BaseView):
 
     def update_already_read_lines(self, count: int):
         self.code_editor.markProcessedLines(count)
+
+    def failed_command(self, error_message: str):
+        self.file_sender.pause()
+
+        self.showError(
+            'Error',
+            f'{error_message}. Por favor, resuelva el error y reinicie la ejecución.'
+        )

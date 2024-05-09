@@ -38,57 +38,33 @@ class TestFileSender:
         # Set attributes for test
         self.file_sender._paused = paused
 
-        # Mock GRBL methods
-        mock_grbl_pause = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'setPaused'
-        )
-
         # Call method under test
         self.file_sender.pause()
 
         # Assertions
         assert self.file_sender._paused is True
-        assert mock_grbl_pause.call_count == 1
-        mock_grbl_pause.assert_called_with(True)
 
     @pytest.mark.parametrize("paused", [False, True])
     def test_file_sender_resume(self, mocker: MockerFixture, paused):
         # Set attributes for test
         self.file_sender._paused = paused
 
-        # Mock GRBL methods
-        mock_grbl_pause = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'setPaused'
-        )
-
         # Call method under test
         self.file_sender.resume()
 
         # Assertions
         assert self.file_sender._paused is False
-        assert mock_grbl_pause.call_count == 1
-        mock_grbl_pause.assert_called_with(False)
 
     @pytest.mark.parametrize("paused", [False, True])
     def test_file_sender_toggle_paused(self, mocker: MockerFixture, paused):
         # Set attributes for test
         self.file_sender._paused = paused
 
-        # Mock GRBL methods
-        mock_grbl_pause = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'setPaused'
-        )
-
         # Call method under test
         self.file_sender.toggle_paused()
 
         # Assertions
         assert self.file_sender._paused == (not paused)
-        assert mock_grbl_pause.call_count == 1
-        mock_grbl_pause.assert_called_with(not paused)
 
     def test_file_sender_stop(self, mocker: MockerFixture):
         # Mock timer method
@@ -162,7 +138,6 @@ class TestFileSender:
     def test_file_sender_paused(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock attributes
         self.file_sender.file_path = 'path/to/file'
-        self.file_sender._paused = True
 
         # Mock GRBL methods
         mock_grbl_send_command = mocker.patch.object(
@@ -173,10 +148,13 @@ class TestFileSender:
         # Mock FS methods
         mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
         mocker.patch('builtins.open', mocked_file_data)
+        self.file_sender._open_file()
+
+        # Mock state
+        self.file_sender._paused = True
 
         # Call method under test and wait for signal
         with qtbot.waitSignal(self.file_sender.sent_line, timeout=500, raising=False) as blocker:
-            self.file_sender._open_file()
             self.file_sender.send_line()
 
         # Assertions

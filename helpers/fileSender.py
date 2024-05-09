@@ -43,15 +43,15 @@ class FileSender(QObject):
 
     def pause(self):
         self._paused = True
-        self.grbl_controller.setPaused(True)
 
     def resume(self):
         self._paused = False
-        self.grbl_controller.setPaused(False)
 
     def toggle_paused(self):
         self._paused = not self._paused
-        self.grbl_controller.setPaused(self._paused)
+
+    def is_paused(self) -> bool:
+        return self._paused
 
     def stop(self):
         # Stop timer
@@ -70,13 +70,13 @@ class FileSender(QObject):
 
         self.gcode = open(self.file_path, 'r')
         self.current_line = 1
+        self._paused = False
 
     def _close_file(self):
         if not self.gcode:
             return
 
         self.gcode.close()
-        self._paused = False
 
     # SLOTS
 

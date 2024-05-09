@@ -59,3 +59,10 @@ Este caso de uso describe los pasos necesarios para que un administrador pueda d
 | **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
 | :---        | :---        | :---        |
 | 13.1a      |  | (nada, sigue validando hasta que el buffer tenga espacio) |
+
+**Curso alternativo (hay un error durante la ejecución):**
+
+| **N**      | **Acción realizada por actor** | **Acción realizada por el sistema** |
+| :---        | :---        | :---        |
+| 13.1a      |  | Muestra una ventana emergente notificando el error. |
+| 13.1b      |  | Pausa el envío del archivo. |
