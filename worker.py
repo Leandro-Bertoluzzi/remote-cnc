@@ -8,6 +8,7 @@ try:
     from .database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
         TASK_FAILED_STATUS
     from .database.repositories.taskRepository import TaskRepository
+    from .gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from .grbl.grblController import GrblController
     from .utils.files import getFilePath
     from .utils.storage import delete_value, get_value, set_value
@@ -17,6 +18,7 @@ except ImportError:
     from database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
         TASK_FAILED_STATUS
     from database.repositories.taskRepository import TaskRepository
+    from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from grbl.grblController import GrblController
     from utils.files import getFilePath
     from utils.storage import delete_value, get_value, set_value
@@ -24,7 +26,6 @@ except ImportError:
 # Constants
 SEND_INTERVAL = 0.10    # Seconds
 STATUS_POLL = 0.10      # Seconds
-MAX_BUFFER_FILL = 75    # Percentage
 WORKER_REQUEST_KEY = 'worker_request'
 WORKER_PAUSE_REQUEST = 'grbl_pause'
 WORKER_RESUME_REQUEST = 'grbl_resume'
@@ -69,10 +70,10 @@ def executeTask(
     parserstate = cnc_status.get_parser_state()
     cnc_status.set_tool(task.tool_id)
 
-    # Get the file lenght, while checking if it exists in the first place
+    # Initiates the file sender
+    file_sender = GcodeFileSender(cnc, file_path)
     try:
-        with open(file_path, 'r') as file:
-            total_lines = len(file.readlines())
+        total_lines = file_sender.start()
     except Exception as error:
         cnc.disconnect()
         task_logger.critical('Error opening file: %s', file_path)
@@ -86,7 +87,6 @@ def executeTask(
 
     # 4. Send G-code lines in a loop, until either the file is finished or there is an error
     ts = tp = time.time()  # last time a command was sent and info was queried
-    gcode = open(file_path, 'r')
 
     while True:
         t = time.time()
@@ -107,6 +107,9 @@ def executeTask(
                 }
             )
 
+            if cnc_status.finished():
+                break
+
             if cnc_status.failed():
                 break
 
@@ -118,10 +121,6 @@ def executeTask(
 
         # Send new command?
         if t - ts > SEND_INTERVAL and not finished_sending:
-            # Try not to fill the GRBL buffer
-            if cnc.getBufferFill() > MAX_BUFFER_FILL:
-                continue
-
             # Check if PAUSE or RESUME was requested
             request = get_value(WORKER_REQUEST_KEY)
 
@@ -130,6 +129,7 @@ def executeTask(
                 delete_value(WORKER_REQUEST_KEY)
                 set_value(WORKER_IS_PAUSED_KEY, 'True')
                 paused = True
+                file_sender.pause()
                 continue
 
             if request == WORKER_RESUME_REQUEST:
@@ -137,23 +137,20 @@ def executeTask(
                 delete_value(WORKER_REQUEST_KEY)
                 delete_value(WORKER_IS_PAUSED_KEY)
                 paused = False
+                file_sender.resume()
 
             if paused:
                 time.sleep(1)
                 continue
 
-            line = gcode.readline()
-
-            # EOF or end programm command
-            if not line or (line.strip() in ['M2', 'M02', 'M30']):
-                gcode.close()
+            try:
+                sent_lines = file_sender.send_line()
+            except FinishedFile:
                 finished_sending = True
+                file_sender.stop()
                 continue
 
-            cnc.sendCommand(line)
-
             # update task progress
-            sent_lines = sent_lines + 1
             self.update_state(
                 state='PROGRESS',
                 meta={

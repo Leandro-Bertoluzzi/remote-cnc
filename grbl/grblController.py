@@ -365,7 +365,7 @@ class GrblController:
             self.serial.sendBytes(b'!')
         except SerialException:
             self.grbl_monitor.error(
-                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+                f'Error sending PAUSE command to GRBL: {str(sys.exc_info()[1])}'
             )
             return
         self.grbl_monitor.sent('!')
@@ -379,7 +379,7 @@ class GrblController:
             self.serial.sendBytes(b'~')
         except SerialException:
             self.grbl_monitor.error(
-                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+                f'Error sending RESUME command to GRBL: {str(sys.exc_info()[1])}'
             )
             return
         self.grbl_monitor.sent('~')
@@ -395,7 +395,7 @@ class GrblController:
             self.serial.sendBytes(b'\x18')
         except SerialException:
             self.grbl_monitor.error(
-                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+                f'Error sending STOP command to GRBL: {str(sys.exc_info()[1])}'
             )
             return
         self.grbl_monitor.sent('0x18')
@@ -411,7 +411,7 @@ class GrblController:
             self.serial.sendBytes(b'?')
         except SerialException:
             self.grbl_monitor.error(
-                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+                f'Error sending STATUS command to GRBL: {str(sys.exc_info()[1])}'
             )
             return
         self.grbl_monitor.sent('?', debug=True)
