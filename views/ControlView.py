@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QComboBox, QGridLayout, QToolBar, QToolButton
+from PyQt5.QtWidgets import QComboBox, QGridLayout
 from PyQt5.QtCore import Qt
 from components.buttons.MenuButton import MenuButton
 from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
@@ -10,6 +10,7 @@ from components.CodeEditor import CodeEditor
 from components.ControllerStatus import ControllerStatus
 from components.Joystick import Joystick
 from components.Terminal import Terminal
+from components.ToolBar import ToolBar
 from config import SERIAL_BAUDRATE
 from core.grbl.grblController import GrblController
 from core.grbl.types import GrblSettings, ParserState, Status
@@ -129,46 +130,25 @@ class ControlView(BaseView):
     def createToolBars(self):
         """Adds the tool bars to the Main window
         """
-        self.tool_bar_files = QToolBar()
-        self.tool_bar_files.setMovable(False)
-        self.getWindow().addToolBar(Qt.TopToolBarArea, self.tool_bar_files)
-
         file_options = [
-            ('Nuevo', self.code_editor.new_file),
-            ('Importar', self.code_editor.import_file),
-            ('Exportar', self.code_editor.export_file),
+            ('Nuevo', self.code_editor.new_file, False),
+            ('Importar', self.code_editor.import_file, False),
+            ('Exportar', self.code_editor.export_file, False),
         ]
-
-        for (label, action) in file_options:
-            tool_button = QToolButton()
-            tool_button.setText(label)
-            tool_button.clicked.connect(action)
-            self.tool_bar_files.addWidget(tool_button)
+        self.tool_bar_files = ToolBar(file_options, self.getWindow(), self)
 
         if self.device_busy:
             return
 
-        self.tool_bar_grbl = QToolBar()
-        self.tool_bar_grbl.setMovable(False)
-        self.getWindow().addToolBar(Qt.TopToolBarArea, self.tool_bar_grbl)
-
         exec_options = [
-            ('Ejecutar', self.start_file_stream),
-            ('Detener', self.stop_file_stream),
-            ('Pausar', self.pause_file_stream),
+            ('Ejecutar', self.start_file_stream, False),
+            ('Detener', self.stop_file_stream, False),
+            ('Pausar', self.pause_file_stream, True),
+            ('Conectar', self.toggle_connected, True),
         ]
-
-        for (label, action) in exec_options:
-            tool_button = QToolButton()
-            tool_button.setText(label)
-            tool_button.clicked.connect(action)
-            self.tool_bar_grbl.addWidget(tool_button)
-
-        self.connect_button = QToolButton()
-        self.connect_button.setText('Conectar')
-        self.connect_button.clicked.connect(self.toggle_connected)
-        self.connect_button.setCheckable(True)
-        self.tool_bar_grbl.addWidget(self.connect_button)
+        self.tool_bar_grbl = ToolBar(exec_options, self.getWindow(), self)
+        self.pause_button = self.tool_bar_grbl.get_options()['pausar']
+        self.connect_button = self.tool_bar_grbl.get_options()['conectar']
 
         # Connected devices
         combo_ports = QComboBox()
@@ -331,6 +311,7 @@ class ControlView(BaseView):
 
         # Pause/Resume GRBL controller
         paused = self.file_streamer.is_paused()
+        self.pause_button.setText('Retomar' if paused else 'Pausar')
         self.grbl_controller.setPaused(paused)
 
     def stop_file_stream(self):

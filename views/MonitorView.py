@@ -1,11 +1,11 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem, QToolBar, QToolButton, \
-    QFileDialog
+from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem, QFileDialog
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
 from components.TaskProgress import TaskProgress
 from components.text.LogsViewer import LogsViewer
+from components.ToolBar import ToolBar
 from core.grbl.types import Status, ParserState
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from typing import TYPE_CHECKING
@@ -80,21 +80,14 @@ class MonitorView(BaseView):
     def createToolBars(self):
         """Adds the tool bars to the Main window
         """
-        self.tool_bar = QToolBar()
-        self.tool_bar.setMovable(False)
-        self.getWindow().addToolBar(Qt.TopToolBarArea, self.tool_bar)
-
         options = [
-            ('Ver logs', lambda: None),
-            ('Exportar', self.export_logs),
-            ('Pausar', self.pause_logs),
+            ('Ver logs', lambda: None, True),
+            ('Exportar', self.export_logs, False),
+            ('Pausar', self.pause_logs, True),
         ]
-
-        for (label, action) in options:
-            tool_button = QToolButton()
-            tool_button.setText(label)
-            tool_button.clicked.connect(action)
-            self.tool_bar.addWidget(tool_button)
+        self.tool_bar = ToolBar(options, self.getWindow(), self)
+        self.logs_button = self.tool_bar.get_options()['ver logs']
+        self.pause_button = self.tool_bar.get_options()['pausar']
 
     # EVENTS
 
