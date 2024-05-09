@@ -207,7 +207,7 @@ class GrblController:
             return
 
         if msgType == GRBL_RESULT_ERROR:
-            self._stop = True
+            self.setPaused(True)
             self.error_line = removeProcessedCommand()
             del payload['raw']
             self.error_data = payload
@@ -218,7 +218,7 @@ class GrblController:
 
         if msgType == GRBL_MSG_ALARM:
             self._alarm = True
-            self._stop = True
+            self._paused = True
             self.error_line = removeProcessedCommand()
             del payload['raw']
             self.error_data = payload
@@ -330,6 +330,16 @@ class GrblController:
         """Checks if the program has finished (M2/M30).
         """
         return self._finished
+
+    def clearError(self) -> bool:
+        """Resets the error-related fields.
+        """
+        if self._alarm:
+            return False
+
+        self.error_line = None
+        self.error_data = None
+        return True
 
     # ACTIONS
 
@@ -446,6 +456,25 @@ class GrblController:
             return
         self.grbl_monitor.sent('~')
         self.grbl_monitor.info('Requested RESUME')
+
+    def grbl_soft_reset(self):
+        """Soft-Reset: Halts and safely resets Grbl without a power-cycle.
+        - If reset while in motion, Grbl will throw an alarm to indicate position may be
+        lost from the motion halt.
+        - If reset while not in motion, position is retained and re-homing is not required.
+        """
+        try:
+            self.serial.sendBytes(b'\x18')
+        except SerialException:
+            self.grbl_monitor.error(
+                f'Error sending command to GRBL: {str(sys.exc_info()[1])}'
+            )
+            return
+        self.grbl_monitor.sent('0x18')
+        self.grbl_monitor.info('Requested STOP')
+
+        # Tell the serialIO thread to stop streaming
+        self._stop = True
 
     def queryStatusReport(self):
         """Queries the GRBL device's current status.

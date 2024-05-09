@@ -714,6 +714,9 @@ class TestGrblController:
         # Mock monitor methods
         mock_monitor_error = mocker.patch.object(GrblMonitor, 'error')
 
+        # Mock other methods
+        mock_pause = mocker.patch.object(self.grbl_controller, 'grbl_pause')
+
         # Simulate getting responses from GRBL
         self.grbl_controller.parseResponse('error:25', cline, sline)
 
@@ -721,10 +724,17 @@ class TestGrblController:
         assert cline == [2, 3]
         assert sline == ['G90', 'G00 X0 Y0']
         assert self.grbl_controller.error_line == 'G54 G54'
+        assert self.grbl_controller.error_data == {
+            'code': 25,
+            'message': 'Invalid gcode ID:25',
+            'description': 'Repeated g-code word found in block.'
+        }
         assert mock_monitor_error.call_count == 1
         mock_monitor_error.assert_called_with(
             'Error: Invalid gcode ID:25. Description: Repeated g-code word found in block.'
         )
+        assert mock_pause.call_count == 1
+        assert self.grbl_controller._paused is True
 
     def test_parser_receive_alarm(self, mocker):
         # Set test values
@@ -752,6 +762,7 @@ class TestGrblController:
             'Alarm activated: Homing fail. Description: Homing fail. '
             'The active homing cycle was reset.'
         )
+        assert self.grbl_controller._paused is True
 
     # SERIAL I/O
 
