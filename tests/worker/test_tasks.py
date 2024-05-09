@@ -1,7 +1,7 @@
 import pytest
 from celery.app.task import Task
 from database.repositories.taskRepository import TaskRepository
-from grbl.grblController import GrblController
+from grbl.grblController import GrblController, GrblStatus
 from pytest_mock.plugin import MockerFixture
 import time
 from typing import TextIO
@@ -36,8 +36,8 @@ def test_execute_tasks(mocker: MockerFixture):
         'sendCommand',
         side_effect=increment_commands_count
     )
-    mocker.patch.object(GrblController, 'getStatusReport')
-    mocker.patch.object(GrblController, 'getGcodeParserState')
+    mocker.patch.object(GrblStatus, 'get_status_report')
+    mocker.patch.object(GrblStatus, 'get_parser_state')
     mock_get_grbl_buffer_fill = mocker.patch.object(
         GrblController,
         'getBufferFill',
@@ -48,8 +48,7 @@ def test_execute_tasks(mocker: MockerFixture):
         'getCommandsCount',
         side_effect=get_commands_count
     )
-    mocker.patch.object(GrblController, 'alarm', return_value=False)
-    mocker.patch.object(GrblController, 'failed', return_value=False)
+    mocker.patch.object(GrblStatus, 'failed', return_value=False)
 
     # Mock FS methods
     mocker.patch('worker.getFilePath')
@@ -143,8 +142,8 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     # Mock GRBL methods
     mock_start_connect = mocker.patch.object(GrblController, 'connect')
     mock_start_disconnect = mocker.patch.object(GrblController, 'disconnect')
-    mocker.patch.object(GrblController, 'getStatusReport')
-    mocker.patch.object(GrblController, 'getGcodeParserState')
+    mocker.patch.object(GrblStatus, 'get_status_report')
+    mocker.patch.object(GrblStatus, 'get_parser_state')
 
     # Mock FS methods
     mocker.patch('worker.getFilePath')
@@ -198,8 +197,8 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
         'sendCommand',
         side_effect=increment_commands_count
     )
-    mocker.patch.object(GrblController, 'getStatusReport')
-    mocker.patch.object(GrblController, 'getGcodeParserState')
+    mocker.patch.object(GrblStatus, 'get_status_report')
+    mocker.patch.object(GrblStatus, 'get_parser_state')
     mock_get_grbl_buffer_fill = mocker.patch.object(
         GrblController,
         'getBufferFill',
@@ -210,8 +209,7 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
         'getCommandsCount',
         side_effect=get_commands_count
     )
-    mocker.patch.object(GrblController, 'alarm', return_value=False)
-    mocker.patch.object(GrblController, 'failed', return_value=False)
+    mocker.patch.object(GrblStatus, 'failed', return_value=False)
 
     # Mock FS methods
     mocker.patch('worker.getFilePath')
@@ -234,36 +232,22 @@ def test_execute_tasks_waits_for_buffer(mocker: MockerFixture):
     assert mock_stream_line.call_count == 3
 
 
-@pytest.mark.parametrize(
-    'is_alarm', [False, True]
-)
-def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
+def test_execute_tasks_grbl_error(mocker: MockerFixture):
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
     mocker.patch.object(TaskRepository, 'get_task_by_id')
     mocker.patch.object(TaskRepository, 'update_task_status')
 
     # Mock GRBL error methods
-    mocker.patch.object(GrblController, 'failed', return_value=True)
-    mocker.patch.object(GrblController, 'alarm', return_value=is_alarm)
-    # Mock GRBL state
-    mock_error_line = mocker.PropertyMock(return_value='$H')
-    mocker.patch.object(GrblController, 'error_line', new_callable=mock_error_line)
-    mock_error_data = mocker.PropertyMock(
-        return_value={
-            'code': 6,
-            'message': 'Homing fail',
-            'description': 'Homing fail. The active homing cycle was reset.'
-        }
-    )
-    mocker.patch.object(GrblController, 'error_data', new_callable=mock_error_data)
+    mocker.patch.object(GrblStatus, 'failed', return_value=True)
+    mocker.patch.object(GrblStatus, 'get_error_message', return_value='An error message')
 
     # Mock other GRBL methods
     mocker.patch.object(GrblController, 'connect')
     mock_disconnect = mocker.patch.object(GrblController, 'disconnect')
     mocker.patch.object(GrblController, 'sendCommand')
-    mocker.patch.object(GrblController, 'getStatusReport')
-    mocker.patch.object(GrblController, 'getGcodeParserState')
+    mocker.patch.object(GrblStatus, 'get_status_report')
+    mocker.patch.object(GrblStatus, 'get_parser_state')
     mocker.patch.object(GrblController, 'getBufferFill', return_value=0)
     mocker.patch.object(GrblController, 'getCommandsCount', return_value=0)
 
@@ -285,9 +269,8 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture, is_alarm):
         )
 
     # Assertions
-    expected = 'An alarm was triggered' if is_alarm else 'There was an error'
     assert mock_disconnect.call_count == 1
-    assert expected in str(error.value)
+    assert str(error.value) == 'An error message'
 
 
 def test_execute_tasks_pause(mocker: MockerFixture):
@@ -323,16 +306,15 @@ def test_execute_tasks_pause(mocker: MockerFixture):
         'sendCommand',
         side_effect=increment_commands_count
     )
-    mocker.patch.object(GrblController, 'getStatusReport')
-    mocker.patch.object(GrblController, 'getGcodeParserState')
+    mocker.patch.object(GrblStatus, 'get_status_report')
+    mocker.patch.object(GrblStatus, 'get_parser_state')
     mocker.patch.object(GrblController, 'getBufferFill', return_value=0)
     mocker.patch.object(
         GrblController,
         'getCommandsCount',
         side_effect=get_commands_count
     )
-    mocker.patch.object(GrblController, 'alarm', return_value=False)
-    mocker.patch.object(GrblController, 'failed', return_value=False)
+    mocker.patch.object(GrblStatus, 'failed', return_value=False)
 
     # Mock FS methods
     mocker.patch('worker.getFilePath')

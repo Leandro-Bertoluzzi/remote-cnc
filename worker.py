@@ -55,6 +55,7 @@ def executeTask(
     # 3. Instantiate a GrblController object and start communication with Arduino
     task_logger = get_task_logger(__name__)
     cnc = GrblController(logger=task_logger)
+    cnc_status = cnc.grbl_status
     cnc.connect(serial_port, serial_baudrate)
 
     # Task progress
@@ -64,9 +65,9 @@ def executeTask(
     finished_sending = False
     paused = False
     # Initial CNC state
-    status = cnc.getStatusReport()
-    parserstate = cnc.getGcodeParserState()
-    cnc.setTool(task.tool_id)
+    status = cnc_status.get_status_report()
+    parserstate = cnc_status.get_parser_state()
+    cnc_status.set_tool(task.tool_id)
 
     # Get the file lenght, while checking if it exists in the first place
     try:
@@ -92,8 +93,8 @@ def executeTask(
 
         # Refresh machine position?
         if t - tp > STATUS_POLL:
-            status = cnc.getStatusReport()
-            parserstate = cnc.getGcodeParserState()
+            status = cnc_status.get_status_report()
+            parserstate = cnc_status.get_parser_state()
             processed_lines = cnc.getCommandsCount()
             self.update_state(
                 state='PROGRESS',
@@ -106,7 +107,7 @@ def executeTask(
                 }
             )
 
-            if cnc.failed():
+            if cnc_status.failed():
                 break
 
             # GRBL finished executing file
@@ -171,20 +172,11 @@ def executeTask(
 
     cnc.disconnect()
 
-    if cnc.failed():
+    if cnc_status.failed():
         task_logger.critical('Failed execution of file: %s', file_path)
         repository.update_task_status(task.id, TASK_FAILED_STATUS)
 
-        error_message = 'There was an error'
-
-        if cnc.alarm():
-            error_message = 'An alarm was triggered'
-
-        error_message = (
-                f'{error_message} (code: {cnc.error_data["code"]}) '
-                f'while executing line: {cnc.error_line}.'
-                f'{cnc.error_data["message"]}:{cnc.error_data["description"]}'
-            )
+        error_message = cnc_status.get_error_message()
         task_logger.critical(error_message)
         raise Exception(error_message)
 
