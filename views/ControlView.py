@@ -49,9 +49,15 @@ class ControlView(BaseView):
 
         # GRBL SYNC
         self.grbl_sync = GrblSync(self.grbl_controller)
+        self.grbl_sync.new_message.connect(self.write_to_terminal)
+        self.grbl_sync.new_status.connect(self.update_device_status)
+        self.grbl_sync.failed.connect(self.failed_command)
+        self.grbl_sync.finished.connect(self.finished_command)
 
         # FILE SENDER
         self.file_streamer = FileStreamer(self.grbl_controller)
+        self.file_streamer.sent_line.connect(self.update_already_read_lines)
+        self.file_streamer.finished.connect(self.finished_file_stream)
 
     # SETUP METHODS
 
@@ -211,10 +217,6 @@ class ControlView(BaseView):
 
         # Configure GRBL sync
         self.grbl_sync.start_monitor()
-        self.grbl_sync.new_message.connect(self.write_to_terminal)
-        self.grbl_sync.new_status.connect(self.update_device_status)
-        self.grbl_sync.failed.connect(self.failed_command)
-        self.grbl_sync.finished.connect(self.finished_command)
 
     def disconnect_device(self):
         """Close the connection with the GRBL device.
@@ -301,8 +303,6 @@ class ControlView(BaseView):
 
         # Configure file sender
         self.file_streamer.set_file(file_path)
-        self.file_streamer.sent_line.connect(self.update_already_read_lines)
-        self.file_streamer.finished.connect(self.finished_file_stream)
         self.file_streamer.start()
 
     def pause_file_stream(self):
