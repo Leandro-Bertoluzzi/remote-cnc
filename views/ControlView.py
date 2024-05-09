@@ -15,7 +15,7 @@ from core.grbl.grblController import GrblController
 from core.grbl.types import GrblSettings, ParserState, Status
 from core.utils.serial import SerialService
 from helpers.cncWorkerMonitor import CncWorkerMonitor
-from helpers.fileSender import FileSender
+from helpers.fileStreamer import FileStreamer
 from helpers.grblSync import GrblSync
 import logging
 from typing import TYPE_CHECKING
@@ -50,7 +50,7 @@ class ControlView(BaseView):
         self.grbl_sync = GrblSync(self.grbl_controller)
 
         # FILE SENDER
-        self.file_sender = FileSender(self.grbl_controller)
+        self.file_streamer = FileStreamer(self.grbl_controller)
 
     # SETUP METHODS
 
@@ -234,6 +234,7 @@ class ControlView(BaseView):
         self.grbl_sync.new_message.connect(self.write_to_terminal)
         self.grbl_sync.new_status.connect(self.update_device_status)
         self.grbl_sync.failed.connect(self.failed_command)
+        self.grbl_sync.finished.connect(self.finished_command)
 
     def disconnect_device(self):
         """Close the connection with the GRBL device.
@@ -247,7 +248,7 @@ class ControlView(BaseView):
             self.showError('Error', str(error))
             return
         self.connected = False
-        self.file_sender.stop()
+        self.file_streamer.stop()
         self.grbl_sync.stop_monitor()
         try:
             self.connect_button.setText('Conectar')
@@ -319,29 +320,22 @@ class ControlView(BaseView):
         self.code_editor.resetProcessedLines()
 
         # Configure file sender
-        self.file_sender.set_file(file_path)
-        self.file_sender.sent_line.connect(self.update_already_read_lines)
-        self.file_sender.finished.connect(self.finished_file_stream)
-        self.file_sender.start()
+        self.file_streamer.set_file(file_path)
+        self.file_streamer.sent_line.connect(self.update_already_read_lines)
+        self.file_streamer.finished.connect(self.finished_file_stream)
+        self.file_streamer.start()
 
     def pause_file_stream(self):
         # Pause/Resume file streaming
-        self.file_sender.toggle_paused()
+        self.file_streamer.toggle_paused()
 
         # Pause/Resume GRBL controller
-        paused = self.file_sender.is_paused()
+        paused = self.file_streamer.is_paused()
         self.grbl_controller.setPaused(paused)
 
     def stop_file_stream(self):
         self.code_editor.setReadOnly(False)
-        self.file_sender.stop()
-
-    def finished_file_stream(self):
-        self.code_editor.setReadOnly(False)
-        self.showInfo(
-            'Archivo enviado',
-            'Se terminó de enviar el archivo para su ejecución, por favor espere a que termine'
-        )
+        self.file_streamer.stop()
 
     # Interaction with other widgets
 
@@ -388,10 +382,23 @@ class ControlView(BaseView):
     def update_already_read_lines(self, count: int):
         self.code_editor.markProcessedLines(count)
 
+    def finished_file_stream(self):
+        self.code_editor.setReadOnly(False)
+        self.showInfo(
+            'Archivo enviado',
+            'Se terminó de enviar el archivo para su ejecución, por favor espere a que termine.'
+        )
+
     def failed_command(self, error_message: str):
-        self.file_sender.pause()
+        self.file_streamer.pause()
 
         self.showError(
             'Error',
             f'{error_message}. Por favor, resuelva el error y reinicie la ejecución.'
         )
+
+    def finished_command(self):
+        """An "end of program" command was sent (M2, M30)
+        """
+        self.file_streamer.stop()
+        self.finished_file_stream()

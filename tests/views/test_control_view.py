@@ -8,7 +8,7 @@ from core.grbl.grblController import GrblController
 import core.mocks.grbl_mocks as grbl_mocks
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.grblSync import GrblSync
-from helpers.fileSender import FileSender
+from helpers.fileStreamer import FileStreamer
 from MainWindow import MainWindow
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QDialog, QMessageBox
@@ -124,7 +124,7 @@ class TestControlView:
         mock_grbl_disconnect = mocker.patch.object(GrblController, 'disconnect')
         mock_start_monitor = mocker.patch.object(GrblSync, 'start_monitor')
         mock_write_to_terminal = mocker.patch.object(ControlView, 'write_to_terminal')
-        mock_stop_sending_file = mocker.patch.object(FileSender, 'stop')
+        mock_stop_sending_file = mocker.patch.object(FileStreamer, 'stop')
         mock_stop_monitor = mocker.patch.object(GrblSync, 'stop_monitor')
 
         # Call method under test
@@ -307,8 +307,8 @@ class TestControlView:
         )
 
         # Mock file sender methods
-        mock_set_file_to_stream = mocker.patch.object(FileSender, 'set_file')
-        mock_start_file_stream = mocker.patch.object(FileSender, 'start')
+        mock_set_file_to_stream = mocker.patch.object(FileStreamer, 'set_file')
+        mock_start_file_stream = mocker.patch.object(FileStreamer, 'start')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
@@ -327,7 +327,7 @@ class TestControlView:
 
     def test_pause_file_stream(self, mocker: MockerFixture):
         # Mock file sender methods
-        mock_toggle_paused = mocker.patch.object(FileSender, 'toggle_paused')
+        mock_toggle_paused = mocker.patch.object(FileStreamer, 'toggle_paused')
 
         # Call method under test
         self.control_view.pause_file_stream()
@@ -337,7 +337,7 @@ class TestControlView:
 
     def test_stop_file_stream(self, mocker: MockerFixture):
         # Mock file sender methods
-        mock_stop = mocker.patch.object(FileSender, 'stop')
+        mock_stop = mocker.patch.object(FileStreamer, 'stop')
 
         # Call method under test
         self.control_view.stop_file_stream()

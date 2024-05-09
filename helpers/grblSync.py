@@ -14,6 +14,7 @@ class GrblSync(QObject):
     new_message = pyqtSignal(str)
     new_status = pyqtSignal(object, object)
     failed = pyqtSignal(str)
+    finished = pyqtSignal()
 
     # CONSTRUCTOR
 
@@ -24,6 +25,7 @@ class GrblSync(QObject):
         self.grbl_status = grbl_controller.grbl_status
         self.grbl_monitor = grbl_controller.grbl_monitor
         self._has_error = False
+        self._has_finished = False
 
         # Create and configure timers
         self.monitor_status = QTimer(self)
@@ -40,6 +42,9 @@ class GrblSync(QObject):
     # FLOW CONTROL
 
     def start_monitor(self):
+        # Reset state
+        self._has_error = False
+        self._has_finished = False
         # Start timers
         self.monitor_status.start()
         self.monitor_commands.start()
@@ -55,6 +60,13 @@ class GrblSync(QObject):
         status = self.grbl_status.get_status_report()
         parserstate = self.grbl_status.get_parser_state()
 
+        # Emit new status signal
+        self.new_status.emit(
+            status,
+            parserstate
+        )
+
+        # Check error status
         if self.grbl_status.failed() and not self._has_error:
             error_message = self.grbl_status.get_error_message()
             self.failed.emit(error_message)
@@ -63,11 +75,10 @@ class GrblSync(QObject):
         if self._has_error and not self.grbl_status.failed():
             self._has_error = False
 
-        # Emit new status signal
-        self.new_status.emit(
-            status,
-            parserstate
-        )
+        # Check if an "end of programm" command was sent
+        if self.grbl_status.finished() and not self._has_finished:
+            self.finished.emit()
+            self._has_finished = True
 
     def get_command(self):
         message = self.grbl_monitor.getLog()
