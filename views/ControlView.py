@@ -12,7 +12,7 @@ from components.Joystick import Joystick
 from components.Terminal import Terminal
 from config import SERIAL_BAUDRATE
 from core.grbl.grblController import GrblController
-from core.grbl.types import GrblSettings, Status
+from core.grbl.types import GrblSettings, ParserState, Status
 from core.utils.serial import SerialService
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.fileSender import FileSender
@@ -60,7 +60,8 @@ class ControlView(BaseView):
         grbl_logger = logging.getLogger('control_view_logger')
         grbl_logger.setLevel(logging.INFO)
         self.grbl_controller = GrblController(grbl_logger)
-        self.checkmode = self.grbl_controller.getCheckModeEnabled()
+        self.grbl_status = self.grbl_controller.grbl_status
+        self.checkmode = self.grbl_status.is_checkmode()
 
     def setup_ui(self):
         """ Setup UI
@@ -303,13 +304,13 @@ class ControlView(BaseView):
             return
 
         # Reset GRBL controller
-        if not self.grbl_controller.clearError():
+        if not self.grbl_status.clear_error():
             self.showError(
                 'Alarma activa',
                 'Hay una alarma activa, debe desactivarla antes de continuar.'
             )
             return
-        if self.grbl_controller.is_paused():
+        if self.grbl_status.paused():
             self.grbl_controller.setPaused(False)
         self.grbl_controller.restartCommandsCount()
 
@@ -377,14 +378,12 @@ class ControlView(BaseView):
     def update_device_status(
             self,
             status: Status,
-            feedrate: float,
-            spindle: float,
-            tool_index: int
+            parserstate: ParserState
     ):
         self.status_monitor.set_status(status)
-        self.status_monitor.set_feedrate(feedrate)
-        self.status_monitor.set_spindle(spindle)
-        self.status_monitor.set_tool(tool_index)
+        self.status_monitor.set_feedrate(parserstate['feedrate'])
+        self.status_monitor.set_spindle(parserstate['spindle'])
+        self.status_monitor.set_tool(parserstate['tool'])
 
     def update_already_read_lines(self, count: int):
         self.code_editor.markProcessedLines(count)

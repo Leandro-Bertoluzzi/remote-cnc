@@ -62,6 +62,7 @@ class TestControlView:
         # More assertions
         assert self.parent.addToolBar.call_count == (1 if device_busy else 2)
         assert mock_check_tasks_in_progress.call_count == 1
+        assert control_view.checkmode is False
 
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_control_view_goes_back_to_menu(self, device_busy):
@@ -447,7 +448,10 @@ class TestControlView:
         mock_set_tool = mocker.patch.object(ControllerStatus, 'set_tool')
 
         # Call method under test
-        self.control_view.update_device_status({}, 50.0, 500.0, 1)
+        self.control_view.update_device_status(
+            grbl_mocks.grbl_status,
+            grbl_mocks.grbl_parserstate
+        )
 
         # Assertions
         assert mock_set_status.call_count == 1

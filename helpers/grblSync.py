@@ -12,7 +12,7 @@ class GrblSync(QObject):
     # SIGNALS
 
     new_message = pyqtSignal(str)
-    new_status = pyqtSignal(object, float, float, int)
+    new_status = pyqtSignal(object, object)
     failed = pyqtSignal(str)
 
     # CONSTRUCTOR
@@ -21,7 +21,7 @@ class GrblSync(QObject):
         super().__init__()
 
         # Attributes definition
-        self.grbl_controller = grbl_controller
+        self.grbl_status = grbl_controller.grbl_status
         self.grbl_monitor = grbl_controller.grbl_monitor
         self._has_error = False
 
@@ -52,36 +52,21 @@ class GrblSync(QObject):
     # SLOTS
 
     def get_status(self):
-        status = self.grbl_controller.getStatusReport()
-        feedrate = self.grbl_controller.getFeedrate()
-        spindle = self.grbl_controller.getSpindle()
-        tool_index_grbl = self.grbl_controller.getTool()
+        status = self.grbl_status.get_status_report()
+        parserstate = self.grbl_status.get_parser_state()
 
-        if self.grbl_controller.failed() and not self._has_error:
-            error_message = 'There was an error'
-
-            if self.grbl_controller.alarm():
-                error_message = 'An alarm was triggered'
-
-            error_line = self.grbl_controller.error_line
-            error_data = self.grbl_controller.error_data
-            error_message = (
-                    f'{error_message} (code: {error_data["code"]}) '
-                    f'while executing line: {error_line}\n'
-                    f'{error_data["message"]}:{error_data["description"]}'
-                )
+        if self.grbl_status.failed() and not self._has_error:
+            error_message = self.grbl_status.get_error_message()
             self.failed.emit(error_message)
             self._has_error = True
 
-        if self._has_error and not self.grbl_controller.failed():
+        if self._has_error and not self.grbl_status.failed():
             self._has_error = False
 
         # Emit new status signal
         self.new_status.emit(
             status,
-            feedrate,
-            spindle,
-            tool_index_grbl
+            parserstate
         )
 
     def get_command(self):

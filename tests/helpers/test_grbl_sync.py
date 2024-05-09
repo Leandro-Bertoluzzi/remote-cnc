@@ -50,26 +50,56 @@ class TestGrblSync:
     def test_grbl_sync_status_received(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock GRBL controller methods
         mocker.patch.object(
-            self.grbl_controller,
-            'getStatusReport',
+            self.grbl_controller.grbl_status,
+            'get_status_report',
             return_value=grbl_mocks.grbl_status
         )
         mocker.patch.object(
-            self.grbl_controller,
-            'getFeedrate',
-            return_value=50.0
-        )
-        mocker.patch.object(
-            self.grbl_controller,
-            'getSpindle',
-            return_value=250.0
-        )
-        mocker.patch.object(
-            self.grbl_controller,
-            'getTool',
-            return_value=1
+            self.grbl_controller.grbl_status,
+            'get_parser_state',
+            return_value=grbl_mocks.grbl_parserstate
         )
 
         # Call method under test and wait for signal
         with qtbot.waitSignal(self.grbl_sync.new_status, raising=True):
             self.grbl_sync.get_status()
+
+    def test_grbl_sync_grbl_failed(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock GRBL controller methods
+        mocker.patch.object(
+            self.grbl_controller.grbl_status,
+            'failed',
+            return_value=True
+        )
+        mocker.patch.object(
+            self.grbl_controller.grbl_status,
+            'get_error_message',
+            return_value='An error message'
+        )
+
+        # Call method under test and wait for signal
+        with qtbot.waitSignal(self.grbl_sync.failed, raising=True):
+            self.grbl_sync.get_status()
+
+        # Assertions
+        self.grbl_sync._has_error is True
+
+    def test_grbl_sync_grbl_recovers_from_failed(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock state
+        self.grbl_sync._has_error = True
+
+        # Mock GRBL controller methods
+        mocker.patch.object(
+            self.grbl_controller.grbl_status,
+            'failed',
+            return_value=False
+        )
+
+        # Call method under test and wait for signal
+        with qtbot.waitSignal(self.grbl_sync.failed, timeout=500, raising=False) as blocker:
+            self.grbl_sync.get_status()
+
+        # Assertions
+        self.grbl_sync._has_error is False
+        # Check whether the signal was triggered
+        assert blocker.signal_triggered is False
