@@ -1,5 +1,6 @@
+from core.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
 from core.grbl.grblController import GrblController
-from helpers.fileSender import FileSender
+from helpers.fileStreamer import FileStreamer
 from logging import Logger
 from PyQt5.QtCore import QTimer
 import pytest
@@ -7,222 +8,102 @@ from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 
 
-class TestFileSender:
+class TestFileStreamer:
     @pytest.fixture(autouse=True)
     def setup_method(self):
         # Mock GRBL controller object
         self.grbl_controller = GrblController(Logger('test-logger'))
 
-        # Create an instance of FileSender
-        self.file_sender = FileSender(self.grbl_controller)
+        # Create an instance of FileStreamer
+        self.file_streamer = FileStreamer(self.grbl_controller)
 
     def test_file_set_file_path(self):
         # Call method under test
-        self.file_sender.set_file('/path/to/file.nc')
+        self.file_streamer.set_file('/path/to/file.nc')
 
         # Assertions
-        assert self.file_sender.file_path == '/path/to/file.nc'
+        assert self.file_streamer.file_sender.file_path == '/path/to/file.nc'
 
-    def test_file_sender_start(self, mocker: MockerFixture):
+    def test_file_streamer_start(self, mocker: MockerFixture):
+        # Mock Gcode sender method
+        mock_sender_start = mocker.patch.object(GcodeFileSender, 'start')
+
         # Mock timer method
         mock_timer_start = mocker.patch.object(QTimer, 'start')
 
         # Call method under test
-        self.file_sender.start()
+        self.file_streamer.start()
 
         # Assertions
+        assert mock_sender_start.call_count == 1
         assert mock_timer_start.call_count == 1
 
-    @pytest.mark.parametrize("paused", [False, True])
-    def test_file_sender_pause(self, mocker: MockerFixture, paused):
-        # Set attributes for test
-        self.file_sender._paused = paused
+    def test_file_streamer_pause(self, mocker: MockerFixture):
+        # Mock Gcode sender method
+        mock_sender_pause = mocker.patch.object(GcodeFileSender, 'pause')
 
         # Call method under test
-        self.file_sender.pause()
+        self.file_streamer.pause()
 
         # Assertions
-        assert self.file_sender._paused is True
+        assert mock_sender_pause.call_count == 1
 
-    @pytest.mark.parametrize("paused", [False, True])
-    def test_file_sender_resume(self, mocker: MockerFixture, paused):
-        # Set attributes for test
-        self.file_sender._paused = paused
+    def test_file_streamer_resume(self, mocker: MockerFixture):
+        # Mock Gcode sender method
+        mock_sender_resume = mocker.patch.object(GcodeFileSender, 'resume')
 
         # Call method under test
-        self.file_sender.resume()
+        self.file_streamer.resume()
 
         # Assertions
-        assert self.file_sender._paused is False
+        assert mock_sender_resume.call_count == 1
 
-    @pytest.mark.parametrize("paused", [False, True])
-    def test_file_sender_toggle_paused(self, mocker: MockerFixture, paused):
-        # Set attributes for test
-        self.file_sender._paused = paused
+    def test_file_streamer_toggle_paused(self, mocker: MockerFixture):
+        # Mock Gcode sender method
+        mock_sender_toggle_paused = mocker.patch.object(GcodeFileSender, 'toggle_paused')
 
         # Call method under test
-        self.file_sender.toggle_paused()
+        self.file_streamer.toggle_paused()
 
         # Assertions
-        assert self.file_sender._paused == (not paused)
+        assert mock_sender_toggle_paused.call_count == 1
 
-    def test_file_sender_stop(self, mocker: MockerFixture):
+    def test_file_streamer_stop(self, mocker: MockerFixture):
+        # Mock Gcode sender method
+        mock_sender_stop = mocker.patch.object(GcodeFileSender, 'stop')
+
         # Mock timer method
         mock_timer_stop = mocker.patch.object(QTimer, 'stop')
 
         # Call method under test
-        self.file_sender.stop()
+        self.file_streamer.stop()
 
         # Assertions
         assert mock_timer_stop.call_count == 1
+        assert mock_sender_stop.call_count == 1
 
-    @pytest.mark.parametrize("file_path", [None, 'path/to/file'])
-    def test_file_sender_open_file(self, mocker: MockerFixture, file_path):
-        # Mock attributes
-        self.file_sender.file_path = file_path
-
-        # Mock FS methods
-        mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
-        mock_open_file = mocker.patch('builtins.open', mocked_file_data)
-
-        # Call method under test
-        self.file_sender._open_file()
-
-        # Assertions
-        assert mock_open_file.call_count == (1 if file_path else 0)
-
-    def test_file_sender_send_line(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock attributes
-        self.file_sender.file_path = 'path/to/file'
-
-        # Mock GRBL methods
-        mock_grbl_get_buffer_fill = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'getBufferFill',
-            return_value=10.0
-        )
-        mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'sendCommand'
-        )
-
-        # Mock FS methods
-        mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
-        mocker.patch('builtins.open', mocked_file_data)
+    def test_file_streamer_send_line(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock Gcode sender method
+        mock_send_line = mocker.patch.object(GcodeFileSender, 'send_line')
 
         # Call method under test and wait for signal
-        with qtbot.waitSignal(self.file_sender.sent_line, raising=True):
-            self.file_sender._open_file()
-            self.file_sender.send_line()
+        with qtbot.waitSignal(self.file_streamer.sent_line, raising=True):
+            self.file_streamer.send_line()
 
         # Assertions
-        assert mock_grbl_get_buffer_fill.call_count == 1
-        assert mock_grbl_send_command.call_count == 1
+        assert mock_send_line.call_count == 1
 
-    def test_file_sender_no_file(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock GRBL methods
-        mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'sendCommand'
+    def test_file_streamer_send_whole_file(self, qtbot: QtBot, mocker: MockerFixture):
+        # Mock Gcode sender method
+        mock_send_line = mocker.patch.object(
+            GcodeFileSender,
+            'send_line',
+            side_effect=FinishedFile()
         )
 
         # Call method under test and wait for signal
-        with qtbot.waitSignal(self.file_sender.sent_line, timeout=500, raising=False) as blocker:
-            self.file_sender.send_line()
+        with qtbot.waitSignal(self.file_streamer.finished, raising=True):
+            self.file_streamer.send_line()
 
         # Assertions
-        assert mock_grbl_send_command.call_count == 0
-        # Check whether the signal was triggered
-        assert blocker.signal_triggered is False
-
-    def test_file_sender_paused(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock attributes
-        self.file_sender.file_path = 'path/to/file'
-
-        # Mock GRBL methods
-        mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'sendCommand'
-        )
-
-        # Mock FS methods
-        mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
-        mocker.patch('builtins.open', mocked_file_data)
-        self.file_sender._open_file()
-
-        # Mock state
-        self.file_sender._paused = True
-
-        # Call method under test and wait for signal
-        with qtbot.waitSignal(self.file_sender.sent_line, timeout=500, raising=False) as blocker:
-            self.file_sender.send_line()
-
-        # Assertions
-        assert mock_grbl_send_command.call_count == 0
-        # Check whether the signal was triggered
-        assert blocker.signal_triggered is False
-
-    def test_file_sender_avoids_filling_buffer(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock attributes
-        self.file_sender.file_path = 'path/to/file'
-
-        # Mock GRBL methods
-        mock_grbl_get_buffer_fill = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'getBufferFill',
-            return_value=100.0
-        )
-        mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'sendCommand'
-        )
-
-        # Mock FS methods
-        mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
-        mocker.patch('builtins.open', mocked_file_data)
-
-        # Call method under test and wait for signal
-        with qtbot.waitSignal(self.file_sender.sent_line, timeout=500, raising=False) as blocker:
-            self.file_sender._open_file()
-            self.file_sender.send_line()
-
-        # Assertions
-        assert mock_grbl_get_buffer_fill.call_count == 1
-        assert mock_grbl_send_command.call_count == 0
-        # Check whether the signal was triggered
-        assert blocker.signal_triggered is False
-
-    def test_file_sender_send_whole_file(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock attributes
-        self.file_sender.file_path = 'path/to/file'
-
-        # Mock GRBL methods
-        mock_grbl_get_buffer_fill = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'getBufferFill',
-            return_value=10.0
-        )
-        mock_grbl_send_command = mocker.patch.object(
-            self.file_sender.grbl_controller,
-            'sendCommand'
-        )
-
-        # Mock FS methods
-        mocked_file_data = mocker.mock_open(read_data=b'G1 X10 Y20\nG1 X30 Y40\nG1 X50 Y60')
-        mocker.patch('builtins.open', mocked_file_data)
-
-        # Mock other methods
-        mock_stop = mocker.patch.object(self.file_sender, 'stop')
-
-        # Call method under test and wait for signal
-        with qtbot.waitSignal(self.file_sender.finished, raising=True):
-            self.file_sender._open_file()
-            self.file_sender.send_line()
-            self.file_sender.send_line()
-            self.file_sender.send_line()
-            self.file_sender.send_line()
-
-        # Assertions
-        assert mock_grbl_get_buffer_fill.call_count == 4
-        assert mock_grbl_send_command.call_count == 3
-        assert mock_stop.call_count == 1
+        assert mock_send_line.call_count == 1
