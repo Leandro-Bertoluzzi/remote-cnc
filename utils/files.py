@@ -181,6 +181,6 @@ def deleteFile(userId: int, fileName: str) -> None:
     try:
         # Remove the file
         file_whole_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
-        file_whole_path.unlink()
+        file_whole_path.unlink(missing_ok=True)
     except Exception as error:
         raise FileSystemError(f'There was an error removing the file from the file system: {error}')
