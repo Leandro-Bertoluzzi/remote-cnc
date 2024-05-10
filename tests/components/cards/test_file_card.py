@@ -2,7 +2,8 @@ from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from core.database.exceptions import DatabaseError
 from core.database.models import File, User
-from core.database.repositories.fileRepository import DuplicatedFileNameError, FileRepository
+from core.database.repositories.fileRepository import DuplicatedFileNameError
+from core.utils.fileManager import FileManager
 from core.utils.files import FileSystemError
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
@@ -55,25 +56,22 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'exec', return_value=dialogResponse)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mocker.patch.object(FileRepository, 'check_file_exists')
-        mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
+        # Mock file manager methods
+        mock_rename_file = mocker.patch.object(FileManager, 'rename_file')
 
         # Call the updateFile method
         self.card.updateFile()
 
         # Validate function calls
         assert mock_rename_file.call_count == (1 if expected_updated else 0)
-        assert mock_update_file.call_count == (1 if expected_updated else 0)
 
         if expected_updated:
-            update_file_params = {
-                'id': 1,
+            rename_file_params = {
                 'user_id': 1,
-                'file_name': 'updated_name.gcode'
+                'file': self.file,
+                'new_name': 'updated_name.gcode'
             }
-            mock_update_file.assert_called_with(*update_file_params.values())
+            mock_rename_file.assert_called_with(*rename_file_params.values())
 
     def test_file_card_update_file_no_change(self, mocker: MockerFixture):
         # Mock FileDataDialog methods
@@ -81,16 +79,14 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
+        # Mock file manager methods
+        mock_rename_file = mocker.patch.object(FileManager, 'rename_file')
 
         # Call the updateFile method
         self.card.updateFile()
 
         # Validate function calls
         assert mock_rename_file.call_count == 0
-        assert mock_update_file.call_count == 0
 
     def test_file_card_update_file_repeated_name(self, mocker: MockerFixture):
         # Mock FileDataDialog methods
@@ -98,14 +94,12 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mocker.patch.object(
-            FileRepository,
-            'check_file_exists',
+        # Mock file manager methods
+        mock_rename_file = mocker.patch.object(
+            FileManager,
+            'rename_file',
             side_effect=DuplicatedFileNameError('mocked error')
         )
-        mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, 'showWarning')
@@ -114,8 +108,7 @@ class TestFileCard:
         self.card.updateFile()
 
         # Validate function calls
-        assert mock_rename_file.call_count == 0
-        assert mock_update_file.call_count == 0
+        assert mock_rename_file.call_count == 1
         assert mock_popup.call_count == 1
 
     def test_file_card_update_file_fs_error(self, mocker: MockerFixture):
@@ -124,13 +117,12 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mocker.patch.object(FileRepository, 'check_file_exists')
-        mock_rename_file = mocker.patch(
-            'components.cards.FileCard.renameFile',
+        # Mock file manager methods
+        mock_rename_file = mocker.patch.object(
+            FileManager,
+            'rename_file',
             side_effect=FileSystemError('mocked error')
         )
-        mock_update_file = mocker.patch.object(FileRepository, 'update_file')
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, 'showError')
@@ -140,7 +132,6 @@ class TestFileCard:
 
         # Validate function calls
         assert mock_rename_file.call_count == 1
-        assert mock_update_file.call_count == 0
         assert mock_popup.call_count == 1
 
     def test_file_card_update_file_db_error(self, mocker: MockerFixture):
@@ -149,12 +140,10 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mocker.patch.object(FileRepository, 'check_file_exists')
-        mock_rename_file = mocker.patch('components.cards.FileCard.renameFile')
-        mock_update_file = mocker.patch.object(
-            FileRepository,
-            'update_file',
+        # Mock file manager methods
+        mock_rename_file = mocker.patch.object(
+            FileManager,
+            'rename_file',
             side_effect=DatabaseError('mocked error')
         )
 
@@ -166,46 +155,43 @@ class TestFileCard:
 
         # Validate function calls
         assert mock_rename_file.call_count == 1
-        assert mock_update_file.call_count == 1
         assert mock_popup.call_count == 1
 
     @pytest.mark.parametrize(
-            "msgBoxResponse,expectedMethodCalls",
+            "msgBoxResponse,expected_updated",
             [
-                (QMessageBox.Yes, 1),
-                (QMessageBox.Cancel, 0)
+                (QMessageBox.Yes, True),
+                (QMessageBox.Cancel, False)
             ]
         )
     def test_file_card_remove_file(
         self,
         mocker: MockerFixture,
         msgBoxResponse,
-        expectedMethodCalls
+        expected_updated
     ):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=msgBoxResponse)
 
-        # Mock FS and DB methods
-        mock_delete_file = mocker.patch('components.cards.FileCard.deleteFile')
-        mock_remove_file = mocker.patch.object(FileRepository, 'remove_file')
+        # Mock file manager methods
+        mock_delete_file = mocker.patch.object(FileManager, 'remove_file')
 
         # Call the removeFile method
         self.card.removeFile()
 
         # Validate function calls
-        assert mock_delete_file.call_count == expectedMethodCalls
-        assert mock_remove_file.call_count == expectedMethodCalls
+        assert mock_delete_file.call_count == (1 if expected_updated else 0)
 
     def test_file_card_remove_file_fs_error(self, mocker: MockerFixture):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
-        # Mock FS and DB methods
-        mock_delete_file = mocker.patch(
-            'components.cards.FileCard.deleteFile',
+        # Mock file manager methods
+        mock_delete_file = mocker.patch.object(
+            FileManager,
+            'remove_file',
             side_effect=FileSystemError('mocked error')
         )
-        mock_remove_file = mocker.patch.object(FileRepository, 'remove_file')
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, 'showError')
@@ -215,17 +201,15 @@ class TestFileCard:
 
         # Validate function calls
         assert mock_delete_file.call_count == 1
-        assert mock_remove_file.call_count == 0
         assert mock_popup.call_count == 1
 
     def test_file_card_remove_file_db_error(self, mocker: MockerFixture):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, 'exec', return_value=QMessageBox.Yes)
 
-        # Mock FS and DB methods
-        mock_delete_file = mocker.patch('components.cards.FileCard.deleteFile')
-        mock_remove_file = mocker.patch.object(
-            FileRepository,
+        # Mock file manager methods
+        mock_delete_file = mocker.patch.object(
+            FileManager,
             'remove_file',
             side_effect=DatabaseError('mocked error')
         )
@@ -238,5 +222,4 @@ class TestFileCard:
 
         # Validate function calls
         assert mock_delete_file.call_count == 1
-        assert mock_remove_file.call_count == 1
         assert mock_popup.call_count == 1

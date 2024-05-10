@@ -1,12 +1,11 @@
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
-from config import USER_ID
-from core.database.base import Session as SessionLocal
+from config import USER_ID, PROJECT_ROOT
 from core.database.exceptions import DatabaseError, EntityNotFoundError
 from core.database.models import File
 from core.database.repositories.fileRepository import DuplicatedFileNameError
-from core.database.repositories.fileRepository import FileRepository
-from core.utils.files import renameFile, deleteFile, InvalidFile, FileSystemError
+from core.utils.files import InvalidFile, FileSystemError
+from core.utils.fileManager import FileManager
 from helpers.utils import needs_confirmation
 
 
@@ -15,6 +14,7 @@ class FileCard(Card):
         super(FileCard, self).__init__(parent)
 
         self.file = file
+        self.file_manager = FileManager(PROJECT_ROOT)
         self.setup_ui()
 
     def setup_ui(self):
@@ -38,22 +38,11 @@ class FileCard(Card):
             return
 
         try:
-            db_session = SessionLocal()
-            repository = FileRepository(db_session)
-            # Check if the file is repeated
-            repository.check_file_exists(USER_ID, name, 'impossible-hash')
-            # Update file in the file system
-            renameFile(
-                self.file.user_id,
-                self.file.file_name,
-                name
-            )
-            # Update the entry for the file in the DB
-            repository.update_file(self.file.id, self.file.user_id, name)
-        except DuplicatedFileNameError:
+            self.file_manager.rename_file(USER_ID, self.file, name)
+        except DuplicatedFileNameError as error:
             self.showWarning(
                 'Nombre repetido',
-                f'Ya existe un archivo con el nombre <<{name}>>, pruebe renombrarlo'
+                str(error)
             )
         except (InvalidFile, FileSystemError) as error:
             self.showError(
@@ -71,12 +60,7 @@ class FileCard(Card):
     @needs_confirmation('¿Realmente desea eliminar el archivo?', 'Eliminar archivo')
     def removeFile(self):
         try:
-            # Remove the file from the file system
-            deleteFile(self.file.user_id, self.file.file_name)
-            # Remove the entry for the file in the DB
-            db_session = SessionLocal()
-            repository = FileRepository(db_session)
-            repository.remove_file(self.file.id)
+            self.file_manager.remove_file(self.file)
         except FileSystemError as error:
             self.showError(
                 'Error de borrado',

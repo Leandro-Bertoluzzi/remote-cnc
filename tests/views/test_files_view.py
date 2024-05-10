@@ -2,8 +2,10 @@ from components.buttons.MenuButton import MenuButton
 from components.cards.FileCard import FileCard
 from components.cards.MsgCard import MsgCard
 from components.dialogs.FileDataDialog import FileDataDialog
-from core.database.repositories.fileRepository import DuplicatedFileError, \
+from core.database.repositories.fileRepository import DatabaseError, DuplicatedFileError, \
     DuplicatedFileNameError, FileRepository
+from core.utils.fileManager import FileManager
+from core.utils.files import FileSystemError
 from MainWindow import MainWindow
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 import pytest
@@ -51,7 +53,7 @@ class TestFilesView:
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
-    def test_files_view_init_with_no_files(self, mocker, helpers):
+    def test_files_view_init_with_no_files(self, mocker: MockerFixture, helpers):
         mock_get_all_files = mocker.patch.object(
             FileRepository,
             'get_all_files',
@@ -66,7 +68,7 @@ class TestFilesView:
         assert helpers.count_widgets(files_view.layout(), FileCard) == 0
         assert helpers.count_widgets(files_view.layout(), MsgCard) == 1
 
-    def test_files_view_init_db_error(self, mocker, helpers):
+    def test_files_view_init_db_error(self, mocker: MockerFixture, helpers):
         mock_get_all_files = mocker.patch.object(
             FileRepository,
             'get_all_files',
@@ -100,7 +102,7 @@ class TestFilesView:
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 2
 
-    def test_files_view_refresh_layout_db_error(self, mocker, helpers):
+    def test_files_view_refresh_layout_db_error(self, mocker: MockerFixture, helpers):
         # Mock DB methods to simulate error(s)
         # 1st execution: Widget creation (needs to success)
         # 2nd execution: Test case
@@ -126,13 +128,13 @@ class TestFilesView:
         assert helpers.count_widgets(files_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(files_view.layout(), FileCard) == 0
 
-    def test_files_view_create_file(self, mocker, helpers):
+    def test_files_view_create_file(self, mocker: MockerFixture, helpers):
         # Mock FileDataDialog methods
         mock_input = 'example-file-4', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
+        # Mock file manager methods
         def side_effect_create_file(user_id, file_name, file_hash):
             file_4 = File(
                 user_id=1,
@@ -143,11 +145,8 @@ class TestFilesView:
             self.files_list.append(file_4)
             return
 
-        mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch.object(FileRepository, 'check_file_exists')
-        mock_save_file = mocker.patch('views.FilesView.copyFile')
         mock_create_file = mocker.patch.object(
-            FileRepository,
+            FileManager,
             'create_file',
             side_effect=side_effect_create_file
         )
@@ -156,7 +155,6 @@ class TestFilesView:
         self.files_view.createFile()
 
         # Validate DB calls
-        assert mock_save_file.call_count == 1
         assert mock_create_file.call_count == 1
         assert self.mock_get_all_files.call_count == 2
 
@@ -164,21 +162,18 @@ class TestFilesView:
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 4
 
-    def test_files_view_create_file_repeated_name(self, mocker, helpers):
+    def test_files_view_create_file_repeated_name(self, mocker: MockerFixture, helpers):
         # Mock FileDataDialog methods
         mock_input = 'example-file-3', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch.object(
-            FileRepository,
-            'check_file_exists',
+        # Mock file manager methods
+        mock_create_file = mocker.patch.object(
+            FileManager,
+            'create_file',
             side_effect=DuplicatedFileNameError('mocked error')
         )
-        mock_save_file = mocker.patch('views.FilesView.copyFile')
-        mock_create_file = mocker.patch.object(FileRepository, 'create_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
@@ -187,28 +182,24 @@ class TestFilesView:
         self.files_view.createFile()
 
         # Assertions
-        assert mock_save_file.call_count == 0
-        assert mock_create_file.call_count == 0
+        assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
-    def test_files_view_create_file_duplicated(self, mocker, helpers):
+    def test_files_view_create_file_duplicated(self, mocker: MockerFixture, helpers):
         # Mock FileDataDialog methods
         mock_input = 'example-file-4', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch.object(
-            FileRepository,
-            'check_file_exists',
+        # Mock file manager methods
+        mock_create_file = mocker.patch.object(
+            FileManager,
+            'create_file',
             side_effect=DuplicatedFileError('mocked error')
         )
-        mock_save_file = mocker.patch('views.FilesView.copyFile')
-        mock_create_file = mocker.patch.object(FileRepository, 'create_file')
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
@@ -217,25 +208,23 @@ class TestFilesView:
         self.files_view.createFile()
 
         # Assertions
-        assert mock_save_file.call_count == 0
-        assert mock_create_file.call_count == 0
+        assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
-    def test_files_view_create_file_fs_error(self, mocker, helpers):
+    def test_files_view_create_file_fs_error(self, mocker: MockerFixture, helpers):
         # Mock FileDataDialog methods
         mock_input = 'example-file-4', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
-        # Mock FS and DB methods
-        mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch.object(FileRepository, 'check_file_exists')
-        mock_save_file = mocker.patch(
-            'views.FilesView.copyFile',
-            side_effect=Exception('mocked error')
+        # Mock file manager methods
+        mock_create_file = mocker.patch.object(
+            FileManager,
+            'create_file',
+            side_effect=FileSystemError('mocked error')
         )
         mock_create_file = mocker.patch.object(FileRepository, 'create_file')
 
@@ -246,27 +235,24 @@ class TestFilesView:
         self.files_view.createFile()
 
         # Assertions
-        assert mock_save_file.call_count == 1
         assert mock_create_file.call_count == 0
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
-    def test_files_view_create_file_db_error(self, mocker, helpers):
+    def test_files_view_create_file_db_error(self, mocker: MockerFixture, helpers):
         # Mock FileDataDialog methods
         mock_input = 'example-file-4', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
         mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
 
         # Mock FS and DB methods
-        mocker.patch('views.FilesView.computeSHA256')
-        mocker.patch.object(FileRepository, 'check_file_exists')
-        mock_save_file = mocker.patch('views.FilesView.copyFile')
+        # Mock file manager methods
         mock_create_file = mocker.patch.object(
-            FileRepository,
+            FileManager,
             'create_file',
-            side_effect=Exception('mocked error')
+            side_effect=DatabaseError('mocked error')
         )
 
         # Mock QMessageBox methods
@@ -276,7 +262,6 @@ class TestFilesView:
         self.files_view.createFile()
 
         # Assertions
-        assert mock_save_file.call_count == 1
         assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1

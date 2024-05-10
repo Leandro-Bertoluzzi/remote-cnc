@@ -3,8 +3,9 @@ from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID
 from core.database.base import Session as SessionLocal
 from core.database.repositories.fileRepository import DuplicatedFileError, \
-    DuplicatedFileNameError, FileRepository
-from core.utils.files import computeSHA256, copyFile
+    DuplicatedFileNameError, DatabaseError, FileRepository
+from core.utils.files import InvalidFile, FileSystemError
+from core.utils.fileManager import FileManager
 from views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 
@@ -39,41 +40,22 @@ class FilesView(BaseListView):
 
         name, path = fileDialog.getInputs()
 
-        # Checks if the file is repeated
-        file_hash = computeSHA256(path)
+        file_manager = FileManager()
         try:
-            db_session = SessionLocal()
-            repository = FileRepository(db_session)
-            repository.check_file_exists(USER_ID, name, file_hash)
-        except DuplicatedFileNameError:
-            self.showWarning(
-                'Nombre repetido',
-                f'Ya existe un archivo con el nombre <<{name}>>, pruebe renombrarlo'
-            )
-            return
-        except DuplicatedFileError as error:
+            file_manager.create_file(USER_ID, name, path)
+        except (DuplicatedFileNameError, DuplicatedFileError) as error:
             self.showWarning(
                 'Archivo repetido',
                 str(error)
             )
             return
-
-        # Save file in the file system
-        try:
-            copyFile(USER_ID, path, name)
-        except Exception as error:
+        except (InvalidFile, FileSystemError) as error:
             self.showError(
                 'Error de guardado',
                 str(error)
             )
             return
-
-        # Create an entry for the file in the DB
-        try:
-            db_session = SessionLocal()
-            repository = FileRepository(db_session)
-            repository.create_file(USER_ID, name, file_hash)
-        except Exception as error:
+        except DatabaseError as error:
             self.showError(
                 'Error de base de datos',
                 str(error)
