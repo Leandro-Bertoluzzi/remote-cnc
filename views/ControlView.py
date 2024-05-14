@@ -207,6 +207,7 @@ class ControlView(BaseView):
         try:
             response = self.grbl_controller.connect(self.port_selected, SERIAL_BAUDRATE)
         except Exception as error:
+            self.connect_button.setChecked(False)
             self.showError('Error', str(error))
             return
 
@@ -230,9 +231,10 @@ class ControlView(BaseView):
             self.showError('Error', str(error))
             return
         self.connected = False
-        self.file_streamer.stop()
-        self.grbl_sync.stop_monitor()
+
         try:
+            self.file_streamer.stop()
+            self.grbl_sync.stop_monitor()
             self.connect_button.setText('Conectar')
             self.enable_serial_widgets(False)
             self.status_monitor.set_status(GRBL_STATUS_DISCONNECTED)

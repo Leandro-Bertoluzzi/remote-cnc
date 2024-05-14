@@ -44,7 +44,7 @@ class TestLogsViewer:
         mock_thread_start = mocker.patch.object(QThread, 'start')
 
         # Call method under test
-        self.logs_viewer.start_watching()
+        self.logs_viewer.start()
 
         # Assertions
         assert mock_worker_move_to_thread.call_count == 1
@@ -173,7 +173,7 @@ class TestLogsViewer:
             [self.logs_viewer.logs_worker.new_log] * 3,
             raising=True
         ):
-            self.logs_viewer.start_watching()
+            self.logs_viewer.start()
 
         # Assertions
         assert mock_watcher.call_count == 1

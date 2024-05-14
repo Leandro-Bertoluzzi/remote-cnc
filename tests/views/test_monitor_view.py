@@ -17,7 +17,7 @@ class TestMonitorView:
         mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
 
         # Mock logs monitor methods
-        mocker.patch.object(LogsViewer, 'start_watching')
+        mocker.patch.object(LogsViewer, 'start')
 
         # Mock other methods
         mocker.patch.object(MonitorView, 'connect_worker')

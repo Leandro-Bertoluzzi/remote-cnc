@@ -222,7 +222,7 @@ class CodeEditor(IndexedTextEdit):
 
     def indexAreaWidth(self):
         digits = 1
-        count = max(1, self.blockCount())
+        count = max(1.0, self.blockCount())
         while count >= 10:
             count /= 10
             digits += 1

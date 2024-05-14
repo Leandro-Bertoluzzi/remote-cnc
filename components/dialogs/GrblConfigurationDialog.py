@@ -69,7 +69,7 @@ class GrblConfigurationDialog(QDialog):
         self.setLayout(layout)
         self.setWindowTitle('Configurar GRBL')
 
-    def updateModifiedItems(self, row, column):
+    def updateModifiedItems(self, row, _):
         parameter = self.settings.verticalHeaderItem(row).text()
         value = self.settings.item(row, 0).text()
         self.settings.item(row, 0).setBackground(QColor(19, 178, 45))

@@ -26,9 +26,6 @@ class FileStreamer(QObject):
         self.file_manager.setInterval(SEND_INTERVAL)
         self.file_manager.timeout.connect(self.send_line)
 
-    def __del__(self):
-        self.stop()
-
     # FLOW CONTROL
 
     def start(self):

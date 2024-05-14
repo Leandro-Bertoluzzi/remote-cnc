@@ -84,9 +84,6 @@ class LogsViewer(IndexedTextEdit):
         self.logs_thread: Optional[QThread] = None
         self.logs_worker = Worker()
 
-    def __del__(self):
-        self.stop()
-
     # Thread control methods
 
     def pause(self):
@@ -105,7 +102,7 @@ class LogsViewer(IndexedTextEdit):
         self.logs_thread.quit()
         self.logs_thread.wait()
 
-    def start_watching(self):
+    def start(self):
         # Create a QThread object
         self.logs_thread = QThread(self)
         # Move worker to the thread

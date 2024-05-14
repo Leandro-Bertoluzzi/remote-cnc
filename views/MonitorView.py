@@ -29,7 +29,7 @@ class MonitorView(BaseView):
         self.connect_worker()
 
         # Start monitors
-        self.logs_viewer.start_watching()
+        self.logs_viewer.start()
 
     # SETUP METHODS
 

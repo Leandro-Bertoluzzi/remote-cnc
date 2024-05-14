@@ -36,9 +36,6 @@ class GrblSync(QObject):
         self.monitor_commands.setInterval(COMMANDS_POLL)
         self.monitor_commands.timeout.connect(self.get_command)
 
-    def __del__(self):
-        self.stop_monitor()
-
     # FLOW CONTROL
 
     def start_monitor(self):

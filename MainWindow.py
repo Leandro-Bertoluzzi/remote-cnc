@@ -30,6 +30,10 @@ class MainWindow(QMainWindow):
             if CncWorkerMonitor.is_worker_running():
                 self.status_bar.updateDeviceStatus('TRABAJANDO...')
 
+        # Signals and slots
+        self.worker_monitor.task_finished.connect(self.on_task_finished)
+        self.worker_monitor.task_failed.connect(self.on_task_failed)
+
     # UI
 
     def adjustWindowSize(self) -> None:
@@ -116,8 +120,6 @@ class MainWindow(QMainWindow):
     def startWorkerMonitor(self, task_worker_id: str):
         self.status_bar.updateDeviceStatus('TRABAJANDO...')
         self.worker_monitor.start_task_monitor(task_worker_id)
-        self.worker_monitor.task_finished.connect(self.on_task_finished)
-        self.worker_monitor.task_failed.connect(self.on_task_failed)
         self.status_bar.setTemporalStatusMessage('Iniciado el monitor del worker')
 
     def enable_device(self):
