@@ -1,10 +1,11 @@
+from config import appConfig
 from containers.ButtonGrid import ButtonGrid
 from containers.ButtonList import ButtonList
 from core.grbl.grblController import GrblController
 from core.grbl.grblUtils import JOG_DISTANCE_INCREMENTAL
 from mixins.JogController import JogController
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 
 class Joystick(QWidget, JogController):
@@ -12,6 +13,7 @@ class Joystick(QWidget, JogController):
         super(Joystick, self).__init__(parent)
         self.set_controller(grbl_controller)
         self.setup_ui()
+        self.init_widgets()
 
     # UI methods
 
@@ -51,10 +53,27 @@ class Joystick(QWidget, JogController):
         label_units, layout_units = self.create_units_radio_buttons()
         self.layout_config.addRow(label_units, layout_units)
 
+        self.btn_set_default = QPushButton('Establecer por defecto')
+        self.btn_set_default.clicked.connect(self.set_default_values)
+        self.layout_config.addWidget(self.btn_set_default)
+
         layout.addLayout(self.layout_config)
 
-        # We ensure the correct units are shown in the widgets
-        self.control_units.buttons()[0].click()
+    def init_widgets(self):
+        step_x = appConfig.get_float('interface.control.jog', 'stepx', 0.0)
+        step_y = appConfig.get_float('interface.control.jog', 'stepy', 0.0)
+        step_z = appConfig.get_float('interface.control.jog', 'stepz', 0.0)
+        feedrate = appConfig.get_float('interface.control.jog', 'feedrate', 0.0)
+        units = appConfig.get_int('interface.control.jog', 'units', 0)
+
+        # Set default values
+        self.input_x.setValue(step_x)
+        self.input_y.setValue(step_y)
+        self.input_z.setValue(step_z)
+        self.input_feedrate.setValue(feedrate)
+
+        # Set units
+        self.control_units.buttons()[units].click()
 
     def create_joystick(self) -> QVBoxLayout:
         xy_joystick = ButtonGrid(
@@ -101,6 +120,21 @@ class Joystick(QWidget, JogController):
             input.setSuffix(unit_info['suffix'])
 
         self.input_feedrate.setSuffix(unit_info['suffix'] + '/min')
+
+    def set_default_values(self):
+        stepx = round(self.input_x.value(), 2)
+        stepy = round(self.input_y.value(), 2)
+        stepz = round(self.input_z.value(), 2)
+        feedrate = round(self.input_feedrate.value(), 2)
+        units = self.control_units.checkedId()
+
+        # Set default values
+        appConfig.set_float('interface.control.jog', 'stepx', stepx)
+        appConfig.set_float('interface.control.jog', 'stepy', stepy)
+        appConfig.set_float('interface.control.jog', 'stepz', stepz)
+        appConfig.set_float('interface.control.jog', 'feedrate', feedrate)
+        appConfig.set_int('interface.control.jog', 'units', units)
+        appConfig.save_config()
 
     # GRBL controller interaction
 

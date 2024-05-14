@@ -20,23 +20,23 @@ class TestJoystick:
 
     def test_joystick_set_units(self):
         # Mock attributes
-        self.joystick.units = 1
-
-        # Trigger action under test
-        self.joystick.control_units.button(2).click()
-
-        # Assertions
-        assert self.joystick.units == 2
-        assert self.joystick.input_x.suffix() == ' in'
-        assert self.joystick.input_y.suffix() == ' in'
-        assert self.joystick.input_z.suffix() == ' in'
-        assert self.joystick.input_feedrate.suffix() == ' in/min'
+        self.joystick.units = 0
 
         # Trigger action under test
         self.joystick.control_units.button(1).click()
 
         # Assertions
         assert self.joystick.units == 1
+        assert self.joystick.input_x.suffix() == ' in'
+        assert self.joystick.input_y.suffix() == ' in'
+        assert self.joystick.input_z.suffix() == ' in'
+        assert self.joystick.input_feedrate.suffix() == ' in/min'
+
+        # Trigger action under test
+        self.joystick.control_units.button(0).click()
+
+        # Assertions
+        assert self.joystick.units == 0
         assert self.joystick.input_x.suffix() == ' mm'
         assert self.joystick.input_y.suffix() == ' mm'
         assert self.joystick.input_z.suffix() == ' mm'
@@ -96,7 +96,7 @@ class TestJoystick:
     def test_send_jog_command(self):
         # Mock widget state
         self.joystick.input_feedrate.setValue(500.0)
-        self.joystick.units = 1
+        self.joystick.units = 0
 
         # Trigger action under test
         self.joystick.send_jog_command(1.5, 1.3, 1.2, 500.0, 'distance_incremental')

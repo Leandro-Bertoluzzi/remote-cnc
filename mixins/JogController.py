@@ -6,13 +6,13 @@ from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QHBoxLayout, QLabel, Q
 
 class JogController():
     UNIT_MAPPING = {
-        1: {'suffix': ' mm', 'distance_unit': JOG_UNIT_MILIMETERS},
-        2: {'suffix': ' in', 'distance_unit': JOG_UNIT_INCHES}
+        0: {'suffix': ' mm', 'distance_unit': JOG_UNIT_MILIMETERS},
+        1: {'suffix': ' in', 'distance_unit': JOG_UNIT_INCHES}
     }
 
     def __init__(self):
         # Attributes definition
-        self.units = 1  # Default to millimeters
+        self.units = 0  # Default to millimeters
 
     def set_controller(self, grbl_controller: GrblController):
         self.grbl_controller = grbl_controller
@@ -27,8 +27,8 @@ class JogController():
         layout_units.addWidget(radio_in)
 
         self.control_units = QButtonGroup()
-        self.control_units.addButton(radio_mm, 1)
-        self.control_units.addButton(radio_in, 2)
+        self.control_units.addButton(radio_mm, 0)
+        self.control_units.addButton(radio_in, 1)
         self.control_units.buttonClicked.connect(self.set_units)
 
         return label_units, layout_units

@@ -22,23 +22,23 @@ class TestAbsoluteMoveDialog:
 
     def test_move_dialog_set_units(self):
         # Mock attributes
-        self.dialog.units = 1
-
-        # Trigger action under test
-        self.dialog.control_units.button(2).click()
-
-        # Assertions
-        assert self.dialog.units == 2
-        assert self.dialog.input_x.suffix() == ' in'
-        assert self.dialog.input_y.suffix() == ' in'
-        assert self.dialog.input_z.suffix() == ' in'
-        assert self.dialog.input_feedrate.suffix() == ' in/min'
+        self.dialog.units = 0
 
         # Trigger action under test
         self.dialog.control_units.button(1).click()
 
         # Assertions
         assert self.dialog.units == 1
+        assert self.dialog.input_x.suffix() == ' in'
+        assert self.dialog.input_y.suffix() == ' in'
+        assert self.dialog.input_z.suffix() == ' in'
+        assert self.dialog.input_feedrate.suffix() == ' in/min'
+
+        # Trigger action under test
+        self.dialog.control_units.button(0).click()
+
+        # Assertions
+        assert self.dialog.units == 0
         assert self.dialog.input_x.suffix() == ' mm'
         assert self.dialog.input_y.suffix() == ' mm'
         assert self.dialog.input_z.suffix() == ' mm'
@@ -73,7 +73,7 @@ class TestAbsoluteMoveDialog:
     def test_send_jog_command(self):
         # Mock widget state
         self.dialog.input_feedrate.setValue(500.0)
-        self.dialog.units = 1
+        self.dialog.units = 0
 
         # Trigger action under test
         self.dialog.send_jog_command(1.5, 1.3, 1.2, 500.0, 'distance_absolute')

@@ -1,19 +1,21 @@
-from dotenv import load_dotenv
+from helpers.configManager import ConfigManager
 import os
 from pathlib import Path
 
-# Take environment variables from .env.
-load_dotenv(override=True)
-
-# Get environment variables
-USER_ID = int(os.environ.get('USER_ID') or '0')
-SERIAL_PORT = os.environ.get('SERIAL_PORT', '')
-SERIAL_BAUDRATE = int(os.environ.get('SERIAL_BAUDRATE', ''))
-
 # Generate global constants
-# PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+# PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = '/app'   # If worker runs inside container
 GRBL_LOGS_FILE = Path.cwd() / Path('core', 'logs', 'grbl.log')
+CONFIG_FILE = Path.cwd() / 'config.ini'
+
+# Initiate confiuration manager
+appConfig = ConfigManager(CONFIG_FILE)
+appConfig.load_config()
+
+# Get user-defined variables
+USER_ID = appConfig.get_int('general', 'userid', 0)
+SERIAL_PORT = appConfig.get_str('serial', 'port', '')
+SERIAL_BAUDRATE = appConfig.get_int('serial', 'baudrate', 115200)
 
 
 # Utility functions
