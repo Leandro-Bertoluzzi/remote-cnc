@@ -1,11 +1,12 @@
 import pytest
 from celery.app.task import Task
+from cncworker.workerStatusManager import WorkerStatusManager
 from database.repositories.taskRepository import TaskRepository
 from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
 from grbl.grblController import GrblController, GrblStatus
 from pytest_mock.plugin import MockerFixture
 import time
-from worker import executeTask, WORKER_PAUSE_REQUEST, WORKER_RESUME_REQUEST
+from worker import executeTask
 
 
 def test_execute_tasks(mocker: MockerFixture):
@@ -22,8 +23,13 @@ def test_execute_tasks(mocker: MockerFixture):
         nonlocal commands_count
         return commands_count
 
-    # Mock Redis methods
-    mocker.patch('worker.get_value', return_value='')
+    # Mock WorkerStatusManager methods
+    mocker.patch.object(
+        WorkerStatusManager,
+        'process_request',
+        return_value=(False, False)
+    )
+    mocker.patch.object(WorkerStatusManager, 'is_paused', return_value=False)
 
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
@@ -219,13 +225,37 @@ def test_execute_tasks_pause(mocker: MockerFixture):
         nonlocal commands_count
         return commands_count
 
-    # Mock Redis methods
-    mock_get_store_value = mocker.patch(
-        'worker.get_value',
-        side_effect=[WORKER_PAUSE_REQUEST, '', '', '', WORKER_RESUME_REQUEST, '', '', '', '']
+    # Mock WorkerStatusManager methods
+    mock_process_request = mocker.patch.object(
+        WorkerStatusManager,
+        'process_request',
+        side_effect=[
+            (True, False),
+            (False, False),
+            (False, False),
+            (False, False),
+            (False, True),
+            (False, False),
+            (False, False),
+            (False, False),
+            (False, False)
+        ]
     )
-    mock_set_store_value = mocker.patch('worker.set_value')
-    mock_delete_store_value = mocker.patch('worker.delete_value')
+    mocker.patch.object(
+        WorkerStatusManager,
+        'is_paused',
+        side_effect=[
+            True,
+            True,
+            True,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False
+        ]
+    )
 
     # Mock DB methods
     mocker.patch.object(TaskRepository, 'are_there_tasks_in_progress', return_value=False)
@@ -270,7 +300,5 @@ def test_execute_tasks_pause(mocker: MockerFixture):
     )
 
     # Assertions
-    assert mock_get_store_value.call_count == 8
-    assert mock_set_store_value.call_count == 1
-    assert mock_delete_store_value.call_count == 3
+    assert mock_process_request.call_count == 8
     assert mock_stream_line.call_count == 4

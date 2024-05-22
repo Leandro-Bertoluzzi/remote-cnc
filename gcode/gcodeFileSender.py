@@ -75,13 +75,13 @@ class GcodeFileSender:
 
     # SLOTS
 
-    def send_line(self):
+    def send_line(self) -> int:
         if not self.gcode or self._paused:
-            return
+            return self.current_line
 
         # Try not to fill the GRBL buffer
         if self.grbl_controller.getBufferFill() > MAX_BUFFER_FILL:
-            return
+            return self.current_line
 
         line = self.gcode.readline()
 

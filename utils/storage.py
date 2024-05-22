@@ -58,4 +58,4 @@ def delete_value(key: str):
         port=REDIS_PORT,
         db=REDIS_DB_STORAGE
     )
-    return r.delete(key)
+    r.delete(key)

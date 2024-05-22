@@ -4,6 +4,7 @@ import time
 
 try:
     from .cncworker.app import app
+    from .cncworker.workerStatusManager import WorkerStatusManager
     from .database.base import Session as SessionLocal
     from .database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
         TASK_FAILED_STATUS
@@ -11,9 +12,9 @@ try:
     from .gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from .grbl.grblController import GrblController
     from .utils.files import getFilePath
-    from .utils.storage import delete_value, get_value, set_value
 except ImportError:
     from cncworker.app import app
+    from cncworker.workerStatusManager import WorkerStatusManager
     from database.base import Session as SessionLocal
     from database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
         TASK_FAILED_STATUS
@@ -21,15 +22,10 @@ except ImportError:
     from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from grbl.grblController import GrblController
     from utils.files import getFilePath
-    from utils.storage import delete_value, get_value, set_value
 
 # Constants
 SEND_INTERVAL = 0.10    # Seconds
 STATUS_POLL = 0.10      # Seconds
-WORKER_REQUEST_KEY = 'worker_request'
-WORKER_PAUSE_REQUEST = 'grbl_pause'
-WORKER_RESUME_REQUEST = 'grbl_resume'
-WORKER_IS_PAUSED_KEY = 'worker_paused'
 
 
 @app.task(name='worker.tasks.executeTask', bind=True)
@@ -64,7 +60,7 @@ def executeTask(
     processed_lines = 0
     total_lines = 0
     finished_sending = False
-    paused = False
+    worker_status = WorkerStatusManager()
     # Initial CNC state
     status = cnc_status.get_status_report()
     parserstate = cnc_status.get_parser_state()
@@ -122,24 +118,17 @@ def executeTask(
         # Send new command?
         if t - ts > SEND_INTERVAL and not finished_sending:
             # Check if PAUSE or RESUME was requested
-            request = get_value(WORKER_REQUEST_KEY)
+            pause, resume = worker_status.process_request()
 
-            if request == WORKER_PAUSE_REQUEST:
+            if pause:
                 cnc.setPaused(True)
-                delete_value(WORKER_REQUEST_KEY)
-                set_value(WORKER_IS_PAUSED_KEY, 'True')
-                paused = True
                 file_sender.pause()
-                continue
 
-            if request == WORKER_RESUME_REQUEST:
+            if resume:
                 cnc.setPaused(False)
-                delete_value(WORKER_REQUEST_KEY)
-                delete_value(WORKER_IS_PAUSED_KEY)
-                paused = False
                 file_sender.resume()
 
-            if paused:
+            if worker_status.is_paused():
                 time.sleep(1)
                 continue
 
@@ -148,7 +137,6 @@ def executeTask(
             except FinishedFile:
                 finished_sending = True
                 file_sender.stop()
-                continue
 
             # update task progress
             self.update_state(
