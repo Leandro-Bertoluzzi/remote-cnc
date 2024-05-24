@@ -8,7 +8,6 @@ WorkerTaskList = dict[str, list[str]]
 WorkerStatus = TypedDict('WorkerStatus', {
     'connected': bool,
     'running': bool,
-    'available': bool,
     'stats': dict,
     'registered_tasks': Optional[WorkerTaskList],
     'active_tasks': Optional[WorkerTaskList]
@@ -37,14 +36,6 @@ def is_worker_running():
     return tasks_count > 0
 
 
-def is_worker_available():
-    """Returns whether the worker process is available to start working on a task.
-    """
-    connected = is_worker_on()
-    running = is_worker_running()
-    return connected and not running
-
-
 def get_worker_status() -> WorkerStatus:
     """Returns the worker status.
     """
@@ -52,14 +43,12 @@ def get_worker_status() -> WorkerStatus:
 
     connected = is_worker_on()
     running = is_worker_running()
-    available = connected and not running
     stats = inspector.stats()
     registered_tasks = inspector.registered()
     active_tasks = inspector.active()
     result = {
         'connected': connected,
         'running': running,
-        'available': available,
         'stats': stats,
         'registered_tasks': registered_tasks,
         'active_tasks': active_tasks

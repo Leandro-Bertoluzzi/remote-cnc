@@ -7,7 +7,7 @@ try:
     from .cncworker.workerStatusManager import WorkerStatusManager
     from .database.base import Session as SessionLocal
     from .database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
-        TASK_FAILED_STATUS
+        TASK_FAILED_STATUS, TASK_APPROVED_STATUS
     from .database.repositories.taskRepository import TaskRepository
     from .gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from .grbl.grblController import GrblController
@@ -17,7 +17,7 @@ except ImportError:
     from cncworker.workerStatusManager import WorkerStatusManager
     from database.base import Session as SessionLocal
     from database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
-        TASK_FAILED_STATUS
+        TASK_FAILED_STATUS, TASK_APPROVED_STATUS
     from database.repositories.taskRepository import TaskRepository
     from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from grbl.grblController import GrblController
@@ -40,12 +40,15 @@ def executeTask(
     repository = TaskRepository(db_session)
     # 1. Check if there is a task currently in progress, in which case return an exception
     if repository.are_there_tasks_in_progress():
-        raise Exception('There is a task currently in progress, please wait until finished')
+        raise Exception('Ya hay una tarea en progreso, por favor espere a que termine')
 
     # 2. Get the file for the requested task
     task = repository.get_task_by_id(task_id)
     if not task:
-        raise Exception('There are no pending tasks to process')
+        raise Exception('No se encontró la tarea en la base de datos')
+
+    if task.status != TASK_APPROVED_STATUS:
+        raise Exception(f'La tarea tiene un estado incorrecto: {task.status}')
 
     file_path = getFilePath(base_path, task.file.user_id, task.file.file_name)
 
@@ -72,14 +75,13 @@ def executeTask(
         total_lines = file_sender.start()
     except Exception as error:
         cnc.disconnect()
-        task_logger.critical('Error opening file: %s', file_path)
+        task_logger.critical('Error al abrir el archivo: %s', file_path)
         task_logger.critical(error)
-        repository.update_task_status(task.id, TASK_FAILED_STATUS)
         raise error
 
     # Once sure the file exists, mark the task as 'in progress' in the DB
     repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS)
-    task_logger.info('Started execution of file: %s', file_path)
+    task_logger.info('Comenzada la ejecución del archivo: %s', file_path)
 
     # 4. Send G-code lines in a loop, until either the file is finished or there is an error
     ts = tp = time.time()  # last time a command was sent and info was queried
@@ -158,7 +160,7 @@ def executeTask(
     cnc.disconnect()
 
     if cnc_status.failed():
-        task_logger.critical('Failed execution of file: %s', file_path)
+        task_logger.critical('Error durante la ejecución del archivo: %s', file_path)
         repository.update_task_status(task.id, TASK_FAILED_STATUS)
 
         error_message = cnc_status.get_error_message()
@@ -166,7 +168,7 @@ def executeTask(
         raise Exception(error_message)
 
     # SUCCESS
-    task_logger.info('Finished execution of file: %s', file_path)
+    task_logger.info('Finalizada la ejecución del archivo: %s', file_path)
     repository.update_task_status(task.id, TASK_FINISHED_STATUS)
 
     return True
