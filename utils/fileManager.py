@@ -1,21 +1,63 @@
 from pathlib import Path
 import shutil
+from typing import BinaryIO
 
 try:
     from database.base import Session as SessionLocal
     from database.models import File
     from database.repositories.fileRepository import FileRepository
-    from utils.files import computeSHA256, copyFile, renameFile, deleteFile, getFilePath
+    from utils.files import computeSHA256, computeSHA256FromFile, copyFile, renameFile, \
+        deleteFile, getFilePath, saveFile
 except ImportError:
     from ..database.base import Session as SessionLocal
     from ..database.models import File
     from ..database.repositories.fileRepository import FileRepository
-    from .files import computeSHA256, copyFile, renameFile, deleteFile, getFilePath
+    from .files import computeSHA256, computeSHA256FromFile, copyFile, renameFile, \
+        deleteFile, getFilePath, saveFile
 
 
 class FileManager:
     def __init__(self, base_path: str = ''):
         self.base_path = base_path
+
+    def upload_file(self, user_id: int, file_name: str, file: BinaryIO):
+        """Creates a file in the FS and saves it to the DB.
+        It either FS or DB raises an error, it rollbacks the whole operation.
+
+        Arguments:
+        - user_id (int): User ID.
+        - file_name (str): File name of the new file.
+        - origin_path (str): File path to the original file.
+
+        Returns: None
+
+        Raises:
+        - DuplicatedFileNameError: A file with the same name already exists for the current user.
+        - DuplicatedFileError: A file with the same content already exists for the current user.
+        - DatabaseError: Error from ORM.
+        - InvalidFile: Invalid file extension.
+        - FileSystemError: An error ocurred during file creation in FS.
+        """
+        # Instantiate repository
+        db_session = SessionLocal()
+        repository = FileRepository(db_session)
+
+        # Checks if the file is repeated
+        # can raise (DuplicatedFileNameError, DuplicatedFileError)
+        file_hash = computeSHA256FromFile(file)
+        repository.check_file_exists(user_id, file_name, file_hash)
+
+        # Save file in the file system
+        # Can raise (InvalidFile, FileSystemError)
+        created_path = saveFile(user_id, file, file_name)
+
+        # Create an entry for the file in the DB
+        # Can raise DatabaseError
+        try:
+            repository.create_file(user_id, file_name, file_hash)
+        except Exception as error:
+            self._rollback_created(created_path)
+            raise error
 
     def create_file(self, user_id: int, file_name: str, origin_path: str):
         """Creates a file in the FS and saves it to the DB.
@@ -105,6 +147,35 @@ class FileManager:
             self._rollback_renamed(updated_path, original_path)
             raise error
 
+    def rename_file_by_id(self, user_id: int, file_id: int, new_name: str):
+        """Renames a file in the FS and update it in the DB.
+        It either FS or DB raises an error, it rollbacks the whole operation.
+
+        Arguments:
+        - user_id (int): User ID.
+        - file (File): Current file in DB.
+        - new_name (str): New file name for the file.
+
+        Returns: None
+
+        Raises:
+        - DuplicatedFileNameError: A file with the same name already exists for the current user.
+        - InvalidFile: Invalid file extension.
+        - EntityNotFoundError: The file was not found in the DB.
+        - DatabaseError: Error from ORM.
+        - FileSystemError: An error ocurred during file update in FS.
+        """
+        # Instantiate repository
+        db_session = SessionLocal()
+        repository = FileRepository(db_session)
+
+        # Get file
+        # Can raise (EntityNotFoundError, DatabaseError)
+        file = repository.get_file_by_id(file_id)
+
+        # Original method
+        self.rename_file(user_id, file, new_name)
+
     def remove_file(self, file: File):
         """Removes a file from the FS and the DB.
         If the FS or DB raises an error, it rollbacks the whole operation.
@@ -144,6 +215,31 @@ class FileManager:
             raise error
 
         self._remove_backup()
+
+    def remove_file_by_id(self, file_id: int):
+        """Removes a file from the FS and the DB.
+        If the FS or DB raises an error, it rollbacks the whole operation.
+
+        Arguments:
+        - file (File): Current file in DB.
+
+        Returns: None
+
+        Raises:
+        - EntityNotFoundError: The file was not found in the DB.
+        - DatabaseError: Error from ORM.
+        - FileSystemError: An error ocurred during file removal in FS.
+        """
+        # Instantiate repository
+        db_session = SessionLocal()
+        repository = FileRepository(db_session)
+
+        # Get file
+        # Can raise (EntityNotFoundError, DatabaseError)
+        file = repository.get_file_by_id(file_id)
+
+        # Original method
+        self.remove_file(file)
 
     # UTILITIES
 
