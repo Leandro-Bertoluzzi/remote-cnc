@@ -70,6 +70,9 @@ def computeSHA256FromFile(file: BinaryIO) -> str:
     hash_sha256 = hashlib.sha256()
     for chunk in iter(lambda: file.read(4096), b""):
         hash_sha256.update(chunk)
+
+    # Once finished, reset the file pointer
+    file.seek(0)
     return hash_sha256.hexdigest()
 
 

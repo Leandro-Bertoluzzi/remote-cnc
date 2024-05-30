@@ -250,12 +250,19 @@ class FileManager:
         file_path.rename(old_name)
 
     def _rollback_removed(self, file_path: Path):
-        shutil.move(self.backup_path, file_path)
+        try:
+            shutil.move(self.backup_path, file_path)
+        except Exception:
+            pass
 
     def _backup_file(self, file_path: Path):
+        if not file_path.exists():
+            return
         self.backup_path = file_path.parent.parent / (file_path.name + ".backup")
-        if self.backup_path.exists():
-            shutil.copy(file_path, self.backup_path)
+        shutil.copy(file_path, self.backup_path)
 
     def _remove_backup(self):
-        self.backup_path.unlink(missing_ok=True)
+        try:
+            self.backup_path.unlink(missing_ok=True)
+        except Exception:
+            pass
