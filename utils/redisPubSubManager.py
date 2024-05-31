@@ -1,3 +1,4 @@
+import asyncio
 import redis.asyncio as aioredis
 from redis.asyncio.client import PubSub
 
@@ -32,7 +33,11 @@ class RedisPubSubManager:
         self.redis_connection = await self._get_redis_connection()
         self.pubsub = self.redis_connection.pubsub()
 
-    async def _publish(self, channel: str, message: str) -> None:
+    def connect_sync(self) -> None:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.connect())
+
+    async def publish(self, channel: str, message: str) -> None:
         """
         Publishes a message to a specific Redis channel.
 
@@ -41,6 +46,10 @@ class RedisPubSubManager:
             message (str): Message to be published.
         """
         await self.redis_connection.publish(channel, message)
+
+    def publish_sync(self, channel: str, message: str) -> None:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.publish(channel, message))
 
     async def subscribe(self, channel: str) -> PubSub:
         """
@@ -70,3 +79,7 @@ class RedisPubSubManager:
         """
         await self.pubsub.unsubscribe()
         self.pubsub = None
+
+    def disconnect_sync(self) -> None:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.disconnect())

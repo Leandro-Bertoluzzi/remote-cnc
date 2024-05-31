@@ -25,11 +25,12 @@ class ToolRepository:
     def get_tool_by_id(self, id: int):
         try:
             tool = self.session.get(Tool, id)
-            if not tool:
-                raise EntityNotFoundError(f'Tool with ID {id} was not found')
-            return tool
         except SQLAlchemyError as e:
             raise DatabaseError(f'Error retrieving the tool with ID {id}: {e}')
+
+        if not tool:
+            raise EntityNotFoundError(f'Tool with ID {id} was not found')
+        return tool
 
     def get_all_tools(self):
         try:

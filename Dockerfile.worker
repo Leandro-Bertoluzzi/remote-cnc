@@ -23,6 +23,7 @@ WORKDIR /app
 COPY ./config.py /app
 COPY ./worker.py /app
 COPY ./database /app/database
+COPY ./gcode /app/gcode
 COPY ./grbl /app/grbl
 COPY ./utils /app/utils
 COPY ./cncworker /app/cncworker

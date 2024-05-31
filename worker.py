@@ -1,5 +1,6 @@
 from celery import Task
 from celery.utils.log import get_task_logger
+import json
 import time
 
 try:
@@ -12,6 +13,7 @@ try:
     from .gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from .grbl.grblController import GrblController
     from .utils.files import getFilePath
+    from .utils.redisPubSubManager import RedisPubSubManager
 except ImportError:
     from cncworker.app import app
     from cncworker.workerStatusManager import WorkerStatusManager
@@ -22,10 +24,12 @@ except ImportError:
     from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from grbl.grblController import GrblController
     from utils.files import getFilePath
+    from utils.redisPubSubManager import RedisPubSubManager
 
 # Constants
 SEND_INTERVAL = 0.10    # Seconds
 STATUS_POLL = 0.10      # Seconds
+STATUS_CHANNEL = 'grbl_status'
 
 
 @app.task(name='worker.tasks.executeTask', bind=True)
@@ -83,6 +87,10 @@ def executeTask(
     repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS)
     task_logger.info('Comenzada la ejecución del archivo: %s', file_path)
 
+    # Start a PubSub manager to notify updates
+    redis = RedisPubSubManager()
+    redis.connect_sync()
+
     # 4. Send G-code lines in a loop, until either the file is finished or there is an error
     ts = tp = time.time()  # last time a command was sent and info was queried
 
@@ -104,6 +112,13 @@ def executeTask(
                     'parserstate': parserstate
                 }
             )
+            message = json.dumps({
+                'processed_lines': processed_lines,
+                'total_lines': total_lines,
+                'status': status,
+                'parserstate': parserstate
+            })
+            redis.publish_sync(STATUS_CHANNEL, message)
 
             if cnc_status.finished():
                 break
@@ -151,6 +166,11 @@ def executeTask(
                     'parserstate': parserstate
                 }
             )
+            message = json.dumps({
+                'sent_lines': sent_lines,
+                'total_lines': total_lines
+            })
+            redis.publish_sync(STATUS_CHANNEL, message)
 
             ts = t
 
@@ -158,6 +178,7 @@ def executeTask(
     # and update its status in the DB
 
     cnc.disconnect()
+    redis.disconnect()
 
     if cnc_status.failed():
         task_logger.critical('Error durante la ejecución del archivo: %s', file_path)
