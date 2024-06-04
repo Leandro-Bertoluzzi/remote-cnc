@@ -76,7 +76,8 @@ def executeTask(
     # Initiates the file sender
     file_sender = GcodeFileSender(cnc, file_path)
     try:
-        total_lines = file_sender.start()
+        # Account for line added at the end (G4 P0)
+        total_lines = file_sender.start() + 1
     except Exception as error:
         cnc.disconnect()
         task_logger.critical('Error al abrir el archivo: %s', file_path)
@@ -152,6 +153,8 @@ def executeTask(
             try:
                 sent_lines = file_sender.send_line()
             except FinishedFile:
+                cnc.sendCommand('G4 P0')    # Ask to wait for finish
+                sent_lines += 1
                 finished_sending = True
                 file_sender.stop()
 
