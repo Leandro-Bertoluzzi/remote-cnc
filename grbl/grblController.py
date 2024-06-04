@@ -570,4 +570,5 @@ class GrblController:
                 tosend = None
                 if t - tg > G_POLL:
                     self.queryGcodeParserState()
+                    self.commands_count -= 1    # Avoid counting non-sent commands
                     tg = t
