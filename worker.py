@@ -13,7 +13,7 @@ try:
     from .gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from .grbl.grblController import GrblController
     from .utils.files import getFilePath
-    from .utils.redisPubSubManager import RedisPubSubManager
+    from .utils.redisPubSubManager import RedisPubSubManagerSync
 except ImportError:
     from cncworker.app import app
     from cncworker.workerStatusManager import WorkerStatusManager
@@ -24,7 +24,7 @@ except ImportError:
     from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
     from grbl.grblController import GrblController
     from utils.files import getFilePath
-    from utils.redisPubSubManager import RedisPubSubManager
+    from utils.redisPubSubManager import RedisPubSubManagerSync
 
 # Constants
 SEND_INTERVAL = 0.10    # Seconds
@@ -88,8 +88,8 @@ def executeTask(
     task_logger.info('Comenzada la ejecución del archivo: %s', file_path)
 
     # Start a PubSub manager to notify updates
-    redis = RedisPubSubManager()
-    redis.connect_sync()
+    redis = RedisPubSubManagerSync()
+    redis.connect()
 
     # 4. Send G-code lines in a loop, until either the file is finished or there is an error
     ts = tp = time.time()  # last time a command was sent and info was queried
@@ -118,7 +118,7 @@ def executeTask(
                 'status': status,
                 'parserstate': parserstate
             })
-            redis.publish_sync(STATUS_CHANNEL, message)
+            redis.publish(STATUS_CHANNEL, message)
 
             if cnc_status.finished():
                 break
@@ -170,7 +170,7 @@ def executeTask(
                 'sent_lines': sent_lines,
                 'total_lines': total_lines
             })
-            redis.publish_sync(STATUS_CHANNEL, message)
+            redis.publish(STATUS_CHANNEL, message)
 
             ts = t
 

@@ -1,12 +1,21 @@
+import json
 import logging
 from .parsers.grblMsgTypes import GRBL_MSG_STATUS
 from pathlib import Path
 from queue import Empty, Queue
 from typing import Optional
 
+try:
+    from ..utils.redisPubSubManager import RedisPubSubManagerSync
+except ImportError:
+    from utils.redisPubSubManager import RedisPubSubManagerSync
+
+# Constants
+PUBSUB_CHANNEL = 'grbl_messages'
+
 
 class GrblMonitor:
-    def __init__(self, logger: logging.Logger, ):
+    def __init__(self, logger: logging.Logger):
         # Configure logs queue for external monitor
         self.queue_log: Queue[str] = Queue()
 
@@ -23,11 +32,17 @@ class GrblMonitor:
         self.logger = logger
         self.logger.addHandler(file_handler)
 
+        # Start a PubSub manager to notify updates to external apps
+        self.redis = RedisPubSubManagerSync()
+        self.redis.connect()
+
     def __del__(self):
         # Removes the file handler from the logger
         for h in self.logger.handlers:
             if isinstance(h, logging.FileHandler):
                 self.logger.removeHandler(h)
+        # Unsubscribes from PubSub
+        self.redis.disconnect()
 
     # LOGGER
 
@@ -63,6 +78,12 @@ class GrblMonitor:
             return
         self.logger.info('[Sent] command: %s', command)
         self.queueLog(command)
+        # Publish in PubSub
+        pubsub_message = json.dumps({
+            'type': 'sent',
+            'message': command
+        })
+        self.redis.publish(PUBSUB_CHANNEL, pubsub_message)
 
     def received(self, message: str, msgType: Optional[str], payload: dict[str, str]):
         if (msgType == GRBL_MSG_STATUS):
@@ -73,6 +94,12 @@ class GrblMonitor:
         self.logger.info('[Received] Message from GRBL: %s', message)
         self.logger.info('[Parsed] Message type: %s| Payload: %s', msgType, payload)
         self.queueLog(message)
+        # Publish in PubSub
+        pubsub_message = json.dumps({
+            'type': 'received',
+            'message': message
+        })
+        self.redis.publish(PUBSUB_CHANNEL, pubsub_message)
 
     # LOGS QUEUE MANAGEMENT
 
