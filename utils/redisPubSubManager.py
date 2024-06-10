@@ -46,7 +46,7 @@ class RedisPubSubManager:
     @abstractmethod
     async def get_message(self) -> PubSubMessage:
         """
-        Publishes a message to a specific Redis channel.
+        Get the next message in subscribed topic(s) if one is available, otherwise None.
 
         Returns:
             PubSubMessage: Message published to subscribed topic(s).
