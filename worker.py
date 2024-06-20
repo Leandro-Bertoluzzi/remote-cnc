@@ -280,6 +280,12 @@ def cncServer(
     # disconnect from the GRBL device
 
     cnc.disconnect()
+
+    message = json.dumps({
+        'status': cnc_status.get_status_report()
+    })
+    redis.publish(STATUS_CHANNEL, message)
+
     redis.disconnect()
     task_logger.info('**Finalizado servidor de comandos CNC**')
 
