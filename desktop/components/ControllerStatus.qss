@@ -1,0 +1,22 @@
+QLabel {
+    color: black;
+    font: bold 14px;
+    min-width: 250px;
+    max-width: 250px;
+    padding: 0 6px;
+}
+
+QLabel[class="status"] {
+    background-color: #808080;
+    border-radius: 5px;
+    color: #2a2b39;
+    padding: 6px;
+}
+
+QLabel[class="coordinates"] {
+    background-color: #2a2c2d;
+    border-radius: 5px;
+    color: #407d84;
+    padding: 6px;
+    font-family: monospace;
+}

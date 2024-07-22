@@ -1,0 +1,28 @@
+name: cnc-local-app-dev
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - alembic=1.10.*
+  - bcrypt=3.2.*
+  - flake8=6.1.*
+  - mypy==1.5.*
+  - pip
+  - psycopg2=2.9.*
+  - pyqt=5.15.*
+  - pyqt-stubs
+  - pyserial=3.5
+  - pytest=7.4.*
+  - pytest-cov=4.1.*
+  - pytest-env=1.1.*
+  - pytest-mock=3.10.*
+  - pytest-qt=4.4.*
+  - python=3.9
+  - python-dotenv
+  - sqlalchemy=2.0.*
+  - watchdog
+  - pip:
+    - "celery[redis]"
+    - celery-types
+    - pytest-sqlalchemy-mock
+    - PyQtWebEngine==5.15.*

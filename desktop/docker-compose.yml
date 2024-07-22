@@ -1,0 +1,59 @@
+name: cnc-manager
+
+services:
+  postgresql:
+    image: postgres:16.1-alpine
+    #image: arm32v7/postgres:16.1-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres-datavolume:/var/lib/postgresql/data
+    container_name: cnc-admin-postgresql
+
+  adminer:
+    image: adminer:4.8.1
+    #image: arm32v7/adminer:4.8.1
+    depends_on:
+      - postgresql
+    ports:
+      - "8080:8080"
+    container_name: cnc-admin-adminer
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - 6379:6379
+    container_name: cnc-admin-redis
+
+  worker:
+    command: celery --app worker worker --loglevel=INFO --logfile=logs/celery.log
+    depends_on:
+      - redis
+      - postgresql
+    device_cgroup_rules:
+      - 'c 188:* rmw'
+    env_file:
+      - ./core/.env
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=postgresql
+    volumes:
+      - ./gcode_files:/app/gcode_files
+      - ./core/logs:/app/logs
+    container_name: cnc-admin-worker
+
+  flower:
+    image: mher/flower
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    depends_on:
+      - redis
+      - worker
+    ports:
+      - 5555:5555
+
+volumes:
+  postgres-datavolume:

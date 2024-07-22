@@ -1,0 +1,11 @@
+services:
+  worker:
+    build:
+      context: ./core
+      dockerfile: ./Dockerfile.worker
+      target: production
+    volumes:
+      # Devices
+      - /dev:/dev
+      # Devices information
+      - /run/udev:/run/udev:ro

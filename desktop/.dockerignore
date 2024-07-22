@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Environments
+.env*
+venv/
+conda/
+
+# Test related files
+tests/
+htmlcov/
+.coverage
+
+# Documentation
+docs/
+README.md
+
+# User files
+gcode_files/
+
+# Log files
+*.log
+
+# Cache files
+.*_cache/
+
+# Git related files
+.git/
+.gitignore
+.gitmodules
+
+# Docker related files
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Configuration
+.editorconfig
+Makefile
+setup.cfg
