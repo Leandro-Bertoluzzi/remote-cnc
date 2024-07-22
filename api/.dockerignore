@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Cache files
+**.*_cache/
+
+# Environments
+.env*
+venv/
+environment.yml
+
+# Test related files
+.coverage
+
+# Documentation
+docs/
+postman/
+README.md
+
+# User files
+gcode_files/
+
+# Log files
+*.log
+
+# Cache files
+.*_cache/
+
+# Git related files
+.git/
+.gitignore
+.gitmodules
+
+# Docker related files
+docker-compose.yaml
+docker-compose.*.yaml
+Dockerfile
+.dockerignore
+
+# Configuration
+.editorconfig
+
+# Reverse proxy
+nginx/

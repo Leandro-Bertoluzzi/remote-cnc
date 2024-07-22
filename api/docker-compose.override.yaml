@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:8000"
+    pull_policy: never
+    volumes:
+      - ./:/app
+
+  postgresql:
+    ports:
+      - ${DB_PORT}:5432
+
+  worker:
+    build:
+      context: ./core
+      dockerfile: ./Dockerfile.worker
+      target: production
+    volumes:
+      # Devices
+      - /dev:/dev
+      # Devices information
+      - /run/udev:/run/udev:ro
+
+  testdb:
+    image: postgres:16.1-alpine
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=cnc_db
+    ports:
+      - 5000:5432
+    container_name: remote-cnc-testdb
+
+  ngrok:
+    restart: unless-stopped
+    command: http api:8000 --scheme http,https
+    ports:
+      - 4040:4040

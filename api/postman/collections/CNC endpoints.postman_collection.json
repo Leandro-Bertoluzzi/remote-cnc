@@ -1,0 +1,1541 @@
+{
+	"info": {
+		"_postman_id": "4076a463-98e5-4a8b-91a5-88554c73755d",
+		"name": "CNC endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10553870"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get all users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Test\",\r\n    \"email\": \"testing@test.com\",\r\n    \"password\": \"abcABC@123\",\r\n    \"role\": \"user\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Test update\",\r\n    \"email\": \"testing-update@test.com\",\r\n    \"role\": \"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:user_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":user_id"
+							],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/:user_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":user_id"
+							],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "8"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"admin@test.com\",\r\n    \"password\": \"password\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User auth",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/auth",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"auth"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Files",
+			"item": [
+				{
+					"name": "Upload file",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "test.gcode"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/files/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"files",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all files",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"files",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all files from user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"files"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update file name",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"file_name\": \"new_name_testing.gcode\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/files/:file_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"files",
+								":file_id"
+							],
+							"variable": [
+								{
+									"key": "file_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove file",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files/:file_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"files",
+								":file_id"
+							],
+							"variable": [
+								{
+									"key": "file_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwtToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Tools",
+			"item": [
+				{
+					"name": "Upload tool",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Tool 1\",\r\n    \"description\": \"It may be useful for something\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tools",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tools"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all tools",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tools/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tools",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update tool",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Tool 2\",\r\n    \"description\": \"It may also be useful for other stuff\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tools/:tool_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tools",
+								":tool_id"
+							],
+							"variable": [
+								{
+									"key": "tool_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove tool",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tools/:tool_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tools",
+								":tool_id"
+							],
+							"variable": [
+								{
+									"key": "tool_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get tool by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tools/:tool_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tools",
+								":tool_id"
+							],
+							"variable": [
+								{
+									"key": "tool_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwtToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Materials",
+			"item": [
+				{
+					"name": "Upload material",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Wood\",\r\n    \"description\": \"It is some kind of wood\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/materials",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materials"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all materials",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materials/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materials",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update material",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Cardboard\",\r\n    \"description\": \"It is cardboard\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/materials/:material_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materials",
+								":material_id"
+							],
+							"variable": [
+								{
+									"key": "material_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove material",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materials/:material_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materials",
+								":material_id"
+							],
+							"variable": [
+								{
+									"key": "material_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwtToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Tasks",
+			"item": [
+				{
+					"name": "Upload task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"file_id\": 1,\r\n    \"tool_id\": 1,\r\n    \"material_id\": 1,\r\n    \"name\": \"My first task\",\r\n    \"note\": \"Please take into account this... and that...\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tasks",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all tasks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								"all"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "on_hold",
+									"description": "all, pending_approval, on_hold, in_progress, finished, rejected, cancelled",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all tasks by user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks?status=on_hold",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "on_hold",
+									"description": "all, pending_approval, on_hold, in_progress, finished, rejected, cancelled"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update task",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"file_id\": 1,\r\n    \"tool_id\": 1,\r\n    \"material_id\": 1,\r\n    \"name\": \"My first task updated\",\r\n    \"priority\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tasks/:task_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								":task_id"
+							],
+							"variable": [
+								{
+									"key": "task_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update task status",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"status\": \"on_hold\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tasks/:task_id/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								":task_id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "task_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel task",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"status\": \"cancelled\",\r\n    \"cancellation_reason\": \"Because I can\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tasks/:task_id/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								":task_id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "task_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove task",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks/:task_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								":task_id"
+							],
+							"variable": [
+								{
+									"key": "task_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwtToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "CNC",
+			"item": [
+				{
+					"name": "Execute G-code command",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"command\": \"G17 G20 G90 G94 G54\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cnc/command",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"command"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Execute jog command",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"x\": 0.25,\r\n    \"y\": 0.35,\r\n    \"z\": 0.45,\r\n    \"feedrate\": 200,\r\n    \"units\": \"milimeters\",\r\n    \"mode\": \"distance_incremental\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cnc/jog",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"jog"
+							],
+							"query": [
+								{
+									"key": "machine",
+									"value": "0",
+									"description": "0: False, 1: True",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start CNC conection",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"command\": \"G17 G20 G90 G94 G54\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cnc/server",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"server"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Stop CNC conection Copy",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"command\": \"G17 G20 G90 G94 G54\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cnc/server",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"server"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get available ports",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cnc/ports",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"ports"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwtToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Worker",
+			"item": [
+				{
+					"name": "Worker task status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/status/:worker_task_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"status",
+								":worker_task_id"
+							],
+							"variable": [
+								{
+									"key": "worker_task_id",
+									"value": "9bc95c6b-d40f-4eb4-ac6b-57f76b898fcd"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Worker status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Device status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/device/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"device",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check paused",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/pause",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"pause"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Device enable",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/device/:enabled",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"device",
+								":enabled"
+							],
+							"variable": [
+								{
+									"key": "enabled",
+									"value": "1",
+									"description": "0: disabled, 1: enabled"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set paused",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/pause/:paused",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"pause",
+								":paused"
+							],
+							"variable": [
+								{
+									"key": "paused",
+									"value": "1",
+									"description": "0: disabled, 1: enabled"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check worker on",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/check/on",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"check",
+								"on"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check worker running",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/check/running",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"check",
+								"running"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check worker available",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/check/available",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"check",
+								"available"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Run task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/worker/task/:db_task_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"worker",
+								"task",
+								":db_task_id"
+							],
+							"variable": [
+								{
+									"key": "db_task_id",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwtToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Monitor",
+			"item": [
+				{
+					"name": "Get GRBL logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/monitor/logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"monitor",
+								"logs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start stream",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/monitor/stream/:channel",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"monitor",
+								"stream",
+								":channel"
+							],
+							"variable": [
+								{
+									"key": "channel",
+									"value": "grbl_status",
+									"description": "grbl_status, grbl_responses"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Publish message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"message\": \"Un mensaje\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/monitor/messages/:channel",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"monitor",
+								"messages",
+								":channel"
+							],
+							"variable": [
+								{
+									"key": "channel",
+									"value": "grbl_messages",
+									"description": "grbl_status, grbl_messages"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Publish GRBL status update",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Get parsed request body\r",
+									"body_raw = JSON.parse(pm.request.body.raw)\r",
+									"\r",
+									"// Convert message to string\r",
+									"message = JSON.stringify(body_raw.message)\r",
+									"body_raw.message = message\r",
+									"\r",
+									"// Update request body\r",
+									"pm.request.body.raw = body_raw"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"message\": {\r\n        \"sent_lines\": 25,\r\n        \"processed_lines\": 20,\r\n        \"total_lines\": 50,\r\n        \"status\": {\r\n            \"activeState\": \"UPDATED\",\r\n            \"mpos\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0},\r\n            \"wpos\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0},\r\n            \"ov\": [],\r\n            \"subState\": \"\",\r\n            \"wco\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0}\r\n        },\r\n        \"parserstate\": {\r\n            \"modal\": {\r\n                \"motion\": \"G0\",\r\n                \"wcs\": \"G54\",\r\n                \"plane\": \"G17\",\r\n                \"units\": \"G21\",\r\n                \"distance\": \"G90\",\r\n                \"feedrate\": \"G94\",\r\n                \"program\": \"M0\",\r\n                \"spindle\": \"M5\",\r\n                \"coolant\": \"M9\"\r\n            },\r\n            \"tool\": 1,\r\n            \"feedrate\": 50.0,\r\n            \"spindle\": 250.0\r\n        }\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/monitor/messages/grbl_status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"monitor",
+								"messages",
+								"grbl_status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Publish GRBL response",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Get parsed request body\r",
+									"body_raw = JSON.parse(pm.request.body.raw)\r",
+									"\r",
+									"// Convert message to string\r",
+									"message = JSON.stringify(body_raw.message)\r",
+									"body_raw.message = message\r",
+									"\r",
+									"// Update request body\r",
+									"pm.request.body.raw = body_raw"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"message\": {\r\n        \"type\": \"received\",\r\n        \"message\": \"ok\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/monitor/messages/grbl_messages",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"monitor",
+								"messages",
+								"grbl_messages"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwtToken}}",
+						"type": "string"
+					}
+				]
+			}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

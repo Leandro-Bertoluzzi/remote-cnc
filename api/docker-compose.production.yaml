@@ -1,0 +1,32 @@
+services:
+  api:
+    #build:
+    #  context: .
+    #  target: production
+    image: leandrobertoluzzi/cnc-api:latest
+    #platform: linux/arm/v7
+    ports:
+      - "8000:80"
+    restart: always
+
+  postgresql:
+    restart: always
+
+  worker:
+    image: leandrobertoluzzi/cnc-worker:latest
+    #platform: linux/arm/v7
+    volumes:
+      # Devices
+      - /dev:/dev
+      # Devices information
+      - /run/udev:/run/udev:ro
+
+  flower:
+    image: leandrobertoluzzi/flower
+    command: celery --broker=redis://redis:6379/0 flower --port=5555 --url_prefix=/monitor
+
+  ngrok:
+    restart: always
+    command: http --domain=${NGROK_DOMAIN} api:80 --scheme http,https
+    environment:
+      - NGROK_DOMAIN=${NGROK_DOMAIN}

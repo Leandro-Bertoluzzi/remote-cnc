@@ -1,0 +1,32 @@
+name: cnc-remote-api
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - alembic=1.10
+  - bcrypt=3.2
+  - email_validator=1.2
+  - fastapi=0.104
+  - flake8=6.1
+  - httpx=0.24
+  - mypy=1.5
+  - pip
+  - psycopg2-binary=2.9
+  - pyjwt=2.4
+  - pyserial=3.5
+  - pytest=7.4
+  - pytest-cov=4.1
+  - pytest-env=1.1
+  - pytest-mock=3.10
+  - python=3.9
+  - python-dotenv
+  - python-multipart
+  - regex
+  - sqlalchemy=2.0
+  - uvicorn=0.20
+  - watchdog
+  - pip:
+    - "celery[redis]"
+    - celery-types
+    - pytest-sqlalchemy-mock
+    - sse-starlette

@@ -1,0 +1,38 @@
+server {
+    listen      80;
+    listen      [::]:80;
+    #server_name cncmanager.local my-ngrok-free.app;
+    server_name <raspberry-local-url> <ngrok-static-domain>;
+
+    location /api/ {
+        proxy_intercept_errors on;
+        error_page 404 = @404;
+        proxy_pass http://localhost:8000/;
+    }
+
+    # Flower (Celery monitor)
+    location /monitor/ {
+        proxy_pass http://localhost:5555;
+        # Stronly recommended, use basic authentication
+        #auth_basic "Restricted Content";
+        #auth_basic_user_file /etc/nginx/.htpasswd;
+    }
+
+    # Comment this section if you are not using a camera server
+    location /camera/ {
+        # proxy_pass http://localhost:8081/;
+        proxy_pass <camera-server-url>;
+    }
+
+    error_page 404 = @404;
+    location @404 {
+        return 404 '{"status":404,"message":"Resource not found"}';
+    }
+
+    error_page 503 @maintenance;
+    location @maintenance {
+        return 503 '{"error": {"status_code": 503,"status": "Service under maintenance"}}';
+    }
+
+    default_type application/json; # If no content-type, assume JSON
+}
