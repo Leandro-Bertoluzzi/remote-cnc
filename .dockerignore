@@ -10,6 +10,8 @@ venv/
 environment.yml
 
 # Test related files
+tests/
+htmlcov/
 .coverage
 
 # Documentation
@@ -39,6 +41,8 @@ Dockerfile
 
 # Configuration
 .editorconfig
+Makefile
+setup.cfg
 
 # Reverse proxy
 nginx/

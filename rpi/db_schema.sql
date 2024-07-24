@@ -1,17 +1,17 @@
 BEGIN;
 
 CREATE TABLE alembic_version (
-    version_num VARCHAR(32) NOT NULL, 
+    version_num VARCHAR(32) NOT NULL,
     CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
 );
 
 -- Running upgrade  -> dda662b6775d
 
 CREATE TABLE users (
-    id SERIAL NOT NULL, 
-    name VARCHAR(50) NOT NULL, 
-    email VARCHAR(50) NOT NULL, 
-    password VARCHAR(150) NOT NULL, 
+    id SERIAL NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    email VARCHAR(50) NOT NULL,
+    password VARCHAR(150) NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -24,11 +24,11 @@ INSERT INTO alembic_version (version_num) VALUES ('dda662b6775d') RETURNING alem
 -- Running upgrade dda662b6775d -> a4a5b53fb397
 
 CREATE TABLE files (
-    id SERIAL NOT NULL, 
-    user_id INTEGER, 
-    file_name VARCHAR(150) NOT NULL, 
-    file_path VARCHAR(150) NOT NULL, 
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
+    id SERIAL NOT NULL,
+    user_id INTEGER,
+    file_name VARCHAR(150) NOT NULL,
+    file_path VARCHAR(150) NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -39,10 +39,10 @@ UPDATE alembic_version SET version_num='a4a5b53fb397' WHERE alembic_version.vers
 -- Running upgrade a4a5b53fb397 -> b45f388692dc
 
 CREATE TABLE tasks (
-    id SERIAL NOT NULL, 
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
-    status_updated_at TIMESTAMP WITHOUT TIME ZONE, 
-    priority INTEGER NOT NULL, 
+    id SERIAL NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    status_updated_at TIMESTAMP WITHOUT TIME ZONE,
+    priority INTEGER NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -67,10 +67,10 @@ UPDATE alembic_version SET version_num='677cfe19a165' WHERE alembic_version.vers
 -- Running upgrade 677cfe19a165 -> 8475035ee19e
 
 CREATE TABLE tools (
-    id SERIAL NOT NULL, 
-    name VARCHAR(50) NOT NULL, 
-    description VARCHAR(150) NOT NULL, 
-    added_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
+    id SERIAL NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    description VARCHAR(150) NOT NULL,
+    added_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -85,10 +85,10 @@ UPDATE alembic_version SET version_num='47f8b3a7f591' WHERE alembic_version.vers
 -- Running upgrade 47f8b3a7f591 -> f0fe8ee5571c
 
 CREATE TABLE materials (
-    id SERIAL NOT NULL, 
-    name VARCHAR(50) NOT NULL, 
-    description VARCHAR(150) NOT NULL, 
-    added_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
+    id SERIAL NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    description VARCHAR(150) NOT NULL,
+    added_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
 

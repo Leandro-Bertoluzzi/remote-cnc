@@ -1,23 +1,24 @@
-tests:
-	pytest -s --cov-config=setup.cfg
-	flake8
-	mypy .
+test-api:
+	cd api && pytest -s
+	cd api && flake8
+	cd api && mypy .
 
-separator_linter = ============================= Linter =============================
-separator_type = ============================= Type checker =============================
+test-core:
+	cd core && pytest -s
+	cd core && flake8
+	cd core && mypy .
 
-tests-log:
-	pytest > tests_result.log
-	echo $(separator_linter) >> tests_result.log
-	flake8 >> tests_result.log
-	echo $(separator_type) >> tests_result.log
-	mypy . >> tests_result.log
+test-desktop:
+	cd desktop && pytest -s
+	cd desktop && flake8
+	cd desktop && mypy .
 
 clean:
 	python3 -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.py[co]')]"
 	python3 -Bc "import pathlib; [p.rmdir() for p in pathlib.Path('.').rglob('__pycache__')]"
 	python3 -Bc "import pathlib; import shutil; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('*_cache')]"
+	python3 -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.log')]"
 	python3 -Bc "import pathlib; import shutil; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('htmlcov')]"
 	python3 -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('.coverage')]"
 
-.PHONY: tests
+.PHONY: clean

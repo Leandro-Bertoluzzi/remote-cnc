@@ -2,12 +2,14 @@ services:
   api:
     build:
       context: .
+      dockerfile: Dockerfile.api
       target: development
     ports:
       - "8000:8000"
     pull_policy: never
     volumes:
-      - ./:/app
+      - ./api:/app
+      - ./core:/app/core
 
   postgresql:
     ports:
@@ -15,8 +17,8 @@ services:
 
   worker:
     build:
-      context: ./core
-      dockerfile: ./Dockerfile.worker
+      context: .
+      dockerfile: Dockerfile.worker
       target: production
     volumes:
       # Devices

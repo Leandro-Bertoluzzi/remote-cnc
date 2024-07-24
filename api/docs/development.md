@@ -15,10 +15,10 @@ Before using the app for the first time you should run:
 
 ```bash
 # Clone this project
-$ git clone --recurse-submodules https://github.com/Leandro-Bertoluzzi/remote-cnc-api
+$ git clone https://github.com/Leandro-Bertoluzzi/remote-cnc
 
-# 1. Access the repository
-$ cd remote-cnc-api
+# 1. Access the repository and folder
+$ cd remote-cnc/api
 
 # 2. Set up your Python environment
 # Option 1: If you use Conda
@@ -227,12 +227,4 @@ $ flake8
 
 ```bash
 $ mypy .
-```
-
-### All tests
-
-You can also run all tests together, by using the following command:
-
-```bash
-$ make tests
 ```

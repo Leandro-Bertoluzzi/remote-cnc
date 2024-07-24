@@ -8,7 +8,7 @@ services:
       - redis
     env_file:
       - core/.env
-      - .env
+      - api/.env
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql

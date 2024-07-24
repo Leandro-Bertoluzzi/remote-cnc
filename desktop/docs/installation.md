@@ -21,10 +21,10 @@ Before using the app for the first time you should run:
 
 ```bash
 # Clone this project (unless you manually copied the files)
-$ git clone --recurse-submodules https://github.com/Leandro-Bertoluzzi/cnc-local-app
+$ git clone https://github.com/Leandro-Bertoluzzi/remote-cnc
 
-# 1. Access the repository
-$ cd cnc-local-app
+# 1. Access the repository and folder
+$ cd remote-cnc/desktop
 
 # 2. Install the needed global site-packages
 $ sudo apt-get update
@@ -115,4 +115,4 @@ $ docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
 
 # Set up database
 
-You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](./db-management.md#execute-a-sql-script).
+You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](../../rpi/db-management.md#execute-a-sql-script).

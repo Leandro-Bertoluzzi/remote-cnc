@@ -2,6 +2,7 @@ services:
   api:
     #build:
     #  context: .
+    #  dockerfile: Dockerfile.api
     #  target: production
     image: leandrobertoluzzi/cnc-api:latest
     #platform: linux/arm/v7

@@ -1,9 +1,0 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-
-# Documentation
-docs/
-README.md
-
-# Cache files
-.*_cache/

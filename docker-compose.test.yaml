@@ -1,8 +1,8 @@
 services:
   worker:
     build:
-      context: ./core
-      dockerfile: ./Dockerfile.worker
+      context: .
+      dockerfile: Dockerfile.worker
       target: development
     environment:
       - GRBL_SIMULATION=TRUE

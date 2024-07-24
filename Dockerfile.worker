@@ -13,20 +13,20 @@ RUN apt-get update \
 
 # Add files from the build context to the container temporarily to execute a RUN instruction
 # https://docs.docker.com/develop/develop-images/instructions/#add-or-copy
-RUN --mount=type=bind,source=cncworker/requirements.txt,target=/tmp/requirements.txt \
+RUN --mount=type=bind,source=core/cncworker/requirements.txt,target=/tmp/requirements.txt \
 pip install -r /tmp/requirements.txt
 
 # Set work directory
 WORKDIR /app
 
 # Copy files into the container
-COPY ./config.py /app
-COPY ./worker.py /app
-COPY ./database /app/database
-COPY ./gcode /app/gcode
-COPY ./grbl /app/grbl
-COPY ./utils /app/utils
-COPY ./cncworker /app/cncworker
+COPY ./core/config.py /app
+COPY ./core/worker.py /app
+COPY ./core/database /app/database
+COPY ./core/gcode /app/gcode
+COPY ./core/grbl /app/grbl
+COPY ./core/utils /app/utils
+COPY ./core/cncworker /app/cncworker
 
 FROM base as production
 
@@ -62,7 +62,7 @@ RUN apt-get update -y && apt-get upgrade -y
 RUN apt install -y socat
 
 # Copy script to create virtual port, to activate later
-COPY ./cncworker/simport.sh /app
+COPY ./core/cncworker/simport.sh /app
 # Fix line endings
 RUN sed -i "s/\r//" /app/simport.sh
 # Ensure execution permissions

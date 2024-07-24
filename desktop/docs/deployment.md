@@ -67,9 +67,9 @@ $ docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
 
 # Database migration
 
-1. Generate a SQL script for the migration following [these steps](./db-management.md#generate-sql-from-migrations-development).
+1. Generate a SQL script for the migration following [these steps](../../rpi/db-management.md#generate-sql-from-migrations-development).
 
-2. You can execute the migration script in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](./db-management.md#execute-a-sql-script).
+2. You can execute the migration script in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](../../rpi/db-management.md#execute-a-sql-script).
 
 # Update CNC worker
 

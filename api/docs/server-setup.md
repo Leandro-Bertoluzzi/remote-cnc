@@ -34,7 +34,7 @@ $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d
 
 # Set up database
 
-You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](./db-management.md#execute-a-sql-script).
+You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](../../rpi/db-management.md#execute-a-sql-script).
 
 # (Optional) Set up reverse proxy
 
