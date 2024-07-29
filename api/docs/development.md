@@ -27,7 +27,11 @@ $ python -m venv env-dev
 $ source env-dev/bin/activate
 $ pip install -r requirements-dev.txt
 
-# 3. Copy and configure the .env files
+# 3. Ask pip to install local packages in development mode
+# This is needed to use 'core' as a package in local development
+pip install -e .
+
+# 4. Copy and configure the .env files
 cp .env.example .env
 cp core/.env.example core/.env
 ```
