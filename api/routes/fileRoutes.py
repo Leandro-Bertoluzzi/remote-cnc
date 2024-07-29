@@ -50,9 +50,10 @@ def get_files_from_all_users(
 @fileRoutes.post('/')
 def upload_file(
     file: UploadFile,
-    user: GetUserDep
+    user: GetUserDep,
+    db_session: GetDbSession
 ):
-    file_manager = FileManager(PROJECT_ROOT)
+    file_manager = FileManager(PROJECT_ROOT, db_session)
     try:
         file_manager.upload_file(user.id, file.filename, file.file)
     except Exception as error:
@@ -65,9 +66,10 @@ def upload_file(
 def update_file_name(
     file_id: int,
     request: FileUpdateModel,
-    user: GetUserDep
+    user: GetUserDep,
+    db_session: GetDbSession
 ):
-    file_manager = FileManager(PROJECT_ROOT)
+    file_manager = FileManager(PROJECT_ROOT, db_session)
     try:
         file_manager.rename_file_by_id(user.id, file_id, request.file_name)
     except Exception as error:
@@ -79,9 +81,10 @@ def update_file_name(
 @fileRoutes.delete('/{file_id}')
 def remove_existing_file(
     file_id: int,
-    user: GetUserDep
+    user: GetUserDep,
+    db_session: GetDbSession
 ):
-    file_manager = FileManager(PROJECT_ROOT)
+    file_manager = FileManager(PROJECT_ROOT, db_session)
     try:
         file_manager.remove_file_by_id(file_id)
     except Exception as error:

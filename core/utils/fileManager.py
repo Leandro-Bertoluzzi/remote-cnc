@@ -3,13 +3,11 @@ import shutil
 from typing import BinaryIO
 
 try:
-    from database.base import Session as SessionLocal
     from database.models import File
     from database.repositories.fileRepository import FileRepository
     from utils.files import computeSHA256, computeSHA256FromFile, copyFile, renameFile, \
         deleteFile, getFilePath, saveFile
 except ImportError:
-    from ..database.base import Session as SessionLocal
     from ..database.models import File
     from ..database.repositories.fileRepository import FileRepository
     from .files import computeSHA256, computeSHA256FromFile, copyFile, renameFile, \
@@ -17,8 +15,9 @@ except ImportError:
 
 
 class FileManager:
-    def __init__(self, base_path: str = ''):
+    def __init__(self, base_path: str = '', _session=None):
         self.base_path = base_path
+        self.session = _session
 
     def upload_file(self, user_id: int, file_name: str, file: BinaryIO):
         """Creates a file in the FS and saves it to the DB.
@@ -39,8 +38,7 @@ class FileManager:
         - FileSystemError: An error ocurred during file creation in FS.
         """
         # Instantiate repository
-        db_session = SessionLocal()
-        repository = FileRepository(db_session)
+        repository = FileRepository(self.session)
 
         # Checks if the file is repeated
         # can raise (DuplicatedFileNameError, DuplicatedFileError)
@@ -78,8 +76,7 @@ class FileManager:
         - FileSystemError: An error ocurred during file creation in FS.
         """
         # Instantiate repository
-        db_session = SessionLocal()
-        repository = FileRepository(db_session)
+        repository = FileRepository(self.session)
 
         # Checks if the file is repeated
         # can raise (DuplicatedFileNameError, DuplicatedFileError)
@@ -117,8 +114,7 @@ class FileManager:
         - FileSystemError: An error ocurred during file update in FS.
         """
         # Instantiate repository
-        db_session = SessionLocal()
-        repository = FileRepository(db_session)
+        repository = FileRepository(self.session)
 
         # Check if the file is repeated
         # can raise DuplicatedFileNameError
@@ -166,8 +162,7 @@ class FileManager:
         - FileSystemError: An error ocurred during file update in FS.
         """
         # Instantiate repository
-        db_session = SessionLocal()
-        repository = FileRepository(db_session)
+        repository = FileRepository(self.session)
 
         # Get file
         # Can raise (EntityNotFoundError, DatabaseError)
@@ -203,8 +198,7 @@ class FileManager:
         deleteFile(file.user_id, file.file_name)
 
         # Remove the entry for the file in the DB
-        db_session = SessionLocal()
-        repository = FileRepository(db_session)
+        repository = FileRepository(self.session)
 
         # Remove the entry for the file in the DB
         # Can raise (EntityNotFoundError, DatabaseError)
@@ -231,8 +225,7 @@ class FileManager:
         - FileSystemError: An error ocurred during file removal in FS.
         """
         # Instantiate repository
-        db_session = SessionLocal()
-        repository = FileRepository(db_session)
+        repository = FileRepository(self.session)
 
         # Get file
         # Can raise (EntityNotFoundError, DatabaseError)

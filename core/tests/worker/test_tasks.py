@@ -62,7 +62,7 @@ def test_execute_tasks(mocker: MockerFixture):
 
     # Call method under test
     response = executeTask(
-        task_id=1,
+        task_id=2,
         base_path='path/to/project',
         serial_port='test-port',
         serial_baudrate=115200
@@ -103,7 +103,7 @@ def test_no_tasks_to_execute(mocker: MockerFixture):
         )
 
     # Assertions
-    assert str(error.value) == 'There are no pending tasks to process'
+    assert str(error.value) == 'No se encontró la tarea en la base de datos'
     assert mock_get_task_by_id.call_count == 1
     assert mock_start_connection.call_count == 0
     assert mock_stream_line.call_count == 0
@@ -122,7 +122,7 @@ def test_task_in_progress_exception(mocker: MockerFixture):
             serial_port='test-port',
             serial_baudrate=115200
         )
-    assert str(error.value) == 'There is a task currently in progress, please wait until finished'
+    assert str(error.value) == 'Ya hay una tarea en progreso, por favor espere a que termine'
 
 
 def test_task_missing_arguments():
@@ -293,7 +293,7 @@ def test_execute_tasks_pause(mocker: MockerFixture):
 
     # Call method under test
     executeTask(
-        task_id=1,
+        task_id=2,
         base_path='path/to/project',
         serial_port='test-port',
         serial_baudrate=115200

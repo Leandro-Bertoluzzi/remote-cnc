@@ -1,4 +1,4 @@
-import asyncio
+import asyncio  # noqa: F401
 from config import GRBL_LOGS_FILE
 from core.utils.logs import LogsInterpreter
 from fastapi import APIRouter, Request

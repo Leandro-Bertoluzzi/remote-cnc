@@ -1,4 +1,3 @@
-
 import bcrypt
 from database.models import User
 from database.repositories.userRepository import UserRepository

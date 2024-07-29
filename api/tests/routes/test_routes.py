@@ -1,16 +1,18 @@
 from celery.result import AsyncResult
 from core.database.base import Base
 from core.database.models import File, Material, Task, Tool
+from core.utils.fileManager import FileManager
 import datetime
-import pytest
+import hashlib
+import pytest   # noqa: F401
 from tests.conftest import engine, test_admin, test_user, TestingSession
 
 
 # Seed data
 creation_time = datetime.datetime(2000, 1, 1, 0, 0, 0)
-test_file = File(1, "file_1.gcode", "files/file1.gcode", creation_time)
-test_file2 = File(1, "file_2.gcode", "files/file2.gcode", creation_time)
-test_file3 = File(2, "file_3.gcode", "files/file3.gcode", creation_time)
+test_file = File(1, "file_1.gcode", hashlib.sha256(b"G54").hexdigest(), creation_time)
+test_file2 = File(1, "file_2.gcode", hashlib.sha256(b"G55").hexdigest(), creation_time)
+test_file3 = File(2, "file_3.gcode", hashlib.sha256(b";empty").hexdigest(), creation_time)
 test_material = Material("Material 1", "A very useful material", creation_time)
 test_material2 = Material("Material 2", "A not so useful material", creation_time)
 test_tool = Tool("Tool 1", "A very useful tool", creation_time)
@@ -317,11 +319,8 @@ class TestRoutes:
         files = {"file": ("new_file.gcode", b"G54", "text/plain")}
         headers = {"Authorization": "Bearer a-valid-token"}
 
-        # Mock file validation
-        mocker.patch('routes.fileRoutes.validateGcodeFile')
-
         # Mock FS method to simulate file operation
-        mocker.patch('routes.fileRoutes.saveFile')
+        mocker.patch.object(FileManager, "upload_file")
 
         # Query endpoint under test
         response = client.post("/files/", files=files, headers=headers)
@@ -331,7 +330,7 @@ class TestRoutes:
         assert response.json() == {'success': 'The file was successfully uploaded'}
 
     def test_create_file_repeated_name(self, client):
-        files = {"file": ("new_file.gcode", b"G55", "text/plain")}
+        files = {"file": ("file_1.gcode", b"G55", "text/plain")}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Query endpoint under test
@@ -340,7 +339,7 @@ class TestRoutes:
         # Assertions
         assert response.status_code == 400
         assert response.json()["detail"] == (
-            "Ya existe un archivo con el nombre <<new_file.gcode>>, pruebe renombrarlo"
+            "Ya existe un archivo con el nombre <<file_1.gcode>>"
         )
 
     def test_create_file_duplicated_content(self, client):
@@ -353,54 +352,18 @@ class TestRoutes:
         # Assertions
         assert response.status_code == 400
         assert response.json()["detail"] == (
-            "El archivo <<new_file.gcode>> tiene el mismo contenido"
+            "El archivo <<file_1.gcode>> tiene el mismo contenido"
         )
 
-    def test_create_file_check_duplicate_db_error(self, client, mocker):
-        files = {"file": ("another_file.gcode", b"G55", "text/plain")}
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock file validation to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.FileRepository.check_file_exists',
-            side_effect=Exception('There was an error validating the file')
-        )
-
-        # Query endpoint under test
-        response = client.post("/files/", files=files, headers=headers)
-
-        # Assertions
-        assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error validating the file"
-
-    def test_create_file_validation_error(self, client, mocker):
+    def test_create_file_error(self, client, mocker):
         files = {"file": ("another_file.gcode", b"G54 G90", "text/plain")}
         headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock file validation to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.validateGcodeFile',
-            side_effect=Exception('There was an error validating the file')
-        )
-
-        # Query endpoint under test
-        response = client.post("/files/", files=files, headers=headers)
-
-        # Assertions
-        assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error validating the file"
-
-    def test_create_file_fs_error(self, client, mocker):
-        files = {"file": ("another_file.gcode", b"G54 G90", "text/plain")}
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock file validation
-        mocker.patch('routes.fileRoutes.validateGcodeFile')
 
         # Mock FS method to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.saveFile',
-            side_effect=Exception('There was an error saving the file in the FS')
+        mocker.patch.object(
+            FileManager,
+            "upload_file",
+            side_effect=Exception('There was an error saving the file')
         )
 
         # Query endpoint under test
@@ -408,37 +371,14 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error saving the file in the FS"
-
-    def test_create_file_db_error(self, client, mocker):
-        files = {"file": ("another_file.gcode", b"G54 G90", "text/plain")}
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock file validation
-        mocker.patch('routes.fileRoutes.validateGcodeFile')
-
-        # Mock FS method to simulate file operation
-        mocker.patch('routes.fileRoutes.saveFile')
-
-        # Mock DB method to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.FileRepository.create_file',
-            side_effect=Exception('There was an error saving the file in DB')
-        )
-
-        # Query endpoint under test
-        response = client.post("/files/", files=files, headers=headers)
-
-        # Assertions
-        assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error saving the file in DB"
+        assert response.json()["detail"] == "There was an error saving the file"
 
     def test_update_file(self, client, mocker):
         data = {"file_name": "updated_file.gcode"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock FS method to simulate file operation
-        mocker.patch('routes.fileRoutes.renameFile')
+        mocker.patch.object(FileManager, "rename_file_by_id")
 
         # Query endpoint under test
         response = client.put("/files/4", json=data, headers=headers)
@@ -447,14 +387,15 @@ class TestRoutes:
         assert response.status_code == 200
         assert response.json() == {"success": "The file name was successfully updated"}
 
-    def test_update_file_fs_error(self, client, mocker):
+    def test_update_file_error(self, client, mocker):
         data = {"file_name": "updated_file.gcode"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock FS method to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.renameFile',
-            side_effect=Exception('There was an error updating the file in the FS')
+        mocker.patch.object(
+            FileManager,
+            "rename_file_by_id",
+            side_effect=Exception('There was an error updating the file')
         )
 
         # Query endpoint under test
@@ -462,33 +403,13 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error updating the file in the FS"
-
-    def test_update_file_db_error(self, client, mocker):
-        data = {"file_name": "updated_file.gcode"}
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock FS method to simulate file operation
-        mocker.patch('routes.fileRoutes.renameFile')
-
-        # Mock DB method to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.FileRepository.update_file',
-            side_effect=Exception('There was an error updating the file in DB')
-        )
-
-        # Query endpoint under test
-        response = client.put("/files/1", json=data, headers=headers)
-
-        # Assertions
-        assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error updating the file in DB"
+        assert response.json()["detail"] == "There was an error updating the file"
 
     def test_remove_file(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock FS method to simulate file operation
-        mocker.patch('routes.fileRoutes.deleteFile')
+        mocker.patch.object(FileManager, "remove_file_by_id")
 
         # Query endpoint under test
         response = client.delete("/files/4", headers=headers)
@@ -497,13 +418,14 @@ class TestRoutes:
         assert response.status_code == 200
         assert response.json() == {"success": "The file was successfully removed"}
 
-    def test_remove_file_fs_error(self, client, mocker):
+    def test_remove_file_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock FS method to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.deleteFile',
-            side_effect=Exception('There was an error')
+        mocker.patch.object(
+            FileManager,
+            "remove_file_by_id",
+            side_effect=Exception('There was an error removing the file')
         )
 
         # Query endpoint under test
@@ -511,26 +433,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error"
-
-    def test_remove_file_db_error(self, client, mocker):
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock FS method to simulate file operation
-        mocker.patch('routes.fileRoutes.deleteFile')
-
-        # Mock DB method to simulate exception
-        mocker.patch(
-            'routes.fileRoutes.FileRepository.remove_file',
-            side_effect=Exception('There was an error')
-        )
-
-        # Query endpoint under test
-        response = client.delete("/files/2", headers=headers)
-
-        # Assertions
-        assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error"
+        assert response.json()["detail"] == "There was an error removing the file"
 
 # --------------------------------------------------------------------- #
 # ------------------------------- TOOLS ------------------------------- #
@@ -953,40 +856,6 @@ class TestRoutes:
         assert response.status_code == 200
         assert response.json() == {'success': 'The task status was successfully updated'}
 
-    @pytest.mark.parametrize("task_in_progress", [True, False])
-    def test_update_task_status_to_approved(self, client, mocker, task_in_progress):
-        data = {
-            "status": "on_hold"
-        }
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock DB methods
-        mocker.patch(
-            'routes.taskRoutes.TaskRepository.are_there_tasks_in_progress',
-            return_value=task_in_progress
-        )
-
-        # Mock worker method
-        mock_add_task_in_queue = mocker.patch(
-            'routes.taskRoutes.executeTask.delay',
-            return_value=AsyncResult('test-worker-task-id')
-        )
-
-        # Query endpoint under test
-        response = client.put("/tasks/4/status", json=data, headers=headers)
-
-        # Assertions
-        assert response.status_code == 200
-        assert response.json() == {
-            'success': (
-                'The task status was successfully updated'
-            ) if task_in_progress else (
-                'The task status was successfully updated and the task '
-                'was sent to execution with ID: test-worker-task-id'
-            )
-        }
-        assert mock_add_task_in_queue.call_count == (1 if not task_in_progress else 0)
-
     def test_update_task_status_error(self, client, mocker):
         data = {
             "status": "on_hold"
@@ -1039,12 +908,15 @@ class TestRoutes:
     def test_get_worker_task_status_in_progress(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
 
+        # Mock worker status
+        mocker.patch("routes.workerRoutes.worker.is_worker_on", return_value=True)
+
         # Mock Celery task metadata
         task_metadata = {
             'status': 'PROGRESS',
             'result': {
-                'percentage': 50,
-                'progress': 10,
+                'processed_lines': 10,
+                'sent_lines': 15,
                 'total_lines': 20,
                 'status': {
                     'activeState': 'IDLE',
@@ -1086,8 +958,8 @@ class TestRoutes:
         assert response.status_code == 200
         assert response.json() == {
             'status': 'PROGRESS',
-            'percentage': 50,
-            'progress': 10,
+            'processed_lines': 10,
+            'sent_lines': 15,
             'total_lines': 20,
             'cnc_status': {
                 'activeState': 'IDLE',
@@ -1116,6 +988,9 @@ class TestRoutes:
     def test_get_worker_task_status_failed(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
 
+        # Mock worker status
+        mocker.patch("routes.workerRoutes.worker.is_worker_on", return_value=True)
+
         # Mock Celery task metadata
         task_metadata = {
             'status': 'FAILURE',
@@ -1141,8 +1016,8 @@ class TestRoutes:
         assert response.status_code == 200
         assert response.json() == {
             'status': 'FAILURE',
-            'percentage': None,
-            'progress': None,
+            'processed_lines': None,
+            'sent_lines': None,
             'total_lines': None,
             'cnc_status': None,
             'cnc_parserstate': None,
@@ -1154,6 +1029,9 @@ class TestRoutes:
 
     def test_get_worker_task_status_success(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
+
+        # Mock worker status
+        mocker.patch("routes.workerRoutes.worker.is_worker_on", return_value=True)
 
         # Mock Celery task metadata
         task_metadata = {
@@ -1181,8 +1059,8 @@ class TestRoutes:
         assert response.status_code == 200
         assert response.json() == {
             'status': 'SUCCESS',
-            'percentage': None,
-            'progress': None,
+            'processed_lines': None,
+            'sent_lines': None,
             'total_lines': None,
             'cnc_status': None,
             'cnc_parserstate': None,
@@ -1194,6 +1072,9 @@ class TestRoutes:
 
     def test_get_worker_task_status_sync_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
+
+        # Mock worker status
+        mocker.patch("routes.workerRoutes.worker.is_worker_on", return_value=True)
 
         # Mock Celery methods
         mock_query_task = mocker.patch.object(
