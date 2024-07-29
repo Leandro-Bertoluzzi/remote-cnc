@@ -1,6 +1,6 @@
-FROM python:3.9 as base
+FROM python:3.9 AS base
 
-FROM base as development
+FROM base AS development
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY ./core /app/core
 # Run uvicorn server
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
-FROM base as production
+FROM base AS production
 
 WORKDIR /app
 

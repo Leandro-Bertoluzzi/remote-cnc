@@ -9,15 +9,16 @@ services:
     env_file:
       - core/.env
       - api/.env
+      - .env
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
-    #platform: linux/arm/v7
+    volumes:
+      - ./gcode_files:/app/gcode_files
     container_name: remote-cnc-api
 
   postgresql:
     image: postgres:16.1-alpine
-    #image: arm32v7/postgres:16.1-alpine
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
@@ -28,7 +29,6 @@ services:
 
   adminer:
     image: adminer:4.8.1
-    #image: arm32v7/adminer:4.8.1
     depends_on:
       - postgresql
     ports:
@@ -50,6 +50,7 @@ services:
       - 'c 188:* rmw'
     env_file:
       - ./core/.env
+      - .env
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
@@ -70,7 +71,6 @@ services:
 
   ngrok:
     image: ngrok/ngrok:latest
-    #platform: linux/arm
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     depends_on:

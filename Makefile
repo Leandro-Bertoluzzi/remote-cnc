@@ -1,3 +1,6 @@
+start-app:
+	cd desktop && python main.py
+
 test-api:
 	cd api && pytest -s
 	cd api && flake8

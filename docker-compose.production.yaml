@@ -11,7 +11,11 @@ services:
     restart: always
 
   postgresql:
+    #image: arm32v7/postgres:16.1-alpine
     restart: always
+
+  adminer:
+    #image: arm32v7/adminer:4.8.1
 
   worker:
     image: leandrobertoluzzi/cnc-worker:latest
@@ -27,6 +31,7 @@ services:
     command: celery --broker=redis://redis:6379/0 flower --port=5555 --url_prefix=/monitor
 
   ngrok:
+    #platform: linux/arm
     restart: always
     command: http --domain=${NGROK_DOMAIN} api:80 --scheme http,https
     environment:

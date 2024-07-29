@@ -2,9 +2,7 @@
 
 ## Overview
 
-1. [Introduction](#introduction).
 1. [Set up API](#set-up-api).
-1. [Set up database](#set-up-database).
 1. (Optional) [Set up reverse proxy](#optional-set-up-reverse-proxy).
 1. [Set up remote access with Ngrok](#set-up-remote-access-with-ngrok).
 
@@ -31,10 +29,6 @@ You can run the API in a Docker container. This will also start the following se
 ```bash
 $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d
 ```
-
-# Set up database
-
-You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](../../rpi/db-management.md#execute-a-sql-script).
 
 # (Optional) Set up reverse proxy
 

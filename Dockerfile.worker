@@ -1,5 +1,5 @@
 # Pull official base image
-FROM python:3.9-slim-buster as base
+FROM python:3.9-slim-buster AS base
 
 # Install dependencies
 RUN apt-get update \
@@ -28,14 +28,14 @@ COPY ./core/grbl /app/grbl
 COPY ./core/utils /app/utils
 COPY ./core/cncworker /app/cncworker
 
-FROM base as production
+FROM base AS production
 
 # Create a non-root user
 RUN adduser --uid 1000 --gid 20 nonroot
 USER nonroot
 
 # Stage to build GRBL simulator from source code
-FROM debian:buster-slim as build
+FROM debian:buster-slim AS build
 WORKDIR /app
 
 # Install minimal dependencies, clone repositories and build executable
@@ -52,7 +52,7 @@ RUN make new
 FROM scratch AS export-exe
 COPY --from=build /app/grbl/grbl/grbl-sim/*.exe ./
 
-FROM base as development
+FROM base AS development
 
 # Copy executable from build stage
 COPY --from=build app/grbl/grbl/grbl-sim/grbl_sim.exe /app/grbl_sim.exe

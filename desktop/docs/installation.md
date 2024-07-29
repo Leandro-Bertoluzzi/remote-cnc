@@ -2,8 +2,9 @@
 
 ## Overview
 
-1. Set up Qt app.
-1. Set up database.
+1. [Install dependencies](#install-dependencies).
+1. [Run the Qt app](#run-the-qt-app).
+1. [Configure the app at startup](#configure-the-qt-app-at-startup).
 
 # Introduction
 
@@ -13,9 +14,7 @@ The steps described in this guide were tested in the following device:
 - **Board:** Raspberry Pi 3B+
 - **OS:** Raspberry Pi OS (Bullseye, 32-bit)
 
-# Set up Qt app
-
-## Install dependencies
+# Install dependencies
 
 Before using the app for the first time you should run:
 
@@ -41,7 +40,7 @@ $ pip install -r rpi/requirements.txt
 cp .env.example .env
 ```
 
-## Run the Qt app
+# Run the Qt app
 
 Once installed all dependencies and created the Python environment, every time you want to start the app you must run:
 
@@ -53,7 +52,19 @@ $ source venv/bin/activate
 $ python main.py
 ```
 
-## Configure the Qt app at startup
+## Initiate additional services
+
+You can start containers for the required services via `docker compose`:
+- PostgreSQL DB.
+- Message broker (Redis).
+- CNC worker.
+- DB admin (adminer).
+
+```bash
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml --profile=worker up -d
+```
+
+# Configure the Qt app at startup
 
 1. Move the `start.sh` bash script to your user's root folder.
 
@@ -100,19 +111,3 @@ Note: Replace `{{username}}` by your actual user's name.
 ```bash
 $ sudo reboot
 ```
-
-## Initiate additional services
-
-You can start containers for the required services via `docker compose`:
-- PostgreSQL DB.
-- Message broker (Redis).
-- CNC worker.
-- DB admin (adminer).
-
-```bash
-$ docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
-```
-
-# Set up database
-
-You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](../../rpi/db-management.md#execute-a-sql-script).

@@ -5,7 +5,7 @@ from pathlib import Path
 # Generate global constants
 # PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = '/app'   # If worker runs inside container
-GRBL_LOGS_FILE = Path.cwd() / Path('core', 'logs', 'grbl.log')
+GRBL_LOGS_FILE = Path.cwd().parent / Path('core', 'logs', 'grbl.log')
 CONFIG_FILE = Path.cwd() / 'config.ini'
 
 # Initiate confiuration manager
