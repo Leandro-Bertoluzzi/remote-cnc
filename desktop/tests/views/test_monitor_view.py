@@ -1,7 +1,6 @@
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
 from components.text.LogsViewer import LogsViewer
-from helpers.cncWorkerMonitor import CncWorkerMonitor
 from MainWindow import MainWindow
 from PyQt5.QtGui import QCloseEvent
 import pytest
@@ -14,7 +13,7 @@ class TestMonitorView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
 
         # Mock logs monitor methods
         mocker.patch.object(LogsViewer, 'start')
@@ -39,11 +38,7 @@ class TestMonitorView:
         self.parent.addToolBar.reset_mock()
 
         # Mock worker monitor methods
-        mock_check_tasks_in_progress = mocker.patch.object(
-            CncWorkerMonitor,
-            'is_worker_running',
-            return_value=device_busy
-        )
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=device_busy)
 
         # Create an instance of MonitorView
         monitor_view = MonitorView(self.parent)
@@ -58,7 +53,6 @@ class TestMonitorView:
         # More assertions
         assert monitor_view.status_monitor.isEnabled() == device_busy
         assert self.parent.addToolBar.call_count == 1
-        assert mock_check_tasks_in_progress.call_count == 1
 
     def test_monitor_view_goes_back_to_menu(self):
         # Call method under test

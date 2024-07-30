@@ -4,15 +4,14 @@ from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from components.TaskProgress import TaskProgress
 from config import USER_ID
+import core.cncworker.utils as worker
+from core.cncworker.workerStatusManager import WorkerStoreAdapter
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_INITIAL_STATUS, \
     TASK_FAILED_STATUS, TASK_APPROVED_STATUS, TASK_IN_PROGRESS_STATUS
 from core.database.repositories.taskRepository import TaskRepository
-from core.utils.storage import get_value_from_id, get_value, set_value
-from core.worker import WORKER_REQUEST_KEY, WORKER_PAUSE_REQUEST, WORKER_RESUME_REQUEST, \
-    WORKER_IS_PAUSED_KEY
-from helpers.cncWorkerMonitor import CncWorkerMonitor
+from core.utils.storage import get_value_from_id
 from helpers.utils import needs_confirmation, send_task_to_worker
 from PyQt5.QtWidgets import QSizePolicy, QPushButton
 
@@ -44,7 +43,7 @@ class TaskCard(Card):
     def setup_ui(self):
         self.paused = False
         if self.task.status == TASK_IN_PROGRESS_STATUS:
-            self.paused = not not get_value(WORKER_IS_PAUSED_KEY)
+            self.paused = WorkerStoreAdapter.is_device_paused()
 
         self.setup_buttons(self.task.status)
 
@@ -242,14 +241,21 @@ class TaskCard(Card):
 
     @needs_confirmation('¿Desea ejecutar la tarea ahora?', 'Ejecutar tarea')
     def runTask(self):
-        if not CncWorkerMonitor.is_device_enabled():
+        if not worker.is_worker_on():
+            self.showError(
+                'Worker desconectado',
+                'Ejecución cancelada: El worker no está conectado'
+            )
+            return
+
+        if not WorkerStoreAdapter.is_device_enabled():
             self.showError(
                 'Equipo deshabilitado',
                 'Ejecución cancelada: El equipo está deshabilitado'
             )
             return
 
-        if CncWorkerMonitor.is_worker_running():
+        if worker.is_worker_running():
             self.showError(
                 'Equipo ocupado',
                 'Ejecución cancelada: Ya hay una tarea en progreso'
@@ -276,8 +282,8 @@ class TaskCard(Card):
                 widget.setText('Pausar' if self.paused else 'Retomar')
 
         if self.paused:
-            set_value(WORKER_REQUEST_KEY, WORKER_RESUME_REQUEST)
+            WorkerStoreAdapter.request_pause()
         else:
-            set_value(WORKER_REQUEST_KEY, WORKER_PAUSE_REQUEST)
+            WorkerStoreAdapter.request_resume()
 
         self.paused = not self.paused

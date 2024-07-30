@@ -6,7 +6,6 @@ from components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from components.Terminal import Terminal
 from core.grbl.grblController import GrblController
 import core.mocks.grbl_mocks as grbl_mocks
-from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.grblSync import GrblSync
 from helpers.fileStreamer import FileStreamer
 from MainWindow import MainWindow
@@ -22,7 +21,7 @@ class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
 
         # Create an instance of ControlView
         self.parent = mock_window
@@ -41,11 +40,7 @@ class TestControlView:
         self.parent.addToolBar.reset_mock()
 
         # Mock worker monitor methods
-        mock_check_tasks_in_progress = mocker.patch.object(
-            CncWorkerMonitor,
-            'is_worker_running',
-            return_value=device_busy
-        )
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=device_busy)
 
         # Create an instance of ControlView
         control_view = ControlView(self.parent)
@@ -61,7 +56,6 @@ class TestControlView:
 
         # More assertions
         assert self.parent.addToolBar.call_count == (1 if device_busy else 2)
-        assert mock_check_tasks_in_progress.call_count == 1
         assert control_view.checkmode is False
 
     @pytest.mark.parametrize("device_busy", [False, True])

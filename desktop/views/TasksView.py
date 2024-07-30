@@ -1,12 +1,13 @@
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
+import core.cncworker.utils as worker
+from core.cncworker.workerStatusManager import WorkerStoreAdapter
 from core.database.base import Session as SessionLocal
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
-from helpers.cncWorkerMonitor import CncWorkerMonitor
 from views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 
@@ -52,7 +53,9 @@ class TasksView(BaseListView):
         tasks = repository.get_all_tasks_from_user(USER_ID, status='all')
 
         # Check if there is a task in progress
-        self.device_available = CncWorkerMonitor.is_device_available()
+        enabled = WorkerStoreAdapter.is_device_enabled()
+        running = worker.is_worker_running()
+        self.device_available = enabled and not running
 
         return tasks
 
