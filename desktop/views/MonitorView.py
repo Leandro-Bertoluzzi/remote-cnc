@@ -6,8 +6,8 @@ from components.ControllerStatus import ControllerStatus
 from components.TaskProgress import TaskProgress
 from components.text.LogsViewer import LogsViewer
 from components.ToolBar import ToolBar
+import core.cncworker.utils as worker
 from core.grbl.types import Status, ParserState
-from helpers.cncWorkerMonitor import CncWorkerMonitor
 from typing import TYPE_CHECKING
 from views.BaseView import BaseView
 
@@ -20,7 +20,7 @@ class MonitorView(BaseView):
         super(MonitorView, self).__init__(parent)
 
         # STATE MANAGEMENT
-        self.device_busy = CncWorkerMonitor.is_worker_running()
+        self.device_busy = worker.is_worker_running()
 
         # UI
         self.setup_ui()

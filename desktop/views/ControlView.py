@@ -12,10 +12,10 @@ from components.Joystick import Joystick
 from components.Terminal import Terminal
 from components.ToolBar import ToolBar
 from config import SERIAL_BAUDRATE
+import core.cncworker.utils as worker
 from core.grbl.grblController import GrblController
 from core.grbl.types import GrblSettings, ParserState, Status
 from core.utils.serial import SerialService
-from helpers.cncWorkerMonitor import CncWorkerMonitor
 from helpers.fileStreamer import FileStreamer
 from helpers.grblSync import GrblSync
 import logging
@@ -42,7 +42,7 @@ class ControlView(BaseView):
         self.connected = False
         self.port_selected = ''
         self.device_settings: GrblSettings = {}
-        self.device_busy = CncWorkerMonitor.is_worker_running()
+        self.device_busy = worker.is_worker_running()
 
         self.setup_grbl_controller()
         self.setup_ui()

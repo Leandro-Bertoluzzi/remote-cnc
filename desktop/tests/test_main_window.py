@@ -1,4 +1,3 @@
-from helpers.cncWorkerMonitor import CncWorkerMonitor
 from MainWindow import MainWindow
 from views.MainMenu import MainMenu
 from views.UsersView import UsersView
@@ -20,8 +19,8 @@ class TestMainWindow:
         worker_running
     ):
         # Mock worker monitor methods
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_on', return_value=worker_on)
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=worker_running)
+        mocker.patch('core.cncworker.utils.is_worker_on', return_value=worker_on)
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=worker_running)
 
         # Mock QMessageBox method
         mocker.patch.object(
@@ -51,8 +50,8 @@ class TestMainWindow:
 
     def test_main_window_changes_view(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock worker monitor methods
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_on', return_value=False)
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
+        mocker.patch('core.cncworker.utils.is_worker_on', return_value=False)
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
 
         # Instantiate window
         window = MainWindow()
@@ -89,8 +88,8 @@ class TestMainWindow:
         expectedMethodCalls
     ):
         # Mock worker monitor methods
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_on', return_value=False)
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=False)
+        mocker.patch('core.cncworker.utils.is_worker_on', return_value=False)
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
 
         # Instantiate window
         window = MainWindow()

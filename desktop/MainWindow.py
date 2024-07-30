@@ -1,4 +1,6 @@
 from components.StatusBar import StatusBar
+import core.cncworker.utils as worker
+from core.cncworker.workerStatusManager import WorkerStoreAdapter
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication
@@ -24,10 +26,10 @@ class MainWindow(QMainWindow):
         # Initial status
         self.status_bar.updateWorkerStatus('DESCONECTADO')
         self.status_bar.updateDeviceStatus('---')
-        if CncWorkerMonitor.is_worker_on():
+        if worker.is_worker_on():
             self.status_bar.updateDeviceStatus('HABILITADO')
             self.status_bar.updateWorkerStatus('CONECTADO')
-            if CncWorkerMonitor.is_worker_running():
+            if worker.is_worker_running():
                 self.status_bar.updateDeviceStatus('TRABAJANDO...')
 
         # Signals and slots
@@ -123,6 +125,6 @@ class MainWindow(QMainWindow):
         self.status_bar.setTemporalStatusMessage('Iniciado el monitor del worker')
 
     def enable_device(self):
-        self.worker_monitor.set_device_enabled(True)
+        WorkerStoreAdapter.set_device_enabled(True)
         self.status_bar.setEnableBtnVisible(False)
         self.status_bar.updateDeviceStatus('HABILITADO')

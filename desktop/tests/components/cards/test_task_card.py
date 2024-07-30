@@ -4,14 +4,13 @@ from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
+from core.cncworker.workerStatusManager import WorkerStoreAdapter
 from core.database.models import Task, TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, \
     TASK_INITIAL_STATUS, TASK_APPROVED_STATUS
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
-from core.worker import WORKER_REQUEST_KEY, WORKER_PAUSE_REQUEST, WORKER_RESUME_REQUEST
-from helpers.cncWorkerMonitor import CncWorkerMonitor
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 from typing import Union
@@ -72,7 +71,7 @@ class TestTaskCard:
         self.task.id = 1
 
         # Mock Redis methods
-        mocker.patch('components.cards.TaskCard.get_value')
+        mocker.patch.object(WorkerStoreAdapter, 'is_device_paused', return_value=False)
 
         # Mock card's auxiliary methods
         mock_set_task_description = mocker.patch.object(TaskCard, 'check_task_status')
@@ -305,7 +304,7 @@ class TestTaskCard:
             'components.cards.TaskCard.get_value_from_id',
             return_value=worker_task_id
         )
-        mocker.patch('components.cards.TaskCard.get_value')
+        mocker.patch.object(WorkerStoreAdapter, 'is_device_paused', return_value=False)
 
         # Mock Celery methods
         mock_query_task = mocker.patch.object(
@@ -489,8 +488,8 @@ class TestTaskCard:
             return_value=QMessageBox.Ok
         )
         # Mock worker monitor methods
-        mocker.patch.object(CncWorkerMonitor, 'is_device_enabled', return_value=device_enabled)
-        mocker.patch.object(CncWorkerMonitor, 'is_worker_running', return_value=task_in_progress)
+        mocker.patch.object(WorkerStoreAdapter, 'is_device_enabled', return_value=device_enabled)
+        mocker.patch('core.cncworker.utils.is_worker_running', return_value=task_in_progress)
 
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.TaskCard.send_task_to_worker')
@@ -564,7 +563,8 @@ class TestTaskCard:
         paused
     ):
         # Mock Redis methods
-        mock_set_value = mocker.patch('components.cards.TaskCard.set_value')
+        mock_pause = mocker.patch.object(WorkerStoreAdapter, 'request_pause')
+        mock_resume = mocker.patch.object(WorkerStoreAdapter, 'request_resume')
 
         # Mock card status
         self.card.paused = paused
@@ -573,10 +573,6 @@ class TestTaskCard:
         self.card.pauseTask()
 
         # Validate DB calls
-        assert mock_set_value.call_count == 1
-        set_value_params = {
-            'key': WORKER_REQUEST_KEY,
-            'value': WORKER_RESUME_REQUEST if paused else WORKER_PAUSE_REQUEST,
-        }
-        mock_set_value.assert_called_with(*set_value_params.values())
+        assert mock_pause.call_count == (1 if paused else 0)
+        assert mock_resume.call_count == (0 if paused else 1)
         assert self.card.paused == (not paused)

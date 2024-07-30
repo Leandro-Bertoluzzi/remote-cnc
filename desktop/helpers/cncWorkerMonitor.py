@@ -1,6 +1,5 @@
 from celery.result import AsyncResult
-from core.cncworker.app import app
-from functools import reduce
+from core.cncworker.workerStatusManager import WorkerStoreAdapter
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer
 
 # Constants
@@ -68,70 +67,11 @@ class CncWorkerMonitor(QObject):
             )
 
         if task_status == 'SUCCESS':
-            self.set_device_enabled(False)
+            WorkerStoreAdapter.set_device_enabled(False)
             self.stop_task_monitor()
             self.task_finished.emit()
 
         if task_status == 'FAILURE':
-            self.set_device_enabled(False)
+            WorkerStoreAdapter.set_device_enabled(False)
             self.stop_task_monitor()
             self.task_failed.emit(str(task_info))
-
-    # STATIC METHODS
-
-    @classmethod
-    def is_worker_on(cls):
-        """Returns whether the worker process is running.
-        """
-        try:
-            return not not app.control.ping()
-        except Exception:
-            return False
-
-    @classmethod
-    def is_worker_running(cls):
-        """Returns whether the worker process is working on a task.
-        """
-        inspector = app.control.inspect()
-        try:
-            active_tasks = inspector.active()
-            if not active_tasks:
-                return False
-            tasks_count = reduce(
-                lambda x, tasks: x + len(tasks),
-                active_tasks.values(),
-                0
-            )
-            return tasks_count > 0
-        except Exception:
-            return False
-
-    @classmethod
-    def get_worker_status(cls):
-        inspector = app.control.inspect()
-
-        availability = inspector.ping()
-        stats = inspector.stats()
-        registered_tasks = inspector.registered()
-        active_tasks = inspector.active()
-        result = {
-            'availability': availability,
-            'stats': stats,
-            'registered_tasks': registered_tasks,
-            'active_tasks': active_tasks
-        }
-        return result
-
-    @classmethod
-    def is_device_enabled(cls):
-        return cls.device_enabled
-
-    @classmethod
-    def is_device_available(cls):
-        """Checks if device is ready for use (enabled + not running)
-        """
-        return cls.device_enabled and not cls.is_worker_running()
-
-    @classmethod
-    def set_device_enabled(cls, enabled: bool):
-        cls.device_enabled = enabled
