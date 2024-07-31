@@ -4,8 +4,8 @@ from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from components.TaskProgress import TaskProgress
 from config import USER_ID
-import core.cncworker.utils as worker
-from core.cncworker.workerStatusManager import WorkerStoreAdapter
+import core.worker.utils as worker
+from core.worker.workerStatusManager import WorkerStoreAdapter
 from core.database.base import Session as SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
     TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_INITIAL_STATUS, \

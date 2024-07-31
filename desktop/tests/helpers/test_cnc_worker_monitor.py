@@ -1,5 +1,5 @@
 from celery.result import AsyncResult
-from core.cncworker.workerStatusManager import WorkerStoreAdapter
+from core.worker.workerStatusManager import WorkerStoreAdapter
 import core.mocks.grbl_mocks as grbl_mocks
 import core.mocks.worker_mocks as worker_mocks
 from core.grbl.types import Status, ParserState

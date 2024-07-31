@@ -42,7 +42,7 @@ services:
     container_name: remote-cnc-redis
 
   worker:
-    command: celery --app worker worker --loglevel=INFO --logfile=logs/celery.log
+    command: celery --app app worker --loglevel=INFO --logfile=core/logs/celery.log
     depends_on:
       - redis
       - postgresql
@@ -57,7 +57,7 @@ services:
     profiles: ["worker"]
     volumes:
       - ./gcode_files:/app/gcode_files
-      - ./core/logs:/app/logs
+      - ./core/logs:/app/core/logs
     container_name: remote-cnc-worker
 
   flower:

@@ -1,6 +1,6 @@
 from components.StatusBar import StatusBar
-import core.cncworker.utils as worker
-from core.cncworker.workerStatusManager import WorkerStoreAdapter
+import core.worker.utils as worker
+from core.worker.workerStatusManager import WorkerStoreAdapter
 from helpers.cncWorkerMonitor import CncWorkerMonitor
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication

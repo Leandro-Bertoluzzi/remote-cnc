@@ -3,9 +3,9 @@ from typing import Optional
 from typing_extensions import TypedDict
 
 try:
-    from ..worker import app
+    from .scheduler import app
 except ImportError:
-    from worker import app
+    from worker.scheduler import app
 
 # Types definition
 WorkerTaskList = dict[str, list[str]]

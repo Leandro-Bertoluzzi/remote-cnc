@@ -1,8 +1,8 @@
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from config import USER_ID
-import core.cncworker.utils as worker
-from core.cncworker.workerStatusManager import WorkerStoreAdapter
+import core.worker.utils as worker
+from core.worker.workerStatusManager import WorkerStoreAdapter
 from core.database.base import Session as SessionLocal
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository

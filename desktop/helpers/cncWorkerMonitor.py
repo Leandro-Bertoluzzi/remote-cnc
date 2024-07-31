@@ -1,5 +1,5 @@
 from celery.result import AsyncResult
-from core.cncworker.workerStatusManager import WorkerStoreAdapter
+from core.worker.workerStatusManager import WorkerStoreAdapter
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer
 
 # Constants

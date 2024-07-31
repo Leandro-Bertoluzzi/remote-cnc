@@ -3,28 +3,16 @@ from celery.utils.log import get_task_logger
 import json
 import time
 
-try:
-    from .workerStatusManager import WorkerStatusManager
-    from ..database.base import Session as SessionLocal
-    from ..database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
-        TASK_FAILED_STATUS, TASK_APPROVED_STATUS
-    from ..database.repositories.taskRepository import TaskRepository
-    from ..gcode.gcodeFileSender import GcodeFileSender, FinishedFile
-    from ..grbl.grblController import GrblController
-    from ..utils.files import getFilePath
-    from ..utils.redisPubSubManager import RedisPubSubManagerSync
-    from ..worker import app
-except ImportError:
-    from cncworker.workerStatusManager import WorkerStatusManager
-    from database.base import Session as SessionLocal
-    from database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
-        TASK_FAILED_STATUS, TASK_APPROVED_STATUS
-    from database.repositories.taskRepository import TaskRepository
-    from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
-    from grbl.grblController import GrblController
-    from utils.files import getFilePath
-    from utils.redisPubSubManager import RedisPubSubManagerSync
-    from worker import app
+from app import app
+from core.database.base import Session as SessionLocal
+from core.database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
+    TASK_FAILED_STATUS, TASK_APPROVED_STATUS
+from core.database.repositories.taskRepository import TaskRepository
+from core.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from core.grbl.grblController import GrblController
+from core.utils.files import getFilePath
+from core.utils.redisPubSubManager import RedisPubSubManagerSync
+from core.worker.workerStatusManager import WorkerStatusManager
 
 # Constants
 SEND_INTERVAL = 0.10    # Seconds
@@ -33,7 +21,7 @@ STATUS_CHANNEL = 'grbl_status'
 COMMANDS_CHANNEL = 'worker_commands'
 
 
-@app.task(name='worker.tasks.executeTask', bind=True)
+@app.task(name='execute_task', bind=True)
 def executeTask(
     self: Task,
     task_id: int,
@@ -199,7 +187,7 @@ def executeTask(
     return True
 
 
-@app.task(name='worker.tasks.cncServer', bind=True)
+@app.task(name='cnc_server', bind=True)
 def cncServer(
     self: Task,
     serial_port: str,
@@ -269,9 +257,9 @@ def cncServer(
                 continue
 
             # Check if a command was requested
-            message = redis.get_message()
-            if message is not None and 'data' in message.keys():
-                data: bytes = message['data']
+            received = redis.get_message()
+            if received is not None and 'data' in received.keys():
+                data: bytes = received['data']
                 cnc.sendCommand(data.decode())
 
             tp = t

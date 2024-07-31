@@ -1,10 +1,10 @@
 import pytest
 from celery.app.task import Task
-from cncworker.tasks import executeTask
-from cncworker.workerStatusManager import WorkerStatusManager
-from database.repositories.taskRepository import TaskRepository
-from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
-from grbl.grblController import GrblController, GrblStatus
+from tasks import executeTask
+from core.database.repositories.taskRepository import TaskRepository
+from core.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from core.grbl.grblController import GrblController, GrblStatus
+from core.worker.workerStatusManager import WorkerStatusManager
 from pytest_mock.plugin import MockerFixture
 import time
 
@@ -148,7 +148,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     mocker.patch.object(GrblStatus, 'get_parser_state')
 
     # Mock FS methods
-    mocker.patch('worker.getFilePath')
+    mocker.patch('tasks.getFilePath')
 
     # Mock file sender methods
     mocker.patch.object(
