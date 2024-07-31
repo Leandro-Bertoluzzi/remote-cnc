@@ -29,6 +29,9 @@ class MainWindow(QMainWindow):
         if worker.is_worker_on():
             self.status_bar.updateDeviceStatus('HABILITADO')
             self.status_bar.updateWorkerStatus('CONECTADO')
+            if not WorkerStoreAdapter.is_device_enabled():
+                self.status_bar.setEnableBtnVisible(True)
+                self.status_bar.updateDeviceStatus('DESHABILITADO')
             if worker.is_worker_running():
                 self.status_bar.updateDeviceStatus('TRABAJANDO...')
 
