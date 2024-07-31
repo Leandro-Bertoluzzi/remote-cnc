@@ -1,12 +1,12 @@
 import pytest
 from celery.app.task import Task
+from cncworker.tasks import executeTask
 from cncworker.workerStatusManager import WorkerStatusManager
 from database.repositories.taskRepository import TaskRepository
 from gcode.gcodeFileSender import GcodeFileSender, FinishedFile
 from grbl.grblController import GrblController, GrblStatus
 from pytest_mock.plugin import MockerFixture
 import time
-from worker import executeTask
 
 
 def test_execute_tasks(mocker: MockerFixture):

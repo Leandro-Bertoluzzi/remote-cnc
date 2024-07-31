@@ -1,10 +1,10 @@
 from config import PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
-from core.cncworker.app import app
 from core.cncworker.workerStatusManager import WorkerStoreAdapter
+from core.cncworker.tasks import executeTask
 import core.cncworker.utils as worker
 from core.grbl.types import ParserState, Status
 from core.utils.storage import add_value_with_id
-from core.worker import executeTask
+from core.worker import app
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetUserDep, GetAdminDep
 from pydantic import BaseModel
