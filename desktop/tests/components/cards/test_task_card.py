@@ -4,7 +4,7 @@ from celery.result import AsyncResult
 from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
-from core.cncworker.workerStatusManager import WorkerStoreAdapter
+from core.worker.workerStatusManager import WorkerStoreAdapter
 from core.database.models import Task, TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, \
     TASK_INITIAL_STATUS, TASK_APPROVED_STATUS
 from core.database.repositories.fileRepository import FileRepository

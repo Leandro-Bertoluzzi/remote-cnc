@@ -1,7 +1,7 @@
 from config import SERIAL_PORT, SERIAL_BAUDRATE
-from core.cncworker.workerStatusManager import WorkerStoreAdapter
-from core.cncworker.tasks import cncServer, COMMANDS_CHANNEL
-import core.cncworker.utils as worker
+from core.worker.workerStatusManager import WorkerStoreAdapter
+from core.worker.scheduler import cncServer, COMMANDS_CHANNEL
+import core.worker.utils as worker
 import core.grbl.grblUtils as grblUtils
 from core.utils.serial import SerialService
 from fastapi import APIRouter, HTTPException

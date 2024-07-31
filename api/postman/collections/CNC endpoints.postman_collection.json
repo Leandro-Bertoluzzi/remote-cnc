@@ -987,7 +987,7 @@
 					"response": []
 				},
 				{
-					"name": "Stop CNC conection Copy",
+					"name": "Stop CNC conection",
 					"request": {
 						"method": "DELETE",
 						"header": [],

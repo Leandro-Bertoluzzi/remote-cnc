@@ -12,7 +12,7 @@ from components.Joystick import Joystick
 from components.Terminal import Terminal
 from components.ToolBar import ToolBar
 from config import SERIAL_BAUDRATE
-import core.cncworker.utils as worker
+import core.worker.utils as worker
 from core.grbl.grblController import GrblController
 from core.grbl.types import GrblSettings, ParserState, Status
 from core.utils.serial import SerialService

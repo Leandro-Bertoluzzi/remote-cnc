@@ -16,6 +16,11 @@ test-desktop:
 	cd desktop && flake8
 	cd desktop && mypy .
 
+test-worker:
+	cd worker && pytest -s
+	cd worker && flake8
+	cd worker && mypy .
+
 clean:
 	python3 -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.py[co]')]"
 	python3 -Bc "import pathlib; [p.rmdir() for p in pathlib.Path('.').rglob('__pycache__')]"

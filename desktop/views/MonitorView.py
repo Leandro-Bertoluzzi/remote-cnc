@@ -6,7 +6,7 @@ from components.ControllerStatus import ControllerStatus
 from components.TaskProgress import TaskProgress
 from components.text.LogsViewer import LogsViewer
 from components.ToolBar import ToolBar
-import core.cncworker.utils as worker
+import core.worker.utils as worker
 from core.grbl.types import Status, ParserState
 from typing import TYPE_CHECKING
 from views.BaseView import BaseView
