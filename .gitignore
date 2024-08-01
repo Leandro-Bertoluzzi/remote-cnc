@@ -11,6 +11,7 @@ api.conf
 
 # User files
 gcode_files/
+thumbnails/
 
 # Log files
 *.log

@@ -21,7 +21,7 @@ STATUS_CHANNEL = 'grbl_status'
 COMMANDS_CHANNEL = 'worker_commands'
 
 
-@app.task(name='execute_task', bind=True)
+@app.task(name='execute_task', bind=True, ignore_result=True)
 def executeTask(
     self: Task,
     task_id: int,
@@ -184,10 +184,8 @@ def executeTask(
     task_logger.info('Finalizada la ejecución del archivo: %s', file_path)
     repository.update_task_status(task.id, TASK_FINISHED_STATUS)
 
-    return True
 
-
-@app.task(name='cnc_server', bind=True)
+@app.task(name='cnc_server', bind=True, ignore_result=True)
 def cncServer(
     self: Task,
     serial_port: str,
@@ -276,5 +274,3 @@ def cncServer(
 
     redis.disconnect()
     task_logger.info('**Finalizado servidor de comandos CNC**')
-
-    return True
