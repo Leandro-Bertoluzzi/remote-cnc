@@ -1,6 +1,7 @@
 from config import PROJECT_ROOT
 from core.database.repositories.fileRepository import FileRepository
 from core.utils.fileManager import FileManager
+from core.worker.scheduler import createThumbnail
 import datetime
 from fastapi import APIRouter, HTTPException, UploadFile
 from middleware.authMiddleware import GetAdminDep, GetUserDep
@@ -55,7 +56,8 @@ def upload_file(
 ):
     file_manager = FileManager(PROJECT_ROOT, db_session)
     try:
-        file_manager.upload_file(user.id, file.filename, file.file)
+        file_id = file_manager.upload_file(user.id, file.filename, file.file)
+        createThumbnail.delay(file_id, PROJECT_ROOT)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
