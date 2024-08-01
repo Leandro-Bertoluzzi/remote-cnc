@@ -57,6 +57,7 @@ services:
     profiles: ["worker"]
     volumes:
       - ./gcode_files:/app/gcode_files
+      - ./thumbnails:/app/thumbnails
       - ./core/logs:/app/core/logs
     container_name: remote-cnc-worker
 

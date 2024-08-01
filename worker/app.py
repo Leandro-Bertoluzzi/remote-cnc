@@ -6,5 +6,5 @@ app = Celery(
     'worker',
     broker=CELERY_BROKER_URL,
     backend=CELERY_RESULT_BACKEND,
-    include=['tasks']
+    include=['tasks.cnc', 'tasks.files']
 )

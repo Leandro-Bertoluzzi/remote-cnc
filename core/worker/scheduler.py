@@ -36,3 +36,10 @@ def cncServer(
     serial_baudrate: int
 ) -> bool:
     pass
+
+@app.task(name='create_thumbnail')
+def createThumbnail(
+    file_id: int,
+    base_path: str
+) -> bool:
+    pass

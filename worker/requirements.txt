@@ -4,3 +4,10 @@ pyserial==3.5
 python-dotenv==1.0.0
 redis==4.6.0
 SQLAlchemy==2.0.21
+numpy==1.26.4
+pillow==10.4.0
+configobj==5.0.6
+vtk==9.3.*
+PyQt5==5.15.*
+mayavi==4.8.*
+PyVirtualDisplay==3.0.*

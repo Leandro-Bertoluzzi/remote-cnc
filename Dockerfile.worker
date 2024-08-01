@@ -7,6 +7,8 @@ RUN apt-get update \
   && apt-get install -y build-essential \
   # psycopg2 dependencies
   && apt-get install -y libpq-dev \
+  # mayavi,vtk,pyqt5 dependencies
+  && apt-get install -yq --no-install-recommends xvfb x11-utils libx11-dev qt5-default \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
@@ -22,14 +24,18 @@ WORKDIR /app
 # Copy files into the container
 COPY ./worker/app.py /app
 COPY ./worker/config.py /app
-COPY ./worker/tasks.py /app
+COPY ./worker/tasks /app/tasks
+COPY ./worker/utils /app/utils
 COPY ./core /app/core
+
+# Enable "headless" mode (no GUI) for Qt
+ENV QT_QPA_PLATFORM=offscreen
 
 FROM base AS production
 
 # Create a non-root user
-RUN adduser --uid 1000 --gid 20 nonroot
-USER nonroot
+#RUN adduser --uid 1000 --gid 20 nonroot
+#USER nonroot
 
 # Stage to build GRBL simulator from source code
 FROM debian:buster-slim AS build

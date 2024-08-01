@@ -17,6 +17,7 @@ REDIS_DB_STORAGE = int(os.environ.get('REDIS_DB_STORAGE', '1'))
 GRBL_SIMULATION = bool(os.environ.get('GRBL_SIMULATION', ''))
 
 # Generate global constants
-FILES_FOLDER_PATH = './gcode_files'
+FILES_FOLDER_PATH = '/app/gcode_files'
+IMAGES_FOLDER_PATH = '/app/thumbnails'
 SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 CELERY_BROKER_URL = CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_CELERY}'
