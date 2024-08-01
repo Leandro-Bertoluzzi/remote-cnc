@@ -320,7 +320,8 @@ class TestRoutes:
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock FS method to simulate file operation
-        mocker.patch.object(FileManager, "upload_file")
+        mocker.patch.object(FileManager, "upload_file", return_value=3)
+        mocker.patch('routes.fileRoutes.createThumbnail')
 
         # Query endpoint under test
         response = client.post("/files/", files=files, headers=headers)
