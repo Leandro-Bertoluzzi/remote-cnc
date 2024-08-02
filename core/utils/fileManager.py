@@ -57,7 +57,7 @@ class FileManager:
             self._rollback_created(created_path)
             raise error
 
-    def create_file(self, user_id: int, file_name: str, origin_path: str):
+    def create_file(self, user_id: int, file_name: str, origin_path: str) -> int:
         """Creates a file in the FS and saves it to the DB.
         It either FS or DB raises an error, it rollbacks the whole operation.
 
@@ -66,7 +66,7 @@ class FileManager:
         - file_name (str): File name of the new file.
         - origin_path (str): File path to the original file.
 
-        Returns: None
+        Returns: file_id (int)
 
         Raises:
         - DuplicatedFileNameError: A file with the same name already exists for the current user.
@@ -91,7 +91,8 @@ class FileManager:
         # Create an entry for the file in the DB
         # Can raise DatabaseError
         try:
-            repository.create_file(user_id, file_name, file_hash)
+            new_file = repository.create_file(user_id, file_name, file_hash)
+            return new_file.id
         except Exception as error:
             self._rollback_created(created_path)
             raise error

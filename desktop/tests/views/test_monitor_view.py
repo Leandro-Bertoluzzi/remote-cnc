@@ -13,7 +13,7 @@ class TestMonitorView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
+        mocker.patch('core.worker.utils.is_worker_running', return_value=False)
 
         # Mock logs monitor methods
         mocker.patch.object(LogsViewer, 'start')
@@ -38,7 +38,7 @@ class TestMonitorView:
         self.parent.addToolBar.reset_mock()
 
         # Mock worker monitor methods
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=device_busy)
+        mocker.patch('core.worker.utils.is_worker_running', return_value=device_busy)
 
         # Create an instance of MonitorView
         monitor_view = MonitorView(self.parent)

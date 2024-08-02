@@ -143,7 +143,7 @@ class TestFilesView:
             )
             file_4.user = self.user_test
             self.files_list.append(file_4)
-            return
+            return 4
 
         mock_create_file = mocker.patch.object(
             FileManager,
@@ -151,12 +151,16 @@ class TestFilesView:
             side_effect=side_effect_create_file
         )
 
+        # Mock call to worker
+        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
+
         # Call the createFile method
         self.files_view.createFile()
 
-        # Validate DB calls
+        # Validate function calls
         assert mock_create_file.call_count == 1
         assert self.mock_get_all_files.call_count == 2
+        assert mock_create_thumbnail.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
@@ -178,6 +182,9 @@ class TestFilesView:
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
 
+        # Mock call to worker
+        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
+
         # Call the method under test
         self.files_view.createFile()
 
@@ -185,6 +192,7 @@ class TestFilesView:
         assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
+        assert mock_create_thumbnail.call_count == 0
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
@@ -204,6 +212,9 @@ class TestFilesView:
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
 
+        # Mock call to worker
+        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
+
         # Call the method under test
         self.files_view.createFile()
 
@@ -211,6 +222,7 @@ class TestFilesView:
         assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
+        assert mock_create_thumbnail.call_count == 0
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
@@ -231,6 +243,9 @@ class TestFilesView:
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
+        # Mock call to worker
+        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
+
         # Call the method under test
         self.files_view.createFile()
 
@@ -238,6 +253,7 @@ class TestFilesView:
         assert mock_create_file.call_count == 0
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
+        assert mock_create_thumbnail.call_count == 0
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
@@ -258,6 +274,9 @@ class TestFilesView:
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
 
+        # Mock call to worker
+        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
+
         # Call the method under test
         self.files_view.createFile()
 
@@ -265,5 +284,6 @@ class TestFilesView:
         assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
+        assert mock_create_thumbnail.call_count == 0
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3

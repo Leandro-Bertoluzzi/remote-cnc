@@ -6,6 +6,7 @@ from core.database.repositories.fileRepository import DuplicatedFileError, \
     DuplicatedFileNameError, DatabaseError, FileRepository
 from core.utils.files import InvalidFile, FileSystemError
 from core.utils.fileManager import FileManager
+from core.worker.scheduler import createThumbnail
 from views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 
@@ -42,7 +43,8 @@ class FilesView(BaseListView):
 
         file_manager = FileManager(FILES_FOLDER_PATH)
         try:
-            file_manager.create_file(USER_ID, name, path)
+            file_id = file_manager.create_file(USER_ID, name, path)
+            createThumbnail.delay(file_id)
         except (DuplicatedFileNameError, DuplicatedFileError) as error:
             self.showWarning(
                 'Archivo repetido',
