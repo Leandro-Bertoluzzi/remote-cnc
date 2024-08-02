@@ -9,8 +9,7 @@ load_dotenv()
 SERIAL_PORT = os.environ.get('SERIAL_PORT', '')
 SERIAL_BAUDRATE = int(os.environ.get('SERIAL_BAUDRATE'))
 TOKEN_SECRET = os.environ.get('TOKEN_SECRET', '')
+FILES_FOLDER_PATH = os.environ.get('FILES_FOLDER_PATH', '/app/gcode_files')
 
 # Generate global constants
-# PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = '/app'   # If worker runs inside container
 GRBL_LOGS_FILE = Path.cwd() / Path('core', 'logs', 'grbl.log')

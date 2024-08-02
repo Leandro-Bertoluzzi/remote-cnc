@@ -5,13 +5,11 @@ from typing import BinaryIO
 try:
     from database.models import File
     from database.repositories.fileRepository import FileRepository
-    from utils.files import computeSHA256, computeSHA256FromFile, copyFile, renameFile, \
-        deleteFile, getFilePath, saveFile
+    from utils.files import computeSHA256, computeSHA256FromFile, FileSystemHelper
 except ImportError:
     from ..database.models import File
     from ..database.repositories.fileRepository import FileRepository
-    from .files import computeSHA256, computeSHA256FromFile, copyFile, renameFile, \
-        deleteFile, getFilePath, saveFile
+    from .files import computeSHA256, computeSHA256FromFile, FileSystemHelper
 
 
 class FileManager:
@@ -47,7 +45,8 @@ class FileManager:
 
         # Save file in the file system
         # Can raise (InvalidFile, FileSystemError)
-        created_path = saveFile(user_id, file, file_name)
+        files_helper = FileSystemHelper(self.base_path)
+        created_path = files_helper.saveFile(user_id, file, file_name)
 
         # Create an entry for the file in the DB
         # Can raise DatabaseError
@@ -86,7 +85,8 @@ class FileManager:
 
         # Save file in the file system
         # Can raise (InvalidFile, FileSystemError)
-        created_path = copyFile(user_id, origin_path, file_name)
+        files_helper = FileSystemHelper(self.base_path)
+        created_path = files_helper.copyFile(user_id, origin_path, file_name)
 
         # Create an entry for the file in the DB
         # Can raise DatabaseError
@@ -122,15 +122,15 @@ class FileManager:
         repository.check_file_exists(user_id, new_name, 'impossible-hash')
 
         # Save the original file name, in case we have to recover it
-        original_path = getFilePath(
-            self.base_path,
+        files_helper = FileSystemHelper(self.base_path)
+        original_path = files_helper.getFilePath(
             file.user_id,
             file.file_name
         )
 
         # Update file in the file system
         # Can raise (InvalidFile, FileSystemError)
-        updated_path = renameFile(
+        updated_path = files_helper.renameFile(
             file.user_id,
             file.file_name,
             new_name
@@ -187,8 +187,8 @@ class FileManager:
         - FileSystemError: An error ocurred during file removal in FS.
         """
         # Save a backup of the file, in case we have to recover it
-        file_path = getFilePath(
-            self.base_path,
+        files_helper = FileSystemHelper(self.base_path)
+        file_path = files_helper.getFilePath(
             file.user_id,
             file.file_name
         )
@@ -196,7 +196,7 @@ class FileManager:
 
         # Remove the file from the file system
         # Can raise FileSystemError
-        deleteFile(file.user_id, file.file_name)
+        files_helper.deleteFile(file.user_id, file.file_name)
 
         # Remove the entry for the file in the DB
         repository = FileRepository(self.session)

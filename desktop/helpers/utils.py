@@ -1,4 +1,4 @@
-from config import PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
+from config import SERIAL_BAUDRATE, SERIAL_PORT
 from core.worker.scheduler import executeTask
 from core.utils.files import getFileNameInFolder
 from core.utils.storage import add_value_with_id
@@ -19,7 +19,6 @@ def send_task_to_worker(db_task_id: int) -> str:
     """
     worker_task = executeTask.delay(
         db_task_id,
-        PROJECT_ROOT,
         SERIAL_PORT,
         SERIAL_BAUDRATE
     )

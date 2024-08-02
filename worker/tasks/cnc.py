@@ -4,13 +4,14 @@ import json
 import time
 
 from app import app
+from config import FILES_FOLDER_PATH
 from core.database.base import Session as SessionLocal
 from core.database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
     TASK_FAILED_STATUS, TASK_APPROVED_STATUS
 from core.database.repositories.taskRepository import TaskRepository
 from core.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
 from core.grbl.grblController import GrblController
-from core.utils.files import getFilePath
+from core.utils.files import FileSystemHelper
 from core.utils.redisPubSubManager import RedisPubSubManagerSync
 from core.worker.workerStatusManager import WorkerStatusManager
 
@@ -25,7 +26,6 @@ COMMANDS_CHANNEL = 'worker_commands'
 def executeTask(
     self: Task,
     task_id: int,
-    base_path: str,
     serial_port: str,
     serial_baudrate: int
 ) -> bool:
@@ -43,7 +43,8 @@ def executeTask(
     if task.status != TASK_APPROVED_STATUS:
         raise Exception(f'La tarea tiene un estado incorrecto: {task.status}')
 
-    file_path = getFilePath(base_path, task.file.user_id, task.file.file_name)
+    files_helper = FileSystemHelper(FILES_FOLDER_PATH)
+    file_path = files_helper.getFilePath(task.file.user_id, task.file.file_name)
 
     # 3. Instantiate a GrblController object and start communication with Arduino
     task_logger = get_task_logger(__name__)

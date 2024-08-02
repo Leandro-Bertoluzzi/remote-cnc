@@ -3,11 +3,6 @@ import hashlib
 from pathlib import Path
 from typing import BinaryIO
 
-try:
-    from ..config import FILES_FOLDER_PATH
-except ImportError:
-    from config import FILES_FOLDER_PATH
-
 ALLOWED_FILE_EXTENSIONS = {'txt', 'gcode', 'nc'}
 
 # Custom exceptions
@@ -21,18 +16,6 @@ class FileSystemError(Exception):
     pass
 
 
-def isAllowedFile(filename: str) -> bool:
-    """
-    - Name: isAllowedFile
-    - Parameter(s):
-        - filename: string, file name to validate
-    - Description:
-        Checks if the file has a valid file extension
-    """
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_FILE_EXTENSIONS
-
-
 def getFileNameInFolder(current: str, searched: str) -> Path:
     """
     - Name: getFileNameInFolder
@@ -44,19 +27,6 @@ def getFileNameInFolder(current: str, searched: str) -> Path:
     """
     folder = Path(current).parent
     return folder / searched
-
-
-def getFilePath(basePath: str, userId: int, fileName: str) -> Path:
-    """
-    - Name: getFilePath
-    - Parameter(s):
-        - basePath: string, absolute path to parent folder
-        - userId: int, user ID
-        - fileName: string, name of the file we need to remove
-    - Description:
-        Returns the path to the user's file
-    """
-    return Path(basePath, FILES_FOLDER_PATH, str(userId), fileName)
 
 
 def computeSHA256FromFile(file: BinaryIO) -> str:
@@ -91,99 +61,137 @@ def computeSHA256(filePath: str) -> str:
     return hash_sha256.hexdigest()
 
 
-def saveFile(userId: int, file: BinaryIO, filename: str) -> Path:
-    """ Copies a file into the right folder in the file system
-    - Parameter(s):
-        - userId: int, user ID
-        - file: BinaryIO, content of the file to save in system
-        - filename: string, file name of the original file
-    """
+class FileSystemHelper:
+    def __init__(self, basePath: str):
+        """
+        - Parameter(s):
+            - basePath: string, absolute path to files folder
+        """
+        self.basePath = basePath
 
-    # Check if the file format is a valid one
-    if not isAllowedFile(filename):
-        raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+    # PRIVATE METHODS
+    @staticmethod
+    def _is_valid_filename(filename: str) -> bool:
+        """
+        - Name: _is_valid_filename
+        - Parameter(s):
+            - filename: string, file name to validate
+        - Description:
+            Checks if the file has a valid file extension
+        """
+        return '.' in filename and \
+            filename.rsplit('.', 1)[1].lower() in ALLOWED_FILE_EXTENSIONS
 
-    try:
-        # If FILES_FOLDER_PATH or the folder for the current user are not present, then create them
-        user_files_folder_path = Path(f'{FILES_FOLDER_PATH}/{userId}')
-        if not user_files_folder_path.is_dir():
-            user_files_folder_path.mkdir(parents=True)
+    # PUBLIC METHODS
+    def getFilePath(self, userId: int, fileName: str) -> Path:
+        """
+        - Name: getFilePath
+        - Parameter(s):
+            - userId: int, user ID
+            - fileName: string, name of the file we need to remove
+        - Description:
+            Returns the path to the user's file
+        """
+        return Path(self.basePath, str(userId), fileName)
 
-        # Save the file
-        full_file_path = user_files_folder_path / filename
-        with open(full_file_path, "wb") as buffer:
-            shutil.copyfileobj(file, buffer)
-    except Exception as error:
-        raise FileSystemError(f'There was an error writing the file in the file system: {error}')
+    def saveFile(self, userId: int, file: BinaryIO, filename: str) -> Path:
+        """ Copies a file into the right folder in the file system
+        - Parameter(s):
+            - userId: int, user ID
+            - file: BinaryIO, content of the file to save in system
+            - filename: string, file name of the original file
+        """
 
-    return full_file_path
+        # Check if the file format is a valid one
+        if not self._is_valid_filename(filename):
+            raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
+        try:
+            # If the folder is not present, then create it
+            user_files_folder_path = Path(f'{self.basePath}/{userId}')
+            if not user_files_folder_path.is_dir():
+                user_files_folder_path.mkdir(parents=True)
 
-def copyFile(userId: int, original_path: str, fileName: str) -> Path:
-    """ Copies a file into the right folder in the file system
-    - Parameter(s):
-        - userId: int, user ID
-        - original_path: string, path to the file we need to save
-        - filename: string, file name for the final file
-    """
+            # Save the file
+            full_file_path = user_files_folder_path / filename
+            with open(full_file_path, "wb") as buffer:
+                shutil.copyfileobj(file, buffer)
+        except Exception as error:
+            raise FileSystemError(
+                f'There was an error writing the file in the file system: {error}'
+            )
 
-    # Check if the file format is a valid one
-    if not isAllowedFile(fileName):
-        raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+        return full_file_path
 
-    try:
-        # If FILES_FOLDER_PATH or the folder for the current user are not present, then create them
-        user_files_folder_path = Path(f'{FILES_FOLDER_PATH}/{userId}')
-        if not user_files_folder_path.is_dir():
-            user_files_folder_path.mkdir(parents=True)
+    def copyFile(self, userId: int, original_path: str, fileName: str) -> Path:
+        """ Copies a file into the right folder in the file system
+        - Parameter(s):
+            - userId: int, user ID
+            - original_path: string, path to the file we need to save
+            - filename: string, file name for the final file
+        """
 
-        # Save the file
-        full_file_path = user_files_folder_path / fileName
-        shutil.copy(original_path, full_file_path)
-    except Exception as error:
-        raise FileSystemError(f'There was an error writing the file in the file system: {error}')
+        # Check if the file format is a valid one
+        if not self._is_valid_filename(fileName):
+            raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
-    return full_file_path
+        try:
+            # If the folder is not present, then create it
+            user_files_folder_path = Path(f'{self.basePath}/{userId}')
+            if not user_files_folder_path.is_dir():
+                user_files_folder_path.mkdir(parents=True)
 
+            # Save the file
+            full_file_path = user_files_folder_path / fileName
+            shutil.copy(original_path, full_file_path)
+        except Exception as error:
+            raise FileSystemError(
+                f'There was an error writing the file in the file system: {error}'
+            )
 
-def renameFile(userId: int, fileName: str, newFileName: str) -> Path:
-    """
-    - Name: renameFile
-    - Parameter(s):
-        - userId: int, user ID
-        - fileName: string, name of the file we need to update
-        - newFileName: string, file name for the final file
-    - Description:
-        Updates the name of a file in the file system
-    """
+        return full_file_path
 
-    # Check if the file format is a valid one
-    if not isAllowedFile(newFileName):
-        raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+    def renameFile(self, userId: int, fileName: str, newFileName: str) -> Path:
+        """
+        - Name: renameFile
+        - Parameter(s):
+            - userId: int, user ID
+            - fileName: string, name of the file we need to update
+            - newFileName: string, file name for the final file
+        - Description:
+            Updates the name of a file in the file system
+        """
 
-    try:
-        # Rename the file
-        current_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
-        full_file_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{newFileName}')
-        current_file_path.rename(full_file_path)
-    except Exception as error:
-        raise FileSystemError(f'There was an error renaming the file in the file system: {error}')
+        # Check if the file format is a valid one
+        if not self._is_valid_filename(newFileName):
+            raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
 
-    return full_file_path
+        try:
+            # Rename the file
+            current_file_path = Path(f'{self.basePath}/{userId}/{fileName}')
+            full_file_path = Path(f'{self.basePath}/{userId}/{newFileName}')
+            current_file_path.rename(full_file_path)
+        except Exception as error:
+            raise FileSystemError(
+                f'There was an error renaming the file in the file system: {error}'
+            )
 
+        return full_file_path
 
-def deleteFile(userId: int, fileName: str) -> None:
-    """
-    - Name: deleteFile
-    - Parameter(s):
-        - userId: int, user ID
-        - fileName: string, name of the file we need to remove
-    - Description:
-        Removes a file from the file system
-    """
-    try:
-        # Remove the file
-        file_whole_path = Path(f'{FILES_FOLDER_PATH}/{userId}/{fileName}')
-        file_whole_path.unlink(missing_ok=True)
-    except Exception as error:
-        raise FileSystemError(f'There was an error removing the file from the file system: {error}')
+    def deleteFile(self, userId: int, fileName: str) -> None:
+        """
+        - Name: deleteFile
+        - Parameter(s):
+            - userId: int, user ID
+            - fileName: string, name of the file we need to remove
+        - Description:
+            Removes a file from the file system
+        """
+        try:
+            # Remove the file
+            file_whole_path = Path(f'{self.basePath}/{userId}/{fileName}')
+            file_whole_path.unlink(missing_ok=True)
+        except Exception as error:
+            raise FileSystemError(
+                f'There was an error removing the file from the file system: {error}'
+            )
