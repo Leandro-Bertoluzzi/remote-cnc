@@ -1,3 +1,4 @@
+from core.worker.workerStatusManager import WorkerStoreAdapter
 from MainWindow import MainWindow
 from views.MainMenu import MainMenu
 from views.UsersView import UsersView
@@ -11,16 +12,19 @@ from pytestqt.qtbot import QtBot
 class TestMainWindow:
     @pytest.mark.parametrize("worker_on", [False, True])
     @pytest.mark.parametrize("worker_running", [False, True])
+    @pytest.mark.parametrize("device_enabled", [False, True])
     def test_main_window_init(
         self,
         qtbot: QtBot,
         mocker: MockerFixture,
         worker_on,
-        worker_running
+        worker_running,
+        device_enabled
     ):
         # Mock worker monitor methods
-        mocker.patch('core.cncworker.utils.is_worker_on', return_value=worker_on)
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=worker_running)
+        mocker.patch('core.worker.utils.is_worker_on', return_value=worker_on)
+        mocker.patch('core.worker.utils.is_worker_running', return_value=worker_running)
+        mocker.patch.object(WorkerStoreAdapter, 'is_device_enabled', return_value=device_enabled)
 
         # Mock QMessageBox method
         mocker.patch.object(
@@ -44,14 +48,15 @@ class TestMainWindow:
         expected_device_status = 'Dispositivo : ---'
         if worker_on:
             expected_device_status = (
-                'Dispositivo : TRABAJANDO...' if worker_running else 'Dispositivo : HABILITADO'
+                'Dispositivo : HABILITADO' if device_enabled else 'Dispositivo : DESHABILITADO'
             )
+            if worker_running:
+                expected_device_status = 'Dispositivo : TRABAJANDO...'
         assert window.status_bar.label_device.text() == expected_device_status
 
     def test_main_window_changes_view(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock worker monitor methods
-        mocker.patch('core.cncworker.utils.is_worker_on', return_value=False)
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
+        mocker.patch('core.worker.utils.is_worker_on', return_value=False)
 
         # Instantiate window
         window = MainWindow()
@@ -88,8 +93,7 @@ class TestMainWindow:
         expectedMethodCalls
     ):
         # Mock worker monitor methods
-        mocker.patch('core.cncworker.utils.is_worker_on', return_value=False)
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
+        mocker.patch('core.worker.utils.is_worker_on', return_value=False)
 
         # Instantiate window
         window = MainWindow()

@@ -21,7 +21,7 @@ class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=False)
+        mocker.patch('core.worker.utils.is_worker_running', return_value=False)
 
         # Create an instance of ControlView
         self.parent = mock_window
@@ -40,7 +40,7 @@ class TestControlView:
         self.parent.addToolBar.reset_mock()
 
         # Mock worker monitor methods
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=device_busy)
+        mocker.patch('core.worker.utils.is_worker_running', return_value=device_busy)
 
         # Create an instance of ControlView
         control_view = ControlView(self.parent)

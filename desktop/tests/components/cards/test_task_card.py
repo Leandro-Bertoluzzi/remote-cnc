@@ -489,7 +489,7 @@ class TestTaskCard:
         )
         # Mock worker monitor methods
         mocker.patch.object(WorkerStoreAdapter, 'is_device_enabled', return_value=device_enabled)
-        mocker.patch('core.cncworker.utils.is_worker_running', return_value=task_in_progress)
+        mocker.patch('core.worker.utils.is_worker_running', return_value=task_in_progress)
 
         # Mock task manager methods
         mock_add_task_in_queue = mocker.patch('components.cards.TaskCard.send_task_to_worker')

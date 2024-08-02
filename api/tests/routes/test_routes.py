@@ -321,7 +321,7 @@ class TestRoutes:
 
         # Mock FS method to simulate file operation
         mocker.patch.object(FileManager, "upload_file", return_value=3)
-        mocker.patch('routes.fileRoutes.createThumbnail')
+        mocker.patch('routes.fileRoutes.createThumbnail.delay')
 
         # Query endpoint under test
         response = client.post("/files/", files=files, headers=headers)
