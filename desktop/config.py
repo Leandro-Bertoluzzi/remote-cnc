@@ -3,8 +3,6 @@ import os
 from pathlib import Path
 
 # Generate global constants
-# PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = '/app'   # If worker runs inside container
 GRBL_LOGS_FILE = Path.cwd().parent / Path('core', 'logs', 'grbl.log')
 CONFIG_FILE = Path.cwd() / 'config.ini'
 
@@ -14,6 +12,7 @@ appConfig.load_config()
 
 # Get user-defined variables
 USER_ID = appConfig.get_int('general', 'userid', 0)
+FILES_FOLDER_PATH = appConfig.get_str('general', 'gcodefiles')
 SERIAL_PORT = appConfig.get_str('serial', 'port', '')
 SERIAL_BAUDRATE = appConfig.get_int('serial', 'baudrate', 115200)
 

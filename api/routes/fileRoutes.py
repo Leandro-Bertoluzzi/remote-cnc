@@ -1,4 +1,4 @@
-from config import PROJECT_ROOT
+from config import FILES_FOLDER_PATH
 from core.database.repositories.fileRepository import FileRepository
 from core.utils.fileManager import FileManager
 from core.worker.scheduler import createThumbnail
@@ -54,10 +54,10 @@ def upload_file(
     user: GetUserDep,
     db_session: GetDbSession
 ):
-    file_manager = FileManager(PROJECT_ROOT, db_session)
+    file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         file_id = file_manager.upload_file(user.id, file.filename, file.file)
-        createThumbnail.delay(file_id, PROJECT_ROOT)
+        createThumbnail.delay(file_id)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -71,7 +71,7 @@ def update_file_name(
     user: GetUserDep,
     db_session: GetDbSession
 ):
-    file_manager = FileManager(PROJECT_ROOT, db_session)
+    file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         file_manager.rename_file_by_id(user.id, file_id, request.file_name)
     except Exception as error:
@@ -86,7 +86,7 @@ def remove_existing_file(
     user: GetUserDep,
     db_session: GetDbSession
 ):
-    file_manager = FileManager(PROJECT_ROOT, db_session)
+    file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         file_manager.remove_file_by_id(file_id)
     except Exception as error:

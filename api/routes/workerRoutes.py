@@ -1,4 +1,4 @@
-from config import PROJECT_ROOT, SERIAL_BAUDRATE, SERIAL_PORT
+from config import SERIAL_BAUDRATE, SERIAL_PORT
 from core.worker.workerStatusManager import WorkerStoreAdapter
 from core.worker.scheduler import app, executeTask
 import core.worker.utils as worker
@@ -52,7 +52,6 @@ def send_task_to_worker(
 
     worker_task = executeTask.delay(
         db_task_id,
-        PROJECT_ROOT,
         SERIAL_PORT,
         SERIAL_BAUDRATE
     )

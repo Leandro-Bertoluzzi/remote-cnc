@@ -1,6 +1,6 @@
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
-from config import USER_ID
+from config import USER_ID, FILES_FOLDER_PATH
 from core.database.base import Session as SessionLocal
 from core.database.repositories.fileRepository import DuplicatedFileError, \
     DuplicatedFileNameError, DatabaseError, FileRepository
@@ -40,7 +40,7 @@ class FilesView(BaseListView):
 
         name, path = fileDialog.getInputs()
 
-        file_manager = FileManager()
+        file_manager = FileManager(FILES_FOLDER_PATH)
         try:
             file_manager.create_file(USER_ID, name, path)
         except (DuplicatedFileNameError, DuplicatedFileError) as error:

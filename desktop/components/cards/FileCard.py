@@ -1,6 +1,6 @@
 from components.cards.Card import Card
 from components.dialogs.FileDataDialog import FileDataDialog
-from config import USER_ID, PROJECT_ROOT
+from config import USER_ID, FILES_FOLDER_PATH
 from core.database.exceptions import DatabaseError, EntityNotFoundError
 from core.database.models import File
 from core.database.repositories.fileRepository import DuplicatedFileNameError
@@ -14,7 +14,7 @@ class FileCard(Card):
         super(FileCard, self).__init__(parent)
 
         self.file = file
-        self.file_manager = FileManager(PROJECT_ROOT)
+        self.file_manager = FileManager(FILES_FOLDER_PATH)
         self.setup_ui()
 
     def setup_ui(self):

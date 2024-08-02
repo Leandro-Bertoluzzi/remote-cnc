@@ -22,7 +22,6 @@ COMMANDS_CHANNEL = 'worker_commands'
 def executeTask(
     self: Task,
     task_id: int,
-    base_path: str,
     serial_port: str,
     serial_baudrate: int
 ) -> bool:
@@ -37,9 +36,7 @@ def cncServer(
 ) -> bool:
     pass
 
+
 @app.task(name='create_thumbnail')
-def createThumbnail(
-    file_id: int,
-    base_path: str
-) -> bool:
+def createThumbnail(file_id: int) -> bool:
     pass
