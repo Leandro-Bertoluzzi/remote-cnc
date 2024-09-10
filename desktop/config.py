@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 
 # Generate global constants
-GRBL_LOGS_FILE = Path.cwd().parent / Path('core', 'logs', 'grbl.log')
 CONFIG_FILE = Path.cwd() / 'config.ini'
 
 # Initiate confiuration manager
