@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pytest_mock.plugin import MockerFixture
-from utils.logs import LogsInterpreter, LogFileWatcher
+from utils.logsInterpreter import LogsInterpreter
 
 
 class TestLogsInterpreter:
@@ -118,34 +118,3 @@ class TestLogsInterpreter:
 
         # Assertions
         assert result == []
-
-
-class TestLogFileWatcher:
-    def test_watch_log_file(self, mocker: MockerFixture):
-        # Mock FS methods
-        mocked_file_data = mocker.mock_open(read_data='')
-        mocked_file = mocker.patch('builtins.open', mocked_file_data)
-
-        mocker.patch.object(mocked_file(), 'readline', side_effect=[
-            '[28/02/2024 19:45:55] INFO: Interesting information',
-            '[28/02/2024 19:45:55] WARNING: A warning...',
-            'Not a log message, just ignore',
-            '[28/02/2024 19:45:55] INFO: [Sent] command: $X'
-        ])
-
-        # Instantiate class under test
-        watcher = LogFileWatcher(Path)
-        assert watcher.is_watching is False
-
-        # Call method under test
-        logs = watcher.watch()
-
-        # Assertions
-        assert next(logs) == ('28/02/2024 19:45:55', 'INFO', None, 'Interesting information')
-        assert watcher.is_watching is True
-        assert next(logs) == ('28/02/2024 19:45:55', 'WARNING', None, 'A warning...')
-        assert next(logs) == ('28/02/2024 19:45:55', 'INFO', 'Sent', 'command: $X')
-
-        # Stop watching file
-        watcher.stop_watching()
-        assert watcher.is_watching is False

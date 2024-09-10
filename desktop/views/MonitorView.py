@@ -1,11 +1,8 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem, QFileDialog
+from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
 from components.TaskProgress import TaskProgress
-from components.text.LogsViewer import LogsViewer
-from components.ToolBar import ToolBar
 import core.worker.utils as worker
 from core.grbl.types import Status, ParserState
 from typing import TYPE_CHECKING
@@ -28,9 +25,6 @@ class MonitorView(BaseView):
         # GRBL/WORKER SYNC
         self.connect_worker()
 
-        # Start monitors
-        self.logs_viewer.start()
-
     # SETUP METHODS
 
     def setup_ui(self):
@@ -42,25 +36,22 @@ class MonitorView(BaseView):
 
         self.status_monitor = ControllerStatus(parent=self)
         self.task_progress = TaskProgress(parent=self)
-        self.logs_viewer = LogsViewer(parent=self)
 
         ############################################
         # 0      STATUS      |                     #
         #   ---------------- |                     #
-        # 1     PROGRESS     |        LOGS         #
+        # 1     PROGRESS     |                     #
         #   ---------------- |                     #
         # 2                  |                     #
         #   -------------------------------------- #
         # 3               BTN_BACK                 #
         ############################################
 
-        self.createToolBars()
         layout.addWidget(self.status_monitor, 0, 0, 1, 1, Qt.AlignTop)
         layout.addWidget(self.task_progress, 1, 0, 1, 1)
         if not self.device_busy:
             self.status_monitor.setEnabled(False)
             self.task_progress.setEnabled(False)
-        layout.addWidget(self.logs_viewer, 0, 1, 4, 1)
 
         self.placeholder = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         layout.addItem(self.placeholder, 2, 0)
@@ -77,28 +68,10 @@ class MonitorView(BaseView):
         if self.device_busy:
             self.getWindow().worker_monitor.task_new_status.connect(self.update_task_status)
 
-    def createToolBars(self):
-        """Adds the tool bars to the Main window
-        """
-        options = [
-            ('Ver logs', lambda: None, True),
-            ('Exportar', self.export_logs, False),
-            ('Pausar', self.pause_logs, True),
-        ]
-        self.tool_bar = ToolBar(options, self.getWindow(), self)
-        self.logs_button = self.tool_bar.get_options()['ver logs']
-        self.pause_button = self.tool_bar.get_options()['pausar']
-
     # EVENTS
 
     def backToMenu(self):
-        self.getWindow().removeToolBar(self.tool_bar)
-        self.logs_viewer.stop()
         self.getWindow().backToMenu()
-
-    def closeEvent(self, event: QCloseEvent):
-        self.logs_viewer.stop()
-        return super().closeEvent(event)
 
     # UI METHODS
 
@@ -131,18 +104,3 @@ class MonitorView(BaseView):
         self.status_monitor.set_feedrate(feedrate)
         self.status_monitor.set_spindle(spindle)
         self.status_monitor.set_tool(tool_index)
-
-    def pause_logs(self):
-        self.logs_viewer.toggle_paused()
-
-    def export_logs(self):
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Exportar registro de actividad",
-            "C:\\",
-            "Log files (*.log *.csv *.txt)"
-        )
-        if not file_path:
-            return
-
-        self.logs_viewer.export_logs(file_path)

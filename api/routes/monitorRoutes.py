@@ -1,44 +1,15 @@
 import asyncio  # noqa: F401
-from config import GRBL_LOGS_FILE
-from core.utils.logs import LogsInterpreter
 from fastapi import APIRouter, Request
-from middleware.authMiddleware import GetAdminDep, GetUserDep
+from middleware.authMiddleware import GetUserDep
 from middleware.pubSubMiddleware import GetPubSub
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
-from typing import Optional
 
 monitorRoutes = APIRouter(prefix="/monitor", tags=["Monitor"])
 
 
-class LogResponseModel(BaseModel):
-    datetime: str
-    level: str
-    type: Optional[str]
-    message: str
-
-
 class PubSubMessageModel(BaseModel):
     message: str
-
-
-@monitorRoutes.get('/logs')
-def get_logs(
-    admin: GetAdminDep
-) -> list[LogResponseModel]:
-    logs = []
-    log_sets = LogsInterpreter().interpret_file(GRBL_LOGS_FILE)
-
-    for datetime, level, type, message in log_sets:
-        log_dict = {
-            'datetime': datetime,
-            'level': level,
-            'type': type,
-            'message': message,
-        }
-        logs.append(log_dict)
-
-    return logs
 
 
 @monitorRoutes.get("/stream/{channel}")

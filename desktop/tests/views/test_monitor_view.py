@@ -1,8 +1,6 @@
 from components.buttons.MenuButton import MenuButton
 from components.ControllerStatus import ControllerStatus
-from components.text.LogsViewer import LogsViewer
 from MainWindow import MainWindow
-from PyQt5.QtGui import QCloseEvent
 import pytest
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -14,9 +12,6 @@ class TestMonitorView:
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
         mocker.patch('core.worker.utils.is_worker_running', return_value=False)
-
-        # Mock logs monitor methods
-        mocker.patch.object(LogsViewer, 'start')
 
         # Mock other methods
         mocker.patch.object(MonitorView, 'connect_worker')
@@ -47,12 +42,10 @@ class TestMonitorView:
         # Validate amount of each type of widget
         layout = monitor_view.layout()
         assert helpers.count_grid_widgets(layout, MenuButton) == 1
-        assert helpers.count_grid_widgets(layout, LogsViewer) == 1
         assert helpers.count_grid_widgets(layout, ControllerStatus) == 1
 
         # More assertions
         assert monitor_view.status_monitor.isEnabled() == device_busy
-        assert self.parent.addToolBar.call_count == 1
 
     def test_monitor_view_goes_back_to_menu(self):
         # Call method under test
@@ -61,16 +54,6 @@ class TestMonitorView:
         # Assertions
         self.parent.removeToolBar.call_count == 1
         self.parent.backToMenu.assert_called_once()
-
-    def test_monitor_view_close_event(self, mocker: MockerFixture):
-        # Mock methods
-        mock_stop_logs_monitor = mocker.patch.object(LogsViewer, 'stop')
-
-        # Call method under test
-        self.monitor_view.closeEvent(QCloseEvent())
-
-        # Assertions
-        assert mock_stop_logs_monitor.call_count == 1
 
     def test_monitor_view_update_device_status(self, mocker: MockerFixture):
         # Mock methods
@@ -87,13 +70,3 @@ class TestMonitorView:
         assert mock_set_feedrate.call_count == 1
         assert mock_set_spindle.call_count == 1
         assert mock_set_tool.call_count == 1
-
-    def test_monitor_view_pause_logs(self, mocker: MockerFixture):
-        # Mock methods
-        mock_pause_logs_monitor = mocker.patch.object(LogsViewer, 'toggle_paused')
-
-        # Call method under test
-        self.monitor_view.pause_logs()
-
-        # Assertions
-        assert mock_pause_logs_monitor.call_count == 1
