@@ -12,6 +12,7 @@ from core.database.repositories.taskRepository import TaskRepository
 from core.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
 from core.grbl.grblController import GrblController
 from core.utils.files import FileSystemHelper
+from core.utils.loggerFactory import setup_task_logger, setup_stream_logger
 from core.utils.redisPubSubManager import RedisPubSubManagerSync
 from core.worker.workerStatusManager import WorkerStatusManager
 
@@ -47,7 +48,8 @@ def executeTask(
     file_path = files_helper.getFilePath(task.file.user_id, task.file.file_name)
 
     # 3. Instantiate a GrblController object and start communication with Arduino
-    task_logger = get_task_logger(__name__)
+    worker_logger = get_task_logger(__name__)
+    task_logger = setup_task_logger(task.file.file_name, worker_logger.level)
     cnc = GrblController(logger=task_logger)
     cnc_status = cnc.grbl_status
     cnc.connect(serial_port, serial_baudrate)
@@ -70,13 +72,13 @@ def executeTask(
         total_lines = file_sender.start() + 1
     except Exception as error:
         cnc.disconnect()
-        task_logger.critical('Error al abrir el archivo: %s', file_path)
-        task_logger.critical(error)
+        worker_logger.critical('Error al abrir el archivo: %s', file_path)
+        worker_logger.critical(error)
         raise error
 
     # Once sure the file exists, mark the task as 'in progress' in the DB
     repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS)
-    task_logger.info('Comenzada la ejecución del archivo: %s', file_path)
+    worker_logger.info('Comenzada la ejecución del archivo: %s', file_path)
 
     # 5. Start a PubSub manager to notify updates and listen to requests
     redis = RedisPubSubManagerSync()
@@ -174,15 +176,15 @@ def executeTask(
     redis.disconnect()
 
     if cnc_status.failed():
-        task_logger.critical('Error durante la ejecución del archivo: %s', file_path)
+        worker_logger.critical('Error durante la ejecución del archivo: %s', file_path)
         repository.update_task_status(task.id, TASK_FAILED_STATUS)
 
         error_message = cnc_status.get_error_message()
-        task_logger.critical(error_message)
+        worker_logger.critical(error_message)
         raise Exception(error_message)
 
     # SUCCESS
-    task_logger.info('Finalizada la ejecución del archivo: %s', file_path)
+    worker_logger.info('Finalizada la ejecución del archivo: %s', file_path)
     repository.update_task_status(task.id, TASK_FINISHED_STATUS)
 
 
@@ -199,7 +201,8 @@ def cncServer(
         raise Exception('Hay una tarea en progreso, por favor espere a que termine')
 
     # 2. Instantiate a GrblController object and start communication with Arduino
-    task_logger = get_task_logger(__name__)
+    worker_logger = get_task_logger(__name__)
+    task_logger = setup_stream_logger('cnc_server', worker_logger.level)
     cnc = GrblController(logger=task_logger)
     cnc_status = cnc.grbl_status
     cnc.connect(serial_port, serial_baudrate)
@@ -216,7 +219,7 @@ def cncServer(
 
     # 4. Send G-code lines in a loop until the user requests the disconnection
     tp = time.time()  # last time a command was sent and info was queried
-    task_logger.info('**Iniciado servidor de comandos CNC**')
+    worker_logger.info('**Iniciado servidor de comandos CNC**')
 
     while True:
         t = time.time()
@@ -239,7 +242,7 @@ def cncServer(
             redis.publish(STATUS_CHANNEL, message)
 
             if cnc_status.finished():
-                task_logger.info('Encontrado comando de fin de programa, desconectando...')
+                worker_logger.info('Encontrado comando de fin de programa, desconectando...')
                 break
 
             # Check if PAUSE or RESUME was requested
@@ -274,4 +277,4 @@ def cncServer(
     redis.publish(STATUS_CHANNEL, message)
 
     redis.disconnect()
-    task_logger.info('**Finalizado servidor de comandos CNC**')
+    worker_logger.info('**Finalizado servidor de comandos CNC**')

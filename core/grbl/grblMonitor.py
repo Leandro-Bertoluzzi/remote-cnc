@@ -1,7 +1,6 @@
 import json
 import logging
 from .parsers.grblMsgTypes import GRBL_MSG_STATUS
-from pathlib import Path
 from queue import Empty, Queue
 from typing import Optional
 
@@ -19,18 +18,8 @@ class GrblMonitor:
         # Configure logs queue for external monitor
         self.queue_log: Queue[str] = Queue()
 
-        # Location of logs file
-        file_path = Path(__file__).parent.parent / 'logs' / 'grbl.log'
-
         # Configure logger
-        file_handler = logging.FileHandler(file_path, 'a', delay=True)
-        file_format = logging.Formatter(
-            '[%(asctime)s] %(levelname)s: %(message)s',
-            datefmt='%d/%m/%Y %H:%M:%S'
-        )
-        file_handler.setFormatter(file_format)
         self.logger = logger
-        self.logger.addHandler(file_handler)
 
         # Start a PubSub manager to notify updates to external apps
         self.redis = RedisPubSubManagerSync()

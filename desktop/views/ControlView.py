@@ -15,6 +15,7 @@ from config import SERIAL_BAUDRATE
 import core.worker.utils as worker
 from core.grbl.grblController import GrblController
 from core.grbl.types import GrblSettings, ParserState, Status
+from core.utils.loggerFactory import setup_stream_logger
 from core.utils.serial import SerialService
 from helpers.fileStreamer import FileStreamer
 from helpers.grblSync import GrblSync
@@ -64,8 +65,7 @@ class ControlView(BaseView):
     def setup_grbl_controller(self):
         """ Setup GRBL controller
         """
-        grbl_logger = logging.getLogger('control_view_logger')
-        grbl_logger.setLevel(logging.INFO)
+        grbl_logger = setup_stream_logger('control_view', logging.INFO)
         self.grbl_controller = GrblController(grbl_logger)
         self.grbl_status = self.grbl_controller.grbl_status
         self.checkmode = self.grbl_status.is_checkmode()
