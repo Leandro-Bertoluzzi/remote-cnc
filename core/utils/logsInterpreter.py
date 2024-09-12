@@ -9,8 +9,6 @@ import re
 Log = tuple[str, str, Optional[str], str]
 
 
-# Classes
-
 class LogsInterpreter:
     @classmethod
     def interpret_log(cls, log: str) -> Optional[Log]:
