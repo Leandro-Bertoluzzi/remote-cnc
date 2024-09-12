@@ -79,10 +79,10 @@ You can find instructions to run locally (without Docker) and further informatio
 
 ### Mock external services
 
-In addition, you can also add a mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
+You can also run a mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
 
 ```bash
-$ docker compose -f docker-compose.yaml -f docker-compose.test.yaml up
+$ docker compose --profile=simulator up
 ```
 
 For the worker/app to use the mocked port, update your environment (or ini file) to use a virtual port:
@@ -94,7 +94,7 @@ SERIAL_PORT=/dev/ttyUSBFAKE
 Initiate the virtual port inside the worker's container:
 
 ```bash
-docker exec -it remote-cnc-worker /bin/bash simport.sh
+docker exec -it remote-cnc-worker-sim /bin/bash simport.sh
 ```
 
 ### Manage database
