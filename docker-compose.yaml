@@ -3,6 +3,10 @@ name: cnc-api
 services:
   api:
     image: cnc-api
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: development
     depends_on:
       - postgresql
       - redis
@@ -27,6 +31,17 @@ services:
       - postgres-datavolume:/var/lib/postgresql/data
     container_name: remote-cnc-postgresql
 
+  testdb:
+    image: postgres:16.1-alpine
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=cnc_db
+    ports:
+      - 5000:5432
+    container_name: remote-cnc-testdb
+    profiles: ["test"]
+
   adminer:
     image: adminer:4.8.1
     depends_on:
@@ -42,6 +57,10 @@ services:
     container_name: remote-cnc-redis
 
   worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      target: production
     command: celery --app app worker --loglevel=INFO --logfile=core/logs/celery.log
     depends_on:
       - redis
@@ -54,12 +73,39 @@ services:
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
-    profiles: ["worker"]
     volumes:
       - ./gcode_files:/app/gcode_files
       - ./thumbnails:/app/thumbnails
       - ./core/logs:/app/core/logs
+      # Devices
+      - /dev:/dev
+      # Devices information
+      - /run/udev:/run/udev:ro
     container_name: remote-cnc-worker
+    profiles: ["worker"]
+
+  worker-sim:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      target: development
+    command: celery --app app worker --loglevel=INFO --logfile=core/logs/celery.log
+    depends_on:
+      - redis
+      - postgresql
+    env_file:
+      - ./core/.env
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=postgresql
+      - GRBL_SIMULATION=TRUE
+    volumes:
+      - ./gcode_files:/app/gcode_files
+      - ./thumbnails:/app/thumbnails
+      - ./core/logs:/app/core/logs
+    container_name: remote-cnc-worker-sim
+    profiles: ["test", "simulator"]
 
   flower:
     image: mher/flower
