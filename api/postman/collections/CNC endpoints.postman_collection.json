@@ -366,7 +366,7 @@
 			"name": "Tools",
 			"item": [
 				{
-					"name": "Upload tool",
+					"name": "Create tool",
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -1516,6 +1516,23 @@
 					}
 				]
 			}
+		},
+		{
+			"name": "Health check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
