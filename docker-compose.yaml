@@ -8,8 +8,10 @@ services:
       dockerfile: Dockerfile.api
       target: development
     depends_on:
-      - postgresql
-      - redis
+      redis:
+        condition: service_started
+      postgresql:
+        condition: service_healthy
     env_file:
       - core/.env
       - api/.env
@@ -17,6 +19,12 @@ services:
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
+    healthcheck:
+      test: curl --fail http://localhost:8000/health || exit 1
+      interval: 10m
+      timeout: 30s
+      retries: 3
+      start_period: 60s
     volumes:
       - ./gcode_files:/app/gcode_files
     container_name: remote-cnc-api
@@ -27,6 +35,11 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
       - POSTGRES_DB=${DB_NAME}
+    healthcheck:
+      test: pg_isready
+      interval: 2m
+      timeout: 5s
+      retries: 5
     volumes:
       - postgres-datavolume:/var/lib/postgresql/data
     container_name: remote-cnc-postgresql
@@ -63,8 +76,10 @@ services:
       target: production
     command: celery --app app worker --loglevel=INFO --logfile=core/logs/celery.log
     depends_on:
-      - redis
-      - postgresql
+      redis:
+        condition: service_started
+      postgresql:
+        condition: service_healthy
     device_cgroup_rules:
       - 'c 188:* rmw'
     env_file:
@@ -91,8 +106,10 @@ services:
       target: development
     command: celery --app app worker --loglevel=INFO --logfile=core/logs/celery.log
     depends_on:
-      - redis
-      - postgresql
+      redis:
+        condition: service_started
+      postgresql:
+        condition: service_healthy
     env_file:
       - ./core/.env
       - .env
@@ -121,7 +138,8 @@ services:
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     profiles: ["ngrok"]
     container_name: remote-cnc-ngrok
 
