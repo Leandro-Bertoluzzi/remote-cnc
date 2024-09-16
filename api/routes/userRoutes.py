@@ -1,11 +1,9 @@
 from core.database.models import RoleType
 from core.database.repositories.userRepository import UserRepository
-from core.utils.security import validate_password
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
 from pydantic import BaseModel, EmailStr, Field
-from services.security import generate_token
 from services.utilities import serializeList
 
 userRoutes = APIRouter(prefix="/users", tags=["Users"])
@@ -26,11 +24,6 @@ class UserUpdateModel(BaseModel):
     name: str
     email: EmailStr
     role: RoleType
-
-
-class UserLoginModel(BaseModel):
-    email: EmailStr
-    password: str
 
 
 class UserResponse(BaseModel):
@@ -106,40 +99,6 @@ def remove_existing_user(
         raise HTTPException(400, detail=str(error))
 
     return {'success': 'The user was successfully removed'}
-
-
-@userRoutes.post('/login')
-def login(
-    request: UserLoginModel,
-    db_session: GetDbSession
-):
-    email = request.email
-    password = request.password
-
-    # Get user from DB
-    try:
-        repository = UserRepository(db_session)
-        user = repository.get_user_by_email(email)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error))
-
-    if not user:
-        raise HTTPException(404, detail='Unauthorized: Invalid email')
-
-    checks = validate_password(user.password, password)
-    if not checks:
-        raise HTTPException(404, detail='Unauthorized: Invalid combination of email and password')
-
-    try:
-        userData = user.serialize()
-        # token should expire after 24 hrs
-        userData['token'] = generate_token(user.id)
-        return {
-            'message': 'Successfully fetched auth token',
-            'data': userData
-        }
-    except Exception as error:
-        raise HTTPException(400, detail=str(error))
 
 
 @userRoutes.get('/auth')
