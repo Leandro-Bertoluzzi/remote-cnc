@@ -107,7 +107,7 @@ class FileRepository:
             if file_hash:
                 file.file_hash = file_hash
             self.session.commit()
-            return file
+            return file.serialize()
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the file in the DB: {e}')

@@ -50,7 +50,7 @@ class ToolRepository:
             tool.name = name
             tool.description = description
             self.session.commit()
-            return tool
+            return tool.serialize()
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the tool in the DB: {e}')

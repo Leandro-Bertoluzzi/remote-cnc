@@ -16,7 +16,7 @@ class TaskCreateModel(BaseModel):
     file_id: int
     tool_id: int
     material_id: int
-    note: str = ''
+    note: Optional[str] = ''
 
 
 class TaskUpdateStatusModel(BaseModel):
@@ -77,7 +77,7 @@ def create_new_task(
     request: TaskCreateModel,
     user: GetUserDep,
     db_session: GetDbSession
-):
+) -> TaskResponseModel:
     fileId = request.file_id
     toolId = request.tool_id
     materialId = request.material_id
@@ -86,7 +86,7 @@ def create_new_task(
 
     try:
         repository = TaskRepository(db_session)
-        repository.create_task(
+        new_task = repository.create_task(
             user.id,
             fileId,
             toolId,
@@ -97,7 +97,7 @@ def create_new_task(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The task was successfully created'}
+    return new_task
 
 
 @taskRoutes.put('/{task_id}/status')
@@ -106,7 +106,7 @@ def update_existing_task_status(
     request: TaskUpdateStatusModel,
     user: GetUserDep,
     db_session: GetDbSession
-):
+) -> TaskResponseModel:
     taskStatus = request.status
     cancellationReason = request.cancellation_reason
 
@@ -114,7 +114,7 @@ def update_existing_task_status(
 
     try:
         repository = TaskRepository(db_session)
-        repository.update_task_status(
+        updated_task = repository.update_task_status(
             task_id,
             taskStatus,
             admin_id,
@@ -123,9 +123,7 @@ def update_existing_task_status(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {
-        'success': 'The task status was successfully updated'
-    }
+    return updated_task
 
 
 @taskRoutes.put('/{task_id}')
@@ -134,7 +132,7 @@ def update_existing_task(
     request: TaskUpdateModel,
     user: GetUserDep,
     db_session: GetDbSession
-):
+) -> TaskResponseModel:
     fileId = request.file_id
     toolId = request.tool_id
     materialId = request.material_id
@@ -144,7 +142,7 @@ def update_existing_task(
 
     try:
         repository = TaskRepository(db_session)
-        repository.update_task(
+        updated_task = repository.update_task(
             task_id,
             user.id,
             fileId,
@@ -157,7 +155,7 @@ def update_existing_task(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The task was successfully updated'}
+    return updated_task
 
 
 @taskRoutes.delete('/{task_id}')
@@ -172,4 +170,4 @@ def remove_existing_task(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The task was successfully removed'}
+    return {'success': 'La tarea fue eliminada con éxito'}

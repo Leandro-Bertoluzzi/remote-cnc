@@ -59,17 +59,17 @@ def update_existing_material(
     material_id: int,
     admin: GetAdminDep,
     db_session: GetDbSession
-):
+) -> MaterialResponseModel:
     materialName = request.name
     materialDescription = request.description
 
     try:
         repository = MaterialRepository(db_session)
-        repository.update_material(material_id, materialName, materialDescription)
+        material = repository.update_material(material_id, materialName, materialDescription)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The material was successfully updated'}
+    return material
 
 
 @materialRoutes.delete('/{material_id}')
@@ -84,4 +84,4 @@ def remove_existing_material(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The material was successfully removed'}
+    return {'success': 'El material fue eliminado con éxito'}

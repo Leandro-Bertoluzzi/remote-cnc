@@ -79,17 +79,17 @@ def update_existing_tool(
     tool_id: int,
     admin: GetAdminDep,
     db_session: GetDbSession
-):
+) -> ToolResponseModel:
     toolName = request.name
     toolDescription = request.description
 
     try:
         repository = ToolRepository(db_session)
-        repository.update_tool(tool_id, toolName, toolDescription)
+        tool = repository.update_tool(tool_id, toolName, toolDescription)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The tool was successfully updated'}
+    return tool
 
 
 @toolRoutes.delete('/{tool_id}')
@@ -104,4 +104,4 @@ def remove_existing_tool(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The tool was successfully removed'}
+    return {'success': 'La herramienta fue eliminada con éxito'}
