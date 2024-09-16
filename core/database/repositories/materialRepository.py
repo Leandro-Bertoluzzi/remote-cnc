@@ -49,7 +49,7 @@ class MaterialRepository:
             material.name = name
             material.description = description
             self.session.commit()
-            return material
+            return material.serialize()
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the material in the DB: {e}')

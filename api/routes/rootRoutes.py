@@ -58,17 +58,17 @@ def login(
         raise HTTPException(400, detail=str(error))
 
     if not user:
-        raise HTTPException(404, detail='Unauthorized: Invalid email')
+        raise HTTPException(404, detail='No autorizado: Email inválido')
 
     checks = validate_password(user.password, password)
     if not checks:
-        raise HTTPException(404, detail='Unauthorized: Invalid combination of email and password')
+        raise HTTPException(404, detail='No autorizado: Combinación inválida de email y contraseña')
 
     try:
         userData = user.serialize()
         userData['token'] = generate_token(user.id)
         return {
-            'message': 'Successfully fetched auth token',
+            'message': 'Usuario autenticado con éxito',
             'data': userData
         }
     except Exception as error:

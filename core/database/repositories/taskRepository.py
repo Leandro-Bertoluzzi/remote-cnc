@@ -46,7 +46,7 @@ class TaskRepository:
 
             self.session.add(new_task)
             self.session.commit()
-            return new_task
+            return new_task.serialize()
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error creating the task in the DB: {e}')
@@ -139,7 +139,7 @@ class TaskRepository:
             task.priority = priority or task.priority
 
             self.session.commit()
-            return task
+            return task.serialize()
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating task with ID {id} in DB: {e}')
@@ -160,7 +160,7 @@ class TaskRepository:
                 raise EntityNotFoundError(f'Task with ID {id} was not found')
 
             if task.status == status:
-                return task
+                return task.serialize()
 
             if not validate_transition(task.status, status):
                 raise InvalidTaskStatus(f'Transition from {task.status} to {status} is not valid')
@@ -184,7 +184,7 @@ class TaskRepository:
             task.status_updated_at = datetime.now()
 
             self.session.commit()
-            return task
+            return task.serialize()
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the task status in the DB: {e}')

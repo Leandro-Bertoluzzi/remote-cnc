@@ -93,7 +93,7 @@ class UserRepository:
             user.role = role
 
             self.session.commit()
-            return user
+            return user.serialize()
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the user in the DB: {e}')

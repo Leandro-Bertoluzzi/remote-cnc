@@ -17,7 +17,7 @@ class FileManager:
         self.base_path = base_path
         self.session = _session
 
-    def upload_file(self, user_id: int, file_name: str, file: BinaryIO) -> int:
+    def upload_file(self, user_id: int, file_name: str, file: BinaryIO) -> File:
         """Creates a file in the FS and saves it to the DB.
         It either FS or DB raises an error, it rollbacks the whole operation.
 
@@ -52,7 +52,7 @@ class FileManager:
         # Can raise DatabaseError
         try:
             new_file = repository.create_file(user_id, file_name, file_hash)
-            return new_file.id
+            return new_file.serialize()
         except Exception as error:
             self._rollback_created(created_path)
             raise error
@@ -140,7 +140,8 @@ class FileManager:
         # Update the entry for the file in the DB
         # Can raise (EntityNotFoundError, DatabaseError)
         try:
-            repository.update_file(file.id, file.user_id, new_name)
+            updated_file = repository.update_file(file.id, file.user_id, new_name)
+            return updated_file
         except Exception as error:
             self._rollback_renamed(updated_path, original_path)
             raise error
@@ -171,7 +172,7 @@ class FileManager:
         file = repository.get_file_by_id(file_id)
 
         # Original method
-        self.rename_file(user_id, file, new_name)
+        return self.rename_file(user_id, file, new_name)
 
     def remove_file(self, file: File):
         """Removes a file from the FS and the DB.

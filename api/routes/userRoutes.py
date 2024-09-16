@@ -72,18 +72,18 @@ def update_existing_user(
     request: UserUpdateModel,
     admin: GetAdminDep,
     db_session: GetDbSession
-):
+) -> UserResponse:
     name = request.name
     email = request.email
     role = request.role
 
     try:
         repository = UserRepository(db_session)
-        repository.update_user(user_id, name, email, role)
+        user = repository.update_user(user_id, name, email, role)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The user was successfully updated'}
+    return user
 
 
 @userRoutes.delete('/{user_id}')
@@ -98,12 +98,12 @@ def remove_existing_user(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The user was successfully removed'}
+    return {'success': 'El usuario fue eliminado con éxito'}
 
 
 @userRoutes.get('/auth')
 def authenticate(user: GetUserDep):
     return {
-        'message': 'Successfully authenticated',
+        'message': 'Usuario autenticado con éxito',
         'data': user.serialize()
     }

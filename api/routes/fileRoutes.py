@@ -53,15 +53,15 @@ def upload_file(
     file: UploadFile,
     user: GetUserDep,
     db_session: GetDbSession
-):
+) -> FileResponseModel:
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
-        file_id = file_manager.upload_file(user.id, file.filename, file.file)
-        createThumbnail.delay(file_id)
+        new_file = file_manager.upload_file(user.id, file.filename, file.file)
+        createThumbnail.delay(new_file["id"])
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The file was successfully uploaded'}
+    return new_file
 
 
 @fileRoutes.put('/{file_id}')
@@ -70,14 +70,14 @@ def update_file_name(
     request: FileUpdateModel,
     user: GetUserDep,
     db_session: GetDbSession
-):
+) -> FileResponseModel:
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
-        file_manager.rename_file_by_id(user.id, file_id, request.file_name)
+        updated_file = file_manager.rename_file_by_id(user.id, file_id, request.file_name)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The file name was successfully updated'}
+    return updated_file
 
 
 @fileRoutes.delete('/{file_id}')
@@ -92,4 +92,4 @@ def remove_existing_file(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return {'success': 'The file was successfully removed'}
+    return {'success': 'El archivo fue eliminado con éxito'}

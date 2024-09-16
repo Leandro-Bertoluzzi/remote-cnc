@@ -72,32 +72,32 @@ class TestRoutes:
         data = {"email": "admin@test.com", "password": "password"}
 
         # Query endpoint under test
-        response = client.post("/users/login", json=data)
+        response = client.post("/login", json=data)
 
         # Assertions
         assert response.status_code == 200
-        assert response.json()["message"] == "Successfully fetched auth token"
+        assert response.json()["message"] == "Usuario autenticado con éxito"
 
     def test_login_invalid_email(self, client):
         data = {"email": "invalid@test.com", "password": "password"}
 
         # Query endpoint under test
-        response = client.post("/users/login", json=data)
+        response = client.post("/login", json=data)
 
         # Assertions
         assert response.status_code == 404
-        assert response.json()["detail"] == "Unauthorized: Invalid email"
+        assert response.json()["detail"] == "No autorizado: Email inválido"
 
     def test_login_invalid_password(self, client):
         data = {"email": "admin@test.com", "password": "invalid-password"}
 
         # Query endpoint under test
-        response = client.post("/users/login", json=data)
+        response = client.post("/login", json=data)
 
         # Assertions
         assert response.status_code == 404
         error_msg = response.json()["detail"]
-        assert error_msg == "Unauthorized: Invalid combination of email and password"
+        assert error_msg == "No autorizado: Combinación inválida de email y contraseña"
 
     def test_login_db_error(self, client, mocker):
         data = {"email": "admin@test.com", "password": "password"}
@@ -109,7 +109,7 @@ class TestRoutes:
         )
 
         # Query endpoint under test
-        response = client.post("/users/login", json=data)
+        response = client.post("/login", json=data)
 
         # Assertions
         assert response.status_code == 400
@@ -125,7 +125,7 @@ class TestRoutes:
         )
 
         # Query endpoint under test
-        response = client.post("/users/login", json=data)
+        response = client.post("/login", json=data)
 
         # Assertions
         assert response.status_code == 400
@@ -208,7 +208,9 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The user was successfully updated"}
+        assert response.json()["name"] == "testupdate"
+        assert response.json()["email"] == "updateduser@nofoobar.com"
+        assert response.json()["role"] == "user"
 
     def test_update_user_error(self, client, mocker):
         data = {
@@ -239,7 +241,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The user was successfully removed"}
+        assert response.json() == {"success": "El usuario fue eliminado con éxito"}
 
     def test_remove_user_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -328,7 +330,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {'success': 'The file was successfully uploaded'}
+        assert response.json()["name"] == "new_file.gcode"
 
     def test_create_file_repeated_name(self, client):
         files = {"file": ("file_1.gcode", b"G55", "text/plain")}
@@ -386,7 +388,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The file name was successfully updated"}
+        assert response.json()["name"] == "updated_file.gcode"
 
     def test_update_file_error(self, client, mocker):
         data = {"file_name": "updated_file.gcode"}
@@ -417,7 +419,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The file was successfully removed"}
+        assert response.json() == {"success": "El archivo fue eliminado con éxito"}
 
     def test_remove_file_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -502,7 +504,8 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The tool was successfully updated"}
+        assert response.json()["name"] == "Updated tool"
+        assert response.json()["description"] == "An updated tool"
 
     def test_update_tool_error(self, client, mocker):
         data = {"name": "Updated tool", "description": "An updated tool"}
@@ -529,7 +532,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The tool was successfully removed"}
+        assert response.json() == {"success": "La herramienta fue eliminada con éxito"}
 
     def test_remove_tool_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -616,7 +619,8 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The material was successfully updated"}
+        assert response.json()["name"] == "Updated material"
+        assert response.json()["description"] == "An updated material"
 
     def test_update_material_error(self, client, mocker):
         data = {
@@ -646,7 +650,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {"success": "The material was successfully removed"}
+        assert response.json() == {"success": "El material fue eliminado con éxito"}
 
     def test_remove_material_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -777,7 +781,12 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {'success': 'The task was successfully created'}
+        assert response.json()["name"] == "New task"
+        assert response.json()["file_id"] == 1
+        assert response.json()["tool_id"] == 1
+        assert response.json()["material_id"] == 1
+        assert response.json()["note"] == "A note"
+        assert response.json()["status"] == "pending_validation"
 
     def test_create_task_error(self, client, mocker):
         data = {
@@ -818,7 +827,12 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {'success': 'The task was successfully updated'}
+        assert response.json()["name"] == "Updated task"
+        assert response.json()["file_id"] == 2
+        assert response.json()["tool_id"] == 2
+        assert response.json()["material_id"] == 2
+        assert response.json()["priority"] == 5
+        assert response.json()["note"] == "A note"
 
     def test_update_task_error(self, client, mocker):
         data = {
@@ -855,7 +869,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {'success': 'The task status was successfully updated'}
+        assert response.json()["status"] == "on_hold"
 
     def test_update_task_status_error(self, client, mocker):
         data = {
@@ -884,7 +898,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {'success': 'The task was successfully removed'}
+        assert response.json() == {'success': 'La tarea fue eliminada con éxito'}
 
     def test_remove_task_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
