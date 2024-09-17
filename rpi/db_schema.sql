@@ -182,5 +182,11 @@ DROP TYPE temp_task_status;
 
 UPDATE alembic_version SET version_num='5269cf543947' WHERE alembic_version.version_num = '3235826a58f1';
 
+-- Running upgrade 5269cf543947 -> 46ab6ab25408
+
+ALTER TABLE files ADD COLUMN report JSONB;
+
+UPDATE alembic_version SET version_num='46ab6ab25408' WHERE alembic_version.version_num = '5269cf543947';
+
 COMMIT;
 

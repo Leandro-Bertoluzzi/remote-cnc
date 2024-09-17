@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, DateTime, ForeignKey
+from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
 from typing import List, Literal, Optional
@@ -46,11 +46,11 @@ class Task(Base):
     __tablename__ = 'tasks'
 
     # Foreign keys
-    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'))
-    file_id: Mapped[Optional[int]] = mapped_column(ForeignKey('files.id'))
-    tool_id: Mapped[Optional[int]] = mapped_column(ForeignKey('tools.id'))
-    material_id: Mapped[Optional[int]] = mapped_column(ForeignKey('materials.id'))
-    admin_id: Mapped[int] = mapped_column(ForeignKey('users.id'), init=False, nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    file_id: Mapped[int] = mapped_column(ForeignKey('files.id'))
+    tool_id: Mapped[int] = mapped_column(ForeignKey('tools.id'))
+    material_id: Mapped[int] = mapped_column(ForeignKey('materials.id'))
+    admin_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), init=False)
     # Object attributes
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
@@ -107,10 +107,11 @@ class File(Base):
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     # Foreign keys
-    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
     # Other attributes
     file_name: Mapped[str] = mapped_column(String(150))
     file_hash: Mapped[str] = mapped_column(String(150))
+    report: Mapped[Optional[JSON]] = mapped_column(JSON, init=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
 
     # Virtual columns

@@ -112,6 +112,18 @@ class FileRepository:
             self.session.rollback()
             raise DatabaseError(f'Error updating the file in the DB: {e}')
 
+    def save_file_report(self, id: int, report: dict):
+        try:
+            file = self.session.get(File, id)
+            if not file:
+                raise EntityNotFoundError(f'File with ID {id} was not found')
+
+            file.report = report
+            self.session.commit()
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise DatabaseError(f'Error updating the file in the DB: {e}')
+
     def remove_file(self, id: int):
         try:
             file = self.session.get(File, id)
