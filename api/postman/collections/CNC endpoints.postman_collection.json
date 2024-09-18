@@ -212,6 +212,31 @@
 					"response": []
 				},
 				{
+					"name": "(Re)Generate thumbnail",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files/:file_id/thumbnail",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"files",
+								":file_id",
+								"thumbnail"
+							],
+							"variable": [
+								{
+									"key": "file_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Get all files",
 					"request": {
 						"method": "GET",
