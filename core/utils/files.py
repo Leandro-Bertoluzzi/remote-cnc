@@ -66,6 +66,12 @@ def getFilesInFolder(folderPath: str) -> List[str]:
     return [item.name for item in desktop.iterdir()]
 
 
+def changeFileExtension(file_path: str, new_extension: str) -> str:
+    path = Path(file_path)
+    new_file_path = path.with_suffix("." + new_extension)
+    return str(new_file_path)
+
+
 class FileSystemHelper:
     def __init__(self, basePath: str):
         """

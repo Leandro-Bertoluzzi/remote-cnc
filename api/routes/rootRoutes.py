@@ -1,14 +1,15 @@
 from core.database.repositories.userRepository import UserRepository
 from core.database.types import RoleType
 from core.utils.security import validate_password
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, HTTPException
 from middleware.dbMiddleware import GetDbSession
 from pydantic import BaseModel, EmailStr
 from services.security import generate_token
 
 rootRoutes = APIRouter()
 
-# Heakth check
+
+# Health check
 class HealthCheck(BaseModel):
     status: str = "OK"
 
@@ -44,6 +45,7 @@ class UserLoginResponseModel(BaseModel):
     email: EmailStr
     role: RoleType
     token: str
+
 
 @rootRoutes.post(
     '/login',

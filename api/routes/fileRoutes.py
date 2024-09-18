@@ -53,7 +53,7 @@ def get_file_content(
 ) -> FileContentResponseModel:
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
-        return { 'content': file_manager.read_file(file_id) }
+        return {'content': file_manager.read_file(file_id)}
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 

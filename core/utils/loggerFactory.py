@@ -10,6 +10,10 @@ LOGS_DIR = Path(__file__).parents[1] / 'logs'   # /core/logs
 LOGS_DATETIME_FORMAT = '%Y%m%d_%H%M%S'
 
 
+def get_log_path(file_name: str):
+    return LOGS_DIR / file_name
+
+
 def setup_task_logger(name: str, level: int):
     """Setup a new logger for the task."""
     def manage_old_logs():
@@ -68,7 +72,10 @@ def setup_stream_logger(name: str, level: int):
     )
 
     # Log format
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '[%(asctime)s] %(levelname)s: %(message)s',
+        datefmt='%d/%m/%Y %H:%M:%S'
+    )
     file_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
