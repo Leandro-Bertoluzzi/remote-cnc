@@ -1,5 +1,6 @@
 from config import FILES_FOLDER_PATH
 from core.database.repositories.fileRepository import FileRepository
+from core.database.types import FileReport
 from core.utils.fileManager import FileManager
 from core.worker.scheduler import createThumbnail, generateFileReport
 import datetime
@@ -26,6 +27,10 @@ class FileResponseModel(BaseModel):
         allow_population_by_field_name = True
 
 
+class FileContentResponseModel(BaseModel):
+    content: str
+
+
 @fileRoutes.get('', response_model_by_alias=False)
 @fileRoutes.get('/', response_model_by_alias=False)
 def get_files(
@@ -33,8 +38,7 @@ def get_files(
     db_session: GetDbSession
 ) -> list[FileResponseModel]:
     repository = FileRepository(db_session)
-    files = serializeList(repository.get_all_files_from_user(user.id))
-    return files
+    return serializeList(repository.get_all_files_from_user(user.id))
 
 
 @fileRoutes.get('/all', response_model_by_alias=False)
@@ -43,8 +47,47 @@ def get_files_from_all_users(
     db_session: GetDbSession
 ) -> list[FileResponseModel]:
     repository = FileRepository(db_session)
-    files = serializeList(repository.get_all_files())
-    return files
+    return serializeList(repository.get_all_files())
+
+
+@fileRoutes.get('/{file_id}', response_model_by_alias=False)
+def get_file(
+    file_id: int,
+    user: GetUserDep,
+    db_session: GetDbSession
+) -> FileResponseModel:
+    repository = FileRepository(db_session)
+    try:
+        return repository.get_file_by_id(file_id).serialize()
+    except Exception as error:
+        raise HTTPException(400, detail=str(error))
+
+
+@fileRoutes.get('/{file_id}/content')
+def get_file_content(
+    file_id: int,
+    user: GetUserDep,
+    db_session: GetDbSession
+) -> FileContentResponseModel:
+    file_manager = FileManager(FILES_FOLDER_PATH, db_session)
+    try:
+        return { 'content': file_manager.read_file(file_id) }
+    except Exception as error:
+        raise HTTPException(400, detail=str(error))
+
+
+@fileRoutes.get('/{file_id}/report')
+def get_file_report(
+    file_id: int,
+    user: GetUserDep,
+    db_session: GetDbSession
+) -> FileReport:
+    repository = FileRepository(db_session)
+    try:
+        file = repository.get_file_by_id(file_id)
+        return file.report
+    except Exception as error:
+        raise HTTPException(400, detail=str(error))
 
 
 @fileRoutes.post('')
@@ -74,11 +117,9 @@ def update_file_name(
 ) -> FileResponseModel:
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
-        updated_file = file_manager.rename_file_by_id(user.id, file_id, request.file_name)
+        return file_manager.rename_file_by_id(user.id, file_id, request.file_name)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
-
-    return updated_file
 
 
 @fileRoutes.delete('/{file_id}')

@@ -195,3 +195,19 @@ class FileSystemHelper:
             raise FileSystemError(
                 f'There was an error removing the file from the file system: {error}'
             )
+
+    def readFile(self, userId: int, filename: str) -> str:
+        """ Reads the content of a file in the file system
+        - Parameter(s):
+            - userId: int, user ID
+            - filename: string, file name
+        """
+
+        file_path = self.getFilePath(userId, filename)
+        try:
+            with open(file_path, "r") as content:
+                return content.read()
+        except Exception as error:
+            raise FileSystemError(
+                f'There was an error reading the file: {error}'
+            )
