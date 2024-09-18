@@ -17,6 +17,31 @@ class FileManager:
         self.base_path = base_path
         self.session = _session
 
+    def read_file(self, file_id: int) -> str:
+        """Reads the content of a file in the FS.
+
+        Arguments:
+        - file_id (int): File ID.
+
+        Returns: file content (str)
+
+        Raises:
+        - DatabaseError: Error from ORM.
+        - EntityNotFoundError: The file was not found in the DB.
+        - FileSystemError: An error ocurred while reading.
+        """
+        # Instantiate repository
+        repository = FileRepository(self.session)
+
+        # Checks if the file is repeated
+        # can raise (DatabaseError, EntityNotFoundError)
+        file = repository.get_file_by_id(file_id)
+
+        # Save file in the file system
+        # Can raise FileSystemError
+        files_helper = FileSystemHelper(self.base_path)
+        return files_helper.readFile(file.user_id, file.file_name)
+
     def upload_file(self, user_id: int, file_name: str, file: BinaryIO) -> File:
         """Creates a file in the FS and saves it to the DB.
         It either FS or DB raises an error, it rollbacks the whole operation.

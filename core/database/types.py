@@ -20,5 +20,5 @@ FileReport = TypedDict('FileReport', {
     'tools': List[str],
     'max_feedrate': int,
     'commands_usage': Dict[str, int],
-    'unsopported_commands': List[str]
+    'unsupported_commands': List[str]
 })
