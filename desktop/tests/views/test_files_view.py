@@ -152,6 +152,7 @@ class TestFilesView:
         )
 
         # Mock call to worker
+        mock_generate_report = mocker.patch('views.FilesView.generateFileReport.delay')
         mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
 
         # Call the createFile method
@@ -160,13 +161,26 @@ class TestFilesView:
         # Validate function calls
         assert mock_create_file.call_count == 1
         assert self.mock_get_all_files.call_count == 2
+        assert mock_generate_report.call_count == 1
         assert mock_create_thumbnail.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 4
 
-    def test_files_view_create_file_repeated_name(self, mocker: MockerFixture, helpers):
+    @pytest.mark.parametrize("error, expected_error_level", [
+        (DuplicatedFileNameError('mocked error'), 'warning'),
+        (DuplicatedFileError('mocked error'), 'warning'),
+        (FileSystemError('mocked error'), 'critical'),
+        (DatabaseError('mocked error'), 'critical'),
+    ])
+    def test_files_view_create_file_repeated_name(
+        self,
+        mocker: MockerFixture,
+        helpers,
+        error: Exception,
+        expected_error_level: str
+    ):
         # Mock FileDataDialog methods
         mock_input = 'example-file-3', 'path/to/file.gcode'
         mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
@@ -176,13 +190,18 @@ class TestFilesView:
         mock_create_file = mocker.patch.object(
             FileManager,
             'create_file',
-            side_effect=DuplicatedFileNameError('mocked error')
+            side_effect=error
         )
 
         # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
+        mock_popup = mocker.patch.object(
+            QMessageBox,
+            expected_error_level,
+            return_value=QMessageBox.Ok
+        )
 
         # Mock call to worker
+        mock_generate_report = mocker.patch('views.FilesView.generateFileReport.delay')
         mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
 
         # Call the method under test
@@ -192,98 +211,7 @@ class TestFilesView:
         assert mock_create_file.call_count == 1
         assert mock_popup.call_count == 1
         assert self.mock_get_all_files.call_count == 1
-        assert mock_create_thumbnail.call_count == 0
-        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
-
-    def test_files_view_create_file_duplicated(self, mocker: MockerFixture, helpers):
-        # Mock FileDataDialog methods
-        mock_input = 'example-file-4', 'path/to/file.gcode'
-        mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
-        mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
-
-        # Mock file manager methods
-        mock_create_file = mocker.patch.object(
-            FileManager,
-            'create_file',
-            side_effect=DuplicatedFileError('mocked error')
-        )
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'warning', return_value=QMessageBox.Ok)
-
-        # Mock call to worker
-        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
-
-        # Call the method under test
-        self.files_view.createFile()
-
-        # Assertions
-        assert mock_create_file.call_count == 1
-        assert mock_popup.call_count == 1
-        assert self.mock_get_all_files.call_count == 1
-        assert mock_create_thumbnail.call_count == 0
-        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
-
-    def test_files_view_create_file_fs_error(self, mocker: MockerFixture, helpers):
-        # Mock FileDataDialog methods
-        mock_input = 'example-file-4', 'path/to/file.gcode'
-        mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
-        mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
-
-        # Mock file manager methods
-        mock_create_file = mocker.patch.object(
-            FileManager,
-            'create_file',
-            side_effect=FileSystemError('mocked error')
-        )
-        mock_create_file = mocker.patch.object(FileRepository, 'create_file')
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
-
-        # Mock call to worker
-        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
-
-        # Call the method under test
-        self.files_view.createFile()
-
-        # Assertions
-        assert mock_create_file.call_count == 0
-        assert mock_popup.call_count == 1
-        assert self.mock_get_all_files.call_count == 1
-        assert mock_create_thumbnail.call_count == 0
-        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
-        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
-
-    def test_files_view_create_file_db_error(self, mocker: MockerFixture, helpers):
-        # Mock FileDataDialog methods
-        mock_input = 'example-file-4', 'path/to/file.gcode'
-        mocker.patch.object(FileDataDialog, 'exec', return_value=QDialogButtonBox.Save)
-        mocker.patch.object(FileDataDialog, 'getInputs', return_value=mock_input)
-
-        # Mock FS and DB methods
-        # Mock file manager methods
-        mock_create_file = mocker.patch.object(
-            FileManager,
-            'create_file',
-            side_effect=DatabaseError('mocked error')
-        )
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, 'critical', return_value=QMessageBox.Ok)
-
-        # Mock call to worker
-        mock_create_thumbnail = mocker.patch('views.FilesView.createThumbnail.delay')
-
-        # Call the method under test
-        self.files_view.createFile()
-
-        # Assertions
-        assert mock_create_file.call_count == 1
-        assert mock_popup.call_count == 1
-        assert self.mock_get_all_files.call_count == 1
+        assert mock_generate_report.call_count == 0
         assert mock_create_thumbnail.call_count == 0
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3

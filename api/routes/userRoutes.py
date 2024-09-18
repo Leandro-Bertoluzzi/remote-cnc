@@ -1,4 +1,4 @@
-from core.database.models import RoleType
+from core.database.types import RoleType
 from core.database.repositories.userRepository import UserRepository
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetAdminDep, GetUserDep
