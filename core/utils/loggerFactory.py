@@ -7,6 +7,7 @@ import re
 MAX_LOG_FILES = 5          # Maximum amount of log files
 MAX_LOG_BYTES = 1000000    # Maximum size of log file
 LOGS_DIR = Path(__file__).parents[1] / 'logs'   # /core/logs
+LOGS_DATETIME_FORMAT = '%Y%m%d_%H%M%S'
 
 
 def setup_task_logger(name: str, level: int):
@@ -32,7 +33,7 @@ def setup_task_logger(name: str, level: int):
     # Create a new log file for each task
     log_file = os.path.join(
         LOGS_DIR,
-        f"task_{formatted_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        f"task_{formatted_name}_{datetime.now().strftime(LOGS_DATETIME_FORMAT)}.log"
     )
     file_handler = logging.FileHandler(log_file, "w", delay=True)
 
