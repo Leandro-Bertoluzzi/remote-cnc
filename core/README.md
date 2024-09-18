@@ -67,13 +67,9 @@ $ pip install -r requirements-dev.txt
 # 3. Copy and configure the .env file
 cp .env.example .env
 
-# 4. Ask git to stop tracking log files
-$ git update-index --assume-unchanged logs/grbl.log
-$ git update-index --assume-unchanged logs/celery.log
-
-# 5. If you are starting a new DB, run DB migrations
+# 4. If you are starting a new DB, run DB migrations
 $ alembic upgrade head
-# 6. (Optional) Seed DB with initial values
+# 5. (Optional) Seed DB with initial values
 $ python seeder.py
 ```
 
