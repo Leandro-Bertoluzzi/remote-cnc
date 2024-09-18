@@ -1,7 +1,7 @@
 import shutil
 import hashlib
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, List
 
 ALLOWED_FILE_EXTENSIONS = {'txt', 'gcode', 'nc'}
 
@@ -59,6 +59,11 @@ def computeSHA256(filePath: str) -> str:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_sha256.update(chunk)
     return hash_sha256.hexdigest()
+
+
+def getFilesInFolder(folderPath: str) -> List[str]:
+    desktop = Path(folderPath)
+    return [item.name for item in desktop.iterdir()]
 
 
 class FileSystemHelper:

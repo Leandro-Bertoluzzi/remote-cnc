@@ -2,14 +2,10 @@ import asyncio  # noqa: F401
 from fastapi import APIRouter, Request
 from middleware.authMiddleware import GetUserDep
 from middleware.pubSubMiddleware import GetPubSub
-from pydantic import BaseModel
+from schemas.general import PubSubMessageModel
 from sse_starlette.sse import EventSourceResponse
 
 monitorRoutes = APIRouter(prefix="/monitor", tags=["Monitor"])
-
-
-class PubSubMessageModel(BaseModel):
-    message: str
 
 
 @monitorRoutes.get("/stream/{channel}")

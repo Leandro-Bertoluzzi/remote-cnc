@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.cncRoutes import cncRoutes
 from routes.fileRoutes import fileRoutes
+from routes.logRoutes import logRoutes
 from routes.materialRoutes import materialRoutes
 from routes.monitorRoutes import monitorRoutes
 from routes.rootRoutes import rootRoutes
@@ -23,6 +24,7 @@ app.add_middleware(
 # Routes
 app.include_router(cncRoutes)
 app.include_router(fileRoutes)
+app.include_router(logRoutes)
 app.include_router(materialRoutes)
 app.include_router(monitorRoutes)
 app.include_router(rootRoutes)
