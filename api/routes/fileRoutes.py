@@ -72,8 +72,8 @@ def get_file_report(
         raise HTTPException(400, detail=str(error))
 
 
-@fileRoutes.post('')
-@fileRoutes.post('/')
+@fileRoutes.post('', response_model_by_alias=False)
+@fileRoutes.post('/', response_model_by_alias=False)
 def upload_file(
     file: UploadFile,
     user: GetUserDep,
@@ -90,7 +90,7 @@ def upload_file(
     return new_file
 
 
-@fileRoutes.put('/{file_id}')
+@fileRoutes.put('/{file_id}', response_model_by_alias=False)
 def update_file_name(
     file_id: int,
     request: FileUpdateModel,
