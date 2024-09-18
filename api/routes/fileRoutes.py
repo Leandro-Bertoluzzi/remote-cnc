@@ -135,3 +135,17 @@ def remove_existing_file(
         raise HTTPException(400, detail=str(error))
 
     return {'success': 'El archivo fue eliminado con éxito'}
+
+
+@fileRoutes.post('/{file_id}/thumbnail')
+def generate_thumbnail(
+    file_id: int,
+    admin: GetAdminDep,
+    db_session: GetDbSession
+):
+    try:
+        createThumbnail.delay(file_id)
+    except Exception as error:
+        raise HTTPException(400, detail=str(error))
+
+    return {'success': 'La generación de la vista previa fue solicitada con éxito'}
