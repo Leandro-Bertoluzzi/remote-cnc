@@ -1,4 +1,4 @@
-from core.database.models import StatusType
+from core.database.types import StatusType
 from core.database.repositories.taskRepository import TaskRepository
 import datetime
 from fastapi import APIRouter, HTTPException

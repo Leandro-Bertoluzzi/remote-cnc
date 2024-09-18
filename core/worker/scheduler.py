@@ -40,3 +40,8 @@ def cncServer(
 @app.task(name='create_thumbnail')
 def createThumbnail(file_id: int) -> bool:
     pass
+
+
+@app.task(name='generate_report')
+def generateFileReport(file_id: int) -> bool:
+    pass

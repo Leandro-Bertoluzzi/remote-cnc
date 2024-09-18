@@ -5,6 +5,7 @@ from typing import Optional
 from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError
 from ..models import File, User
+from ..types import FileReport
 
 
 # Custom exceptions
@@ -112,7 +113,7 @@ class FileRepository:
             self.session.rollback()
             raise DatabaseError(f'Error updating the file in the DB: {e}')
 
-    def save_file_report(self, id: int, report: dict):
+    def save_file_report(self, id: int, report: FileReport):
         try:
             file = self.session.get(File, id)
             if not file:
