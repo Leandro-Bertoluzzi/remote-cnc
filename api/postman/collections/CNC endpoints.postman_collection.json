@@ -354,6 +354,27 @@
 				},
 				{
 					"name": "Get file content",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// add a template string of the front-end view we want to render\r",
+									"let template = `\r",
+									"    <pre>{{content}}</pre>\r",
+									"`;\r",
+									"\r",
+									"// Set visualizer\r",
+									"pm.visualizer.set(template, {\r",
+									"    // Pass the response body parsed as JSON\r",
+									"    content: pm.response.json().content\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
