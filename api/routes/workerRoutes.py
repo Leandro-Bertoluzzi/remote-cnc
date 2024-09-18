@@ -2,45 +2,21 @@ from config import SERIAL_BAUDRATE, SERIAL_PORT
 from core.worker.workerStatusManager import WorkerStoreAdapter
 from core.worker.scheduler import app, executeTask
 import core.worker.utils as worker
-from core.grbl.types import ParserState, Status
 from core.utils.storage import add_value_with_id
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetUserDep, GetAdminDep
-from pydantic import BaseModel
-from typing import Optional, Literal
+from schemas.worker import TaskStatusResponseModel, WorkerTaskResponseModel, \
+    WorkerOnResponseModel, WorkerPausedResponseModel, WorkerAvailableResponseModel, \
+    DeviceEnabledResponseModel
 
 workerRoutes = APIRouter(prefix="/worker", tags=["Worker"])
-
-
-class TaskWorkerResponseModel(BaseModel):
-    success: str
-    worker_task_id: str
-
-
-class TaskStatusResponseModel(BaseModel):
-    status: Literal['PENDING', 'STARTED', 'RETRY', 'FAILURE', 'SUCCESS', 'PROGRESS']
-    sent_lines: Optional[int]
-    processed_lines: Optional[int]
-    total_lines: Optional[int]
-    cnc_status: Optional[Status]
-    cnc_parserstate: Optional[ParserState]
-    result: Optional[bool]
-    error: Optional[str]
-
-
-class WorkerStatusResponseModel(BaseModel):
-    connected: bool
-    running: bool
-    stats: dict
-    registered_tasks: Optional[worker.WorkerTaskList]
-    active_tasks: Optional[worker.WorkerTaskList]
 
 
 @workerRoutes.post('/task/{db_task_id}')
 def send_task_to_worker(
     user: GetAdminDep,
     db_task_id: int
-) -> TaskWorkerResponseModel:
+) -> WorkerTaskResponseModel:
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -57,10 +33,7 @@ def send_task_to_worker(
     )
     add_value_with_id('task', id=db_task_id, value=worker_task.task_id)
 
-    return {
-        'success': 'Se solicitó con éxito la ejecución de la tarea, debería comenzar en breve',
-        'worker_task_id': worker_task.task_id
-    }
+    return {'worker_task_id': worker_task.task_id}
 
 
 @workerRoutes.get('/status/{worker_task_id}')
@@ -101,21 +74,14 @@ def get_worker_task_status(
 
 
 @workerRoutes.get('/check/on')
-def check_worker_on(user: GetUserDep):
+def check_worker_on(user: GetUserDep) -> WorkerOnResponseModel:
     """Returns whether the worker process is running.
     """
     return {'is_on': worker.is_worker_on()}
 
 
-@workerRoutes.get('/check/running')
-def check_worker_running(user: GetUserDep):
-    """Returns whether the worker process is working on a task.
-    """
-    return {'running': worker.is_worker_running()}
-
-
 @workerRoutes.get('/check/available')
-def check_worker_available(user: GetUserDep):
+def check_worker_available(user: GetUserDep) -> WorkerAvailableResponseModel:
     """Returns whether the worker process is available to start working on a task.
     """
     enabled = WorkerStoreAdapter.is_device_enabled()
@@ -128,7 +94,7 @@ def check_worker_available(user: GetUserDep):
 
 
 @workerRoutes.get('/status')
-def get_worker_status(user: GetUserDep) -> WorkerStatusResponseModel:
+def get_worker_status(user: GetUserDep) -> worker.WorkerStatus:
     """Returns the worker status.
     """
     return worker.get_worker_status()
@@ -138,23 +104,18 @@ def get_worker_status(user: GetUserDep) -> WorkerStatusResponseModel:
 def set_worker_paused(
     user: GetAdminDep,
     paused: int
-):
+) -> WorkerPausedResponseModel:
     """Pauses or resume the device.
     """
     if paused != 0:
         WorkerStoreAdapter.request_pause()
-        success = 'Se envió la solicitud para pausar la tarea'
     else:
         WorkerStoreAdapter.request_resume()
-        success = 'Se envió la solicitud para retomar la tarea'
-    return {
-        'success': success,
-        'paused': WorkerStoreAdapter.is_device_paused()
-    }
+    return {'paused': WorkerStoreAdapter.is_device_paused()}
 
 
 @workerRoutes.get('/pause')
-def check_worker_paused(user: GetUserDep):
+def check_worker_paused(user: GetUserDep) -> WorkerPausedResponseModel:
     """Checks if the worker is paused
     """
     return {'paused': WorkerStoreAdapter.is_device_paused()}
@@ -164,7 +125,7 @@ def check_worker_paused(user: GetUserDep):
 def set_device_enabled(
     user: GetAdminDep,
     enabled: int
-):
+) -> DeviceEnabledResponseModel:
     """Enables or disables the device.
     """
     WorkerStoreAdapter.set_device_enabled(enabled != 0)
@@ -172,7 +133,7 @@ def set_device_enabled(
 
 
 @workerRoutes.get('/device/status')
-def get_device_status(user: GetUserDep):
+def get_device_status(user: GetUserDep) -> DeviceEnabledResponseModel:
     """Returns the device status (enabled/disabled).
     """
     return {'enabled': WorkerStoreAdapter.is_device_enabled()}

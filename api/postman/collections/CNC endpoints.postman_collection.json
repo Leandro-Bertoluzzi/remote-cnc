@@ -1302,25 +1302,6 @@
 					"response": []
 				},
 				{
-					"name": "Check worker running",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/worker/check/running",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"worker",
-								"check",
-								"running"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Check worker available",
 					"request": {
 						"method": "GET",

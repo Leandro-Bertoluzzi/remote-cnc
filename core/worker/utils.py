@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import Optional
+from typing import Optional, Dict
 from typing_extensions import TypedDict
 
 try:
@@ -8,13 +8,14 @@ except ImportError:
     from worker.scheduler import app
 
 # Types definition
-WorkerTaskList = dict[str, list[str]]
+RegisteredTaskList = dict[str, list[str]]
+ActiveTaskList = Dict
 WorkerStatus = TypedDict('WorkerStatus', {
     'connected': bool,
     'running': bool,
     'stats': dict,
-    'registered_tasks': Optional[WorkerTaskList],
-    'active_tasks': Optional[WorkerTaskList]
+    'registered_tasks': Optional[RegisteredTaskList],
+    'active_tasks': Optional[ActiveTaskList]
 })
 
 
