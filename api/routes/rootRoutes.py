@@ -1,4 +1,5 @@
 from core.database.repositories.userRepository import UserRepository
+from core.database.types import RoleType
 from core.utils.security import validate_password
 from fastapi import APIRouter, status, HTTPException
 from middleware.dbMiddleware import GetDbSession
@@ -16,9 +17,7 @@ class HealthCheck(BaseModel):
     "/health",
     tags=["Healthcheck"],
     summary="Perform a Health Check",
-    response_description="Return HTTP Status Code 200 (OK)",
-    status_code=status.HTTP_200_OK,
-    response_model=HealthCheck,
+    response_description="Return HTTP Status Code 200 (OK)"
 )
 def get_health() -> HealthCheck:
     """
@@ -39,6 +38,13 @@ class UserLoginModel(BaseModel):
     password: str
 
 
+class UserLoginResponseModel(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: RoleType
+    token: str
+
 @rootRoutes.post(
     '/login',
     tags=["Login"],
@@ -47,7 +53,7 @@ class UserLoginModel(BaseModel):
 def login(
     request: UserLoginModel,
     db_session: GetDbSession
-):
+) -> UserLoginResponseModel:
     email = request.email
     password = request.password
 
@@ -67,9 +73,6 @@ def login(
     try:
         userData = user.serialize()
         userData['token'] = generate_token(user.id)
-        return {
-            'message': 'Usuario autenticado con éxito',
-            'data': userData
-        }
+        return userData
     except Exception as error:
         raise HTTPException(400, detail=str(error))

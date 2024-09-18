@@ -1,51 +1,13 @@
-from core.database.types import StatusType
 from core.database.repositories.taskRepository import TaskRepository
-import datetime
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
-from pydantic import BaseModel
-from typing import Optional
+from schemas.general import GenericResponseModel
+from schemas.tasks import TaskCreateModel, TaskUpdateModel, TaskUpdateStatusModel, \
+    TaskResponseModel
 from services.utilities import serializeList
 
 taskRoutes = APIRouter(prefix="/tasks", tags=["Tasks"])
-
-
-class TaskCreateModel(BaseModel):
-    name: str
-    file_id: int
-    tool_id: int
-    material_id: int
-    note: Optional[str] = ''
-
-
-class TaskUpdateStatusModel(BaseModel):
-    status: StatusType
-    cancellation_reason: Optional[str] = ''
-
-
-class TaskUpdateModel(BaseModel):
-    file_id: Optional[int] = None
-    tool_id: Optional[int] = None
-    material_id: Optional[int] = None
-    name: Optional[str] = None
-    priority: Optional[int] = None
-    note: Optional[str] = None
-
-
-class TaskResponseModel(BaseModel):
-    id: int
-    name: str
-    status: str
-    priority: int
-    user_id: int
-    file_id: int
-    tool_id: int
-    material_id: int
-    note: str
-    admin_id: Optional[int] = None
-    cancellation_reason: Optional[str] = None
-    created_at: datetime.datetime
 
 
 @taskRoutes.get('')
@@ -56,8 +18,7 @@ def get_tasks_by_user(
     status: str = 'all'
 ) -> list[TaskResponseModel]:
     repository = TaskRepository(db_session)
-    tasks = serializeList(repository.get_all_tasks_from_user(user.id, status))
-    return tasks
+    return serializeList(repository.get_all_tasks_from_user(user.id, status))
 
 
 @taskRoutes.get('/all')
@@ -67,8 +28,7 @@ def get_tasks_from_all_users(
     status: str = 'all'
 ) -> list[TaskResponseModel]:
     repository = TaskRepository(db_session)
-    tasks = serializeList(repository.get_all_tasks(status))
-    return tasks
+    return serializeList(repository.get_all_tasks(status))
 
 
 @taskRoutes.post('')
@@ -86,7 +46,7 @@ def create_new_task(
 
     try:
         repository = TaskRepository(db_session)
-        new_task = repository.create_task(
+        return repository.create_task(
             user.id,
             fileId,
             toolId,
@@ -96,8 +56,6 @@ def create_new_task(
         )
     except Exception as error:
         raise HTTPException(400, detail=str(error))
-
-    return new_task
 
 
 @taskRoutes.put('/{task_id}/status')
@@ -114,7 +72,7 @@ def update_existing_task_status(
 
     try:
         repository = TaskRepository(db_session)
-        updated_task = repository.update_task_status(
+        return repository.update_task_status(
             task_id,
             taskStatus,
             admin_id,
@@ -122,8 +80,6 @@ def update_existing_task_status(
         )
     except Exception as error:
         raise HTTPException(400, detail=str(error))
-
-    return updated_task
 
 
 @taskRoutes.put('/{task_id}')
@@ -142,7 +98,7 @@ def update_existing_task(
 
     try:
         repository = TaskRepository(db_session)
-        updated_task = repository.update_task(
+        return repository.update_task(
             task_id,
             user.id,
             fileId,
@@ -155,15 +111,13 @@ def update_existing_task(
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
-    return updated_task
-
 
 @taskRoutes.delete('/{task_id}')
 def remove_existing_task(
     task_id: int,
     user: GetUserDep,
     db_session: GetDbSession
-):
+) -> GenericResponseModel:
     try:
         repository = TaskRepository(db_session)
         repository.remove_task(task_id)

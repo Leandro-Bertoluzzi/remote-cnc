@@ -7,23 +7,11 @@ from core.utils.serial import SerialService
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetAdminDep
 from middleware.pubSubMiddleware import GetPubSub
-from pydantic import BaseModel
-from typing import Literal
+from schemas.cnc import CncCommandModel, CncJogCommandModel, CncJogResponseModel
+from schemas.worker import WorkerTaskResponseModel
+from schemas.general import GenericResponseModel
 
 cncRoutes = APIRouter(prefix="/cnc", tags=["CNC"])
-
-
-class CncCommandModel(BaseModel):
-    command: str
-
-
-class CncJogCommandModel(BaseModel):
-    x: float
-    y: float
-    z: float
-    feedrate: float
-    units: Literal["milimeters", "inches"]
-    mode: Literal["distance_absolute", "distance_incremental"]
 
 
 @cncRoutes.get('/ports')
@@ -37,7 +25,7 @@ def get_available_ports(admin: GetAdminDep):
 
 
 @cncRoutes.post('/server')
-def start_cnc_server(admin: GetAdminDep):
+def start_cnc_server(admin: GetAdminDep) -> WorkerTaskResponseModel:
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -52,14 +40,11 @@ def start_cnc_server(admin: GetAdminDep):
         SERIAL_BAUDRATE
     )
 
-    return {
-        'success': 'Se abrió la conexión con el CNC',
-        'worker_task_id': worker_task.task_id
-    }
+    return {'worker_task_id': worker_task.task_id}
 
 
 @cncRoutes.delete('/server')
-async def stop_cnc_server(admin: GetAdminDep, redis: GetPubSub):
+async def stop_cnc_server(admin: GetAdminDep, redis: GetPubSub) -> GenericResponseModel:
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -74,17 +59,14 @@ async def send_code_to_execute(
     request: CncCommandModel,
     admin: GetAdminDep,
     redis: GetPubSub
-):
+) -> GenericResponseModel:
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
     if not worker.is_worker_running():
         raise HTTPException(400, detail='Debe iniciar la conexión con el servidor CNC')
 
-    # Get code from request body
     code = request.command
-
-    # Request command execution
     await redis.publish(COMMANDS_CHANNEL, code)
 
     return {'success': 'El comando fue enviado para su ejecución'}
@@ -96,14 +78,13 @@ async def send_jog_command(
     redis: GetPubSub,
     request: CncJogCommandModel,
     machine: bool = False
-):
+) -> CncJogResponseModel:
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
     if not worker.is_worker_running():
         raise HTTPException(400, detail='Debe iniciar la conexión con el servidor CNC')
 
-    # Generate code from request body
     code = grblUtils.build_jog_command(
         request.x,
         request.y,
@@ -113,11 +94,6 @@ async def send_jog_command(
         distance_mode=request.mode,
         machine_coordinates=machine
     )
-
-    # Request command execution
     await redis.publish(COMMANDS_CHANNEL, code)
 
-    return {
-        'success': 'El comando fue enviado para su ejecución',
-        'command': code
-    }
+    return {'command': code}

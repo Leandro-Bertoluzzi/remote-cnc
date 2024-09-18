@@ -3,32 +3,14 @@ from core.database.repositories.fileRepository import FileRepository
 from core.database.types import FileReport
 from core.utils.fileManager import FileManager
 from core.worker.scheduler import createThumbnail, generateFileReport
-import datetime
 from fastapi import APIRouter, HTTPException, UploadFile
 from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
-from pydantic import BaseModel, Field
+from schemas.files import FileResponseModel, FileContentResponseModel, FileUpdateModel
+from schemas.general import GenericResponseModel
 from services.utilities import serializeList
 
 fileRoutes = APIRouter(prefix="/files", tags=["Files"])
-
-
-class FileUpdateModel(BaseModel):
-    file_name: str
-
-
-class FileResponseModel(BaseModel):
-    id: int
-    name: str = Field(alias="file_name")
-    created_at: datetime.datetime
-    user_id: int
-
-    class Config:
-        allow_population_by_field_name = True
-
-
-class FileContentResponseModel(BaseModel):
-    content: str
 
 
 @fileRoutes.get('', response_model_by_alias=False)
@@ -127,7 +109,7 @@ def remove_existing_file(
     file_id: int,
     user: GetUserDep,
     db_session: GetDbSession
-):
+) -> GenericResponseModel:
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         file_manager.remove_file_by_id(file_id)
@@ -140,9 +122,8 @@ def remove_existing_file(
 @fileRoutes.post('/{file_id}/thumbnail')
 def generate_thumbnail(
     file_id: int,
-    admin: GetAdminDep,
-    db_session: GetDbSession
-):
+    admin: GetAdminDep
+) -> GenericResponseModel:
     try:
         createThumbnail.delay(file_id)
     except Exception as error:
