@@ -1,8 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, Session
 from sqlalchemy import select
 from typing import Optional
-from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError
 from ..models import File, User
 from ..types import FileReport
@@ -18,11 +17,8 @@ class DuplicatedFileNameError(Exception):
 
 
 class FileRepository:
-    def __init__(self, _session=None):
-        self.session = _session or Session()
-
-    def __del__(self):
-        self.close_session()
+    def __init__(self, _session: Session):
+        self.session = _session
 
     def check_file_exists(self, user_id: int, file_name: str, file_hash: str):
         repeated = self.session.scalars(
@@ -80,9 +76,9 @@ class FileRepository:
 
     def get_all_files(self):
         try:
-            files = self.session.execute(
+            files = self.session.scalars(
                 select(File).options(joinedload(File.user))
-            ).scalars().all()
+            ).all()
 
             return files
         except SQLAlchemyError as e:
@@ -108,7 +104,8 @@ class FileRepository:
             if file_hash:
                 file.file_hash = file_hash
             self.session.commit()
-            return file.serialize()
+            self.session.refresh(file)
+            return file
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the file in the DB: {e}')

@@ -5,7 +5,7 @@ import time
 
 from app import app
 from config import FILES_FOLDER_PATH
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
 from core.gcode.gcodeFileSender import GcodeFileSender, FinishedFile

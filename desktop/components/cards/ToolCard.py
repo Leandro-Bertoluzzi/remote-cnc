@@ -1,6 +1,6 @@
 from components.cards.Card import Card
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.models import Tool
 from core.database.repositories.toolRepository import ToolRepository
 from helpers.utils import needs_confirmation

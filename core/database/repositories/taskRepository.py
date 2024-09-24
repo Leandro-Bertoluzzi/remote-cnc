@@ -1,9 +1,8 @@
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, Session
 from sqlalchemy import select
 from datetime import datetime
 from typing import Optional
-from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError, Unauthorized
 from ..models import Task, TaskStatus, TASK_EMPTY_NOTE
 try:
@@ -18,11 +17,8 @@ class InvalidTaskStatus(Exception):
 
 
 class TaskRepository:
-    def __init__(self, _session=None):
-        self.session = _session or Session()
-
-    def __del__(self):
-        self.close_session()
+    def __init__(self, _session: Session):
+        self.session = _session
 
     def create_task(
         self,
@@ -45,7 +41,7 @@ class TaskRepository:
 
             self.session.add(new_task)
             self.session.commit()
-            return new_task.serialize()
+            return new_task
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error creating the task in the DB: {e}')
@@ -138,7 +134,8 @@ class TaskRepository:
             task.priority = priority or task.priority
 
             self.session.commit()
-            return task.serialize()
+            self.session.refresh(task)
+            return task
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating task with ID {id} in DB: {e}')
@@ -159,7 +156,7 @@ class TaskRepository:
                 raise EntityNotFoundError(f'Task with ID {id} was not found')
 
             if task.status == status:
-                return task.serialize()
+                return task
 
             if not validate_transition(task.status, status):
                 raise InvalidTaskStatus(f'Transition from {task.status} to {status} is not valid')
@@ -183,7 +180,8 @@ class TaskRepository:
             task.status_updated_at = datetime.now()
 
             self.session.commit()
-            return task.serialize()
+            self.session.refresh(task)
+            return task
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the task status in the DB: {e}')

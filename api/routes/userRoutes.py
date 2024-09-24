@@ -4,7 +4,6 @@ from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
 from schemas.general import GenericResponseModel
 from schemas.users import UserCreateModel, UserUpdateModel, UserResponse
-from services.utilities import serializeList
 
 userRoutes = APIRouter(prefix="/users", tags=["Users"])
 
@@ -17,7 +16,9 @@ def get_users(
     db_session: GetDbSession
 ) -> list[UserResponse]:
     repository = UserRepository(db_session)
-    return serializeList(repository.get_all_users())
+    users = repository.get_all_users()
+
+    return [UserResponse.from_orm(user) for user in users]
 
 
 @userRoutes.post('')
@@ -52,7 +53,9 @@ def update_existing_user(
 
     try:
         repository = UserRepository(db_session)
-        return repository.update_user(user_id, name, email, role)
+        result = repository.update_user(user_id, name, email, role)
+
+        return UserResponse.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -74,4 +77,4 @@ def remove_existing_user(
 
 @userRoutes.get('/auth')
 def authenticate(user: GetUserDep) -> UserResponse:
-    return user.serialize()
+    return UserResponse.from_orm(user)

@@ -1,4 +1,4 @@
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.repositories.toolRepository import ToolRepository
 from core.grbl.types import Status
 from helpers.utils import applyStylesheet

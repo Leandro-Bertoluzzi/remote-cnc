@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+from sqlalchemy.orm import Session
 from typing import BinaryIO
 
 try:
@@ -13,7 +14,7 @@ except ImportError:
 
 
 class FileManager:
-    def __init__(self, base_path: str = '', _session=None):
+    def __init__(self, base_path, _session: Session):
         self.base_path = base_path
         self.session = _session
 
@@ -76,8 +77,7 @@ class FileManager:
         # Create an entry for the file in the DB
         # Can raise DatabaseError
         try:
-            new_file = repository.create_file(user_id, file_name, file_hash)
-            return new_file.serialize()
+            return repository.create_file(user_id, file_name, file_hash)
         except Exception as error:
             self._rollback_created(created_path)
             raise error
@@ -165,8 +165,7 @@ class FileManager:
         # Update the entry for the file in the DB
         # Can raise (EntityNotFoundError, DatabaseError)
         try:
-            updated_file = repository.update_file(file.id, file.user_id, new_name)
-            return updated_file
+            return repository.update_file(file.id, file.user_id, new_name)
         except Exception as error:
             self._rollback_renamed(updated_path, original_path)
             raise error

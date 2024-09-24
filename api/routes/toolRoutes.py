@@ -4,7 +4,6 @@ from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
 from schemas.general import GenericResponseModel
 from schemas.tools import ToolRequestModel, ToolResponseModel
-from services.utilities import serializeList
 
 toolRoutes = APIRouter(prefix="/tools", tags=["Tools"])
 
@@ -17,7 +16,9 @@ def get_tools(
     db_session: GetDbSession
 ) -> list[ToolResponseModel]:
     repository = ToolRepository(db_session)
-    return serializeList(repository.get_all_tools())
+    tools = repository.get_all_tools()
+
+    return [ToolResponseModel.from_orm(tool) for tool in tools]
 
 
 @toolRoutes.get('/{tool_id}')
@@ -28,7 +29,8 @@ def get_tool_by_id(
 ) -> ToolResponseModel:
     try:
         repository = ToolRepository(db_session)
-        return repository.get_tool_by_id(tool_id).serialize()
+        result = repository.get_tool_by_id(tool_id)
+        return ToolResponseModel.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -62,7 +64,8 @@ def update_existing_tool(
 
     try:
         repository = ToolRepository(db_session)
-        return repository.update_tool(tool_id, toolName, toolDescription)
+        result = repository.update_tool(tool_id, toolName, toolDescription)
+        return ToolResponseModel.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
