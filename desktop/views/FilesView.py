@@ -1,7 +1,7 @@
 from components.cards.FileCard import FileCard
 from components.dialogs.FileDataDialog import FileDataDialog
 from config import USER_ID, FILES_FOLDER_PATH
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.repositories.fileRepository import DuplicatedFileError, \
     DuplicatedFileNameError, DatabaseError, FileRepository
 from core.utils.files import InvalidFile, FileSystemError
@@ -41,7 +41,8 @@ class FilesView(BaseListView):
 
         name, path = fileDialog.getInputs()
 
-        file_manager = FileManager(FILES_FOLDER_PATH)
+        db_session = SessionLocal()
+        file_manager = FileManager(FILES_FOLDER_PATH, db_session)
         try:
             file_id = file_manager.create_file(USER_ID, name, path)
             generateFileReport.delay(file_id)

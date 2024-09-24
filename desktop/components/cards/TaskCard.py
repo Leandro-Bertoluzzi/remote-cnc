@@ -6,7 +6,7 @@ from components.TaskProgress import TaskProgress
 from config import USER_ID
 import core.worker.utils as worker
 from core.worker.workerStatusManager import WorkerStoreAdapter
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.models import Task, TASK_DEFAULT_PRIORITY, TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
 from core.utils.storage import get_value_from_id

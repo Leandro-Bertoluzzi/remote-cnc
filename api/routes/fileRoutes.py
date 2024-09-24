@@ -8,7 +8,6 @@ from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
 from schemas.files import FileResponseModel, FileContentResponseModel, FileUpdateModel
 from schemas.general import GenericResponseModel
-from services.utilities import serializeList
 
 fileRoutes = APIRouter(prefix="/files", tags=["Files"])
 
@@ -20,7 +19,9 @@ def get_files(
     db_session: GetDbSession
 ) -> list[FileResponseModel]:
     repository = FileRepository(db_session)
-    return serializeList(repository.get_all_files_from_user(user.id))
+    files = repository.get_all_files_from_user(user.id)
+
+    return [FileResponseModel.from_orm(file) for file in files]
 
 
 @fileRoutes.get('/all', response_model_by_alias=False)
@@ -29,7 +30,9 @@ def get_files_from_all_users(
     db_session: GetDbSession
 ) -> list[FileResponseModel]:
     repository = FileRepository(db_session)
-    return serializeList(repository.get_all_files())
+    files = repository.get_all_files()
+
+    return [FileResponseModel.from_orm(file) for file in files]
 
 
 @fileRoutes.get('/{file_id}', response_model_by_alias=False)
@@ -40,7 +43,8 @@ def get_file(
 ) -> FileResponseModel:
     repository = FileRepository(db_session)
     try:
-        return repository.get_file_by_id(file_id).serialize()
+        result = repository.get_file_by_id(file_id)
+        return FileResponseModel.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -82,8 +86,8 @@ def upload_file(
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         new_file = file_manager.upload_file(user.id, file.filename, file.file)
-        generateFileReport.delay(new_file["id"])
-        createThumbnail.delay(new_file["id"])
+        generateFileReport.delay(new_file.id)
+        createThumbnail.delay(new_file.id)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -99,7 +103,8 @@ def update_file_name(
 ) -> FileResponseModel:
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
-        return file_manager.rename_file_by_id(user.id, file_id, request.file_name)
+        result = file_manager.rename_file_by_id(user.id, file_id, request.file_name)
+        FileResponseModel.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 

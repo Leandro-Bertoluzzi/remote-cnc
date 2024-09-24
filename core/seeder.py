@@ -1,4 +1,4 @@
-from database.base import Session
+from database.base import SessionLocal
 from database.models import Material, Tool, User
 from utils.security import hash_password
 
@@ -17,7 +17,7 @@ INITIAL_DATA = [
 
 def seed_tables():
     """This method receives a table, a connection and inserts data to that table."""
-    session = Session()
+    session = SessionLocal()
     for item in INITIAL_DATA:
         session.add(item)
     session.commit()

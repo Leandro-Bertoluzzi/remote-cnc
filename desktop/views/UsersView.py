@@ -1,6 +1,6 @@
 from components.cards.UserCard import UserCard
 from components.dialogs.UserDataDialog import UserDataDialog
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.repositories.userRepository import UserRepository
 from views.BaseListView import BaseListView
 from typing import TYPE_CHECKING

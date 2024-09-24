@@ -74,7 +74,7 @@ class TestToolRepository:
 
     def test_error_get_all_tools_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'execute', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception

@@ -5,7 +5,6 @@ from middleware.dbMiddleware import GetDbSession
 from schemas.general import GenericResponseModel
 from schemas.tasks import TaskCreateModel, TaskUpdateModel, TaskUpdateStatusModel, \
     TaskResponseModel
-from services.utilities import serializeList
 
 taskRoutes = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -18,7 +17,9 @@ def get_tasks_by_user(
     status: str = 'all'
 ) -> list[TaskResponseModel]:
     repository = TaskRepository(db_session)
-    return serializeList(repository.get_all_tasks_from_user(user.id, status))
+    tasks = repository.get_all_tasks_from_user(user.id, status)
+
+    return [TaskResponseModel.from_orm(task) for task in tasks]
 
 
 @taskRoutes.get('/all')
@@ -28,7 +29,9 @@ def get_tasks_from_all_users(
     status: str = 'all'
 ) -> list[TaskResponseModel]:
     repository = TaskRepository(db_session)
-    return serializeList(repository.get_all_tasks(status))
+    tasks = repository.get_all_tasks(status)
+
+    return [TaskResponseModel.from_orm(task) for task in tasks]
 
 
 @taskRoutes.post('')
@@ -72,12 +75,13 @@ def update_existing_task_status(
 
     try:
         repository = TaskRepository(db_session)
-        return repository.update_task_status(
+        result = repository.update_task_status(
             task_id,
             taskStatus,
             admin_id,
             cancellationReason
         )
+        return TaskResponseModel.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -98,7 +102,7 @@ def update_existing_task(
 
     try:
         repository = TaskRepository(db_session)
-        return repository.update_task(
+        result = repository.update_task(
             task_id,
             user.id,
             fileId,
@@ -108,6 +112,7 @@ def update_existing_task(
             taskNote,
             taskPriority
         )
+        return TaskResponseModel.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 

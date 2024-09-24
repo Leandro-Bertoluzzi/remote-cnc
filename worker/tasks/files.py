@@ -1,6 +1,6 @@
 from app import app
 from config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.repositories.fileRepository import FileRepository
 from core.gcode.gcodeAnalyser import GcodeAnalyser
 from core.utils.files import FileSystemHelper

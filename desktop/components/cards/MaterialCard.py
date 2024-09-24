@@ -1,6 +1,6 @@
 from components.cards.Card import Card
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.models import Material
 from core.database.repositories.materialRepository import MaterialRepository
 from helpers.utils import needs_confirmation

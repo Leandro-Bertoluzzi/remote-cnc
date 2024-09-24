@@ -1,6 +1,6 @@
 from components.cards.Card import Card
 from components.dialogs.UserDataDialog import UserDataDialog
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.models import User
 from core.database.repositories.userRepository import UserRepository
 from helpers.utils import needs_confirmation

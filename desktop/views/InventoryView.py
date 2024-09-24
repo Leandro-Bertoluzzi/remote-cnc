@@ -2,7 +2,7 @@ from components.cards.MaterialCard import MaterialCard
 from components.dialogs.MaterialDataDialog import MaterialDataDialog
 from components.cards.ToolCard import ToolCard
 from components.dialogs.ToolDataDialog import ToolDataDialog
-from core.database.base import Session as SessionLocal
+from core.database.base import SessionLocal
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.toolRepository import ToolRepository
 from views.BaseListView import BaseListView

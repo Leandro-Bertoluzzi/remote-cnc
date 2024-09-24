@@ -1,16 +1,13 @@
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from sqlalchemy import select
-from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError
 from ..models import Tool
 
 
 class ToolRepository:
-    def __init__(self, _session=None):
-        self.session = _session or Session()
-
-    def __del__(self):
-        self.close_session()
+    def __init__(self, _session: Session):
+        self.session = _session
 
     def create_tool(self, name: str, description: str):
         try:
@@ -34,9 +31,9 @@ class ToolRepository:
 
     def get_all_tools(self):
         try:
-            tools = self.session.execute(
+            tools = self.session.scalars(
                 select(Tool)
-            ).scalars().all()
+            ).all()
             return tools
         except SQLAlchemyError as e:
             raise DatabaseError(f'Error retrieving tools from the DB: {e}')
@@ -50,7 +47,8 @@ class ToolRepository:
             tool.name = name
             tool.description = description
             self.session.commit()
-            return tool.serialize()
+            self.session.refresh(tool)
+            return tool
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the tool in the DB: {e}')

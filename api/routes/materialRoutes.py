@@ -4,7 +4,6 @@ from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
 from schemas.general import GenericResponseModel
 from schemas.materials import MaterialRequestModel, MaterialResponseModel
-from services.utilities import serializeList
 
 materialRoutes = APIRouter(prefix="/materials", tags=["Materials"])
 
@@ -17,7 +16,9 @@ def get_materials(
     db_session: GetDbSession
 ) -> list[MaterialResponseModel]:
     repository = MaterialRepository(db_session)
-    return serializeList(repository.get_all_materials())
+    materials = repository.get_all_materials()
+
+    return [MaterialResponseModel.from_orm(material) for material in materials]
 
 
 @materialRoutes.post('')
@@ -49,7 +50,8 @@ def update_existing_material(
 
     try:
         repository = MaterialRepository(db_session)
-        return repository.update_material(material_id, materialName, materialDescription)
+        result = repository.update_material(material_id, materialName, materialDescription)
+        return MaterialResponseModel.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 

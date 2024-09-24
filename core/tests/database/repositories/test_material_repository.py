@@ -96,7 +96,7 @@ class TestMaterialRepository:
 
     def test_error_get_all_materials_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'execute', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
         material_repository = MaterialRepository(mocked_session)
 
         # Call the method under test and assert exception

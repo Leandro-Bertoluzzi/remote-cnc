@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from sqlalchemy import select
-from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError
 from ..models import User, VALID_ROLES
 try:
@@ -19,11 +19,8 @@ class DuplicatedUserError(Exception):
 
 
 class UserRepository:
-    def __init__(self, _session=None):
-        self.session = _session or Session()
-
-    def __del__(self):
-        self.close_session()
+    def __init__(self, _session: Session):
+        self.session = _session
 
     def create_user(self, name: str, email: str, password: str, role: str):
         if role not in VALID_ROLES:
@@ -32,8 +29,7 @@ class UserRepository:
         try:
             user = self.session.scalars(
                 select(User).
-                filter_by(email=email).
-                limit(1)
+                filter_by(email=email)
             ).first()
             if user:
                 raise DuplicatedUserError(
@@ -63,8 +59,7 @@ class UserRepository:
         try:
             user = self.session.scalars(
                 select(User).
-                filter_by(email=email).
-                limit(1)
+                filter_by(email=email)
             ).first()
             return user
         except SQLAlchemyError as e:
@@ -72,9 +67,9 @@ class UserRepository:
 
     def get_all_users(self):
         try:
-            users = self.session.execute(
+            users = self.session.scalars(
                 select(User)
-            ).scalars().all()
+            ).all()
             return users
         except SQLAlchemyError as e:
             raise DatabaseError(f'Error retrieving users from the DB: {e}')
@@ -93,7 +88,8 @@ class UserRepository:
             user.role = role
 
             self.session.commit()
-            return user.serialize()
+            self.session.refresh(user)
+            return user
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f'Error updating the user in the DB: {e}')
