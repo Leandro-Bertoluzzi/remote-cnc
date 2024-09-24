@@ -6,8 +6,7 @@ import time
 from app import app
 from config import FILES_FOLDER_PATH
 from core.database.base import Session as SessionLocal
-from core.database.models import TASK_FINISHED_STATUS, TASK_IN_PROGRESS_STATUS, \
-    TASK_FAILED_STATUS, TASK_APPROVED_STATUS
+from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
 from core.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
 from core.grbl.grblController import GrblController
@@ -41,7 +40,7 @@ def executeTask(
     if not task:
         raise Exception('No se encontró la tarea en la base de datos')
 
-    if task.status != TASK_APPROVED_STATUS:
+    if task.status != TaskStatus.APPROVED.value:
         raise Exception(f'La tarea tiene un estado incorrecto: {task.status}')
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
@@ -77,7 +76,7 @@ def executeTask(
         raise error
 
     # Once sure the file exists, mark the task as 'in progress' in the DB
-    repository.update_task_status(task.id, TASK_IN_PROGRESS_STATUS)
+    repository.update_task_status(task.id, TaskStatus.IN_PROGRESS.value)
     worker_logger.info('Comenzada la ejecución del archivo: %s', file_path)
 
     # 5. Start a PubSub manager to notify updates and listen to requests
@@ -177,7 +176,7 @@ def executeTask(
 
     if cnc_status.failed():
         worker_logger.critical('Error durante la ejecución del archivo: %s', file_path)
-        repository.update_task_status(task.id, TASK_FAILED_STATUS)
+        repository.update_task_status(task.id, TaskStatus.FAILED.value)
 
         error_message = cnc_status.get_error_message()
         worker_logger.critical(error_message)
@@ -185,7 +184,7 @@ def executeTask(
 
     # SUCCESS
     worker_logger.info('Finalizada la ejecución del archivo: %s', file_path)
-    repository.update_task_status(task.id, TASK_FINISHED_STATUS)
+    repository.update_task_status(task.id, TaskStatus.FINISHED.value)
 
 
 @app.task(name='cnc_server', bind=True, ignore_result=True)

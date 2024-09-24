@@ -1,6 +1,4 @@
-from grbl.constants import GRBL_ACTIVE_STATE_IDLE, GRBL_ACTIVE_STATE_RUN, \
-    GRBL_ACTIVE_STATE_HOLD, GRBL_ACTIVE_STATE_DOOR, GRBL_ACTIVE_STATE_HOME, \
-    GRBL_ACTIVE_STATE_SLEEP, GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_CHECK
+from grbl.constants import GrblActiveState
 from grbl.grblStatus import GrblStatus
 import mocks.grbl_mocks as grbl_mocks
 import pytest
@@ -39,14 +37,14 @@ class TestGrblStatus:
     @pytest.mark.parametrize(
         'active_state',
         [
-            GRBL_ACTIVE_STATE_IDLE,
-            GRBL_ACTIVE_STATE_RUN,
-            GRBL_ACTIVE_STATE_HOLD,
-            GRBL_ACTIVE_STATE_DOOR,
-            GRBL_ACTIVE_STATE_HOME,
-            GRBL_ACTIVE_STATE_SLEEP,
-            GRBL_ACTIVE_STATE_ALARM,
-            GRBL_ACTIVE_STATE_CHECK
+            GrblActiveState.IDLE.value,
+            GrblActiveState.RUN.value,
+            GrblActiveState.HOLD.value,
+            GrblActiveState.DOOR.value,
+            GrblActiveState.HOME.value,
+            GrblActiveState.SLEEP.value,
+            GrblActiveState.ALARM.value,
+            GrblActiveState.CHECK.value
         ]
     )
     def test_status_checkers(self, active_state):
@@ -59,6 +57,6 @@ class TestGrblStatus:
         is_checkmode = self.grbl_status.is_checkmode()
 
         # Assertions
-        assert is_alarm == (active_state == GRBL_ACTIVE_STATE_ALARM)
-        assert is_idle == (active_state == GRBL_ACTIVE_STATE_IDLE)
-        assert is_checkmode == (active_state == GRBL_ACTIVE_STATE_CHECK)
+        assert is_alarm == (active_state == GrblActiveState.ALARM.value)
+        assert is_idle == (active_state == GrblActiveState.IDLE.value)
+        assert is_checkmode == (active_state == GrblActiveState.CHECK.value)

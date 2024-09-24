@@ -5,8 +5,7 @@ from components.cards.TaskCard import TaskCard
 from components.dialogs.TaskCancelDialog import TaskCancelDialog
 from components.dialogs.TaskDataDialog import TaskDataDialog
 from core.worker.workerStatusManager import WorkerStoreAdapter
-from core.database.models import Task, TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, \
-    TASK_INITIAL_STATUS, TASK_APPROVED_STATUS
+from core.database.models import Task, TaskStatus
 from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
@@ -88,7 +87,7 @@ class TestTaskCard:
 
     def test_task_card_init_device_busy(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock task status
-        self.task.status = TASK_ON_HOLD_STATUS
+        self.task.status = TaskStatus.ON_HOLD.value
         self.task.id = 1
 
         # Mock card's auxiliary methods
@@ -233,7 +232,7 @@ class TestTaskCard:
         if expected_updated:
             update_task_params = {
                 'id': 1,
-                'status': TASK_INITIAL_STATUS,
+                'status': TaskStatus.INITIAL.value,
                 'admin_id': 1,
                 'cancellation_reason': '',
             }
@@ -367,7 +366,7 @@ class TestTaskCard:
         if expected_updated:
             update_task_params = {
                 'id': 1,
-                'status': TASK_CANCELLED_STATUS,
+                'status': TaskStatus.CANCELLED.value,
                 'admin_id': 1,
                 'cancellation_reason': 'A valid cancellation reason',
             }
@@ -529,7 +528,7 @@ class TestTaskCard:
         if expected_updated:
             update_task_params = {
                 'id': 1,
-                'status': TASK_APPROVED_STATUS,
+                'status': TaskStatus.APPROVED.value,
                 'admin_id': 1,
                 'cancellation_reason': '',
             }

@@ -7,9 +7,7 @@ from config import USER_ID
 import core.worker.utils as worker
 from core.worker.workerStatusManager import WorkerStoreAdapter
 from core.database.base import Session as SessionLocal
-from core.database.models import Task, TASK_DEFAULT_PRIORITY, TASK_FINISHED_STATUS, \
-    TASK_CANCELLED_STATUS, TASK_ON_HOLD_STATUS, TASK_INITIAL_STATUS, \
-    TASK_FAILED_STATUS, TASK_APPROVED_STATUS, TASK_IN_PROGRESS_STATUS
+from core.database.models import Task, TASK_DEFAULT_PRIORITY, TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
 from core.utils.storage import get_value_from_id
 from helpers.utils import needs_confirmation, send_task_to_worker
@@ -42,7 +40,7 @@ class TaskCard(Card):
 
     def setup_ui(self):
         self.paused = False
-        if self.task.status == TASK_IN_PROGRESS_STATUS:
+        if self.task.status == TaskStatus.IN_PROGRESS.value:
             self.paused = WorkerStoreAdapter.is_device_paused()
 
         self.setup_buttons(self.task.status)
@@ -68,7 +66,7 @@ class TaskCard(Card):
         task_info = task_state.info
         task_status = task_state.status
 
-        if task_status == 'PROGRESS' and self.task.status == TASK_IN_PROGRESS_STATUS:
+        if task_status == 'PROGRESS' and self.task.status == TaskStatus.IN_PROGRESS.value:
             self.show_task_progress(task_info)
 
         if task_status == 'FAILURE':
@@ -107,21 +105,21 @@ class TaskCard(Card):
         """
 
         button_info = {
-            TASK_INITIAL_STATUS: [
+            TaskStatus.PENDING_APPROVAL.value: [
                 ("Editar", self.updateTask),
                 ("Aprobar", self.approveTask),
                 ("Cancelar", self.cancelTask)
             ],
-            TASK_ON_HOLD_STATUS: [("Cancelar", self.cancelTask)],
-            TASK_CANCELLED_STATUS: [
+            TaskStatus.ON_HOLD.value: [("Cancelar", self.cancelTask)],
+            TaskStatus.CANCELLED.value: [
                 ("Eliminar", self.removeTask),
                 ("Restaurar", self.restoreTask)
             ],
-            TASK_IN_PROGRESS_STATUS: [
+            TaskStatus.IN_PROGRESS.value: [
                 ('Retomar' if self.paused else 'Pausar', self.pauseTask)
             ],
-            TASK_FINISHED_STATUS: [("Repetir", self.repeatTask)],
-            TASK_FAILED_STATUS: [("Reintentar", self.repeatTask)]
+            TaskStatus.FINISHED.value: [("Repetir", self.repeatTask)],
+            TaskStatus.FAILED.value: [("Reintentar", self.repeatTask)]
         }
 
         for status_value, data in button_info.items():
@@ -129,7 +127,7 @@ class TaskCard(Card):
                 for (button_text, callback) in data:
                     self.addButton(button_text, callback)
 
-        if status == TASK_ON_HOLD_STATUS:
+        if status == TaskStatus.ON_HOLD.value:
             self.addButton("Ejecutar", self.runTask, self.device_available)
 
     # ACTIONS
@@ -181,7 +179,7 @@ class TaskCard(Card):
             'Restaurar tarea'
     )
     def restoreTask(self):
-        self.updateTaskStatus(TASK_INITIAL_STATUS)
+        self.updateTaskStatus(TaskStatus.INITIAL)
         self.getView().refreshLayout()
 
     def cancelTask(self):
@@ -190,12 +188,12 @@ class TaskCard(Card):
             return
 
         cancellation_reason = cancelDialog.getInput()
-        self.updateTaskStatus(TASK_CANCELLED_STATUS, cancellation_reason)
+        self.updateTaskStatus(TaskStatus.CANCELLED, cancellation_reason)
         self.getView().refreshLayout()
 
     def updateTaskStatus(
         self,
-        new_status: str,
+        new_status: TaskStatus,
         cancellation_reason: str = ''
     ):
         try:
@@ -203,7 +201,7 @@ class TaskCard(Card):
             repository = TaskRepository(db_session)
             repository.update_task_status(
                 self.task.id,
-                new_status,
+                new_status.value,
                 USER_ID,
                 cancellation_reason
             )
@@ -272,7 +270,7 @@ class TaskCard(Card):
 
     @needs_confirmation('¿Realmente desea aprobar la solicitud?', 'Aprobar solicitud')
     def approveTask(self):
-        self.updateTaskStatus(TASK_APPROVED_STATUS)
+        self.updateTaskStatus(TaskStatus.APPROVED)
         self.getView().refreshLayout()
 
     def pauseTask(self):

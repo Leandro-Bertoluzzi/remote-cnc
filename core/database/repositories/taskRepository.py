@@ -5,12 +5,11 @@ from datetime import datetime
 from typing import Optional
 from ..base import Session
 from ..exceptions import DatabaseError, EntityNotFoundError, Unauthorized
-from ..models import Task, TASK_PENDING_APPROVAL_STATUS, TASK_APPROVED_STATUS, \
-    TASK_IN_PROGRESS_STATUS, TASK_CANCELLED_STATUS, TASK_EMPTY_NOTE, VALID_STATUSES
+from ..models import Task, TaskStatus, TASK_EMPTY_NOTE
 try:
-    from ...utils.validators import validate_transition
+    from ...utils.validators import validate_transition, is_valid_task_state
 except ImportError:
-    from utils.validators import validate_transition
+    from utils.validators import validate_transition, is_valid_task_state
 
 
 # Custom exceptions
@@ -110,10 +109,10 @@ class TaskRepository:
         return bool(tasks)
 
     def are_there_pending_tasks(self) -> bool:
-        return self.are_there_tasks_with_status(TASK_APPROVED_STATUS)
+        return self.are_there_tasks_with_status(TaskStatus.APPROVED.value)
 
     def are_there_tasks_in_progress(self) -> bool:
-        return self.are_there_tasks_with_status(TASK_IN_PROGRESS_STATUS)
+        return self.are_there_tasks_with_status(TaskStatus.IN_PROGRESS.value)
 
     def update_task(
         self,
@@ -151,7 +150,7 @@ class TaskRepository:
         admin_id: Optional[int] = None,
         cancellation_reason: str = "",
     ):
-        if status not in VALID_STATUSES:
+        if not is_valid_task_state(status):
             raise InvalidTaskStatus(f'Status {status} is not valid')
 
         try:
@@ -165,19 +164,19 @@ class TaskRepository:
             if not validate_transition(task.status, status):
                 raise InvalidTaskStatus(f'Transition from {task.status} to {status} is not valid')
 
-            is_pending = task.status == TASK_PENDING_APPROVAL_STATUS
-            approved = is_pending and status == TASK_APPROVED_STATUS
+            is_pending = task.status == TaskStatus.PENDING_APPROVAL.value
+            approved = is_pending and status == TaskStatus.APPROVED.value
 
             if approved:
                 if not admin_id:
                     raise Unauthorized('Admin level is required to perform the action')
                 task.admin_id = admin_id
 
-            if status == TASK_PENDING_APPROVAL_STATUS:
+            if status == TaskStatus.PENDING_APPROVAL.value:
                 task.cancellation_reason = None
                 task.admin_id = None
 
-            if status == TASK_CANCELLED_STATUS:
+            if status == TaskStatus.CANCELLED.value:
                 task.cancellation_reason = cancellation_reason
 
             task.status = status

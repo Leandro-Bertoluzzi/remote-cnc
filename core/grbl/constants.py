@@ -1,52 +1,38 @@
+from enum import Enum
 from typing import List
 from .types import ModalGroup, GrblError
 
 # Grbl
 GRBL = 'Grbl'
 
-# Active State
-GRBL_ACTIVE_STATE_IDLE = 'Idle'
-GRBL_ACTIVE_STATE_RUN = 'Run'
-GRBL_ACTIVE_STATE_HOLD = 'Hold'
-GRBL_ACTIVE_STATE_DOOR = 'Door'
-GRBL_ACTIVE_STATE_HOME = 'Home'
-GRBL_ACTIVE_STATE_SLEEP = 'Sleep'
-GRBL_ACTIVE_STATE_ALARM = 'Alarm'
-GRBL_ACTIVE_STATE_CHECK = 'Check'
+# Active State Enum
+class GrblActiveState(Enum):
+    IDLE = 'Idle'
+    RUN = 'Run'
+    HOLD = 'Hold'
+    DOOR = 'Door'
+    HOME = 'Home'
+    SLEEP = 'Sleep'
+    ALARM = 'Alarm'
+    CHECK = 'Check'
 
-# Query commands
-GRBL_COMMAND_CHECK_MODE = '$C'    # G-code check mode enable/disable
-GRBL_COMMAND_HOMING = '$H'        # Homing cycle
-GRBL_COMMAND_DISABLE_ALARM = '$X' # Disable alarm
-GRBL_COMMAND_PARSER_STATE = '$G'  # G-code Parser State
-GRBL_COMMAND_HELP = '$'           # Help
-GRBL_COMMAND_PARAMETERS = '$#'    # GRBL parameters
-GRBL_COMMAND_SETTINGS = '$$'      # GRBL settings
-GRBL_COMMAND_BUILD = '$I'         # Build/Version info
+# Query Commands Enum
+class GrblCommand(Enum):
+    CHECK_MODE = '$C'          # G-code check mode enable/disable
+    HOMING = '$H'              # Homing cycle
+    DISABLE_ALARM = '$X'       # Disable alarm
+    PARSER_STATE = '$G'        # G-code Parser State
+    HELP = '$'                 # Help
+    PARAMETERS = '$#'          # GRBL parameters
+    SETTINGS = '$$'            # GRBL settings
+    BUILD = '$I'               # Build/Version info
 
-GRBL_QUERY_COMMANDS = [
-    GRBL_COMMAND_CHECK_MODE,
-    GRBL_COMMAND_HOMING,
-    GRBL_COMMAND_DISABLE_ALARM,
-    GRBL_COMMAND_PARSER_STATE,
-    GRBL_COMMAND_HELP,
-    GRBL_COMMAND_PARAMETERS,
-    GRBL_COMMAND_SETTINGS,
-    GRBL_COMMAND_BUILD
-]
-
-# Real-time Commands: ~, !, ?, and Ctrl-x
-GRBL_COMMAND_CYCLE_START = '~'     # Cycle Start
-GRBL_COMMAND_FEED_HOLD = '!'       # Feed Hold
-GRBL_COMMAND_STATUS_REPORT = '?'   # Current Status
-GRBL_COMMAND_SOFT_RESET = '\x18'   # Reset Grbl (Ctrl-X)
-
-GRBL_REALTIME_COMMANDS = [
-    GRBL_COMMAND_CYCLE_START,
-    GRBL_COMMAND_FEED_HOLD,
-    GRBL_COMMAND_STATUS_REPORT,
-    GRBL_COMMAND_SOFT_RESET
-]
+# Real-time Commands Enum
+class GrblRealtimeCommand(Enum):
+    CYCLE_START = '~'          # Cycle Start
+    FEED_HOLD = '!'            # Feed Hold
+    STATUS_REPORT = '?'        # Current Status
+    SOFT_RESET = '\x18'        # Reset Grbl (Ctrl-X)
 
 # https://github.com/gnea/grbl
 # http://linuxcnc.org/docs/html/gcode/overview.html#cap:modal-groups

@@ -1,33 +1,26 @@
 from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 from .base import Base
 
 # Enum values
-TASK_PENDING_APPROVAL_STATUS = 'pending_approval'
-TASK_ON_HOLD_STATUS = 'on_hold'
-TASK_IN_PROGRESS_STATUS = 'in_progress'
-TASK_FINISHED_STATUS = 'finished'
-TASK_FAILED_STATUS = 'failed'
-TASK_CANCELLED_STATUS = 'cancelled'
-TASK_APPROVED_STATUS = TASK_ON_HOLD_STATUS
-
-VALID_STATUSES = [
-    TASK_PENDING_APPROVAL_STATUS,
-    TASK_ON_HOLD_STATUS,
-    TASK_IN_PROGRESS_STATUS,
-    TASK_FINISHED_STATUS,
-    TASK_FAILED_STATUS,
-    TASK_CANCELLED_STATUS
-]
+class TaskStatus(Enum):
+    INITIAL = 'pending_approval'
+    PENDING_APPROVAL = 'pending_approval'
+    ON_HOLD = 'on_hold'
+    IN_PROGRESS = 'in_progress'
+    FINISHED = 'finished'
+    FAILED = 'failed'
+    CANCELLED = 'cancelled'
+    APPROVED = 'on_hold'
 
 VALID_ROLES = ['user', 'admin']
 
 # Constants
 TASK_EMPTY_NOTE = ''
 TASK_DEFAULT_PRIORITY = 0
-TASK_INITIAL_STATUS = TASK_PENDING_APPROVAL_STATUS
 
 
 class Task(Base):
@@ -43,7 +36,7 @@ class Task(Base):
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     note: Mapped[str] = mapped_column(String(150), default=TASK_EMPTY_NOTE)
-    status: Mapped[str] = mapped_column(String(50), default=TASK_INITIAL_STATUS)
+    status: Mapped[str] = mapped_column(String(50), default=TaskStatus.INITIAL.value)
     priority: Mapped[int] = mapped_column(Integer, default=TASK_DEFAULT_PRIORITY)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     status_updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, init=False)
