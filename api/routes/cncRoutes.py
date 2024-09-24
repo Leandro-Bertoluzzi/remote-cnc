@@ -7,9 +7,9 @@ from core.utils.serial import SerialService
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetAdminDep
 from middleware.pubSubMiddleware import GetPubSub
-from schemas.cnc import CncCommandModel, CncJogCommandModel, CncJogResponseModel
-from schemas.worker import WorkerTaskResponseModel
-from schemas.general import GenericResponseModel
+from schemas.cnc import CncCommand, CncJogCommand, CncJogResponse
+from schemas.worker import WorkerTaskResponse
+from schemas.general import GenericResponse
 
 cncRoutes = APIRouter(prefix="/cnc", tags=["CNC"])
 
@@ -24,8 +24,8 @@ def get_available_ports(admin: GetAdminDep):
     return {'ports': available_ports}
 
 
-@cncRoutes.post('/server')
-def start_cnc_server(admin: GetAdminDep) -> WorkerTaskResponseModel:
+@cncRoutes.post('/server', response_model=WorkerTaskResponse)
+def start_cnc_server(admin: GetAdminDep):
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -43,8 +43,8 @@ def start_cnc_server(admin: GetAdminDep) -> WorkerTaskResponseModel:
     return {'worker_task_id': worker_task.task_id}
 
 
-@cncRoutes.delete('/server')
-async def stop_cnc_server(admin: GetAdminDep, redis: GetPubSub) -> GenericResponseModel:
+@cncRoutes.delete('/server', response_model=GenericResponse)
+async def stop_cnc_server(admin: GetAdminDep, redis: GetPubSub):
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -54,12 +54,12 @@ async def stop_cnc_server(admin: GetAdminDep, redis: GetPubSub) -> GenericRespon
     return {'success': 'Se finalizó la conexión con el CNC'}
 
 
-@cncRoutes.post('/command')
+@cncRoutes.post('/command', response_model=GenericResponse)
 async def send_code_to_execute(
-    request: CncCommandModel,
+    request: CncCommand,
     admin: GetAdminDep,
     redis: GetPubSub
-) -> GenericResponseModel:
+):
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -72,13 +72,13 @@ async def send_code_to_execute(
     return {'success': 'El comando fue enviado para su ejecución'}
 
 
-@cncRoutes.post('/jog')
+@cncRoutes.post('/jog', response_model=CncJogResponse)
 async def send_jog_command(
     admin: GetAdminDep,
     redis: GetPubSub,
-    request: CncJogCommandModel,
+    request: CncJogCommand,
     machine: bool = False
-) -> CncJogResponseModel:
+):
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 

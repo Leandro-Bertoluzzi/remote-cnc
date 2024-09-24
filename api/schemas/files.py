@@ -2,11 +2,11 @@ import datetime
 from pydantic import BaseModel, Field
 
 
-class FileUpdateModel(BaseModel):
+class FileUpdate(BaseModel):
     file_name: str
 
 
-class FileResponseModel(BaseModel):
+class FileResponse(BaseModel):
     id: int
     name: str = Field(alias="file_name")
     created_at: datetime.datetime
@@ -14,7 +14,8 @@ class FileResponseModel(BaseModel):
 
     class Config:
         allow_population_by_field_name = True
+        orm_mode = True
 
 
-class FileContentResponseModel(BaseModel):
+class FileContentResponse(BaseModel):
     content: str

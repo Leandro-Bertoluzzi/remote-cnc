@@ -2,7 +2,7 @@ import asyncio  # noqa: F401
 from fastapi import APIRouter, Request
 from middleware.authMiddleware import GetUserDep
 from middleware.pubSubMiddleware import GetPubSub
-from schemas.general import PubSubMessageModel
+from schemas.general import PubSubMessage
 from sse_starlette.sse import EventSourceResponse
 
 monitorRoutes = APIRouter(prefix="/monitor", tags=["Monitor"])
@@ -32,7 +32,7 @@ async def stream(
 @monitorRoutes.post("/messages/{channel}")
 async def push_message(
     channel: str,
-    request: PubSubMessageModel,
+    request: PubSubMessage,
     redis: GetPubSub,
     user: GetUserDep
 ):

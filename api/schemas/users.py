@@ -2,7 +2,7 @@ from core.database.types import RoleType
 from pydantic import BaseModel, EmailStr, Field
 
 
-class UserCreateModel(BaseModel):
+class UserCreate(BaseModel):
     name: str
     email: EmailStr
     password: str = Field(
@@ -13,7 +13,7 @@ class UserCreateModel(BaseModel):
     role: RoleType
 
 
-class UserUpdateModel(BaseModel):
+class UserUpdate(BaseModel):
     name: str
     email: EmailStr
     role: RoleType
@@ -24,3 +24,6 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     role: RoleType
+
+    class Config:
+        orm_mode = True

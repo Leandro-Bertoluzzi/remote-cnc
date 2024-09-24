@@ -6,8 +6,8 @@ from core.worker.scheduler import createThumbnail, generateFileReport
 from fastapi import APIRouter, HTTPException, UploadFile
 from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
-from schemas.files import FileResponseModel, FileContentResponseModel, FileUpdateModel
-from schemas.general import GenericResponseModel
+from schemas.files import FileResponse, FileContentResponse, FileUpdate
+from schemas.general import GenericResponse
 
 fileRoutes = APIRouter(prefix="/files", tags=["Files"])
 
@@ -17,44 +17,44 @@ fileRoutes = APIRouter(prefix="/files", tags=["Files"])
 def get_files(
     user: GetUserDep,
     db_session: GetDbSession
-) -> list[FileResponseModel]:
+) -> list[FileResponse]:
     repository = FileRepository(db_session)
     files = repository.get_all_files_from_user(user.id)
 
-    return [FileResponseModel.from_orm(file) for file in files]
+    return [FileResponse.from_orm(file) for file in files]
 
 
 @fileRoutes.get('/all', response_model_by_alias=False)
 def get_files_from_all_users(
     admin: GetAdminDep,
     db_session: GetDbSession
-) -> list[FileResponseModel]:
+) -> list[FileResponse]:
     repository = FileRepository(db_session)
     files = repository.get_all_files()
 
-    return [FileResponseModel.from_orm(file) for file in files]
+    return [FileResponse.from_orm(file) for file in files]
 
 
-@fileRoutes.get('/{file_id}', response_model_by_alias=False)
+@fileRoutes.get('/{file_id}', response_model_by_alias=False, response_model=FileResponse)
 def get_file(
     file_id: int,
     user: GetUserDep,
     db_session: GetDbSession
-) -> FileResponseModel:
+):
     repository = FileRepository(db_session)
     try:
         result = repository.get_file_by_id(file_id)
-        return FileResponseModel.from_orm(result)
+        return FileResponse.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
 
-@fileRoutes.get('/{file_id}/content')
+@fileRoutes.get('/{file_id}/content', response_model=FileContentResponse)
 def get_file_content(
     file_id: int,
     user: GetUserDep,
     db_session: GetDbSession
-) -> FileContentResponseModel:
+):
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         return {'content': file_manager.read_file(file_id)}
@@ -76,13 +76,13 @@ def get_file_report(
         raise HTTPException(400, detail=str(error))
 
 
-@fileRoutes.post('', response_model_by_alias=False)
-@fileRoutes.post('/', response_model_by_alias=False)
+@fileRoutes.post('', response_model_by_alias=False, response_model=FileResponse)
+@fileRoutes.post('/', response_model_by_alias=False, response_model=FileResponse)
 def upload_file(
     file: UploadFile,
     user: GetUserDep,
     db_session: GetDbSession
-) -> FileResponseModel:
+):
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         new_file = file_manager.upload_file(user.id, file.filename, file.file)
@@ -94,27 +94,27 @@ def upload_file(
     return new_file
 
 
-@fileRoutes.put('/{file_id}', response_model_by_alias=False)
+@fileRoutes.put('/{file_id}', response_model_by_alias=False, response_model=FileResponse)
 def update_file_name(
     file_id: int,
-    request: FileUpdateModel,
+    request: FileUpdate,
     user: GetUserDep,
     db_session: GetDbSession
-) -> FileResponseModel:
+):
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         result = file_manager.rename_file_by_id(user.id, file_id, request.file_name)
-        FileResponseModel.from_orm(result)
+        return FileResponse.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
 
-@fileRoutes.delete('/{file_id}')
+@fileRoutes.delete('/{file_id}', response_model=GenericResponse)
 def remove_existing_file(
     file_id: int,
     user: GetUserDep,
     db_session: GetDbSession
-) -> GenericResponseModel:
+):
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         file_manager.remove_file_by_id(file_id)
@@ -124,11 +124,11 @@ def remove_existing_file(
     return {'success': 'El archivo fue eliminado con éxito'}
 
 
-@fileRoutes.post('/{file_id}/thumbnail')
+@fileRoutes.post('/{file_id}/thumbnail', response_model=GenericResponse)
 def generate_thumbnail(
     file_id: int,
     admin: GetAdminDep
-) -> GenericResponseModel:
+):
     try:
         createThumbnail.delay(file_id)
     except Exception as error:

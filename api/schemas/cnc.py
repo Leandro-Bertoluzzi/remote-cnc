@@ -2,11 +2,11 @@ from pydantic import BaseModel
 from typing import Literal
 
 
-class CncCommandModel(BaseModel):
+class CncCommand(BaseModel):
     command: str
 
 
-class CncJogCommandModel(BaseModel):
+class CncJogCommand(BaseModel):
     x: float
     y: float
     z: float
@@ -15,5 +15,5 @@ class CncJogCommandModel(BaseModel):
     mode: Literal["distance_absolute", "distance_incremental"]
 
 
-class CncJogResponseModel(BaseModel):
+class CncJogResponse(BaseModel):
     command: str
