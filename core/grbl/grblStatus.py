@@ -1,4 +1,4 @@
-from .constants import GRBL_ACTIVE_STATE_ALARM, GRBL_ACTIVE_STATE_IDLE, GRBL_ACTIVE_STATE_CHECK
+from .constants import GrblActiveState
 from .types import GrblControllerState, GrblError
 from typing import Optional
 
@@ -166,19 +166,19 @@ class GrblStatus:
         """Checks if the GRBL device is currently in ALARM state.
         """
         activeState = self._state['status']['activeState']
-        return activeState == GRBL_ACTIVE_STATE_ALARM
+        return activeState == GrblActiveState.ALARM.value
 
     def is_idle(self) -> bool:
         """Checks if the GRBL device is currently in IDLE state.
         """
         activeState = self._state['status']['activeState']
-        return activeState == GRBL_ACTIVE_STATE_IDLE
+        return activeState == GrblActiveState.IDLE.value
 
     def is_checkmode(self) -> bool:
         """Returns if the GRBL device is currently configured in check mode.
         """
         activeState = self._state['status']['activeState']
-        return activeState == GRBL_ACTIVE_STATE_CHECK
+        return activeState == GrblActiveState.CHECK.value
 
     def connected(self) -> bool:
         return self.get_flag(FLAG_CONNECTED)
