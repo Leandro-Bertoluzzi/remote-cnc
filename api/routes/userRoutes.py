@@ -2,8 +2,8 @@ from core.database.repositories.userRepository import UserRepository
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
-from schemas.general import GenericResponseModel
-from schemas.users import UserCreateModel, UserUpdateModel, UserResponse
+from schemas.general import GenericResponse
+from schemas.users import UserCreate, UserUpdate, UserResponse
 
 userRoutes = APIRouter(prefix="/users", tags=["Users"])
 
@@ -21,13 +21,13 @@ def get_users(
     return [UserResponse.from_orm(user) for user in users]
 
 
-@userRoutes.post('')
-@userRoutes.post('/')
+@userRoutes.post('', response_model=UserResponse)
+@userRoutes.post('/', response_model=UserResponse)
 def create_new_user(
-    request: UserCreateModel,
+    request: UserCreate,
     admin: GetAdminDep,
     db_session: GetDbSession
-) -> UserResponse:
+):
     name = request.name
     email = request.email
     password = request.password
@@ -40,13 +40,13 @@ def create_new_user(
         raise HTTPException(400, detail=str(error))
 
 
-@userRoutes.put('/{user_id}')
+@userRoutes.put('/{user_id}', response_model=UserResponse)
 def update_existing_user(
     user_id: int,
-    request: UserUpdateModel,
+    request: UserUpdate,
     admin: GetAdminDep,
     db_session: GetDbSession
-) -> UserResponse:
+):
     name = request.name
     email = request.email
     role = request.role
@@ -60,12 +60,12 @@ def update_existing_user(
         raise HTTPException(400, detail=str(error))
 
 
-@userRoutes.delete('/{user_id}')
+@userRoutes.delete('/{user_id}', response_model=GenericResponse)
 def remove_existing_user(
     user_id: int,
     admin: GetAdminDep,
     db_session: GetDbSession
-) -> GenericResponseModel:
+):
     try:
         repository = UserRepository(db_session)
         repository.remove_user(user_id)
@@ -75,6 +75,6 @@ def remove_existing_user(
     return {'success': 'El usuario fue eliminado con éxito'}
 
 
-@userRoutes.get('/auth')
-def authenticate(user: GetUserDep) -> UserResponse:
+@userRoutes.get('/auth', response_model=UserResponse)
+def authenticate(user: GetUserDep):
     return UserResponse.from_orm(user)

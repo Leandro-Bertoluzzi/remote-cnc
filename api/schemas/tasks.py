@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-class TaskCreateModel(BaseModel):
+class TaskCreate(BaseModel):
     name: str
     file_id: int
     tool_id: int
@@ -12,12 +12,12 @@ class TaskCreateModel(BaseModel):
     note: Optional[str] = ''
 
 
-class TaskUpdateStatusModel(BaseModel):
+class TaskUpdateStatus(BaseModel):
     status: StatusType
     cancellation_reason: Optional[str] = ''
 
 
-class TaskUpdateModel(BaseModel):
+class TaskUpdate(BaseModel):
     file_id: Optional[int] = None
     tool_id: Optional[int] = None
     material_id: Optional[int] = None
@@ -26,7 +26,7 @@ class TaskUpdateModel(BaseModel):
     note: Optional[str] = None
 
 
-class TaskResponseModel(BaseModel):
+class TaskResponse(BaseModel):
     id: int
     name: str
     status: str
@@ -39,3 +39,6 @@ class TaskResponseModel(BaseModel):
     admin_id: Optional[int] = None
     cancellation_reason: Optional[str] = None
     created_at: datetime.datetime
+
+    class Config:
+        orm_mode = True

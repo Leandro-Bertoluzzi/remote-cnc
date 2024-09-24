@@ -6,10 +6,10 @@ from datetime import datetime
 import io
 from pathlib import Path
 import re
-from schemas.logs import LogsResponseModel
+from schemas.logs import LogsResponse
 
 
-def classify_log_files() -> list[LogsResponseModel]:
+def classify_log_files() -> list[LogsResponse]:
     log_files = getFilesInFolder(LOGS_DIR)
     classified_files = []
 

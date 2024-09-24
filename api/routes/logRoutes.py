@@ -3,7 +3,7 @@ from core.utils.loggerFactory import get_log_path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
 from middleware.authMiddleware import GetAdminDep
-from schemas.logs import LogsResponseModel
+from schemas.logs import LogsResponse
 from utilities.logs import classify_log_files, generate_log_csv
 
 logRoutes = APIRouter(prefix="/logs", tags=["Logs"])
@@ -12,7 +12,7 @@ logRoutes = APIRouter(prefix="/logs", tags=["Logs"])
 @logRoutes.get('')
 @logRoutes.get('/')
 @logRoutes.get('/all')
-def get_logs(admin: GetAdminDep) -> list[LogsResponseModel]:
+def get_logs(admin: GetAdminDep) -> list[LogsResponse]:
     return classify_log_files()
 
 

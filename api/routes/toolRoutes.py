@@ -2,8 +2,8 @@ from core.database.repositories.toolRepository import ToolRepository
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetAdminDep, GetUserDep
 from middleware.dbMiddleware import GetDbSession
-from schemas.general import GenericResponseModel
-from schemas.tools import ToolRequestModel, ToolResponseModel
+from schemas.general import GenericResponse
+from schemas.tools import ToolRequest, ToolResponse
 
 toolRoutes = APIRouter(prefix="/tools", tags=["Tools"])
 
@@ -14,34 +14,34 @@ toolRoutes = APIRouter(prefix="/tools", tags=["Tools"])
 def get_tools(
     user: GetUserDep,
     db_session: GetDbSession
-) -> list[ToolResponseModel]:
+) -> list[ToolResponse]:
     repository = ToolRepository(db_session)
     tools = repository.get_all_tools()
 
-    return [ToolResponseModel.from_orm(tool) for tool in tools]
+    return [ToolResponse.from_orm(tool) for tool in tools]
 
 
-@toolRoutes.get('/{tool_id}')
+@toolRoutes.get('/{tool_id}', response_model=ToolResponse)
 def get_tool_by_id(
     tool_id: int,
     user: GetUserDep,
     db_session: GetDbSession
-) -> ToolResponseModel:
+):
     try:
         repository = ToolRepository(db_session)
         result = repository.get_tool_by_id(tool_id)
-        return ToolResponseModel.from_orm(result)
+        return ToolResponse.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
 
-@toolRoutes.post('')
-@toolRoutes.post('/')
+@toolRoutes.post('', response_model=ToolResponse)
+@toolRoutes.post('/', response_model=ToolResponse)
 def create_new_tool(
-    request: ToolRequestModel,
+    request: ToolRequest,
     admin: GetAdminDep,
     db_session: GetDbSession
-) -> ToolResponseModel:
+):
     toolName = request.name
     toolDescription = request.description
 
@@ -52,30 +52,30 @@ def create_new_tool(
         raise HTTPException(400, detail=str(error))
 
 
-@toolRoutes.put('/{tool_id}')
+@toolRoutes.put('/{tool_id}', response_model=ToolResponse)
 def update_existing_tool(
-    request: ToolRequestModel,
+    request: ToolRequest,
     tool_id: int,
     admin: GetAdminDep,
     db_session: GetDbSession
-) -> ToolResponseModel:
+):
     toolName = request.name
     toolDescription = request.description
 
     try:
         repository = ToolRepository(db_session)
         result = repository.update_tool(tool_id, toolName, toolDescription)
-        return ToolResponseModel.from_orm(result)
+        return ToolResponse.from_orm(result)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
 
-@toolRoutes.delete('/{tool_id}')
+@toolRoutes.delete('/{tool_id}', response_model=GenericResponse)
 def remove_existing_tool(
     tool_id: int,
     admin: GetAdminDep,
     db_session: GetDbSession
-) -> GenericResponseModel:
+):
     try:
         repository = ToolRepository(db_session)
         repository.remove_tool(tool_id)

@@ -2,13 +2,16 @@ import datetime
 from pydantic import BaseModel
 
 
-class ToolRequestModel(BaseModel):
+class ToolRequest(BaseModel):
     name: str
     description: str
 
 
-class ToolResponseModel(BaseModel):
+class ToolResponse(BaseModel):
     id: int
     name: str
     description: str
     added_at: datetime.datetime
+
+    class Config:
+        orm_mode = True

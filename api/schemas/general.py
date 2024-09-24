@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 
-class GenericResponseModel(BaseModel):
+class GenericResponse(BaseModel):
     success: str
 
 
-class PubSubMessageModel(BaseModel):
+class PubSubMessage(BaseModel):
     message: str

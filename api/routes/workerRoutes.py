@@ -5,18 +5,18 @@ import core.worker.utils as worker
 from core.utils.storage import add_value_with_id
 from fastapi import APIRouter, HTTPException
 from middleware.authMiddleware import GetUserDep, GetAdminDep
-from schemas.worker import TaskStatusResponseModel, WorkerTaskResponseModel, \
-    WorkerOnResponseModel, WorkerPausedResponseModel, WorkerAvailableResponseModel, \
-    DeviceEnabledResponseModel
+from schemas.worker import TaskStatusResponse, WorkerTaskResponse, \
+    WorkerOnResponse, WorkerPausedResponse, WorkerAvailableResponse, \
+    DeviceEnabledResponse
 
 workerRoutes = APIRouter(prefix="/worker", tags=["Worker"])
 
 
-@workerRoutes.post('/task/{db_task_id}')
+@workerRoutes.post('/task/{db_task_id}', response_model=WorkerTaskResponse)
 def send_task_to_worker(
     user: GetAdminDep,
     db_task_id: int
-) -> WorkerTaskResponseModel:
+):
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -36,11 +36,11 @@ def send_task_to_worker(
     return {'worker_task_id': worker_task.task_id}
 
 
-@workerRoutes.get('/status/{worker_task_id}')
+@workerRoutes.get('/status/{worker_task_id}', response_model=TaskStatusResponse)
 def get_worker_task_status(
     user: GetUserDep,
     worker_task_id: str
-) -> TaskStatusResponseModel:
+):
     if not worker.is_worker_on():
         raise HTTPException(400, detail='Worker desconectado')
 
@@ -73,15 +73,15 @@ def get_worker_task_status(
     return response
 
 
-@workerRoutes.get('/check/on')
-def check_worker_on(user: GetUserDep) -> WorkerOnResponseModel:
+@workerRoutes.get('/check/on', response_model=WorkerOnResponse)
+def check_worker_on(user: GetUserDep):
     """Returns whether the worker process is running.
     """
     return {'is_on': worker.is_worker_on()}
 
 
-@workerRoutes.get('/check/available')
-def check_worker_available(user: GetUserDep) -> WorkerAvailableResponseModel:
+@workerRoutes.get('/check/available', response_model=WorkerAvailableResponse)
+def check_worker_available(user: GetUserDep):
     """Returns whether the worker process is available to start working on a task.
     """
     enabled = WorkerStoreAdapter.is_device_enabled()
@@ -100,11 +100,11 @@ def get_worker_status(user: GetUserDep) -> worker.WorkerStatus:
     return worker.get_worker_status()
 
 
-@workerRoutes.put('/pause/{paused}')
+@workerRoutes.put('/pause/{paused}', response_model=WorkerPausedResponse)
 def set_worker_paused(
     user: GetAdminDep,
     paused: int
-) -> WorkerPausedResponseModel:
+):
     """Pauses or resume the device.
     """
     if paused != 0:
@@ -114,26 +114,26 @@ def set_worker_paused(
     return {'paused': WorkerStoreAdapter.is_device_paused()}
 
 
-@workerRoutes.get('/pause')
-def check_worker_paused(user: GetUserDep) -> WorkerPausedResponseModel:
+@workerRoutes.get('/pause', response_model=WorkerPausedResponse)
+def check_worker_paused(user: GetUserDep):
     """Checks if the worker is paused
     """
     return {'paused': WorkerStoreAdapter.is_device_paused()}
 
 
-@workerRoutes.put('/device/{enabled}')
+@workerRoutes.put('/device/{enabled}', response_model=DeviceEnabledResponse)
 def set_device_enabled(
     user: GetAdminDep,
     enabled: int
-) -> DeviceEnabledResponseModel:
+):
     """Enables or disables the device.
     """
     WorkerStoreAdapter.set_device_enabled(enabled != 0)
     return {'enabled': WorkerStoreAdapter.is_device_enabled()}
 
 
-@workerRoutes.get('/device/status')
-def get_device_status(user: GetUserDep) -> DeviceEnabledResponseModel:
+@workerRoutes.get('/device/status', response_model=DeviceEnabledResponse)
+def get_device_status(user: GetUserDep):
     """Returns the device status (enabled/disabled).
     """
     return {'enabled': WorkerStoreAdapter.is_device_enabled()}

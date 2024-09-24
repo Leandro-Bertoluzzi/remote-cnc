@@ -18,6 +18,7 @@ class HealthCheck(BaseModel):
     "/health",
     tags=["Healthcheck"],
     summary="Perform a Health Check",
+    response_model=HealthCheck,
     response_description="Return HTTP Status Code 200 (OK)"
 )
 def get_health() -> HealthCheck:
@@ -34,12 +35,12 @@ def get_health() -> HealthCheck:
 
 
 # User login
-class UserLoginModel(BaseModel):
+class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
 
-class UserLoginResponseModel(BaseModel):
+class UserLoginResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
@@ -51,11 +52,12 @@ class UserLoginResponseModel(BaseModel):
     '/login',
     tags=["Login"],
     summary="User login",
+    response_model=UserLoginResponse
 )
 def login(
-    request: UserLoginModel,
+    request: UserLogin,
     db_session: GetDbSession
-) -> UserLoginResponseModel:
+):
     email = request.email
     password = request.password
 
@@ -73,7 +75,7 @@ def login(
         raise HTTPException(404, detail='No autorizado: Combinación inválida de email y contraseña')
 
     try:
-        userData = user.serialize()
+        userData = user.__dict__
         userData['token'] = generate_token(user.id)
         return userData
     except Exception as error:

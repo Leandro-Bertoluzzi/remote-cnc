@@ -3,11 +3,11 @@ from pydantic import BaseModel
 from typing import Optional, Literal
 
 
-class WorkerTaskResponseModel(BaseModel):
+class WorkerTaskResponse(BaseModel):
     worker_task_id: str
 
 
-class TaskStatusResponseModel(BaseModel):
+class TaskStatusResponse(BaseModel):
     status: Literal['PENDING', 'STARTED', 'RETRY', 'FAILURE', 'SUCCESS', 'PROGRESS']
     sent_lines: Optional[int]
     processed_lines: Optional[int]
@@ -18,19 +18,19 @@ class TaskStatusResponseModel(BaseModel):
     error: Optional[str]
 
 
-class WorkerOnResponseModel(BaseModel):
+class WorkerOnResponse(BaseModel):
     is_on: bool
 
 
-class WorkerPausedResponseModel(BaseModel):
+class WorkerPausedResponse(BaseModel):
     paused: bool
 
 
-class DeviceEnabledResponseModel(BaseModel):
+class DeviceEnabledResponse(BaseModel):
     enabled: bool
 
 
-class WorkerAvailableResponseModel(BaseModel):
+class WorkerAvailableResponse(BaseModel):
     enabled: bool
     running: bool
     available: bool
