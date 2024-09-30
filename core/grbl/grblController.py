@@ -1,6 +1,7 @@
 import logging
 from serial import SerialException
 from typing import Optional
+from .constants import GrblCommand, GrblRealtimeCommand
 from .grblLineParser import GrblLineParser
 from .grblMonitor import GrblMonitor
 from .grblStatus import GrblStatus, FLAG_CONNECTED, FLAG_STOP, FLAG_FINISHED, FLAG_PAUSED, \
@@ -306,7 +307,7 @@ class GrblController:
     def handleHomingCycle(self):
         """Runs the GRBL device's homing cycle.
         """
-        # self.sendCommand('$H')
+        # self.sendCommand(GrblCommand.HOMING.value)
 
         # Technical debt: Temporary solution, disable alarm
         self.disableAlarm()
@@ -314,7 +315,7 @@ class GrblController:
     def disableAlarm(self):
         """Disables an alarm.
         """
-        self.sendCommand('$X')
+        self.sendCommand(GrblCommand.DISABLE_ALARM.value)
 
     def toggleCheckMode(self):
         """Enables/Disables the "check G-code" mode.
@@ -323,7 +324,7 @@ class GrblController:
         where it will parse it, error-check it, and report ok's and errors
         without powering on anything or moving.
         """
-        self.sendCommand('$C')
+        self.sendCommand(GrblCommand.CHECK_MODE.value)
 
     def jog(
             self,
@@ -362,7 +363,7 @@ class GrblController:
         If in motion, the machine will decelerate to a stop and then be suspended.
         """
         try:
-            self.serial.sendBytes(b'!')
+            self.serial.sendBytes(GrblRealtimeCommand.FEED_HOLD.value)
         except SerialException:
             self.grbl_monitor.error(
                 f'Error sending PAUSE command to GRBL: {str(sys.exc_info()[1])}'
@@ -376,7 +377,7 @@ class GrblController:
         when the door is closed, and the M0 program pause states.
         """
         try:
-            self.serial.sendBytes(b'~')
+            self.serial.sendBytes(GrblRealtimeCommand.CYCLE_START.value)
         except SerialException:
             self.grbl_monitor.error(
                 f'Error sending RESUME command to GRBL: {str(sys.exc_info()[1])}'
@@ -392,7 +393,7 @@ class GrblController:
         - If reset while not in motion, position is retained and re-homing is not required.
         """
         try:
-            self.serial.sendBytes(b'\x18')
+            self.serial.sendBytes(GrblRealtimeCommand.SOFT_RESET.value)
         except SerialException:
             self.grbl_monitor.error(
                 f'Error sending STOP command to GRBL: {str(sys.exc_info()[1])}'
@@ -408,7 +409,7 @@ class GrblController:
         """Queries the GRBL device's current status.
         """
         try:
-            self.serial.sendBytes(b'?')
+            self.serial.sendBytes(GrblRealtimeCommand.STATUS_REPORT.value)
         except SerialException:
             self.grbl_monitor.error(
                 f'Error sending STATUS command to GRBL: {str(sys.exc_info()[1])}'
@@ -421,28 +422,28 @@ class GrblController:
     def queryGcodeParserState(self):
         """Queries the GRBL device's current parser state.
         """
-        self.sendCommand('$G')
+        self.sendCommand(GrblCommand.PARSER_STATE.value)
 
     def queryGrblHelp(self):
         """Queries the GRBL 'help' message.
         This message contains all valid GRBL commands.
         """
-        self.sendCommand('$')
+        self.sendCommand(GrblCommand.HELP.value)
 
     def queryGrblParameters(self):
         """Queries the GRBL device's current parameter data.
         """
-        self.sendCommand('$#')
+        self.sendCommand(GrblCommand.PARAMETERS.value)
 
     def queryGrblSettings(self):
         """Queries the list of GRBL settings with their current values.
         """
-        self.sendCommand('$$')
+        self.sendCommand(GrblCommand.SETTINGS.value)
 
     def queryBuildInfo(self):
         """Queries some GRBL device's (firmware) build information.
         """
-        self.sendCommand('$I')
+        self.sendCommand(GrblCommand.BUILD.value)
 
     # GETTERS
 

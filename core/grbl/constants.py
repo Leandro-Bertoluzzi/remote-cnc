@@ -29,10 +29,10 @@ class GrblCommand(Enum):
 
 # Real-time Commands Enum
 class GrblRealtimeCommand(Enum):
-    CYCLE_START = '~'          # Cycle Start
-    FEED_HOLD = '!'            # Feed Hold
-    STATUS_REPORT = '?'        # Current Status
-    SOFT_RESET = '\x18'        # Reset Grbl (Ctrl-X)
+    CYCLE_START = b'~'          # Cycle Start
+    FEED_HOLD = b'!'            # Feed Hold
+    STATUS_REPORT = b'?'        # Current Status
+    SOFT_RESET = b'\x18'        # Reset Grbl (Ctrl-X)
 
 # https://github.com/gnea/grbl
 # http://linuxcnc.org/docs/html/gcode/overview.html#cap:modal-groups
