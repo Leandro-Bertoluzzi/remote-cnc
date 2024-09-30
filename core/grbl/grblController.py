@@ -4,8 +4,7 @@ from typing import Optional
 from .constants import GrblCommand, GrblRealtimeCommand
 from .grblLineParser import GrblLineParser
 from .grblMonitor import GrblMonitor
-from .grblStatus import GrblStatus, FLAG_CONNECTED, FLAG_STOP, FLAG_FINISHED, FLAG_PAUSED, \
-    FLAG_ALARM
+from .grblStatus import GrblStatus, GrblStatusFlag
 from .grblUtils import build_jog_command, get_grbl_setting
 from .parsers.grblMsgTypes import GRBL_MSG_ALARM, GRBL_MSG_FEEDBACK, GRBL_MSG_HELP, \
     GRBL_MSG_OPTIONS, GRBL_MSG_PARSER_STATE, GRBL_MSG_PARAMS, GRBL_MSG_SETTING, \
@@ -127,8 +126,8 @@ class GrblController:
             self.handleHomingCycle()
 
         # State variables
-        self.grbl_status.set_flag(FLAG_CONNECTED, True)
-        self.grbl_status.set_flag(FLAG_FINISHED, False)
+        self.grbl_status.set_flag(GrblStatusFlag.CONNECTED.value, True)
+        self.grbl_status.set_flag(GrblStatusFlag.FINISHED.value, False)
         self.commands_count = 0
 
         # Start serial communication
@@ -149,7 +148,7 @@ class GrblController:
         self.grbl_monitor.info('**Disconnected from device**')
 
         # State variables
-        self.grbl_status.set_flag(FLAG_CONNECTED, False)
+        self.grbl_status.set_flag(GrblStatusFlag.CONNECTED.value, False)
         self.grbl_status.set_active_state(DISCONNECTED)
 
     def parseResponse(self, response: str, cline: list[int], sline: list[str]):
@@ -183,8 +182,8 @@ class GrblController:
             return
 
         if msgType == GRBL_MSG_ALARM:
-            self.grbl_status.set_flag(FLAG_ALARM, True)
-            self.grbl_status.set_flag(FLAG_PAUSED, True)
+            self.grbl_status.set_flag(GrblStatusFlag.ALARM.value, True)
+            self.grbl_status.set_flag(GrblStatusFlag.PAUSED.value, True)
             error_line = removeProcessedCommand()
             del payload['raw']
             self.grbl_status.set_error(error_line, payload)
@@ -246,7 +245,7 @@ class GrblController:
 
         # Response to alarm disable
         if (msgType == GRBL_MSG_FEEDBACK) and ('Caution: Unlocked' in payload['message']):
-            self.grbl_status.set_flag(FLAG_ALARM, False)
+            self.grbl_status.set_flag(GrblStatusFlag.ALARM.value, False)
             self.grbl_status.clear_error()
             self.grbl_monitor.info('Alarm was successfully disabled')
             return
@@ -278,7 +277,7 @@ class GrblController:
     # ACTIONS
 
     def setPaused(self, paused: bool):
-        self.grbl_status.set_flag(FLAG_PAUSED, paused)
+        self.grbl_status.set_flag(GrblStatusFlag.PAUSED.value, paused)
 
         if paused:
             self.grbl_pause()
@@ -403,7 +402,7 @@ class GrblController:
         self.grbl_monitor.info('Requested STOP')
 
         # Tell the serialIO thread to stop streaming
-        self.grbl_status.set_flag(FLAG_STOP, True)
+        self.grbl_status.set_flag(GrblStatusFlag.STOP.value, True)
 
     def queryStatusReport(self):
         """Queries the GRBL device's current status.
@@ -534,10 +533,10 @@ class GrblController:
                     self.parseResponse(response, cline, sline)
 
             # Received external message to stop
-            if self.grbl_status.get_flag(FLAG_STOP):
+            if self.grbl_status.get_flag(GrblStatusFlag.STOP.value):
                 self.emptyQueue()
                 tosend = None
-                self.grbl_status.set_flag(FLAG_STOP, False)
+                self.grbl_status.set_flag(GrblStatusFlag.STOP.value, False)
                 self.grbl_monitor.info('STOP request processed')
 
             # Send command to GRBL
@@ -564,7 +563,7 @@ class GrblController:
                 # Check if end of program
                 if tosend.strip() in ['M2', 'M02', 'M30']:
                     self.grbl_monitor.info(f'A program end command was found: {tosend}')
-                    self.grbl_status.set_flag(FLAG_FINISHED, True)
+                    self.grbl_status.set_flag(GrblStatusFlag.FINISHED.value, True)
                     self.emptyQueue()
                     return
 

@@ -1,13 +1,15 @@
 from .constants import GrblActiveState
 from .types import GrblControllerState, GrblError
+from enum import Enum
 from typing import Optional
 
 # Flags
-FLAG_CONNECTED = 'connected'
-FLAG_STOP = 'stop'
-FLAG_FINISHED = 'finished'
-FLAG_PAUSED = 'paused'
-FLAG_ALARM = 'alarm'
+class GrblStatusFlag(Enum):
+    CONNECTED = 'connected' # Machine is connected
+    STOP = 'stop'           # Request to stop current run
+    FINISHED = 'finished'   # Notification of program end (M2/M30)
+    PAUSED = 'paused'       # Machine is on Hold
+    ALARM = 'alarm'         # Display alarm message
 
 
 class GrblStatus:
@@ -42,18 +44,13 @@ class GrblStatus:
         }
     }
 
-    _flags = {
-        'connected': False,     # Machine is connected
-        'stop': False,          # Raise to stop current run
-        'finished': False,      # Notification of program end (M2/M30)
-        'paused': False,        # Machine is on Hold
-        'alarm': False,         # Display alarm message
-    }
-
     def __init__(self):
         # Errors management
         self._error_line: Optional[str] = None
         self._error_data: Optional[GrblError] = None
+
+        # Flags
+        self._flags = {s.value: False for s in GrblStatusFlag}
 
     # SETTERS
 
@@ -81,7 +78,7 @@ class GrblStatus:
     def clear_error(self) -> bool:
         """Resets the error-related fields.
         """
-        if self.get_flag(FLAG_ALARM):
+        if self.get_flag(GrblStatusFlag.ALARM.value):
             return False
 
         self._error_line = None
@@ -181,15 +178,15 @@ class GrblStatus:
         return activeState == GrblActiveState.CHECK.value
 
     def connected(self) -> bool:
-        return self.get_flag(FLAG_CONNECTED)
+        return self.get_flag(GrblStatusFlag.CONNECTED.value)
 
     def paused(self) -> bool:
-        return self.get_flag(FLAG_PAUSED)
+        return self.get_flag(GrblStatusFlag.PAUSED.value)
 
     def finished(self) -> bool:
         """Checks if the program has finished (M2/M30).
         """
-        return self.get_flag(FLAG_FINISHED)
+        return self.get_flag(GrblStatusFlag.FINISHED.value)
 
     def failed(self) -> bool:
         """Checks if the controller has encountered an error.
