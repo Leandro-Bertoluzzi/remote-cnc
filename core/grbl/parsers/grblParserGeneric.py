@@ -1,9 +1,9 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from ..types import GrblResponse
 from typing import Optional
 
 
-class GrblParserGeneric:
+class GrblParserGeneric(ABC):
     """Base class to define GRBL message parsers
     """
     @staticmethod

@@ -16,8 +16,8 @@ class TestGrblStatus:
 
         # Call methods under test
         status = self.grbl_status.get_status_report()
-        machine_position = self.grbl_status.get_mpos()
-        work_position = self.grbl_status.get_wpos()
+        machine_position = self.grbl_status.get_position('mpos')
+        work_position = self.grbl_status.get_position('wpos')
         parser_state = self.grbl_status.get_parser_state()
         modal_group = self.grbl_status.get_modal()
         tool = self.grbl_status.get_tool()

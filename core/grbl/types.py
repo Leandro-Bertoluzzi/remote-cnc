@@ -1,9 +1,9 @@
-from typing import List, Dict, Optional
+from typing import Literal, Optional
 from typing_extensions import TypedDict
 
 # Definition of types
 
-ModalGroup = TypedDict('ModalGroup', {'group': str, 'modes': List[str]})
+ModalGroup = TypedDict('ModalGroup', {'group': str, 'modes': list[str]})
 GrblError = TypedDict('GrblError', {'code': int, 'message': str, 'description': str})
 GrblSetting = TypedDict('GrblSetting', {
     'value': str,
@@ -13,22 +13,23 @@ GrblSetting = TypedDict('GrblSetting', {
 })
 GrblSettings = dict[str, GrblSetting]
 
-Coordinates = Dict[str, float]
+Coordinates = dict[str, float]
+PositionType = Literal['mpos', 'wpos']
 Status = TypedDict('Status', {
     'activeState': str,
     'subState': Optional[int],
     'mpos': Coordinates,
     'wpos': Coordinates,
-    'ov': List[int],
+    'ov': list[int],
     'wco': Coordinates,
     'pinstate': Optional[str],
-    'buffer': Optional[Dict[str, int]],
+    'buffer': Optional[dict[str, int]],
     'line': Optional[int],
     'accessoryState': Optional[str]
 })
 
 ParserState = TypedDict('ParserState', {
-    'modal': Dict[str, str],
+    'modal': dict[str, str],
     'tool': int,
     'feedrate': float,
     'spindle': float

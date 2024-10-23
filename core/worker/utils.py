@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import Optional, Dict
+from typing import Any, Optional
 from typing_extensions import TypedDict
 
 try:
@@ -9,7 +9,7 @@ except ImportError:
 
 # Types definition
 RegisteredTaskList = dict[str, list[str]]
-ActiveTaskList = Dict
+ActiveTaskList = dict[str, list[Any]]
 WorkerStatus = TypedDict('WorkerStatus', {
     'connected': bool,
     'running': bool,

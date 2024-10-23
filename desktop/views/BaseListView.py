@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from components.cards.MsgCard import MsgCard
 from components.buttons.MenuButton import MenuButton
 from core.database.models import Base
-from typing import List, Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 from typing_extensions import TypedDict
 from views.BaseView import BaseView
 
@@ -16,7 +16,7 @@ ViewList = TypedDict('ViewList', {
     'title': str,
     'empty_msg': str,
     'create_btn_text': str,
-    'items': List[Base],
+    'items': list[Base],
     'create_btn_action': Callable[[], None],
     'get_item_widget': Callable[[Base], QWidget]
 })
@@ -91,7 +91,7 @@ class BaseListView(BaseView):
         get_item_widget: Callable[[Base], QWidget],
         create_btn_text: str = '',
         create_btn_action: Callable[[], None] = lambda: None,
-        items: List[Base] = []
+        items: list[Base] = []
     ):
         list_definition: ViewList = {
             'title': title,
