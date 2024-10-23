@@ -2,7 +2,7 @@ from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 from .base import Base
 
 # Enum values
@@ -74,7 +74,7 @@ class File(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
 
     # Virtual columns
-    tasks: Mapped[List["Task"]] = relationship(
+    tasks: Mapped[list["Task"]] = relationship(
         back_populates='file',
         default_factory=list,
         init=False
@@ -97,7 +97,7 @@ class Tool(Base):
     added_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
 
     # Virtual columns
-    tasks: Mapped[List["Task"]] = relationship(
+    tasks: Mapped[list["Task"]] = relationship(
         back_populates='tool',
         default_factory=list,
         init=False
@@ -116,7 +116,7 @@ class Material(Base):
     added_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
 
     # Virtual columns
-    tasks: Mapped[List["Task"]] = relationship(
+    tasks: Mapped[list["Task"]] = relationship(
         back_populates='material',
         default_factory=list,
         init=False
@@ -138,13 +138,13 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(10))
 
     # Virtual columns
-    tasks: Mapped[List["Task"]] = relationship(
+    tasks: Mapped[list["Task"]] = relationship(
         back_populates='user',
         foreign_keys='Task.user_id',
         default_factory=list,
         init=False
     )
-    files: Mapped[List["File"]] = relationship(
+    files: Mapped[list["File"]] = relationship(
         back_populates='user',
         default_factory=list,
         init=False

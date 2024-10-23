@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import List
 from .types import ModalGroup, GrblError
 
 # Grbl
@@ -36,7 +35,7 @@ class GrblRealtimeCommand(Enum):
 
 # https://github.com/gnea/grbl
 # http://linuxcnc.org/docs/html/gcode/overview.html#cap:modal-groups
-GRBL_MODAL_GROUPS: List[ModalGroup] = [
+GRBL_MODAL_GROUPS: list[ModalGroup] = [
     { # Motion Mode (Defaults to G0)
         'group': 'motion',
         'modes': ['G0', 'G1', 'G2', 'G3', 'G38.2', 'G38.3', 'G38.4', 'G38.5', 'G80']
@@ -77,7 +76,7 @@ GRBL_MODAL_GROUPS: List[ModalGroup] = [
 
 # Errors
 # https://github.com/gnea/grbl/blob/master/doc/csv/error_codes_en_US.csv
-GRBL_ERRORS: List[GrblError] = [
+GRBL_ERRORS: list[GrblError] = [
     {
         'code': 1,
         'message': 'Expected command letter',
@@ -262,7 +261,7 @@ GRBL_ERRORS: List[GrblError] = [
 
 # Alarms
 # https://github.com/gnea/grbl/blob/master/doc/csv/alarm_codes_en_US.csv
-GRBL_ALARMS: List[GrblError] = [
+GRBL_ALARMS: list[GrblError] = [
     {
         'code': 1,
         'message': 'Hard limit',

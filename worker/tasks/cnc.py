@@ -41,7 +41,7 @@ def executeTask(
         raise Exception('No se encontró la tarea en la base de datos')
 
     if task.status != TaskStatus.APPROVED.value:
-        raise Exception(f'La tarea tiene un estado incorrecto: {task.status}')
+        raise Exception('La tarea tiene un estado incorrecto: {}'.format(task.status))
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
     file_path = files_helper.getFilePath(task.file.user_id, task.file.file_name)
@@ -71,13 +71,13 @@ def executeTask(
         total_lines = file_sender.start() + 1
     except Exception as error:
         cnc.disconnect()
-        worker_logger.critical('Error al abrir el archivo: %s', file_path)
+        worker_logger.critical('Error al abrir el archivo: {}'.format(file_path))
         worker_logger.critical(error)
         raise error
 
     # Once sure the file exists, mark the task as 'in progress' in the DB
     repository.update_task_status(task.id, TaskStatus.IN_PROGRESS.value)
-    worker_logger.info('Comenzada la ejecución del archivo: %s', file_path)
+    worker_logger.info('Comenzada la ejecución del archivo: {}'.format(file_path))
 
     # 5. Start a PubSub manager to notify updates and listen to requests
     redis = RedisPubSubManagerSync()
@@ -175,7 +175,7 @@ def executeTask(
     redis.disconnect()
 
     if cnc_status.failed():
-        worker_logger.critical('Error durante la ejecución del archivo: %s', file_path)
+        worker_logger.critical('Error durante la ejecución del archivo: {}'.format(file_path))
         repository.update_task_status(task.id, TaskStatus.FAILED.value)
 
         error_message = cnc_status.get_error_message()
@@ -183,7 +183,7 @@ def executeTask(
         raise Exception(error_message)
 
     # SUCCESS
-    worker_logger.info('Finalizada la ejecución del archivo: %s', file_path)
+    worker_logger.info('Finalizada la ejecución del archivo: {}'.format(file_path))
     repository.update_task_status(task.id, TaskStatus.FINISHED.value)
 
 

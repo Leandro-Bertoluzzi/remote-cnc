@@ -1,4 +1,4 @@
-from typing import Dict, Literal, List
+from typing import Literal
 from typing_extensions import TypedDict
 
 StatusType = Literal[
@@ -17,8 +17,8 @@ FileReport = TypedDict('FileReport', {
     'pause_count': int,
     'movement_lines': int,
     'comment_count': int,
-    'tools': List[str],
+    'tools': list[str],
     'max_feedrate': int,
-    'commands_usage': Dict[str, int],
-    'unsupported_commands': List[str]
+    'commands_usage': dict[str, int],
+    'unsupported_commands': list[str]
 })

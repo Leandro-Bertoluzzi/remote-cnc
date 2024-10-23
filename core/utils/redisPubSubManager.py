@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 import redis
 import redis.asyncio as aioredis
 from redis.asyncio.client import PubSub
@@ -13,7 +13,7 @@ except ImportError:
 PubSubMessage = Optional[dict[str, Any]]
 
 
-class RedisPubSubManager:
+class RedisPubSubManager(ABC):
     def __init__(self):
         self.redis_connection = None
         self.pubsub = None
