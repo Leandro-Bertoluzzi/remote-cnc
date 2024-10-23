@@ -135,3 +135,16 @@ def generate_thumbnail(
         raise HTTPException(400, detail=str(error))
 
     return {'success': 'La generación de la vista previa fue solicitada con éxito'}
+
+
+@fileRoutes.post('/{file_id}/report', response_model=GenericResponse)
+def generate_report(
+    file_id: int,
+    admin: GetAdminDep
+):
+    try:
+        generateFileReport.delay(file_id)
+    except Exception as error:
+        raise HTTPException(400, detail=str(error))
+
+    return {'success': 'La generación del reporte fue solicitada con éxito'}

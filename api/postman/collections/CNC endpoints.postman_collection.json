@@ -237,6 +237,31 @@
 					"response": []
 				},
 				{
+					"name": "(Re)Generate report",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files/:file_id/report",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"files",
+								":file_id",
+								"report"
+							],
+							"variable": [
+								{
+									"key": "file_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Get all files",
 					"request": {
 						"method": "GET",
