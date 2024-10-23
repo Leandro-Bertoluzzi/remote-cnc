@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Generator
 import re
 
 # Custom types
@@ -34,17 +34,13 @@ class LogsInterpreter:
         )
 
     @classmethod
-    def interpret_file(cls, file_path: Path) -> list[Log]:
-        logs_list = []
-
+    def interpret_file(cls, file_path: Path) -> Generator[Log, None, None]:
         if not os.path.exists(file_path):
-            return []
+            return
 
         with open(file_path, "r") as logs:
             for log in logs:
                 parsed = cls.interpret_log(log)
                 if not parsed:
                     continue
-                logs_list.append(parsed)
-
-        return logs_list
+                yield parsed

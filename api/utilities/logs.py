@@ -8,6 +8,12 @@ from pathlib import Path
 import re
 from schemas.logs import LogsResponse
 
+_LOG_FILE_FIXED_NAMES = {
+    "celery.log": "Registros del worker",
+    "cnc_server.log": "Streaming de CNC server",
+    "control_view.log": "Streaming de Control view",
+}
+
 
 def classify_log_files() -> list[LogsResponse]:
     log_files = getFilesInFolder(LOGS_DIR)
@@ -29,15 +35,8 @@ def classify_log_files() -> list[LogsResponse]:
             time = date_time.strftime('%H:%M:%S')
 
             description = f"Ejecución del archivo <<{source_file}>> el día {date} a las {time}"
-
-        if file == "celery.log":
-            description = "Registros del worker"
-
-        if file == "cnc_server.log":
-            description = "Streaming de CNC server"
-
-        if file == "control_view.log":
-            description = "Streaming de Control view"
+        elif file in _LOG_FILE_FIXED_NAMES.keys():
+            description = _LOG_FILE_FIXED_NAMES[file]
 
         classified_files.append({
             'file_name': file,
