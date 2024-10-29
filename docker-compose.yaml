@@ -4,7 +4,7 @@ services:
   api:
     image: cnc-api
     build:
-      context: .
+      context: src
       dockerfile: Dockerfile.api
       target: development
     depends_on:
@@ -13,8 +13,7 @@ services:
       postgresql:
         condition: service_healthy
     env_file:
-      - core/.env
-      - api/.env
+      - ./src/.env
       - .env
     environment:
       - REDIS_HOST=redis
@@ -27,6 +26,7 @@ services:
       start_period: 60s
     volumes:
       - ./gcode_files:/app/gcode_files
+      - ./logs:/app/logs
     container_name: remote-cnc-api
 
   postgresql:
@@ -71,10 +71,10 @@ services:
 
   worker:
     build:
-      context: .
+      context: src
       dockerfile: Dockerfile.worker
       target: production
-    command: celery --app app worker --loglevel=INFO --logfile=core/logs/celery.log
+    command: celery --app start_worker worker --loglevel=INFO --logfile=logs/celery.log
     depends_on:
       redis:
         condition: service_started
@@ -83,7 +83,7 @@ services:
     device_cgroup_rules:
       - 'c 188:* rmw'
     env_file:
-      - ./core/.env
+      - ./src/.env
       - .env
     environment:
       - REDIS_HOST=redis
@@ -91,7 +91,7 @@ services:
     volumes:
       - ./gcode_files:/app/gcode_files
       - ./thumbnails:/app/thumbnails
-      - ./core/logs:/app/core/logs
+      - ./logs:/app/logs
       # Devices
       - /dev:/dev
       # Devices information
@@ -101,17 +101,17 @@ services:
 
   worker-sim:
     build:
-      context: .
+      context: src
       dockerfile: Dockerfile.worker
       target: development
-    command: celery --app app worker --loglevel=INFO --logfile=core/logs/celery.log
+    command: celery --app start_worker worker --loglevel=INFO --logfile=logs/celery.log
     depends_on:
       redis:
         condition: service_started
       postgresql:
         condition: service_healthy
     env_file:
-      - ./core/.env
+      - ./src/.env
       - .env
     environment:
       - REDIS_HOST=redis
@@ -120,7 +120,7 @@ services:
     volumes:
       - ./gcode_files:/app/gcode_files
       - ./thumbnails:/app/thumbnails
-      - ./core/logs:/app/core/logs
+      - ./logs:/app/logs
     container_name: remote-cnc-worker-sim
     profiles: ["test", "simulator"]
 

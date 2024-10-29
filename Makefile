@@ -6,11 +6,6 @@ test-api:
 	cd api && flake8
 	cd api && mypy .
 
-test-core:
-	cd core && pytest -s
-	cd core && flake8
-	cd core && mypy .
-
 test-desktop:
 	cd desktop && pytest -s
 	cd desktop && flake8

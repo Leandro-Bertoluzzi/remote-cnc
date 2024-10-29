@@ -1,7 +1,0 @@
-bcrypt==3.2.0
-celery==5.3.1
-psycopg2==2.9.3
-pyserial==3.5
-python-dotenv==1.0.0
-redis==4.6.0
-SQLAlchemy==2.0.21

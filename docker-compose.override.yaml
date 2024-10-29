@@ -3,8 +3,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./api:/app
-      - ./core:/app/core
+      - ./src:/app
 
   postgresql:
     ports:
