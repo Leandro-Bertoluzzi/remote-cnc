@@ -15,6 +15,3 @@ thumbnails/
 
 # Log files
 *.log
-
-# Distribution / packaging
-*.egg-info
