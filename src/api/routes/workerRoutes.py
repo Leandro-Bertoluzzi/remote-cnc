@@ -97,6 +97,8 @@ def check_worker_available(user: GetUserDep):
 def get_worker_status(user: GetUserDep) -> worker.WorkerStatus:
     """Returns the worker status.
     """
+    if not worker.is_worker_on():
+        raise HTTPException(400, detail='Worker desconectado')
     return worker.get_worker_status()
 
 
