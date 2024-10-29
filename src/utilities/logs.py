@@ -17,7 +17,7 @@ _LOG_FILE_FIXED_NAMES = {
 
 
 def get_log_path(file_name: str):
-    return LOGS_FOLDER_PATH / file_name
+    return Path(LOGS_FOLDER_PATH) / file_name
 
 
 def classify_log_files() -> list[LogsResponse]:
@@ -26,6 +26,9 @@ def classify_log_files() -> list[LogsResponse]:
 
     for file in log_files:
         description = ""
+
+        if not file.endswith(".log"):
+            continue
 
         if file.startswith('task_'):
             # task_{formatted_name}_{YYYYMMDD_hhmmss}.log
