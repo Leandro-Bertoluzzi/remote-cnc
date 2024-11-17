@@ -21,6 +21,8 @@
 <p align="center">
   <a href="#dart-about">About</a> &#xa0; | &#xa0;
   <a href="#sparkles-features">Features</a> &#xa0; | &#xa0;
+  <a href="#rocket-technologies">Technologies</a> &#xa0; | &#xa0;
+  <a href="#white_check_mark-requirements">Requirements</a> &#xa0; | &#xa0;
   <a href="#checkered_flag-installation">Installation</a> &#xa0; | &#xa0;
   <a href="#checkered_flag-development">Development</a> &#xa0; | &#xa0;
   <a href="#rocket-deploy-changes">Deploy changes</a> &#xa0; | &#xa0;
@@ -34,19 +36,40 @@
 ## :dart: About
 
 This repository comprises two related applications:
-- **Desktop**: A small desktop app to monitor and control an Arduino-based CNC machine.
+- **Desktop**: A small desktop app to monitor and control an Arduino-based CNC machine, optimized for touchscreen.
 - **API**: REST API to integrate the app's functionalities in a remote client.
 
 You can see further information in their respective folders.
 
 ## :sparkles: Features
 
-:heavy_check_mark: REST API\
-:heavy_check_mark: Desktop app, optimized for touchscreen
+:heavy_check_mark: PostgreSQL database management\
+:heavy_check_mark: G-code files management\
+:heavy_check_mark: Real time monitoring of CNC status\
+:heavy_check_mark: Communication with GRBL-compatible CNC machine via USB\
+:heavy_check_mark: Long-running process delegation via message broker
+
+## :rocket: Technologies
+
+The following tools were used in this project:
+
+- Programming language: [Python](https://www.python.org/)
+- API framework: [FastAPI](https://fastapi.tiangolo.com/)
+- UI (desktop) framework: [PyQt](https://wiki.python.org/moin/PyQt)
+- Database: [PostgreSQL](https://www.postgresql.org/)
+- ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
+- DB migrations: [Alembic](https://alembic.sqlalchemy.org/en/latest/)
+- Tasks queue: [Celery](https://docs.celeryq.dev/en/stable/)
+- Message broker: [Redis](https://redis.io/)
+- Containerization: [Docker](https://www.docker.com/)
+
+## :white_check_mark: Requirements
+
+Before starting :checkered_flag:, you need to have [Python](https://www.python.org/) and [Docker](https://www.docker.com/) installed.
 
 ## :checkered_flag: Installation
 
-Each subproject's folder contains instructions to start using them in production:
+There is a folder for each subproject in docs, which contain instructions to start using them in production:
 - Desktop: See installation docs for desktop app [here](docs/desktop/installation.md).
 - API: See installation docs for API [here](docs/api/server-setup.md).
 
