@@ -1,5 +1,5 @@
 start-app:
-	cd desktop && python main.py
+	cd src && python main.py
 
 run-tests:
 	cd src && pytest -s
