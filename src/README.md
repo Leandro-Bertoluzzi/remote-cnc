@@ -134,12 +134,8 @@ docker exec -it cnc-admin-worker /bin/bash simport.sh
 ### Bonus: Export compiled GRBL simulator and G-code validator
 
 ```bash
-docker build . --file ./worker/Dockerfile --output "$(pwd)/out/" --target export-exe
+docker build . --file Dockerfile.worker --output "out/" --target export-exe
 ```
-
-- Windows (cmd): %cd%
-- Windows (PowerShell): ${PWD}
-- Linux: $(pwd)
 
 ## :wrench: Running tests
 
