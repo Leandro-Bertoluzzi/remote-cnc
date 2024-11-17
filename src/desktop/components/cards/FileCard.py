@@ -1,10 +1,13 @@
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
+from desktop.components.dialogs.TaskDataDialog import TaskFromFileDialog
 from desktop.config import USER_ID, FILES_FOLDER_PATH
 from database.base import SessionLocal
 from database.exceptions import DatabaseError, EntityNotFoundError
 from database.models import File
 from database.repositories.fileRepository import DuplicatedFileNameError
+from database.repositories.taskRepository import TaskRepository
+from database.utils import get_assets
 from utilities.files import InvalidFile, FileSystemError
 from utilities.fileManager import FileManager
 from desktop.helpers.utils import needs_confirmation
@@ -27,6 +30,7 @@ class FileCard(Card):
         )
         self.setDescription(description)
 
+        self.addButton("Crear tarea", self.createTaskFromFile)
         self.addButton("Editar", self.updateFile)
         self.addButton("Borrar", self.removeFile)
 
@@ -76,3 +80,29 @@ class FileCard(Card):
             )
         else:
             self.getView().refreshLayout()
+
+    def createTaskFromFile(self):
+        try:
+            _, materials, tools = get_assets(USER_ID)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return
+
+        taskDialog = TaskFromFileDialog(self.file, tools, materials)
+        if not taskDialog.exec():
+            return
+
+        _, tool_id, material_id, name, note = taskDialog.getInputs()
+        try:
+            db_session = SessionLocal()
+            repository = TaskRepository(db_session)
+            repository.create_task(USER_ID, self.file.id, tool_id, material_id, name, note)
+        except Exception as error:
+            self.showError(
+                'Error de base de datos',
+                str(error)
+            )
+            return

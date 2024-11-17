@@ -4,10 +4,8 @@ from desktop.config import USER_ID
 import utilities.worker.utils as worker
 from utilities.worker.workerStatusManager import WorkerStoreAdapter
 from database.base import SessionLocal
-from database.repositories.fileRepository import FileRepository
-from database.repositories.materialRepository import MaterialRepository
 from database.repositories.taskRepository import TaskRepository
-from database.repositories.toolRepository import ToolRepository
+from database.utils import get_assets
 from desktop.views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 
@@ -20,7 +18,7 @@ class TasksView(BaseListView):
         super(TasksView, self).__init__(parent)
 
         try:
-            self.getAssets()
+            self.files, self.materials, self.tools = get_assets(USER_ID)
         except Exception as error:
             self.showError(
                 'Error de base de datos',
@@ -76,28 +74,3 @@ class TasksView(BaseListView):
             )
             return
         self.refreshLayout()
-
-    def getAssets(self):
-        db_session = SessionLocal()
-        files_repository = FileRepository(db_session)
-        materials_repository = MaterialRepository(db_session)
-        tools_repository = ToolRepository(db_session)
-
-        self.files = [
-            {
-                'id': file.id,
-                'name': file.file_name
-            } for file in files_repository.get_all_files_from_user(USER_ID)
-        ]
-        self.materials = [
-            {
-                'id': material.id,
-                'name': material.name
-            } for material in materials_repository.get_all_materials()
-        ]
-        self.tools = [
-            {
-                'id': tool.id,
-                'name': tool.name
-            } for tool in tools_repository.get_all_tools()
-        ]

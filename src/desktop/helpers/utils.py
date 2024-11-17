@@ -1,7 +1,4 @@
-from desktop.config import SERIAL_BAUDRATE, SERIAL_PORT
-from utilities.worker.scheduler import executeTask
 from utilities.files import getFileNameInFolder
-from utilities.storage import add_value_with_id
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
 
@@ -12,19 +9,6 @@ def applyStylesheet(self: QWidget, current_file: str, styles_file: str):
     stylesheet = getFileNameInFolder(current_file, styles_file)
     with open(stylesheet, "r") as styles:
         self.setStyleSheet(styles.read())
-
-
-def send_task_to_worker(db_task_id: int) -> str:
-    """Request the task to be executed by the worker.
-    """
-    worker_task = executeTask.delay(
-        db_task_id,
-        SERIAL_PORT,
-        SERIAL_BAUDRATE
-    )
-    add_value_with_id('task', id=db_task_id, value=worker_task.task_id)
-
-    return worker_task.task_id
 
 
 # Decorators

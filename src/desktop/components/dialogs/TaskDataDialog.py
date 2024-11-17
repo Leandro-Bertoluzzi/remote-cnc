@@ -1,18 +1,27 @@
+from database.models import File, Material, Task, Tool
 from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QComboBox, QTextEdit
 from PyQt5.QtCore import Qt
+from typing import Optional
 
 
 class TaskDataDialog(QDialog):
-    def __init__(self, files=[], tools=[], materials=[], taskInfo=None, parent=None):
+    def __init__(
+            self,
+            files: list[File]=[],
+            tools: list[Tool]=[],
+            materials: list[Material]=[],
+            taskInfo: Optional[Task]=None,
+            parent=None
+        ):
         super(TaskDataDialog, self).__init__(parent)
 
         self.files = files
         self.tools = tools
         self.materials = materials
 
-        fileNames = [file['name'] for file in files]
-        toolNames = [tool['name'] for tool in tools]
-        materialNames = [material['name'] for material in materials]
+        fileNames = [file.file_name for file in files]
+        toolNames = [tool.name for tool in tools]
+        materialNames = [material.name for material in materials]
 
         self.name = QLineEdit(self)
         self.file = QComboBox(self)
@@ -49,9 +58,23 @@ class TaskDataDialog(QDialog):
 
     def getInputs(self):
         return (
-            self.files[self.file.currentIndex()]['id'],
-            self.tools[self.tool.currentIndex()]['id'],
-            self.materials[self.material.currentIndex()]['id'],
+            self.files[self.file.currentIndex()].id,
+            self.tools[self.tool.currentIndex()].id,
+            self.materials[self.material.currentIndex()].id,
             self.name.text(),
             self.note.toPlainText()
         )
+
+
+class TaskFromFileDialog(TaskDataDialog):
+    def __init__(
+            self,
+            file: File,
+            tools: list[Tool]=[],
+            materials: list[Material]=[],
+            parent=None
+        ):
+        super(TaskFromFileDialog, self).__init__([file], tools, materials, None, parent)
+
+        self.file.setEnabled(False)
+        self.setWindowTitle('Crear tarea')
