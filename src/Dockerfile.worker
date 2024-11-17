@@ -16,10 +16,18 @@ RUN apt-get update \
 # Add files from the build context to the container temporarily to execute a RUN instruction
 # https://docs.docker.com/develop/develop-images/instructions/#add-or-copy
 RUN --mount=type=bind,source=worker/requirements.txt,target=/tmp/requirements.txt \
-pip install -r /tmp/requirements.txt
+pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 
 # Enable "headless" mode (no GUI) for Qt
 ENV QT_QPA_PLATFORM=offscreen
+
+FROM scratch AS file-system
+
+# Copy files into the container
+COPY config.py start_worker.py /app/
+COPY database /app/database
+COPY utilities /app/utilities
+COPY worker /app/worker
 
 FROM base AS production
 
@@ -27,11 +35,7 @@ FROM base AS production
 WORKDIR /app
 
 # Copy files into the container
-COPY ./config.py /app
-COPY ./start_worker.py /app
-COPY ./database /app/database
-COPY ./utilities /app/utilities
-COPY ./worker /app/worker
+COPY --from=file-system /app /app
 
 # Create a non-root user
 #RUN adduser --uid 1000 --gid 20 nonroot
@@ -68,11 +72,7 @@ RUN apt-get update -y && apt-get upgrade -y \
 WORKDIR /app
 
 # Copy files into the container
-COPY ./config.py /app
-COPY ./start_worker.py /app
-COPY ./database /app/database
-COPY ./utilities /app/utilities
-COPY ./worker /app/worker
+COPY --from=file-system /app /app
 
 # Move script to create virtual port, to activate later
 RUN mv /app/worker/simport.sh /app/simport.sh \
