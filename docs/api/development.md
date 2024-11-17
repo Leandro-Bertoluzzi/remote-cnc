@@ -15,25 +15,20 @@ Before using the app for the first time you should run:
 $ git clone https://github.com/Leandro-Bertoluzzi/remote-cnc
 
 # 1. Access the repository and folder
-$ cd remote-cnc/api
+$ cd remote-cnc/src
 
 # 2. Set up your Python environment
 # Option 1: If you use Conda
 conda env create -f environment.yml
-conda activate cnc-remote-api
+conda activate remote-cnc-dev
 
 # Option 2: If you use venv and pip
 $ python -m venv env-dev
 $ source env-dev/bin/activate
 $ pip install -r requirements-dev.txt
 
-# 3. Ask pip to install local packages in development mode
-# This is needed to use 'core' as a package in local development
-pip install -e .
-
-# 4. Copy and configure the .env files
+# 3. Copy and configure the .env file
 cp .env.example .env
-cp core/.env.example core/.env
 ```
 
 ### Windows
@@ -61,7 +56,7 @@ Once installed all dependencies and created the Python environment, you can run 
 ```bash
 # 1. Activate your Python environment
 # Option 1: If you use Conda
-conda activate cnc-remote-api
+conda activate remote-cnc-dev
 
 # Option 2: If you use venv and pip
 $ source env-dev/bin/activate

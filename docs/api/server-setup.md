@@ -16,8 +16,6 @@ The steps described in this guide were tested in the following device:
 
 # Set up API
 
-(where from and to copy files, access with SSH/FileZilla, etc)
-
 ## Run the API
 
 You can run the API in a Docker container. This will also start the following services:
@@ -34,11 +32,11 @@ $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d
 
 Setting up a reverse proxy is certainly not mandatory, but it allows us to:
 - Add HTTPS support to improve security.
-- Configure redirections (HTTP 30x), useful if we want to modify a URL and still have access to it.
+- Configure redirections (HTTP 30x), useful if you want to modify a URL and still have access to it.
 - Rename routes, for example “URL:8000/base” to “URL/api”.
 - Use authentication and authorization previous to the endpoint.
 - Enforce correct spelling of routes, for example enable “URL/login” but avoid “URL/login/”.
-- Add a maintenance mode: Optionally show a fixed response when we are working on the API/Docker and the API is "down".
+- Add a maintenance mode: Optionally show a fixed response when you are working on the API/Docker and the API is "down".
 
 If you wonder why we don't run Nginx as a container, you can read an article justifying our philosofy [here](https://nickjanetakis.com/blog/why-i-prefer-running-nginx-on-my-docker-host-instead-of-in-a-container).
 
@@ -61,13 +59,17 @@ sudo systemctl restart nginx
 
 ## Set up authentication in private routes
 
-You can follow [this guide](https://www.digitalocean.com/community/tutorials/how-to-set-up-password-authentication-with-nginx-on-ubuntu-22-04) to create a password file and the uncomment the authentication lines in `api.conf`.
+You can follow [this guide](https://www.digitalocean.com/community/tutorials/how-to-set-up-password-authentication-with-nginx-on-ubuntu-22-04) to create a password file. Once done, uncomment the following lines in `api.conf`:
+```bash
+#auth_basic "Restricted Content";
+#auth_basic_user_file /etc/nginx/.htpasswd;
+```
 
 # Set up remote access with Ngrok
 
 ## With Nginx (recommended)
 
-If we are using Nginx as a reverse proxy, we must run Ngrok outside a container because otherwise we couldn't expose Nginx' port to the outside world.
+If you are using Nginx as a reverse proxy, you must run Ngrok outside a container because otherwise you couldn't expose Nginx' port to the outside world.
 
 1. Install the Ngrok client from [Ngrok downloads](https://ngrok.com/download) page, you can either download a zip and unzip it or use `apt install`.
 2. Register Ngrok client, with the auth token in your [Ngrok profile](https://dashboard.ngrok.com/get-started/your-authtoken). If you don't have an account, create one.

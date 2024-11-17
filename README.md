@@ -24,7 +24,7 @@
   <a href="#checkered_flag-installation">Installation</a> &#xa0; | &#xa0;
   <a href="#checkered_flag-development">Development</a> &#xa0; | &#xa0;
   <a href="#rocket-deploy-changes">Deploy changes</a> &#xa0; | &#xa0;
-  <a href="#gear-cnc-worker">CNC worker</a>
+  <a href="#gear-cnc-worker">CNC worker</a> &#xa0; | &#xa0;
   <a href="#memo-license">License</a> &#xa0; | &#xa0;
   <a href="https://github.com/Leandro-Bertoluzzi" target="_blank">Authors</a>
 </p>
@@ -47,12 +47,12 @@ You can see further information in their respective folders.
 ## :checkered_flag: Installation
 
 Each subproject's folder contains instructions to start using them in production:
-- Desktop: See installation docs for desktop app [here](./desktop/docs/installation.md).
-- API: See installation docs for API [here](./api/docs/server-setup.md).
+- Desktop: See installation docs for desktop app [here](docs/desktop/installation.md).
+- API: See installation docs for API [here](docs/api/server-setup.md).
 
 ### Set up database
 
-You can execute the script `rpi/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](rpi/db-management.md#execute-a-sql-script).
+You can execute the script `deployment/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](docs/db/db-management.md#execute-a-sql-script).
 
 ## :checkered_flag: Development
 
@@ -66,7 +66,7 @@ The easiest way to run the needed services is with `Docker`. This will start the
 $ docker compose up -d
 ```
 
-if you want to also start the CNC worker (Celery) in a container (Linux only, see [this section](#cnc-worker)):
+if you want to also start the CNC worker (Celery) in a container (Linux only, see [this section](#gear-cnc-worker)):
 ```bash
 $ docker compose --profile=worker up -d
 ```
@@ -74,12 +74,13 @@ $ docker compose --profile=worker up -d
 Open [http://localhost:8000](http://localhost:8000) with your browser to check if the API works.
 
 You can find instructions to run locally (without Docker) and further information in each subproject's folder:
-- Desktop: See development docs for desktop app [here](./desktop/docs/development.md).
-- API: See development docs for API [here](./api/docs/development.md).
+- Desktop: See development docs for desktop app [here](docs/desktop/development.md).
+- API: See development docs for API [here](docs/api/development.md).
 
 ### Mock external services
 
-You can also run a mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
+You can also run a worker with a mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
+**NOTE:** This version of the worker can run in Windows.
 
 ```bash
 $ docker compose --profile=simulator up
@@ -101,7 +102,7 @@ docker exec -it remote-cnc-worker-sim /bin/bash simport.sh
 
 To see your database, you can either use the `adminer` container which renders an admin in `http://localhost:8080` when running the `docker-compose.yaml`; or connect to it with a client like [DBeaver](https://dbeaver.io/).
 
-You can also manage database migrations by using the following commands inside the `core` folder.
+You can manage database migrations by using the following commands inside the `core` folder.
 
 - Apply all migrations:
 
@@ -123,7 +124,7 @@ $ python seeder.py
 
 More info about Alembic usage [here](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
 
-if you are using `docker compose`, you can run the following commands to apply database migrations and seed it:
+if you are using `docker compose`, you can run the following commands to apply database migrations and seeder:
 
 ```bash
 $ docker exec remote-cnc-api bash -c "cd core && alembic upgrade head"
@@ -132,9 +133,9 @@ $ docker exec remote-cnc-api bash -c "cd core && python seeder.py"
 
 ## :rocket: Deploy changes
 
-Each subproject's folder contains instructions to deploy changes to production:
-- Desktop: See deployment docs for desktop app [here](./desktop/docs/deployment.md).
-- API: See deployment docs for API [here](./api/docs/deployment.md).
+There is a folder for each subproject in docs, which contain instructions to deploy changes to production:
+- Desktop: See deployment docs for desktop app [here](docs/desktop/deployment.md).
+- API: See deployment docs for API [here](docs/api/deployment.md).
 
 ### Update Docker containers
 
@@ -211,8 +212,6 @@ $ cd core/worker
 $ watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
 ```
 
-**NOTE:** You also have to update the value of `PROJECT_ROOT` in `config.py`.
-
 ### Start the Celery worker manually (Windows)
 
 Due to a known problem with Celery's default pool (prefork), it is not as straightforward to start the worker in Windows. In order to do so, we have to explicitly indicate Celery to use another pool. You can read more about this issue [here](https://celery.school/celery-on-windows).
@@ -243,15 +242,11 @@ $ pip install gevent
 $ celery --app worker worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
-**NOTE:** You also have to update the value of `PROJECT_ROOT` in `config.py`.
-
 ## :wrench: Running tests
 
-You can use the following commands to execute tests (unit, linter, type check) in any of the folders:
+You can use the following command to execute tests (unit, linter, type check):
 ```bash
-$ make test-api
-$ make test-core
-$ make test-desktop
+$ make run-tests
 ```
 
 ## :memo: License
