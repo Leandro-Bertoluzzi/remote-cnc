@@ -10,8 +10,9 @@ from database.base import SessionLocal
 from database.models import Task, TASK_DEFAULT_PRIORITY, TaskStatus
 from database.repositories.taskRepository import TaskRepository
 from utilities.storage import get_value_from_id
-from desktop.helpers.utils import needs_confirmation, send_task_to_worker
+from desktop.helpers.utils import needs_confirmation
 from PyQt5.QtWidgets import QSizePolicy, QPushButton
+from utilities.worker.utils import send_task_to_worker
 
 
 class TaskCard(Card):

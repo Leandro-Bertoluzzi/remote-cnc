@@ -1,19 +1,18 @@
-from config import SERIAL_BAUDRATE, SERIAL_PORT
 from utilities.worker.workerStatusManager import WorkerStoreAdapter
-from utilities.worker.scheduler import app, executeTask
+from utilities.worker.scheduler import app
 import utilities.worker.utils as worker
-from utilities.storage import add_value_with_id
 from fastapi import APIRouter, HTTPException
 from api.middleware.authMiddleware import GetUserDep, GetAdminDep
 from schemas.worker import TaskStatusResponse, WorkerTaskResponse, \
     WorkerOnResponse, WorkerPausedResponse, WorkerAvailableResponse, \
     DeviceEnabledResponse
+from utilities.worker.utils import send_task_to_worker
 
 workerRoutes = APIRouter(prefix="/worker", tags=["Worker"])
 
 
 @workerRoutes.post('/task/{db_task_id}', response_model=WorkerTaskResponse)
-def send_task_to_worker(
+def execute_task(
     user: GetAdminDep,
     db_task_id: int
 ):
@@ -26,14 +25,9 @@ def send_task_to_worker(
     if worker.is_worker_running():
         raise HTTPException(400, detail='Equipo ocupado: Hay una tarea en progreso')
 
-    worker_task = executeTask.delay(
-        db_task_id,
-        SERIAL_PORT,
-        SERIAL_BAUDRATE
-    )
-    add_value_with_id('task', id=db_task_id, value=worker_task.task_id)
+    worker_task_id = send_task_to_worker(db_task_id)
 
-    return {'worker_task_id': worker_task.task_id}
+    return {'worker_task_id': worker_task_id}
 
 
 @workerRoutes.get('/status/{worker_task_id}', response_model=TaskStatusResponse)

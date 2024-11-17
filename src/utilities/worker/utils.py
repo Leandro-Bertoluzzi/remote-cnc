@@ -1,7 +1,9 @@
+from config import SERIAL_BAUDRATE, SERIAL_PORT
 from functools import reduce
 from typing import Any, Optional
 from typing_extensions import TypedDict
-from utilities.worker.scheduler import app
+from utilities.storage import add_value_with_id
+from utilities.worker.scheduler import app, executeTask
 
 # Types definition
 RegisteredTaskList = dict[str, list[str]]
@@ -55,3 +57,16 @@ def get_worker_status() -> WorkerStatus:
         'active_tasks': active_tasks
     }
     return result
+
+
+def send_task_to_worker(db_task_id: int) -> str:
+    """Request the task to be executed by the worker.
+    """
+    worker_task = executeTask.delay(
+        db_task_id,
+        SERIAL_PORT,
+        SERIAL_BAUDRATE
+    )
+    add_value_with_id('task', id=db_task_id, value=worker_task.task_id)
+
+    return worker_task.task_id
