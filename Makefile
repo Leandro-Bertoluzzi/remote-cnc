@@ -1,20 +1,14 @@
 start-app:
 	cd desktop && python main.py
 
-test-api:
-	cd api && pytest -s
-	cd api && flake8
-	cd api && mypy .
+run-tests:
+	cd src && pytest -s
+	cd src && flake8
+	cd src && mypy .
 
-test-desktop:
-	cd desktop && pytest -s
-	cd desktop && flake8
-	cd desktop && mypy .
-
-test-worker:
-	cd worker && pytest -s
-	cd worker && flake8
-	cd worker && mypy .
+# unit-tests: TBD
+# feature-tests: TBD
+# desktop-e2e-tests: TBD
 
 clean:
 	python3 -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.py[co]')]"

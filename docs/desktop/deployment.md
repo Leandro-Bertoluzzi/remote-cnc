@@ -19,16 +19,20 @@ The steps described in this guide were tested in the following device:
 
 In case you want to use just the strictly necessary files, the needed files and folders to run the app in production are:
 
-- components
-- containers
-- core
-- helpers
-- views
-- config.py
-- docker-compose.yaml
-- main.py
-- MainWindow.py
-- rpi/requirements.txt
+```
+    .
+    ├── src                     # Source files
+    │   ├── database            # Database models and CRUD
+    │   ├── desktop             # UI components and utilities
+    │   ├── schemas             # Data validation
+    │   ├── utilities           # Various utilities
+    │   ├── config.py           # Configuration management
+    │   └── main.py             # Script to start app
+    ├── deployment
+    │   └── rpi
+    │       └── requirements.desktop.txt
+    └── docker-compose.yaml     # Docker containers orchestration
+```
 
 You can copy them by using [rsync](https://www.raspberrypi.com/documentation/computers/remote-access.html#using-rsync) or a FTP client like [FileZilla](https://docs.digitalocean.com/products/droplets/how-to/transfer-files/).
 
@@ -38,9 +42,9 @@ In case you updated the `requirements` file:
 
 ```bash
 # If you haven't, enter the project folder and activate the environment
-$ cd cnc-local-app
+$ cd remote-cnc
 $ source venv/bin/activate
 
 # Install the missing or new requirements
-$ pip install -r rpi/requirements.txt
+$ pip install -r deployment/rpi/requirements.desktop.txt
 ```

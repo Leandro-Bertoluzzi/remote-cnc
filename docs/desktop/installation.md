@@ -23,7 +23,7 @@ Before using the app for the first time you should run:
 $ git clone https://github.com/Leandro-Bertoluzzi/remote-cnc
 
 # 1. Access the repository and folder
-$ cd remote-cnc/desktop
+$ cd remote-cnc/src
 
 # 2. Install the needed global site-packages
 $ sudo apt-get update
@@ -34,10 +34,11 @@ $ sudo apt-get install libpq5
 # 3. Set up your Python environment
 $ python -m venv --system-site-packages venv
 $ source venv/bin/activate
-$ pip install -r rpi/requirements.txt
+$ pip install -r deployment/rpi/requirements.desktop.txt
 
-# 4. Copy and configure the .env file
+# 4. Copy and configure the .env files
 cp .env.example .env
+cp src/.env.example src/.env
 ```
 
 # Run the Qt app
@@ -69,7 +70,7 @@ $ docker compose -f docker-compose.yml -f docker-compose.production.yml --profil
 1. Move the `start.sh` bash script to your user's root folder.
 
 ```bash
-$ mv /home/{{username}}/cnc-local-app/start.sh /home/{{username}}/start.sh
+$ mv /home/{{username}}/remote-cnc/src/desktop/start.sh /home/{{username}}/start.sh
 ```
 Note: Replace `{{username}}` by your actual user's name.
 
