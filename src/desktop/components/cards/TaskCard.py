@@ -12,7 +12,6 @@ from database.repositories.taskRepository import TaskRepository
 from utilities.storage import get_value_from_id
 from desktop.helpers.utils import needs_confirmation
 from PyQt5.QtWidgets import QSizePolicy, QPushButton
-from utilities.worker.utils import send_task_to_worker
 
 
 class TaskCard(Card):
@@ -261,7 +260,7 @@ class TaskCard(Card):
             )
             return
 
-        worker_task_id = send_task_to_worker(self.task.id)
+        worker_task_id = worker.send_task_to_worker(self.task.id)
         self.getWindow().startWorkerMonitor(worker_task_id)
         self.showInformation(
             'Tarea enviada',
