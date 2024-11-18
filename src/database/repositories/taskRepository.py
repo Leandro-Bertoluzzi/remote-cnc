@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload, Session
-from sqlalchemy import select
+from sqlalchemy import select, func
 from datetime import datetime
 from typing import Optional
 from database.exceptions import DatabaseError, EntityNotFoundError, Unauthorized
@@ -98,8 +98,9 @@ class TaskRepository:
             raise DatabaseError(f'Error retrieving tasks from the DB: {e}')
 
     def are_there_tasks_with_status(self, status: str) -> bool:
-        tasks = self.get_all_tasks(status=status)
-        return bool(tasks)
+        query = select(func.count()).select_from(Task).where(Task.status == status)
+        count = self.session.execute(query).scalar_one()
+        return count > 0
 
     def are_there_pending_tasks(self) -> bool:
         return self.are_there_tasks_with_status(TaskStatus.APPROVED.value)
