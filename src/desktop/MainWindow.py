@@ -1,9 +1,12 @@
+from desktop.components.NavigationBar import NavigationBar
 from desktop.components.StatusBar import StatusBar
 import utilities.worker.utils as worker
 from utilities.worker.workerStatusManager import WorkerStoreAdapter
 from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication
+from desktop.views.BaseView import BaseView
 from desktop.views.MainMenu import MainMenu
 
 
@@ -21,6 +24,9 @@ class MainWindow(QMainWindow):
         # UI components
         self.status_bar = StatusBar(self)
         self.setStatusBar(self.status_bar)
+
+        self.navigation_bar = NavigationBar(self)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.navigation_bar)
         self.initialized = 0
 
         # Initial status
@@ -58,7 +64,7 @@ class MainWindow(QMainWindow):
 
     # Navigation
 
-    def changeView(self, widget):
+    def changeView(self, widget: BaseView):
         self.centralWidget().deleteLater()
         self.setCentralWidget(widget(self))
 
