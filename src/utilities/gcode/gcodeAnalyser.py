@@ -5,15 +5,15 @@ from typing import Pattern
 from utilities.gcode.constants import GCODE_VALID_GCODES, GCODE_VALID_MCODES
 
 # Regular expressions to classify commands
-pause_pattern = r'^(?:N\d+\s+)?M(0|1|00|01)\s*'
-move_pattern = r'^(?:N\d+\s+)?G(0|1|00|01)\s*'
-comment_pattern = r'(^\(.*\)$)|(^;.*)'
+pause_pattern = re.compile(r'^(?:N\d+\s+)?M(0|1|00|01)\s*', re.MULTILINE)
+move_pattern = re.compile(r'^(?:N\d+\s+)?G(0|1|00|01)\s*', re.MULTILINE)
+comment_pattern = re.compile(r'(^\(.*\)$)|(^;.*)', re.MULTILINE)
 
 # Regular expressions to extract parts of a command (not comments)
-gcode_pattern = r'^(?!;|\().*(G\d+(?:.\d)?)'
-mcode_pattern = r'^(?!;|\().*(M\d+)'
-feedrate_pattern = r'^(?!;|\().*F(\d+)'
-t_pattern = r'^(?!;|\().*(T\d+)'
+gcode_pattern = re.compile(r'^(?!;|\().*(G\d+(?:.\d)?)', re.MULTILINE)
+mcode_pattern = re.compile(r'^(?!;|\().*(M\d+)', re.MULTILINE)
+feedrate_pattern = re.compile(r'^(?!;|\().*F(\d+)', re.MULTILINE)
+t_pattern = re.compile(r'^(?!;|\().*(T\d+)', re.MULTILINE)
 
 
 class GcodeAnalyser:
@@ -73,15 +73,15 @@ class GcodeAnalyser:
     # UTILITIES
 
     def _count(self, regex: Pattern, text: str):
-        matches = re.findall(regex, text, re.MULTILINE)
+        matches = regex.findall(text)
         return len(matches)
 
     def _count_all(self, regex: Pattern, text: str):
-        matches = re.findall(regex, text, re.MULTILINE)
+        matches = regex.findall(text)
         return dict(Counter(matches))
 
     def _find_all_unique(self, regex: Pattern, text: str):
-        matches = re.findall(regex, text, re.MULTILINE)
+        matches = regex.findall(text)
         if not matches:
             return []
 
@@ -90,7 +90,7 @@ class GcodeAnalyser:
         return list_set
 
     def _find_max(self, regex: Pattern, text: str):
-        matches = re.findall(regex, text, re.MULTILINE)
+        matches = regex.findall(text)
         if not matches:
             return 0
 

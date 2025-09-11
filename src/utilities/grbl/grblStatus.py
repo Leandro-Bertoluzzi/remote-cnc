@@ -49,9 +49,9 @@ DEFAULT_GRBL_CONTROLLER_STATE = {
 
 
 class GrblStatus:
-    _state: GrblControllerState = DEFAULT_GRBL_CONTROLLER_STATE
-
     def __init__(self):
+        self._state: GrblControllerState = DEFAULT_GRBL_CONTROLLER_STATE
+
         # Errors management
         self._error_line: Optional[str] = None
         self._error_data: Optional[GrblError] = None
