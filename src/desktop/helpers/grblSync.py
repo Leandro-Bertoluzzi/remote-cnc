@@ -78,7 +78,7 @@ class GrblSync(QObject):
             self._has_finished = True
 
     def get_command(self):
-        message = self.grbl_monitor.getLog()
+        message = self.grbl_monitor.get_log()
         if message:
             # Emit new message signal
             self.new_message.emit(message)
