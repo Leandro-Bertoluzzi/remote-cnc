@@ -44,7 +44,7 @@ def executeTask(
         raise Exception('La tarea tiene un estado incorrecto: {}'.format(task.status))
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
-    file_path = files_helper.getFilePath(task.file.user_id, task.file.file_name)
+    file_path = files_helper.get_file_path(task.file.user_id, task.file.file_name)
 
     # 3. Instantiate a GrblController object and start communication with Arduino
     worker_logger = get_task_logger(__name__)

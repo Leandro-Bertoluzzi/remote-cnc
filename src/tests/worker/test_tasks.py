@@ -148,7 +148,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     mocker.patch.object(GrblStatus, 'get_parser_state')
 
     # Mock FS methods
-    mocker.patch('tasks.getFilePath')
+    mocker.patch('tasks.get_file_path')
 
     # Mock file sender methods
     mocker.patch.object(
