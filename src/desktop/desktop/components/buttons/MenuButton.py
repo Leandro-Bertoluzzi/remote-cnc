@@ -1,9 +1,18 @@
+from collections.abc import Callable
+
 from desktop.helpers.utils import applyStylesheet
-from PyQt5.QtWidgets import QPushButton
+from desktop.views.BaseView import BaseView
+from PyQt5.QtWidgets import QPushButton, QWidget
 
 
 class MenuButton(QPushButton):
-    def __init__(self, text, onClick=None, goToView=None, parent=None):
+    def __init__(
+        self,
+        text: str,
+        onClick: Callable[[], None] | None = None,
+        goToView: BaseView | None = None,
+        parent: QWidget | None = None,
+    ):
         super(QPushButton, self).__init__(parent)
 
         self.setText(text)

@@ -175,7 +175,7 @@ class TestDisconnectionMainWindow:
 
         failing_view.__name__ = "FailingView"
 
-        window.changeView(failing_view)
+        window.changeView(failing_view) # type: ignore[arg-type]
 
         # Should show ConnectionErrorWidget in the central widget
         central = window.centralWidget()

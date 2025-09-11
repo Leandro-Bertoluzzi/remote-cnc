@@ -15,26 +15,28 @@ if TYPE_CHECKING:
     from MainWindow import MainWindow  # pragma: no cover
 
 
+MENU_OPTIONS = [
+    ("Tareas", "tasks.svg", TasksView),
+    ("Monitoreo", "monitor.svg", MonitorView),
+    ("Archivos", "files.svg", FilesView),
+    ("Control y\ncalibración", "control.svg", ControlView),
+    ("Usuarios", "users.svg", UsersView),
+    ("Inventario", "inventory.svg", InventoryView),
+]
+GRID_COLUMNS = 4
+
+
 class MainMenu(QWidget):
     def __init__(self, parent: "MainWindow"):
         super(MainMenu, self).__init__(parent)
 
-        # Buttons
-        btn_tasks = self.createButton("Tareas", "tasks.svg", TasksView)
-        btn_monitor = self.createButton("Monitoreo", "monitor.svg", MonitorView)
-        btn_files = self.createButton("Archivos", "files.svg", FilesView)
-        btn_control = self.createButton("Control y\ncalibración", "control.svg", ControlView)
-        btn_users = self.createButton("Usuarios", "users.svg", UsersView)
-        btn_inventory = self.createButton("Inventario", "inventory.svg", InventoryView)
-
-        # Menu layout
+        # Populate menu
         layout = QGridLayout()
-        layout.addWidget(btn_tasks, 0, 0)
-        layout.addWidget(btn_monitor, 0, 1)
-        layout.addWidget(btn_files, 0, 2)
-        layout.addWidget(btn_control, 0, 3)
-        layout.addWidget(btn_users, 1, 0)
-        layout.addWidget(btn_inventory, 1, 1)
+        for index, (label, icon, view) in enumerate(MENU_OPTIONS):
+            x = index // GRID_COLUMNS
+            y = index % GRID_COLUMNS
+            button = self.createButton(label, icon, view)
+            layout.addWidget(button, x, y)
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
