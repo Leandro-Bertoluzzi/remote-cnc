@@ -18,7 +18,7 @@ def createThumbnail(file_id: int) -> bool:
         raise Exception('No se encontró el archivo en la base de datos')
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
-    file_path = files_helper.getFilePath(file.user_id, file.file_name)
+    file_path = files_helper.get_file_path(file.user_id, file.file_name)
 
     # 2. Instantiate the G-code renderer
     renderer = GcodeRenderer()
@@ -39,7 +39,7 @@ def generateFileReport(file_id: int) -> bool:
         raise Exception('No se encontró el archivo en la base de datos')
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
-    file_path = files_helper.getFilePath(file.user_id, file.file_name)
+    file_path = files_helper.get_file_path(file.user_id, file.file_name)
 
     # 2. Instantiate the G-code analyser
     analyser = GcodeAnalyser(file_path)

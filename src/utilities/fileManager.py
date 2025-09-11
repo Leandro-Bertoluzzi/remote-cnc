@@ -15,11 +15,6 @@ class FileManager:
     def read_file(self, file_id: int) -> str:
         """Reads the content of a file in the FS.
 
-        Arguments:
-        - file_id (int): File ID.
-
-        Returns: file content (str)
-
         Raises:
         - DatabaseError: Error from ORM.
         - EntityNotFoundError: The file was not found in the DB.
@@ -35,18 +30,11 @@ class FileManager:
         # Save file in the file system
         # Can raise FileSystemError
         files_helper = FileSystemHelper(self.base_path)
-        return files_helper.readFile(file.user_id, file.file_name)
+        return files_helper.read_file(file.user_id, file.file_name)
 
     def upload_file(self, user_id: int, file_name: str, file: BinaryIO) -> File:
-        """Creates a file in the FS and saves it to the DB.
-        It either FS or DB raises an error, it rollbacks the whole operation.
-
-        Arguments:
-        - user_id (int): User ID.
-        - file_name (str): File name of the new file.
-        - origin_path (str): File path to the original file.
-
-        Returns: file_id (int)
+        """Creates a file in the FS from an upload and saves it to the DB.
+        If either FS or DB raises an error, it rollbacks the whole operation.
 
         Raises:
         - DuplicatedFileNameError: A file with the same name already exists for the current user.
@@ -66,7 +54,7 @@ class FileManager:
         # Save file in the file system
         # Can raise (InvalidFile, FileSystemError)
         files_helper = FileSystemHelper(self.base_path)
-        created_path = files_helper.saveFile(user_id, file, file_name)
+        created_path = files_helper.save_file(user_id, file, file_name)
 
         # Create an entry for the file in the DB
         # Can raise DatabaseError
@@ -76,16 +64,9 @@ class FileManager:
             self._rollback_created(created_path)
             raise error
 
-    def create_file(self, user_id: int, file_name: str, origin_path: str) -> int:
-        """Creates a file in the FS and saves it to the DB.
-        It either FS or DB raises an error, it rollbacks the whole operation.
-
-        Arguments:
-        - user_id (int): User ID.
-        - file_name (str): File name of the new file.
-        - origin_path (str): File path to the original file.
-
-        Returns: file_id (int)
+    def create_file(self, user_id: int, file_name: str, origin_path: str) -> File:
+        """Creates a file in the FS from another file and saves it to the DB.
+        If either FS or DB raises an error, it rollbacks the whole operation.
 
         Raises:
         - DuplicatedFileNameError: A file with the same name already exists for the current user.
@@ -105,27 +86,19 @@ class FileManager:
         # Save file in the file system
         # Can raise (InvalidFile, FileSystemError)
         files_helper = FileSystemHelper(self.base_path)
-        created_path = files_helper.copyFile(user_id, origin_path, file_name)
+        created_path = files_helper.copy_file(user_id, origin_path, file_name)
 
         # Create an entry for the file in the DB
         # Can raise DatabaseError
         try:
-            new_file = repository.create_file(user_id, file_name, file_hash)
-            return new_file.id
+            return repository.create_file(user_id, file_name, file_hash)
         except Exception as error:
             self._rollback_created(created_path)
             raise error
 
-    def rename_file(self, user_id: int, file: File, new_name: str):
-        """Renames a file in the FS and update it in the DB.
-        It either FS or DB raises an error, it rollbacks the whole operation.
-
-        Arguments:
-        - user_id (int): User ID.
-        - file (File): Current file in DB.
-        - new_name (str): New file name for the file.
-
-        Returns: None
+    def rename_file(self, user_id: int, file: File, new_name: str) -> File:
+        """Renames a file in the FS and updates it in the DB.
+        If either FS or DB raises an error, it rollbacks the whole operation.
 
         Raises:
         - DuplicatedFileNameError: A file with the same name already exists for the current user.
@@ -143,14 +116,14 @@ class FileManager:
 
         # Save the original file name, in case we have to recover it
         files_helper = FileSystemHelper(self.base_path)
-        original_path = files_helper.getFilePath(
+        original_path = files_helper.get_file_path(
             file.user_id,
             file.file_name
         )
 
         # Update file in the file system
         # Can raise (InvalidFile, FileSystemError)
-        updated_path = files_helper.renameFile(
+        updated_path = files_helper.rename_file(
             file.user_id,
             file.file_name,
             new_name
@@ -164,16 +137,9 @@ class FileManager:
             self._rollback_renamed(updated_path, original_path)
             raise error
 
-    def rename_file_by_id(self, user_id: int, file_id: int, new_name: str):
-        """Renames a file in the FS and update it in the DB.
-        It either FS or DB raises an error, it rollbacks the whole operation.
-
-        Arguments:
-        - user_id (int): User ID.
-        - file (File): Current file in DB.
-        - new_name (str): New file name for the file.
-
-        Returns: None
+    def rename_file_by_id(self, user_id: int, file_id: int, new_name: str) -> File:
+        """Renames a file in the FS and updates it in the DB.
+        If either FS or DB raises an error, it rollbacks the whole operation.
 
         Raises:
         - DuplicatedFileNameError: A file with the same name already exists for the current user.
@@ -196,11 +162,6 @@ class FileManager:
         """Removes a file from the FS and the DB.
         If the FS or DB raises an error, it rollbacks the whole operation.
 
-        Arguments:
-        - file (File): Current file in DB.
-
-        Returns: None
-
         Raises:
         - EntityNotFoundError: The file was not found in the DB.
         - DatabaseError: Error from ORM.
@@ -208,7 +169,7 @@ class FileManager:
         """
         # Save a backup of the file, in case we have to recover it
         files_helper = FileSystemHelper(self.base_path)
-        file_path = files_helper.getFilePath(
+        file_path = files_helper.get_file_path(
             file.user_id,
             file.file_name
         )
@@ -216,7 +177,7 @@ class FileManager:
 
         # Remove the file from the file system
         # Can raise FileSystemError
-        files_helper.deleteFile(file.user_id, file.file_name)
+        files_helper.delete_file(file.user_id, file.file_name)
 
         # Remove the entry for the file in the DB
         repository = FileRepository(self.session)
@@ -234,11 +195,6 @@ class FileManager:
     def remove_file_by_id(self, file_id: int):
         """Removes a file from the FS and the DB.
         If the FS or DB raises an error, it rollbacks the whole operation.
-
-        Arguments:
-        - file (File): Current file in DB.
-
-        Returns: None
 
         Raises:
         - EntityNotFoundError: The file was not found in the DB.
