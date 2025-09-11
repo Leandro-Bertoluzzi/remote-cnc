@@ -10,7 +10,7 @@ class MenuButton(QPushButton):
         self,
         text: str,
         onClick: Callable[[], None] | None = None,
-        goToView: BaseView | None = None,
+        goToView: type[BaseView] | None = None,
         parent: QWidget | None = None,
     ):
         super(QPushButton, self).__init__(parent)

@@ -17,7 +17,7 @@ class MainMenuButton(QAbstractButton):
         self,
         text: str,
         imageRelPath: str,
-        goToView: BaseView | None = None,
+        goToView: type[BaseView] | None = None,
         parent: QWidget | None = None,
     ):
         super(MainMenuButton, self).__init__(parent)

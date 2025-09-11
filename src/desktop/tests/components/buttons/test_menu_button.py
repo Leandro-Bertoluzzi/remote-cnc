@@ -28,7 +28,7 @@ class TestMenuButton:
         parent.redirectToView = mocker.Mock()  # type: ignore[attr-defined]
 
         # Instantiate button
-        button = MenuButton("Test Button", goToView="Test view", parent=parent)
+        button = MenuButton("Test Button", goToView="Test view", parent=parent)  # type: ignore[arg-type]
         qtbot.addWidget(button)
 
         # User interaction

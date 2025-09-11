@@ -1,13 +1,16 @@
 import logging
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
+from desktop.components.NavigationBar import NavigationBar
 from desktop.components.StatusBar import StatusBar
 from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
 from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.services.deviceService import DeviceService
+from desktop.views.BaseView import BaseView
 from desktop.views.MainMenu import MainMenu
 
 logger = logging.getLogger(__name__)
@@ -27,6 +30,9 @@ class MainWindow(QMainWindow):
         # UI components
         self.status_bar = StatusBar(self)
         self.setStatusBar(self.status_bar)
+
+        self.navigation_bar = NavigationBar(self)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.navigation_bar)
         self.initialized = 0
 
         # Initial status — wrapped to survive broker/Redis being offline
@@ -83,7 +89,7 @@ class MainWindow(QMainWindow):
 
     # Navigation
 
-    def changeView(self, widget):
+    def changeView(self, widget: type[BaseView]):
         old_widget = self.centralWidget()
         try:
             new_widget = widget(self)
