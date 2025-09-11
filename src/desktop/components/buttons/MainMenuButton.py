@@ -1,7 +1,9 @@
+from desktop.views.BaseView import BaseView
 from PyQt5.QtCore import QEvent, Qt
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor, QPaintEvent
 from PyQt5.QtSvg import QSvgRenderer
-from PyQt5.QtWidgets import QAbstractButton
+from PyQt5.QtWidgets import QAbstractButton, QWidget
+from typing import Optional
 from utilities.files import getFileNameInFolder
 
 color_text = QColor('#2E1C1C')
@@ -12,7 +14,13 @@ button_size = 240
 
 
 class MainMenuButton(QAbstractButton):
-    def __init__(self, text, imageRelPath, goToView=None, parent=None):
+    def __init__(
+            self,
+            text: str,
+            imageRelPath: str,
+            goToView: Optional[BaseView] = None,
+            parent: Optional[QWidget] = None
+        ):
         super(MainMenuButton, self).__init__(parent)
 
         # Save image
