@@ -1,6 +1,7 @@
 import logging
 from serial import SerialException
 from typing import Optional
+from utilities.gcode.constants import GCODE_PROGRAM_END_CODES
 from utilities.grbl.constants import GrblCommand, GrblRealtimeCommand
 from utilities.grbl.grblLineParser import GrblLineParser
 from utilities.grbl.grblMonitor import GrblMonitor
@@ -539,7 +540,7 @@ class GrblController:
                 self.grbl_monitor.sent(tosend)
 
                 # Check if end of program
-                if tosend.strip() in ['M2', 'M02', 'M30']:
+                if tosend.strip() in GCODE_PROGRAM_END_CODES:
                     self.grbl_monitor.info(f'A program end command was found: {tosend}')
                     self.grbl_status.set_flag(GrblStatusFlag.FINISHED.value, True)
                     self._empty_queue()
