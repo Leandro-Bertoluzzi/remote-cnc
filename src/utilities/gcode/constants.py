@@ -1,3 +1,5 @@
+# VALID COMMAND CODES
+
 '''
 List of Supported G-Codes in Grbl v1.1:
   - Non-Modal Commands: G4, G10L2, G10L20, G28, G30, G28.1, G30.1, G53, G92, G92.1
@@ -18,7 +20,6 @@ List of Supported G-Codes in Grbl v1.1:
   (*) Commands not enabled by default in config.h
 '''
 
-# Define valid command codes
 GCODE_VALID_GCODES = [
     'G0', 'G1', 'G2', 'G3', 'G38.2', 'G38.3', 'G38.4', 'G38.5', 'G80',    # Motion Modes
     'G4', 'G10', 'G28', 'G30', 'G28.1', 'G30.1', 'G53', 'G92', 'G92.1',   # Non-Modal Commands
