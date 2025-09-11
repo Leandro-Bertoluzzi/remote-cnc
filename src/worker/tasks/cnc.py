@@ -93,7 +93,7 @@ def executeTask(
         if t - tp > STATUS_POLL:
             status = cnc_status.get_status_report()
             parserstate = cnc_status.get_parser_state()
-            processed_lines = cnc.getCommandsCount()
+            processed_lines = cnc.get_commands_count()
             self.update_state(
                 state='PROGRESS',
                 meta={
@@ -130,11 +130,11 @@ def executeTask(
             pause, resume = worker_status.process_request()
 
             if pause:
-                cnc.setPaused(True)
+                cnc.set_paused(True)
                 file_sender.pause()
 
             if resume:
-                cnc.setPaused(False)
+                cnc.set_paused(False)
                 file_sender.resume()
 
             if worker_status.is_paused():
@@ -144,7 +144,7 @@ def executeTask(
             try:
                 sent_lines = file_sender.send_line()
             except FinishedFile:
-                cnc.sendCommand('G4 P0')    # Ask to wait for finish
+                cnc.send_command('G4 P0')    # Ask to wait for finish
                 sent_lines += 1
                 finished_sending = True
                 file_sender.stop()
@@ -248,10 +248,10 @@ def cncServer(
             pause, resume = worker_status.process_request()
 
             if pause:
-                cnc.setPaused(True)
+                cnc.set_paused(True)
 
             if resume:
-                cnc.setPaused(False)
+                cnc.set_paused(False)
 
             if worker_status.is_paused():
                 time.sleep(1)
@@ -261,7 +261,7 @@ def cncServer(
             received = redis.get_message()
             if received is not None and 'data' in received.keys():
                 data: bytes = received['data']
-                cnc.sendCommand(data.decode())
+                cnc.send_command(data.decode())
 
             tp = t
 

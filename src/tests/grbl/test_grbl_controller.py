@@ -108,7 +108,7 @@ class TestGrblController:
                 second_message
             ]
         )
-        mock_handle_homing = mocker.patch.object(GrblController, 'handleHomingCycle')
+        mock_handle_homing = mocker.patch.object(GrblController, 'handle_homing_cycle')
 
         # Call method under test
         response = self.grbl_controller.connect('port', 9600)
@@ -155,7 +155,7 @@ class TestGrblController:
         mock_resume = mocker.patch.object(self.grbl_controller, 'grbl_resume')
 
         # Call method under test
-        self.grbl_controller.setPaused(paused)
+        self.grbl_controller.set_paused(paused)
 
         # Assertions
         assert self.grbl_status.paused() == paused
@@ -167,7 +167,7 @@ class TestGrblController:
         self.grbl_controller.queue = Queue()
 
         # Call method under test
-        self.grbl_controller.sendCommand('$')
+        self.grbl_controller.send_command('$')
 
         # Assertions
         assert self.grbl_controller.queue.qsize() == 1
@@ -175,20 +175,20 @@ class TestGrblController:
 
     def test_handle_homing_cycle(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_disable_alarm = mocker.patch.object(GrblController, 'disableAlarm')
+        mock_disable_alarm = mocker.patch.object(GrblController, 'disable_alarm')
 
         # Call the method under test
-        self.grbl_controller.handleHomingCycle()
+        self.grbl_controller.handle_homing_cycle()
 
         # Assertions
         assert mock_disable_alarm.call_count == 1
 
     def test_disable_alarm(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.disableAlarm()
+        self.grbl_controller.disable_alarm()
 
         # Assertions
         assert mock_command_send.call_count == 1
@@ -225,10 +225,10 @@ class TestGrblController:
 
     def test_query_parser_state(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.queryGcodeParserState()
+        self.grbl_controller.query_gcode_parser_state()
 
         # Assertions
         assert mock_command_send.call_count == 1
@@ -236,10 +236,10 @@ class TestGrblController:
 
     def test_query_help(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.queryGrblHelp()
+        self.grbl_controller.query_grbl_help()
 
         # Assertions
         assert mock_command_send.call_count == 1
@@ -247,10 +247,10 @@ class TestGrblController:
 
     def test_toggle_checkmode(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.toggleCheckMode()
+        self.grbl_controller.toggle_check_mode()
 
         # Assertions
         assert mock_command_send.call_count == 1
@@ -262,7 +262,7 @@ class TestGrblController:
             'grbl.grblController.build_jog_command',
             return_value='$J=X1.0 Y2.0 Z3.0 F500.0'
         )
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
         self.grbl_controller.jog(1.00, 2.00, 3.00, 500.00)
@@ -274,10 +274,10 @@ class TestGrblController:
 
     def test_set_settings(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.setSettings(
+        self.grbl_controller.set_settings(
             {
                 '$22': '1',
                 '$23': '5',
@@ -290,10 +290,10 @@ class TestGrblController:
 
     def test_query_build_info(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.queryBuildInfo()
+        self.grbl_controller.query_build_info()
 
         # Assertions
         assert mock_command_send.call_count == 1
@@ -301,10 +301,10 @@ class TestGrblController:
 
     def test_query_settings(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.queryGrblSettings()
+        self.grbl_controller.query_grbl_settings()
 
         # Assertions
         assert mock_command_send.call_count == 1
@@ -312,10 +312,10 @@ class TestGrblController:
 
     def test_query_grbl_parameters(self, mocker: MockerFixture):
         # Mock GRBL methods
-        mock_command_send = mocker.patch.object(GrblController, 'sendCommand')
+        mock_command_send = mocker.patch.object(GrblController, 'send_command')
 
         # Call the method under test
-        self.grbl_controller.queryGrblParameters()
+        self.grbl_controller.query_grbl_params()
 
         # Assertions
         assert mock_command_send.call_count == 1
@@ -328,9 +328,9 @@ class TestGrblController:
         self.grbl_controller.build_info = grbl_mocks.grbl_build_info
 
         # Call methods under test
-        parameters = self.grbl_controller.getParameters()
-        settings = self.grbl_controller.getGrblSettings()
-        build_info = self.grbl_controller.getBuildInfo()
+        parameters = self.grbl_controller.get_parameters()
+        settings = self.grbl_controller.get_grbl_settings()
+        build_info = self.grbl_controller.get_build_info()
 
         # Assertions
         assert parameters == grbl_mocks.grbl_parameters
@@ -352,7 +352,7 @@ class TestGrblController:
         self.grbl_controller._sumcline = occupied
 
         # Call methods under test
-        value = self.grbl_controller.getBufferFill()
+        value = self.grbl_controller.get_buffer_fill()
 
         # Assertions
         assert value == expected
@@ -368,7 +368,7 @@ class TestGrblController:
         mock_queue_get = mocker.spy(Queue, 'get_nowait')
 
         # Call method under test
-        self.grbl_controller.emptyQueue()
+        self.grbl_controller._empty_queue()
 
         # Assertions
         assert mock_queue_size.call_count == 4
@@ -380,7 +380,7 @@ class TestGrblController:
         mock_queue_get = mocker.patch.object(Queue, 'get_nowait', side_effect=Empty())
 
         # Call method under test
-        self.grbl_controller.emptyQueue()
+        self.grbl_controller._empty_queue()
 
         # Assertions
         assert mock_queue_size.call_count == 1
@@ -393,17 +393,17 @@ class TestGrblController:
         self.grbl_controller.parameters = {}
 
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse('[G54:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G55:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G56:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G57:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G58:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G59:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G28:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G30:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[G92:0.000,0.000,0.000]', [], [])
-        self.grbl_controller.parseResponse('[TLO:0.000]', [], [])
-        self.grbl_controller.parseResponse('[PRB:0.000,0.000,0.000:0]', [], [])
+        self.grbl_controller.parse_response('[G54:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G55:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G56:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G57:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G58:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G59:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G28:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G30:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[G92:0.000,0.000,0.000]', [], [])
+        self.grbl_controller.parse_response('[TLO:0.000]', [], [])
+        self.grbl_controller.parse_response('[PRB:0.000,0.000,0.000:0]', [], [])
 
         # Assertions
         assert self.grbl_controller.parameters == {
@@ -425,8 +425,8 @@ class TestGrblController:
         self.grbl_controller.settings = {}
 
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse('$0=100.200', [], [])
-        self.grbl_controller.parseResponse('$102=1.000', [], [])
+        self.grbl_controller.parse_response('$0=100.200', [], [])
+        self.grbl_controller.parse_response('$102=1.000', [], [])
 
         # Assertions
         assert self.grbl_controller.settings == {
@@ -487,7 +487,7 @@ class TestGrblController:
 
         # Simulate getting responses from GRBL
         for message in messages:
-            self.grbl_controller.parseResponse(message, [], [])
+            self.grbl_controller.parse_response(message, [], [])
 
         # Assertions
         assert self.grbl_controller.build_info == expected
@@ -509,7 +509,7 @@ class TestGrblController:
         mock_monitor_info = mocker.patch.object(GrblMonitor, 'info')
 
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse(message, [], [])
+        self.grbl_controller.parse_response(message, [], [])
 
         # Assertions
         assert mock_monitor_info.call_count == 1
@@ -522,7 +522,7 @@ class TestGrblController:
         self.grbl_controller.help_text = ''
 
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse(
+        self.grbl_controller.parse_response(
             '[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x]',
             [],
             []
@@ -535,7 +535,7 @@ class TestGrblController:
 
     def test_parser_receive_parser_state(self, mocker: MockerFixture):
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse(
+        self.grbl_controller.parse_response(
             '[GC:G38.2 G54 G17 G21 G91 G94 M0 M5 M7 M8 T0 F20. S0.]',
             [],
             []
@@ -562,7 +562,7 @@ class TestGrblController:
 
     def test_parser_receive_status_report(self):
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse(
+        self.grbl_controller.parse_response(
             '<Idle|MPos:5.000,2.000,0.000|FS:0,0|Ov:100,100,100>',
             [],
             []
@@ -587,7 +587,7 @@ class TestGrblController:
 
     def test_parser_receive_disable_alarm_feedback(self):
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse('[MSG:Caution: Unlocked]', [], [])
+        self.grbl_controller.parse_response('[MSG:Caution: Unlocked]', [], [])
 
         # Assertions
         assert self.grbl_status.is_alarm() is False
@@ -599,7 +599,7 @@ class TestGrblController:
         self.grbl_controller._sumcline = 6  # sum([1, 2, 3])
 
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse('ok', cline, sline)
+        self.grbl_controller.parse_response('ok', cline, sline)
 
         # Assertions
         assert cline == [2, 3]
@@ -621,7 +621,7 @@ class TestGrblController:
         mock_pause = mocker.patch.object(self.grbl_controller, 'grbl_pause')
 
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse('error:25', cline, sline)
+        self.grbl_controller.parse_response('error:25', cline, sline)
 
         # Assertions
         assert cline == [2, 3]
@@ -654,7 +654,7 @@ class TestGrblController:
         mock_monitor_critical = mocker.patch.object(GrblMonitor, 'critical')
 
         # Simulate getting responses from GRBL
-        self.grbl_controller.parseResponse('ALARM:6', cline, sline)
+        self.grbl_controller.parse_response('ALARM:6', cline, sline)
 
         # Assertions
         assert cline == [2, 3]
@@ -719,7 +719,7 @@ class TestGrblController:
 
         # Mock controller methods
         mock_query_status_report = mocker.patch.object(GrblController, 'queryStatusReport')
-        mock_parse_response = mocker.patch.object(GrblController, 'parseResponse')
+        mock_parse_response = mocker.patch.object(GrblController, 'parse_response')
 
         # Mock serial methods
         mock_serial_waiting = mocker.patch.object(
@@ -742,7 +742,7 @@ class TestGrblController:
         spy_queue_get = mocker.spy(Queue, 'get_nowait')
 
         # Call method under test
-        self.grbl_controller.serialIO()
+        self.grbl_controller.serial_io()
 
         # Assertions
         # **Query GRBL status section**
@@ -775,7 +775,7 @@ class TestGrblController:
         # Mock controller methods
         mocker.patch.object(GrblController, 'queryStatusReport')
         mock_disconnect = mocker.patch.object(GrblController, 'disconnect')
-        mock_parse_response = mocker.patch.object(GrblController, 'parseResponse')
+        mock_parse_response = mocker.patch.object(GrblController, 'parse_response')
 
         # Mock serial methods
         mock_serial_waiting = mocker.patch.object(
@@ -801,7 +801,7 @@ class TestGrblController:
         mock_monitor_error = mocker.patch.object(GrblMonitor, 'error')
 
         # Call method under test
-        self.grbl_controller.serialIO()
+        self.grbl_controller.serial_io()
 
         # Assertions
         assert mock_serial_waiting.call_count == 1
@@ -831,11 +831,11 @@ class TestGrblController:
         mocker.patch.object(GrblStatus, 'paused', return_value=False)
 
         # Mock monitor methods
-        mocker.patch.object(GrblController, 'emptyQueue', side_effect=stop_thread)
+        mocker.patch.object(GrblController, '_empty_queue', side_effect=stop_thread)
         mock_monitor_info = mocker.patch.object(GrblMonitor, 'info')
 
         # Call method under test
-        self.grbl_controller.serialIO()
+        self.grbl_controller.serial_io()
 
         # Assertions
         assert mock_monitor_info.call_count == 1
@@ -872,7 +872,7 @@ class TestGrblController:
         mocker.patch.object(GrblController, 'queryStatusReport')
         mock_query_parser_state = mocker.patch.object(
             GrblController,
-            'queryGcodeParserState',
+            'query_gcode_parser_state',
             side_effect=stop_thread
         )
 
@@ -888,7 +888,7 @@ class TestGrblController:
         mocker.patch.object(GrblMonitor, 'sent')
 
         # Call method under test
-        self.grbl_controller.serialIO()
+        self.grbl_controller.serial_io()
 
         # Assertions
         assert mock_time.call_count == 2
@@ -924,7 +924,7 @@ class TestGrblController:
         mock_monitor_sent = mocker.patch.object(GrblMonitor, 'sent')
 
         # Call method under test
-        self.grbl_controller.serialIO()
+        self.grbl_controller.serial_io()
 
         # Assertions
         assert mock_sum.call_count == 1
@@ -953,7 +953,7 @@ class TestGrblController:
         mock_monitor_info = mocker.patch.object(GrblMonitor, 'info')
 
         # Call method under test
-        self.grbl_controller.serialIO()
+        self.grbl_controller.serial_io()
 
         # Assertions
         assert mock_serial_send_line.call_count == 2

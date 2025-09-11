@@ -34,4 +34,4 @@ class Terminal(QWidget):
         line = self.input.text()
         self.input.clear()
 
-        self.grbl_controller.sendCommand(line)
+        self.grbl_controller.send_command(line)

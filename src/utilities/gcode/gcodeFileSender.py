@@ -77,7 +77,7 @@ class GcodeFileSender:
             return self.current_line
 
         # Try not to fill the GRBL buffer
-        if self.grbl_controller.getBufferFill() > MAX_BUFFER_FILL:
+        if self.grbl_controller.get_buffer_fill() > MAX_BUFFER_FILL:
             return self.current_line
 
         line = self.gcode.readline()
@@ -86,7 +86,7 @@ class GcodeFileSender:
         if not line:
             raise FinishedFile
 
-        self.grbl_controller.sendCommand(line)
+        self.grbl_controller.send_command(line)
 
         # Return amount of sent lines so far
         self.current_line += 1
