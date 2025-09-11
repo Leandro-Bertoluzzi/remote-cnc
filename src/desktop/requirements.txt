@@ -10,7 +10,6 @@ click-repl==0.3.0
 greenlet==3.0.1
 kombu==5.3.5
 packaging==23.1
-pip==23.3.2
 ply==3.11
 prompt-toolkit==3.0.43
 psycopg2==2.9.9

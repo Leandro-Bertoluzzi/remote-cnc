@@ -25,7 +25,7 @@ conda activate remote-cnc-dev
 # Option 2: If you use venv and pip
 $ python -m venv env-dev
 $ source env-dev/bin/activate
-$ pip install -r requirements-dev.txt
+$ pip install -r desktop/requirements-dev.txt
 
 # 3. Copy and configure the .env file
 cp .env.example .env
@@ -41,7 +41,7 @@ Take into account that the virtual environment activation with pip (step 2, opti
 ```bash
 $ python -m venv env-dev
 $ .\env-dev\Scripts\activate
-$ pip install -r requirements-dev.txt
+$ pip install -r desktop/requirements-dev.txt
 ```
 
 # Run the app
