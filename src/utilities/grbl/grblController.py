@@ -255,16 +255,6 @@ class GrblController:
 
         self.grbl_monitor.debug(f'Unprocessed message from GRBL: {response}')
 
-    # PRIVATE METHODS
-
-    def _empty_queue(self):
-        """Empties the command queue."""
-        while self.queue.qsize() > 0:
-            try:
-                self.queue.get_nowait()
-            except Empty:
-                break
-
     # INTERNAL STATE MANAGEMENT
 
     def restart_commands_count(self):
@@ -354,49 +344,39 @@ class GrblController:
 
     # REAL TIME COMMANDS
 
+    def _send_realtime(self, cmd: bytes, label: str):
+        try:
+            self.serial.sendBytes(cmd)
+        except SerialException as e:
+            self.grbl_monitor.error(f"Error sending {label}: {e}")
+            return
+
+        cmd_str = print(repr(cmd)[2:-1])    # Convert bytes to string for logging
+        self.grbl_monitor.sent(cmd_str)
+        self.grbl_monitor.info(f"Requested {label}")
+
     def grbl_pause(self):
-        """Feed Hold: Places Grbl into a suspend or HOLD state.
+        """
+        Feed Hold: Places Grbl into a suspend or HOLD state.
         If in motion, the machine will decelerate to a stop and then be suspended.
         """
-        try:
-            self.serial.sendBytes(GrblRealtimeCommand.FEED_HOLD.value)
-        except SerialException:
-            self.grbl_monitor.error(
-                f'Error sending PAUSE command to GRBL: {str(sys.exc_info()[1])}'
-            )
-            return
-        self.grbl_monitor.sent('!')
-        self.grbl_monitor.info('Requested PAUSE')
+        self._send_realtime(GrblRealtimeCommand.FEED_HOLD.value, 'PAUSE')
 
     def grbl_resume(self):
-        """Cycle Start / Resume: Resumes a feed hold, a safety door/parking state
+        """
+        Cycle Start / Resume: Resumes a feed hold, a safety door/parking state
         when the door is closed, and the M0 program pause states.
         """
-        try:
-            self.serial.sendBytes(GrblRealtimeCommand.CYCLE_START.value)
-        except SerialException:
-            self.grbl_monitor.error(
-                f'Error sending RESUME command to GRBL: {str(sys.exc_info()[1])}'
-            )
-            return
-        self.grbl_monitor.sent('~')
-        self.grbl_monitor.info('Requested RESUME')
+        self._send_realtime(GrblRealtimeCommand.CYCLE_START.value, 'RESUME')
 
     def grbl_soft_reset(self):
-        """Soft-Reset: Halts and safely resets Grbl without a power-cycle.
+        """
+        Soft-Reset: Halts and safely resets Grbl without a power-cycle.
         - If reset while in motion, Grbl will throw an alarm to indicate position may be
         lost from the motion halt.
         - If reset while not in motion, position is retained and re-homing is not required.
         """
-        try:
-            self.serial.sendBytes(GrblRealtimeCommand.SOFT_RESET.value)
-        except SerialException:
-            self.grbl_monitor.error(
-                f'Error sending STOP command to GRBL: {str(sys.exc_info()[1])}'
-            )
-            return
-        self.grbl_monitor.sent('0x18')
-        self.grbl_monitor.info('Requested STOP')
+        self._send_realtime(GrblRealtimeCommand.SOFT_RESET.value, 'STOP')
 
         # Tell the serial_io thread to stop streaming
         self.grbl_status.set_flag(GrblStatusFlag.STOP.value, True)
@@ -405,10 +385,8 @@ class GrblController:
         """Queries the GRBL device's current status."""
         try:
             self.serial.sendBytes(GrblRealtimeCommand.STATUS_REPORT.value)
-        except SerialException:
-            self.grbl_monitor.error(
-                f'Error sending STATUS command to GRBL: {str(sys.exc_info()[1])}'
-            )
+        except SerialException as e:
+            self.grbl_monitor.error(f"Error sending STATUS: {e}")
             return
         self.grbl_monitor.sent('?', debug=True)
 
@@ -458,7 +436,15 @@ class GrblController:
         """
         return self._sumcline * 100.0 / RX_BUFFER_SIZE
 
-    # Threads
+    # COMMUNICATION
+
+    def _empty_queue(self):
+        """Empties the command queue."""
+        while self.queue.qsize() > 0:
+            try:
+                self.queue.get_nowait()
+            except Empty:
+                break
 
     def serial_io(self):
         """Thread performing I/O on serial line."""
