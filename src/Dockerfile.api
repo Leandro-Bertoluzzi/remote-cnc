@@ -1,44 +1,46 @@
 FROM python:3.9-slim-buster AS base
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update \
-  # dependencies for building Python packages
-  && apt-get install -y build-essential \
-  # psycopg2 dependencies
-  && apt-get install -y libpq-dev \
-  # cleaning up unused files
+  && apt-get install -y --no-install-recommends build-essential libpq-dev \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
 
-FROM base AS development
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set uv environment variables
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Install dependencies
-COPY ./api/requirements-dev.txt ./api/requirements.txt /app/
-RUN pip install --no-cache-dir --upgrade -r requirements-dev.txt
+# ---------- dependency layer (cached while lockfile unchanged) ----------
+# Copy only workspace root + member pyproject.toml files for dependency resolution
+COPY pyproject.toml uv.lock ./
+COPY core/pyproject.toml core/pyproject.toml
+COPY api/pyproject.toml api/pyproject.toml
 
-# Copy project files
-COPY . /app
+# Install dependencies without source (placeholder packages for workspace members)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-workspace --package cnc-api
 
-# Run uvicorn server
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# ---------- source layer ----------
+COPY core/core core/core
+COPY core/alembic core/alembic
+COPY core/alembic.ini core/alembic.ini
+COPY api/ api/
+
+# Sync again to install the actual workspace packages (core + api) from source
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-editable --package cnc-api
+
+# ---------- targets ----------
+FROM base AS development
+CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 FROM base AS production
-
-WORKDIR /app
-
-# Add files from the build context to the container temporarily to execute a RUN instruction
-# https://docs.docker.com/develop/develop-images/instructions/#add-or-copy
-RUN --mount=type=bind,source=api/requirements.txt,target=/tmp/requirements.txt \
-pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
-
-# Copy project files
-COPY ./api /app/api
-COPY ./database /app/database
-COPY ./schemas /app/schemas
-COPY ./utilities /app/utilities
-COPY ./app.py /app
-
 # If running behind a proxy like Nginx or Traefik add --proxy-headers
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers", "--root-path", "/api"]
+CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers", "--root-path", "/api"]
