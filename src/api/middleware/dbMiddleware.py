@@ -1,4 +1,4 @@
-from database.base import SessionLocal
+from core.database.base import SessionLocal
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from typing import Annotated

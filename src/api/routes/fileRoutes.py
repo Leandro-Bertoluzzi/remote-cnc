@@ -1,13 +1,13 @@
-from config import FILES_FOLDER_PATH
-from database.repositories.fileRepository import FileRepository
-from database.types import FileReport
-from utilities.fileManager import FileManager
-from utilities.worker.scheduler import createThumbnail, generateFileReport
+from core.config import FILES_FOLDER_PATH
+from core.database.repositories.fileRepository import FileRepository
+from core.database.types import FileReport
+from core.utilities.fileManager import FileManager
+from core.utilities.worker.scheduler import createThumbnail, generateFileReport
 from fastapi import APIRouter, HTTPException, UploadFile
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
-from schemas.files import FileResponse, FileContentResponse, FileUpdate
-from schemas.general import GenericResponse
+from core.schemas.files import FileResponse, FileContentResponse, FileUpdate
+from core.schemas.general import GenericResponse
 
 fileRoutes = APIRouter(prefix="/files", tags=["Files"])
 

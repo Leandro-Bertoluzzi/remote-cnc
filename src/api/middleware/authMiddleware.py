@@ -1,9 +1,9 @@
-from database.models import User
-from database.repositories.userRepository import UserRepository
+from core.database.models import User
+from core.database.repositories.userRepository import UserRepository
 from api.middleware.dbMiddleware import GetDbSession
 from fastapi import Depends, HTTPException, Request
 from jwt import ExpiredSignatureError, InvalidSignatureError
-from utilities.security import verify_token
+from core.utilities.security import verify_token
 from typing import Annotated
 
 

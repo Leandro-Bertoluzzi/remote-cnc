@@ -1,5 +1,5 @@
 import pytest
-from utilities.grbl.grblLineParser import GrblLineParser
+from core.utilities.grbl.grblLineParser import GrblLineParser
 
 
 @pytest.mark.parametrize(

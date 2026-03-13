@@ -1,6 +1,6 @@
 from abc import abstractmethod
-from utilities.grbl.grblController import GrblController
-from utilities.grbl.grblUtils import JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
+from core.utilities.grbl.grblController import GrblController
+from core.utilities.grbl.grblUtils import JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QHBoxLayout, QLabel, QRadioButton
 
 

@@ -1,5 +1,5 @@
 import pytest
-from database.base import Base
+from core.database.base import Base
 from datetime import datetime
 
 

@@ -1,8 +1,8 @@
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
-from database.base import SessionLocal
-from database.models import Material
-from database.repositories.materialRepository import MaterialRepository
+from core.database.base import SessionLocal
+from core.database.models import Material
+from core.database.repositories.materialRepository import MaterialRepository
 from desktop.helpers.utils import needs_confirmation
 
 

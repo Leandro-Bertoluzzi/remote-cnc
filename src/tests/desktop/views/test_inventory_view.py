@@ -4,9 +4,9 @@ from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
-from database.models import Material, Tool
-from database.repositories.materialRepository import MaterialRepository
-from database.repositories.toolRepository import ToolRepository
+from core.database.models import Material, Tool
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.toolRepository import ToolRepository
 from desktop.MainWindow import MainWindow
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 import pytest

@@ -1,4 +1,4 @@
-from utilities.grbl.grblController import GrblController
+from core.utilities.grbl.grblController import GrblController
 from desktop.helpers.utils import applyStylesheet
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt

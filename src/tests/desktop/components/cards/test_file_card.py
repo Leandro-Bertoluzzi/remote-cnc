@@ -1,10 +1,10 @@
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
-from database.exceptions import DatabaseError
-from database.models import File, User
-from database.repositories.fileRepository import DuplicatedFileNameError
-from utilities.fileManager import FileManager
-from utilities.files import FileSystemError
+from core.database.exceptions import DatabaseError
+from core.database.models import File, User
+from core.database.repositories.fileRepository import DuplicatedFileNameError
+from core.utilities.fileManager import FileManager
+from core.utilities.files import FileSystemError
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
 from pytest_mock.plugin import MockerFixture

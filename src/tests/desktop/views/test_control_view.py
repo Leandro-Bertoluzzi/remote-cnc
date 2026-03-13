@@ -4,7 +4,7 @@ from desktop.components.CodeEditor import CodeEditor
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from desktop.components.Terminal import Terminal
-from utilities.grbl.grblController import GrblController
+from core.utilities.grbl.grblController import GrblController
 import mocks.grbl_mocks as grbl_mocks
 from desktop.helpers.grblSync import GrblSync
 from desktop.helpers.fileStreamer import FileStreamer

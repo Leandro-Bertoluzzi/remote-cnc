@@ -1,12 +1,12 @@
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
 from desktop.config import USER_ID, FILES_FOLDER_PATH
-from database.base import SessionLocal
-from database.repositories.fileRepository import DuplicatedFileError, \
+from core.database.base import SessionLocal
+from core.database.repositories.fileRepository import DuplicatedFileError, \
     DuplicatedFileNameError, DatabaseError, FileRepository
-from utilities.files import InvalidFile, FileSystemError
-from utilities.fileManager import FileManager
-from utilities.worker.scheduler import createThumbnail, generateFileReport
+from core.utilities.files import InvalidFile, FileSystemError
+from core.utilities.fileManager import FileManager
+from core.utilities.worker.scheduler import createThumbnail, generateFileReport
 from desktop.views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 

@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.buttons.MenuButton import MenuButton
-from database.models import Base
+from core.database.models import Base
 from typing import Callable, TYPE_CHECKING
 from typing_extensions import TypedDict
 from desktop.views.BaseView import BaseView

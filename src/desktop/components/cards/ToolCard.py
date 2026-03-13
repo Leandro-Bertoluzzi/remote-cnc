@@ -1,8 +1,8 @@
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
-from database.base import SessionLocal
-from database.models import Tool
-from database.repositories.toolRepository import ToolRepository
+from core.database.base import SessionLocal
+from core.database.models import Tool
+from core.database.repositories.toolRepository import ToolRepository
 from desktop.helpers.utils import needs_confirmation
 
 

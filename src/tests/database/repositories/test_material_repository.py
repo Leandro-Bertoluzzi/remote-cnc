@@ -1,5 +1,5 @@
-from database.models import Material
-from database.repositories.materialRepository import MaterialRepository
+from core.database.models import Material
+from core.database.repositories.materialRepository import MaterialRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 

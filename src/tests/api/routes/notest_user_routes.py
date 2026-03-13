@@ -1,4 +1,4 @@
-from database.base import Base
+from core.database.base import Base
 from conftest import engine, test_admin, test_user, TestingSession
 
 

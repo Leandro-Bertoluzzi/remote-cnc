@@ -1,9 +1,9 @@
-from database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.materialRepository import MaterialRepository
 from fastapi import APIRouter, HTTPException
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
-from schemas.general import GenericResponse
-from schemas.materials import MaterialRequest, MaterialResponse
+from core.schemas.general import GenericResponse
+from core.schemas.materials import MaterialRequest, MaterialResponse
 
 materialRoutes = APIRouter(prefix="/materials", tags=["Materials"])
 

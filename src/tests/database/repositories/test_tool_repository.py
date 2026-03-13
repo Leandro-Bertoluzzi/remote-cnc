@@ -1,5 +1,5 @@
-from database.models import Tool
-from database.repositories.toolRepository import ToolRepository
+from core.database.models import Tool
+from core.database.repositories.toolRepository import ToolRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 

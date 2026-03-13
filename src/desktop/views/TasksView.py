@@ -1,11 +1,11 @@
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.config import USER_ID
-import utilities.worker.utils as worker
-from utilities.worker.workerStatusManager import WorkerStoreAdapter
-from database.base import SessionLocal
-from database.repositories.taskRepository import TaskRepository
-from database.utils import get_assets
+import core.utilities.worker.utils as worker
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.database.base import SessionLocal
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.utils import get_assets
 from desktop.views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 

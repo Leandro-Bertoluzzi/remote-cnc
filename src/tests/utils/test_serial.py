@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock.plugin import MockerFixture
 import serial
-from utilities.serial import SerialService
+from core.utilities.serial import SerialService
 
 
 @pytest.mark.parametrize('open_port', [True, False])

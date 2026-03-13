@@ -1,4 +1,4 @@
-from utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from desktop.MainWindow import MainWindow
 from desktop.views.MainMenu import MainMenu
 from desktop.views.UsersView import UsersView

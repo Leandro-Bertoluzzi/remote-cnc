@@ -1,9 +1,9 @@
-from database.repositories.toolRepository import ToolRepository
+from core.database.repositories.toolRepository import ToolRepository
 from fastapi import APIRouter, HTTPException
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
-from schemas.general import GenericResponse
-from schemas.tools import ToolRequest, ToolResponse
+from core.schemas.general import GenericResponse
+from core.schemas.tools import ToolRequest, ToolResponse
 
 toolRoutes = APIRouter(prefix="/tools", tags=["Tools"])
 

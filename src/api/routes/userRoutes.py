@@ -1,9 +1,9 @@
-from database.repositories.userRepository import UserRepository
+from core.database.repositories.userRepository import UserRepository
 from fastapi import APIRouter, HTTPException
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
-from schemas.general import GenericResponse
-from schemas.users import UserCreate, UserUpdate, UserResponse
+from core.schemas.general import GenericResponse
+from core.schemas.users import UserCreate, UserUpdate, UserResponse
 
 userRoutes = APIRouter(prefix="/users", tags=["Users"])
 

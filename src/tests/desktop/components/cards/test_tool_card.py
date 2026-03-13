@@ -2,8 +2,8 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
-from database.models import Tool
-from database.repositories.toolRepository import ToolRepository
+from core.database.models import Tool
+from core.database.repositories.toolRepository import ToolRepository
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 

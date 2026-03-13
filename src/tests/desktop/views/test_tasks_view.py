@@ -2,11 +2,11 @@ from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from database.models import Task
-from database.repositories.fileRepository import FileRepository
-from database.repositories.materialRepository import MaterialRepository
-from database.repositories.taskRepository import TaskRepository
-from database.repositories.toolRepository import ToolRepository
+from core.database.models import Task
+from core.database.repositories.fileRepository import FileRepository
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.repositories.toolRepository import ToolRepository
 from desktop.MainWindow import MainWindow
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 import pytest

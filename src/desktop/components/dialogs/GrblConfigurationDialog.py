@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QTableWidget
     QTableWidgetItem, QHeaderView
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from utilities.grbl.types import GrblSettings
+from core.utilities.grbl.types import GrblSettings
 
 
 class GrblConfigurationDialog(QDialog):

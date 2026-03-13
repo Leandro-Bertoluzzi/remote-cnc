@@ -1,5 +1,5 @@
-from database.base import Base
-from database.models import File
+from core.database.base import Base
+from core.database.models import File
 from conftest import engine, test_admin, test_user, TestingSession
 
 

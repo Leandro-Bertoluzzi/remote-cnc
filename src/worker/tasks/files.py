@@ -1,9 +1,9 @@
 from start_worker import app
-from config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
-from database.base import SessionLocal
-from database.repositories.fileRepository import FileRepository
-from utilities.gcode.gcodeAnalyser import GcodeAnalyser
-from utilities.files import FileSystemHelper
+from core.config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
+from core.database.base import SessionLocal
+from core.database.repositories.fileRepository import FileRepository
+from core.utilities.gcode.gcodeAnalyser import GcodeAnalyser
+from core.utilities.files import FileSystemHelper
 from worker.utils.gcode2png import GcodeRenderer
 
 

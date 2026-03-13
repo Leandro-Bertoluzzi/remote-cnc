@@ -1,7 +1,7 @@
 from celery.result import AsyncResult
-from database.base import Base
-from database.models import File, Material, Task, Tool
-from utilities.fileManager import FileManager
+from core.database.base import Base
+from core.database.models import File, Material, Task, Tool
+from core.utilities.fileManager import FileManager
 import datetime
 import hashlib
 import pytest   # noqa: F401

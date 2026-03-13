@@ -1,6 +1,6 @@
 from api.app import app
-from database.base import Base
-from database.models import User
+from core.database.base import Base
+from core.database.models import User
 import datetime
 from fastapi.testclient import TestClient
 from jwt import ExpiredSignatureError, InvalidSignatureError

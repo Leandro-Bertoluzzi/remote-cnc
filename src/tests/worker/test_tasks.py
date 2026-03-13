@@ -1,10 +1,10 @@
 import pytest
 from celery.app.task import Task
 from worker.tasks.cnc import executeTask
-from database.repositories.taskRepository import TaskRepository
-from utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
-from utilities.grbl.grblController import GrblController, GrblStatus
-from utilities.worker.workerStatusManager import WorkerStatusManager
+from core.database.repositories.taskRepository import TaskRepository
+from core.utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from core.utilities.grbl.grblController import GrblController, GrblStatus
+from core.utilities.worker.workerStatusManager import WorkerStatusManager
 from pytest_mock.plugin import MockerFixture
 import time
 

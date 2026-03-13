@@ -2,8 +2,8 @@ import pytest
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from database.models import User
-from database.repositories.userRepository import UserRepository
+from core.database.models import User
+from core.database.repositories.userRepository import UserRepository
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 

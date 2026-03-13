@@ -11,12 +11,12 @@ from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.Joystick import Joystick
 from desktop.components.Terminal import Terminal
 from desktop.components.ToolBar import ToolBar
-from config import SERIAL_BAUDRATE
-import utilities.worker.utils as worker
-from utilities.grbl.grblController import GrblController
-from utilities.grbl.types import GrblSettings, ParserState, Status
-from utilities.loggerFactory import setup_stream_logger
-from utilities.serial import SerialService
+from core.config import SERIAL_BAUDRATE
+import core.utilities.worker.utils as worker
+from core.utilities.grbl.grblController import GrblController
+from core.utilities.grbl.types import GrblSettings, ParserState, Status
+from core.utilities.loggerFactory import setup_stream_logger
+from core.utilities.serial import SerialService
 from desktop.helpers.fileStreamer import FileStreamer
 from desktop.helpers.grblSync import GrblSync
 import logging

@@ -1,8 +1,8 @@
 from desktop.config import appConfig
 from desktop.containers.ButtonGrid import ButtonGrid
 from desktop.containers.ButtonList import ButtonList
-from utilities.grbl.grblController import GrblController
-from utilities.grbl.grblUtils import JOG_DISTANCE_INCREMENTAL
+from core.utilities.grbl.grblController import GrblController
+from core.utilities.grbl.grblUtils import JOG_DISTANCE_INCREMENTAL
 from desktop.mixins.JogController import JogController
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget

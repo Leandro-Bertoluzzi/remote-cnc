@@ -2,16 +2,16 @@ from desktop.components.cards.Card import Card
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
 from desktop.components.dialogs.TaskDataDialog import TaskFromFileDialog
 from desktop.config import USER_ID, FILES_FOLDER_PATH
-from database.base import SessionLocal
-from database.exceptions import DatabaseError, EntityNotFoundError
-from database.models import File, TaskStatus
-from database.repositories.fileRepository import DuplicatedFileNameError
-from database.repositories.taskRepository import TaskRepository
-from database.utils import get_assets
-from utilities.files import InvalidFile, FileSystemError
-from utilities.fileManager import FileManager
-import utilities.worker.utils as worker
-from utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.database.base import SessionLocal
+from core.database.exceptions import DatabaseError, EntityNotFoundError
+from core.database.models import File, TaskStatus
+from core.database.repositories.fileRepository import DuplicatedFileNameError
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.utils import get_assets
+from core.utilities.files import InvalidFile, FileSystemError
+from core.utilities.fileManager import FileManager
+import core.utilities.worker.utils as worker
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from desktop.helpers.utils import needs_confirmation
 
 

@@ -1,8 +1,8 @@
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from database.models import User
-from database.repositories.userRepository import UserRepository
+from core.database.models import User
+from core.database.repositories.userRepository import UserRepository
 from desktop.MainWindow import MainWindow
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 import pytest

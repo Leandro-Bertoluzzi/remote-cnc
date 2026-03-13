@@ -1,6 +1,6 @@
 import pytest
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
-from database.models import Tool
+from core.database.models import Tool
 
 
 class TestToolDataDialog:

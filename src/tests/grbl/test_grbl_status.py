@@ -1,5 +1,5 @@
-from utilities.grbl.constants import GrblActiveState
-from utilities.grbl.grblStatus import GrblStatus
+from core.utilities.grbl.constants import GrblActiveState
+from core.utilities.grbl.grblStatus import GrblStatus
 import mocks.grbl_mocks as grbl_mocks
 import pytest
 

@@ -1,5 +1,5 @@
-from database.models import Task
-from database.repositories.taskRepository import TaskRepository
+from core.database.models import Task
+from core.database.repositories.taskRepository import TaskRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 

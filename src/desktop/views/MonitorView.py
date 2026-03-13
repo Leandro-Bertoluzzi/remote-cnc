@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.TaskProgress import TaskProgress
-import utilities.worker.utils as worker
-from utilities.grbl.types import Status, ParserState
+import core.utilities.worker.utils as worker
+from core.utilities.grbl.types import Status, ParserState
 from typing import TYPE_CHECKING
 from desktop.views.BaseView import BaseView
 

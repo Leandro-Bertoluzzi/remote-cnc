@@ -1,5 +1,5 @@
-from database.base import Base
-from database.models import Material
+from core.database.base import Base
+from core.database.models import Material
 from conftest import engine, TestingSession
 
 

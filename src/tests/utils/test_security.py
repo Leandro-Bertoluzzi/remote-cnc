@@ -1,6 +1,6 @@
 import bcrypt
 import pytest
-import utilities.security as security
+import core.utilities.security as security
 
 
 def test_hash_password(mocker):

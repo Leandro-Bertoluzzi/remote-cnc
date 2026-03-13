@@ -1,6 +1,6 @@
 from desktop.containers.WidgetsHList import WidgetsHList
-from utilities.grbl.grblController import GrblController
-from utilities.grbl.grblUtils import JOG_DISTANCE_ABSOLUTE
+from core.utilities.grbl.grblController import GrblController
+from core.utilities.grbl.grblUtils import JOG_DISTANCE_ABSOLUTE
 from desktop.mixins.JogController import JogController
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QDialogButtonBox
 from PyQt5.QtCore import Qt

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pytest_mock.plugin import MockerFixture
-from utilities.logsInterpreter import LogsInterpreter
+from core.utilities.logsInterpreter import LogsInterpreter
 
 
 class TestLogsInterpreter:

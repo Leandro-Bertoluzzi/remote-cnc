@@ -1,9 +1,9 @@
-from database.repositories.taskRepository import TaskRepository
+from core.database.repositories.taskRepository import TaskRepository
 from fastapi import APIRouter, HTTPException
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
-from schemas.general import GenericResponse
-from schemas.tasks import TaskCreate, TaskUpdate, TaskUpdateStatus, TaskResponse
+from core.schemas.general import GenericResponse
+from core.schemas.tasks import TaskCreate, TaskUpdate, TaskUpdateStatus, TaskResponse
 
 taskRoutes = APIRouter(prefix="/tasks", tags=["Tasks"])
 

@@ -3,7 +3,7 @@ import pytest
 import shutil
 import time
 from typing import BinaryIO
-from utilities.files import getFileNameInFolder, computeSHA256, computeSHA256FromFile, \
+from core.utilities.files import getFileNameInFolder, computeSHA256, computeSHA256FromFile, \
     FileSystemHelper
 
 

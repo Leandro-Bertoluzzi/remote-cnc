@@ -1,8 +1,8 @@
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from database.base import SessionLocal
-from database.models import User
-from database.repositories.userRepository import UserRepository
+from core.database.base import SessionLocal
+from core.database.models import User
+from core.database.repositories.userRepository import UserRepository
 from desktop.helpers.utils import needs_confirmation
 
 

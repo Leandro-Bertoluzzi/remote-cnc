@@ -4,12 +4,12 @@ from celery.result import AsyncResult
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from utilities.worker.workerStatusManager import WorkerStoreAdapter
-from database.models import Task, TaskStatus
-from database.repositories.fileRepository import FileRepository
-from database.repositories.materialRepository import MaterialRepository
-from database.repositories.taskRepository import TaskRepository
-from database.repositories.toolRepository import ToolRepository
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.database.models import Task, TaskStatus
+from core.database.repositories.fileRepository import FileRepository
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.taskRepository import TaskRepository
+from core.database.repositories.toolRepository import ToolRepository
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 from typing import Union

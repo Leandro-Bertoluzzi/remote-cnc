@@ -1,7 +1,7 @@
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from database.base import SessionLocal
-from database.repositories.userRepository import UserRepository
+from core.database.base import SessionLocal
+from core.database.repositories.userRepository import UserRepository
 from desktop.views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 

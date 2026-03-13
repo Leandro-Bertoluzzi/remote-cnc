@@ -1,4 +1,4 @@
-from utilities.redisPubSubManager import RedisPubSubManagerAsync
+from core.utilities.redisPubSubManager import RedisPubSubManagerAsync
 from fastapi import Depends
 from typing import Annotated
 

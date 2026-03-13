@@ -1,5 +1,5 @@
 import pytest
-import utilities.security as security
+import core.utilities.security as security
 from jwt import ExpiredSignatureError, InvalidSignatureError
 
 

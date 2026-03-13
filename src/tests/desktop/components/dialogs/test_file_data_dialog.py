@@ -1,7 +1,7 @@
 import pytest
 from PyQt5.QtWidgets import QFileDialog, QPushButton
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
-from database.models import File
+from core.database.models import File
 
 
 class TestFileDataDialog:

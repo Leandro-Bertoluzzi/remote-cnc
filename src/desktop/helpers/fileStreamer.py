@@ -1,5 +1,5 @@
-from utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
-from utilities.grbl.grblController import GrblController
+from core.utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from core.utilities.grbl.grblController import GrblController
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer
 
 # Constants

@@ -1,7 +1,7 @@
 from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
-from database.models import Material
-from database.repositories.materialRepository import MaterialRepository
+from core.database.models import Material
+from core.database.repositories.materialRepository import MaterialRepository
 from PyQt5.QtWidgets import QDialog, QMessageBox
 import pytest
 from pytest_mock.plugin import MockerFixture

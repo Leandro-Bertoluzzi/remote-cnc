@@ -1,5 +1,5 @@
-from database.models import File
-from database.repositories.fileRepository import FileRepository, DuplicatedFileError, \
+from core.database.models import File
+from core.database.repositories.fileRepository import FileRepository, DuplicatedFileError, \
     DuplicatedFileNameError
 import pytest
 from sqlalchemy.exc import SQLAlchemyError

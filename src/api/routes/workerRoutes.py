@@ -1,12 +1,12 @@
-from utilities.worker.workerStatusManager import WorkerStoreAdapter
-from utilities.worker.scheduler import app
-import utilities.worker.utils as worker
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.utilities.worker.scheduler import app
+import core.utilities.worker.utils as worker
 from fastapi import APIRouter, HTTPException
 from api.middleware.authMiddleware import GetUserDep, GetAdminDep
-from schemas.worker import TaskStatusResponse, WorkerTaskResponse, \
+from core.schemas.worker import TaskStatusResponse, WorkerTaskResponse, \
     WorkerOnResponse, WorkerPausedResponse, WorkerAvailableResponse, \
     DeviceEnabledResponse
-from utilities.worker.utils import send_task_to_worker
+from core.utilities.worker.utils import send_task_to_worker
 
 workerRoutes = APIRouter(prefix="/worker", tags=["Worker"])
 

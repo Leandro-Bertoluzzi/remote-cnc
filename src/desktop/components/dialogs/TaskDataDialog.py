@@ -1,4 +1,4 @@
-from database.models import File, Material, Task, Tool
+from core.database.models import File, Material, Task, Tool
 from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QComboBox, QTextEdit
 from PyQt5.QtCore import Qt
 from typing import Optional

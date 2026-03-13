@@ -2,9 +2,9 @@ from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
-from database.base import SessionLocal
-from database.repositories.materialRepository import MaterialRepository
-from database.repositories.toolRepository import ToolRepository
+from core.database.base import SessionLocal
+from core.database.repositories.materialRepository import MaterialRepository
+from core.database.repositories.toolRepository import ToolRepository
 from desktop.views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 

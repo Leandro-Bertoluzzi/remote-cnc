@@ -2,17 +2,17 @@ from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
-from database.repositories.fileRepository import DatabaseError, DuplicatedFileError, \
+from core.database.repositories.fileRepository import DatabaseError, DuplicatedFileError, \
     DuplicatedFileNameError, FileRepository
-from utilities.fileManager import FileManager
-from utilities.files import FileSystemError
+from core.utilities.fileManager import FileManager
+from core.utilities.files import FileSystemError
 from desktop.MainWindow import MainWindow
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 import pytest
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 from desktop.views.FilesView import FilesView
-from database.models import File, User
+from core.database.models import File, User
 
 
 class TestFilesView:

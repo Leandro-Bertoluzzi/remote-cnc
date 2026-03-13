@@ -1,5 +1,5 @@
-from utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
-from utilities.grbl.grblController import GrblController
+from core.utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from core.utilities.grbl.grblController import GrblController
 from desktop.helpers.fileStreamer import FileStreamer
 from logging import Logger
 from PyQt5.QtCore import QTimer

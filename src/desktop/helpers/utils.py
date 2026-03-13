@@ -1,4 +1,4 @@
-from utilities.files import getFileNameInFolder
+from core.utilities.files import getFileNameInFolder
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
 

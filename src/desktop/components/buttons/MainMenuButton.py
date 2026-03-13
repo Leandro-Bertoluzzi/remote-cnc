@@ -2,7 +2,7 @@ from PyQt5.QtCore import QEvent, Qt
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor, QPaintEvent
 from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAbstractButton
-from utilities.files import getFileNameInFolder
+from core.utilities.files import getFileNameInFolder
 
 color_text = QColor('#2E1C1C')
 color_hover_border = QColor('black')

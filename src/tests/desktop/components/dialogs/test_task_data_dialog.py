@@ -1,9 +1,9 @@
 import pytest
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from database.models import File
-from database.models import Material
-from database.models import Task
-from database.models import Tool
+from core.database.models import File
+from core.database.models import Material
+from core.database.models import Task
+from core.database.models import Tool
 
 
 class TestTaskDataDialog:

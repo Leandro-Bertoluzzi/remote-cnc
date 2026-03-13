@@ -4,12 +4,12 @@ from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.components.TaskProgress import TaskProgress
 from desktop.config import USER_ID
-import utilities.worker.utils as worker
-from utilities.worker.workerStatusManager import WorkerStoreAdapter
-from database.base import SessionLocal
-from database.models import Task, TASK_DEFAULT_PRIORITY, TaskStatus
-from database.repositories.taskRepository import TaskRepository
-from utilities.storage import get_value_from_id
+import core.utilities.worker.utils as worker
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.database.base import SessionLocal
+from core.database.models import Task, TASK_DEFAULT_PRIORITY, TaskStatus
+from core.database.repositories.taskRepository import TaskRepository
+from core.utilities.storage import get_value_from_id
 from desktop.helpers.utils import needs_confirmation
 from PyQt5.QtWidgets import QSizePolicy, QPushButton
 

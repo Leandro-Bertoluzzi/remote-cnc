@@ -1,6 +1,6 @@
 import bcrypt
-from database.models import User
-from database.repositories.userRepository import UserRepository
+from core.database.models import User
+from core.database.repositories.userRepository import UserRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 

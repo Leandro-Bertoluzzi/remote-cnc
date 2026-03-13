@@ -1,5 +1,5 @@
 from app import app
-from database.models import User
+from core.database.models import User
 from fastapi.testclient import TestClient
 import api.middleware.authMiddleware as authMiddleware
 import api.middleware.dbMiddleware as dbMiddleware

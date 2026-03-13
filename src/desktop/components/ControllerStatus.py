@@ -1,6 +1,6 @@
-from database.base import SessionLocal
-from database.repositories.toolRepository import ToolRepository
-from utilities.grbl.types import Status
+from core.database.base import SessionLocal
+from core.database.repositories.toolRepository import ToolRepository
+from core.utilities.grbl.types import Status
 from desktop.helpers.utils import applyStylesheet
 from PyQt5.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt

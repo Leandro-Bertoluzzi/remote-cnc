@@ -2,7 +2,7 @@ import asyncio  # noqa: F401
 from fastapi import APIRouter, Request
 from api.middleware.authMiddleware import GetUserDep
 from api.middleware.pubSubMiddleware import GetPubSub
-from schemas.general import PubSubMessage
+from core.schemas.general import PubSubMessage
 from sse_starlette.sse import EventSourceResponse
 
 monitorRoutes = APIRouter(prefix="/monitor", tags=["Monitor"])

@@ -1,5 +1,5 @@
-from database.base import Base
-from database.models import Tool
+from core.database.base import Base
+from core.database.models import Tool
 from conftest import engine, TestingSession
 
 

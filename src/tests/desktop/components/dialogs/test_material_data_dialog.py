@@ -1,6 +1,6 @@
 import pytest
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
-from database.models import Material
+from core.database.models import Material
 
 
 class TestMaterialDataDialog:
