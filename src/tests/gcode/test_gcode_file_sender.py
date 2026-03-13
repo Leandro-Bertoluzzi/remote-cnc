@@ -1,5 +1,5 @@
-from utilities.grbl.grblController import GrblController
-from utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from core.utilities.grbl.grblController import GrblController
+from core.utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
 from io import BytesIO
 from logging import Logger
 import pytest

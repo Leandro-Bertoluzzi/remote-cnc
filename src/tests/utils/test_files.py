@@ -3,7 +3,7 @@ import pytest
 import shutil
 import time
 from typing import BinaryIO
-from utilities.files import getFileNameInFolder, computeSHA256, computeSHA256FromFile, \
+from core.utilities.files import getFileNameInFolder, computeSHA256, computeSHA256FromFile, \
     FileSystemHelper
 
 
@@ -67,15 +67,13 @@ def test_computeSHA256(mocker):
     assert computeSHA256(file_name) == expected_hash
 
 
-@pytest.mark.parametrize('user_folder_exists', [True, False])
-def test_save_file(mocker, user_folder_exists):
+def test_save_file(mocker):
     file = BinaryIO()
     file_name = 'file.gcode'
     user_id = 1
     expected = Path('path/to/gcode_files/1/file.gcode')
 
     # Mock folder creation
-    mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
     mock_create_dir = mocker.patch.object(Path, 'mkdir')
 
     # Mock file open
@@ -86,12 +84,12 @@ def test_save_file(mocker, user_folder_exists):
     mock_copy_file = mocker.patch.object(shutil, 'copyfileobj')
 
     # Call the method under test
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
     result = files_helper.save_file(user_id, file, file_name)
 
     # Assertions
     assert result == expected
-    assert mock_create_dir.call_count == (0 if user_folder_exists else 1)
+    assert mock_create_dir.call_count == 1
     assert mock_copy_file.call_count == 1
 
 
@@ -108,7 +106,7 @@ def test_save_file_with_invalid_name(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
         files_helper.save_file(user_id, file, file_name)
     assert 'Invalid file format, must be one of: ' in str(error.value)
 
@@ -127,33 +125,30 @@ def test_save_file_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
         files_helper.save_file(user_id, file, file_name)
     assert 'There was an error writing the file in the file system' in str(error.value)
 
 
-@pytest.mark.parametrize('user_folder_exists', [True, False])
-def test_copy_file(mocker, user_folder_exists):
+def test_copy_file(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
     user_id = 1
     expected = Path('path/to/gcode_files/1/file.gcode')
 
     # Mock folder creation
-    mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
     mock_create_dir = mocker.patch.object(Path, 'mkdir')
-    create_dir_call_count = 0 if user_folder_exists else 1
 
     # Mock file copy
     mock_copy_file = mocker.patch.object(shutil, 'copy')
 
     # Call the method under test
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
     result = files_helper.copy_file(user_id, original_path, file_name)
 
     # Assertions
     assert result == expected
-    assert mock_create_dir.call_count == create_dir_call_count
+    assert mock_create_dir.call_count == 1
     assert mock_copy_file.call_count == 1
 
 
@@ -170,7 +165,7 @@ def test_copy_file_with_invalid_name(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
         files_helper.copy_file(user_id, original_path, file_name)
     assert 'Invalid file format, must be one of: ' in str(error.value)
 
@@ -189,7 +184,7 @@ def test_copy_file_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
         files_helper.copy_file(user_id, original_path, file_name)
     assert 'There was an error writing the file in the file system' in str(error.value)
 
@@ -208,7 +203,7 @@ def test_rename_file(mocker):
     mock_rename_file = mocker.patch.object(Path, 'rename')
 
     # Call the method under test
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
     result = files_helper.rename_file(user_id, file_name, new_file_name)
 
     # Assertions
@@ -226,7 +221,7 @@ def test_rename_file_with_invalid_name(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
         files_helper.rename_file(user_id, file_name, new_file_name)
     assert 'Invalid file format, must be one of: ' in str(error.value)
 
@@ -244,7 +239,7 @@ def test_rename_file_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
         files_helper.rename_file(user_id, file_name, new_file_name)
     assert 'There was an error renaming the file in the file system' in str(error.value)
 
@@ -257,7 +252,7 @@ def test_delete_file(mocker):
     mock_remove_file = mocker.patch.object(Path, 'unlink')
 
     # Assertions
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
     files_helper.delete_file(user_id, file_name)
     assert mock_remove_file.call_count == 1
 
@@ -268,6 +263,6 @@ def test_delete_file_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
         files_helper.delete_file(1, 'file_name')
     assert 'There was an error removing the file from the file system' in str(error.value)

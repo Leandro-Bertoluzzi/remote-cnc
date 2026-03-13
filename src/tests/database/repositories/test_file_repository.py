@@ -1,5 +1,5 @@
-from database.models import File
-from database.repositories.fileRepository import FileRepository, DuplicatedFileError, \
+from core.database.models import File
+from core.database.repositories.fileRepository import FileRepository, DuplicatedFileError, \
     DuplicatedFileNameError
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
@@ -83,7 +83,7 @@ class TestFileRepository:
         files_before = file_repository.get_all_files()
 
         # Call method under test
-        file_repository.remove_file(id=1)
+        file_repository.remove_file(id=2)
 
         # Assertions
         files_after = file_repository.get_all_files()

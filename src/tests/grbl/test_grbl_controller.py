@@ -1,10 +1,10 @@
-from utilities.grbl.grblController import GrblController
-from utilities.grbl.grblLineParser import GrblLineParser
-from utilities.grbl.grblMonitor import GrblMonitor
-from utilities.grbl.grblStatus import GrblStatus
-from utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_FEEDBACK, GRBL_MSG_STARTUP, GRBL_RESULT_OK
-import mocks.grbl_mocks as grbl_mocks
-from utilities.serial import SerialService
+from core.utilities.grbl.grblController import GrblController
+from core.utilities.grbl.grblLineParser import GrblLineParser
+from core.utilities.grbl.grblMonitor import GrblMonitor
+from core.utilities.grbl.grblStatus import GrblStatus
+from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_FEEDBACK, GRBL_MSG_STARTUP, GRBL_RESULT_OK
+import mocks.grbl as grbl_mocks
+from core.utilities.serial import SerialService
 from serial import SerialException
 import logging
 from queue import Empty, Queue
@@ -259,7 +259,7 @@ class TestGrblController:
     def test_jog(self, mocker: MockerFixture):
         # Mock GRBL methods
         mock_build_jog_command = mocker.patch(
-            'grbl.grblController.build_jog_command',
+            'core.utilities.grbl.grblController.build_jog_command',
             return_value='$J=X1.0 Y2.0 Z3.0 F500.0'
         )
         mock_command_send = mocker.patch.object(GrblController, 'send_command')

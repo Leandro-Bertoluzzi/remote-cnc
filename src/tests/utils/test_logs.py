@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 from pytest_mock.plugin import MockerFixture
-from utilities.logsInterpreter import LogsInterpreter
+from core.utilities.logsInterpreter import LogsInterpreter
 
 
 class TestLogsInterpreter:
@@ -95,7 +95,7 @@ class TestLogsInterpreter:
         result = LogsInterpreter.interpret_file(Path())
 
         # Assertions
-        assert result == [
+        assert list(result) == [
             ('28/02/2024 19:45:55', 'INFO', None, 'Started USB connection at port COM5'),
             ('28/02/2024 19:45:55', 'WARNING', None, 'Handling homing cycle at startup...'),
             ('28/02/2024 19:45:55', 'INFO', 'Sent', 'command: $X'),
@@ -117,4 +117,4 @@ class TestLogsInterpreter:
         result = LogsInterpreter.interpret_file(Path())
 
         # Assertions
-        assert result == []
+        assert list(result) == []

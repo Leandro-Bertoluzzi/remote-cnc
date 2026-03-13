@@ -1,6 +1,6 @@
 import bcrypt
-from database.models import User
-from database.repositories.userRepository import UserRepository
+from core.database.models import User
+from core.database.repositories.userRepository import UserRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -91,7 +91,7 @@ class TestUserRepository:
         users_before = user_repository.get_all_users()
 
         # Call method under test
-        user_repository.remove_user(id=1)
+        user_repository.remove_user(id=3)
 
         # Assertions
         users_after = user_repository.get_all_users()

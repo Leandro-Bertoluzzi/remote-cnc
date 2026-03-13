@@ -1,13 +1,26 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
 
 # Environment files
 .env
 venv/
+env-dev/
+.venv/
 api.conf
 
 # Test related files
 .coverage
+htmlcov/
+
+# Type checking / linting cache
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
 
 # User files
 gcode_files/

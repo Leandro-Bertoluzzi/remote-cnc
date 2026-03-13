@@ -1,4 +1,4 @@
-from utilities.gcode.gcodeAnalyser import GcodeAnalyser
+from core.utilities.gcode.gcodeAnalyser import GcodeAnalyser
 import pytest
 from pytest_mock.plugin import MockerFixture
 

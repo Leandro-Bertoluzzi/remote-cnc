@@ -1,5 +1,5 @@
-from database.models import Material
-from database.repositories.materialRepository import MaterialRepository
+from core.database.models import Material
+from core.database.repositories.materialRepository import MaterialRepository
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -60,7 +60,7 @@ class TestMaterialRepository:
         materials_before = material_repository.get_all_materials()
 
         # Call method under test
-        material_repository.remove_material(id=1)
+        material_repository.remove_material(id=2)
 
         # Assertions
         materials_after = material_repository.get_all_materials()

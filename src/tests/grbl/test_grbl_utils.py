@@ -1,4 +1,4 @@
-from utilities.grbl.grblUtils import build_jog_command, get_grbl_setting, is_setting_update_command, \
+from core.utilities.grbl.grblUtils import build_jog_command, get_grbl_setting, is_setting_update_command, \
     JOG_DISTANCE_ABSOLUTE, JOG_DISTANCE_INCREMENTAL, JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 import pytest
 
