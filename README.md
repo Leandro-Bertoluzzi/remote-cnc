@@ -65,7 +65,7 @@ The following tools were used in this project:
 
 ## :white_check_mark: Requirements
 
-Before starting :checkered_flag:, you need to have [Python](https://www.python.org/) and [Docker](https://www.docker.com/) installed.
+Before starting :checkered_flag:, you need to have [Python](https://www.python.org/), [uv](https://docs.astral.sh/uv/) and [Docker](https://www.docker.com/) installed.
 
 ## :checkered_flag: Installation
 
@@ -79,6 +79,57 @@ You can execute the script `deployment/db_schema.py` in production with the `adm
 
 ## :checkered_flag: Development
 
+### Project structure
+
+This is a **uv workspace** monorepo. All Python source lives under `src/`:
+
+```text
+src/
+├── pyproject.toml          # Workspace root (virtual)
+├── uv.lock                 # Single lockfile for the whole workspace
+├── core/                   # Shared library: database, config, utilities, schemas
+│   ├── pyproject.toml
+│   ├── core/               # Python package
+│   ├── alembic/            # Database migrations
+│   └── alembic.ini
+├── api/                    # FastAPI REST API
+│   ├── pyproject.toml
+│   ├── main.py             # Entry point
+│   ├── routes/
+│   ├── middleware/
+│   └── tests/
+├── worker/                 # Celery background worker
+│   ├── pyproject.toml
+│   ├── main.py             # Entry point
+│   ├── tasks/
+│   └── tests/
+├── desktop/                # PyQt5 desktop application
+│   ├── pyproject.toml
+│   ├── main.py             # Entry point
+│   ├── views/
+│   ├── components/
+│   └── tests/
+└── tests/                  # Core / shared tests + mocks
+    ├── conftest.py
+    └── mocks/
+```
+
+### First-time setup
+
+```bash
+# 1. Clone the repository
+$ git clone https://github.com/Leandro-Bertoluzzi/remote-cnc.git
+$ cd remote-cnc
+
+# 2. Copy and fill in environment variables
+$ cp .env.example .env
+
+# 3. Install all dependencies (creates a single virtualenv for the workspace)
+$ make install
+```
+
+### Running with Docker (recommended)
+
 The easiest way to run the needed services is with `Docker`. This will start the API and the following services:
 - PostgreSQL DB.
 - Adminer, to manage the DB.
@@ -86,7 +137,7 @@ The easiest way to run the needed services is with `Docker`. This will start the
 - Flower, to monitor the Celery worker.
 
 ```bash
-$ docker compose up -d
+$ make docker-up
 ```
 
 if you want to also start the CNC worker (Celery) in a container (Linux only, see [this section](#gear-cnc-worker)):
@@ -96,7 +147,20 @@ $ docker compose --profile=worker up -d
 
 Open [http://localhost:8000](http://localhost:8000) with your browser to check if the API works.
 
-You can find instructions to run locally (without Docker) and further information in each subproject's folder:
+### Running locally (without Docker)
+
+```bash
+# Start the API
+$ make start-api
+
+# Start the desktop app
+$ make start-desktop
+
+# Start the Celery worker
+$ make start-worker
+```
+
+You can find further information in each subproject's docs folder:
 - Desktop: See development docs for desktop app [here](docs/desktop/development.md).
 - API: See development docs for API [here](docs/api/development.md).
 
@@ -125,33 +189,39 @@ docker exec -it remote-cnc-worker-sim /bin/bash simport.sh
 
 To see your database, you can either use the `adminer` container which renders an admin in `http://localhost:8080` when running the `docker-compose.yaml`; or connect to it with a client like [DBeaver](https://dbeaver.io/).
 
-You can manage database migrations by using the following commands inside the `core` folder.
+You can manage database migrations with the following Makefile targets (which wrap Alembic commands):
 
 - Apply all migrations:
 
 ```bash
-$ alembic upgrade head
+$ make db-upgrade
 ```
 
-- Revert all migrations:
+- Revert last migration:
 
 ```bash
-$ alembic downgrade base
+$ make db-downgrade
+```
+
+- Auto-generate a new revision:
+
+```bash
+$ make db-revision MSG="add users table"
 ```
 
 - Seed DB with initial data:
 
 ```bash
-$ python seeder.py
+$ make db-seed
 ```
 
 More info about Alembic usage [here](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
 
-if you are using `docker compose`, you can run the following commands to apply database migrations and seeder:
+If you are using `docker compose`, you can run the following commands to apply database migrations and seeder:
 
 ```bash
-$ docker exec remote-cnc-api bash -c "cd core && alembic upgrade head"
-$ docker exec remote-cnc-api bash -c "cd core && python seeder.py"
+$ docker exec remote-cnc-api bash -c "cd core && uv run alembic upgrade head"
+$ docker exec remote-cnc-api bash -c "uv run python db_seeder.py"
 ```
 
 ## :rocket: Deploy changes
@@ -199,7 +269,7 @@ docker buildx create --name raspberry --driver=docker-container
 Then, the command to actually generate the image and update the remote repository is the following:
 
 ```bash
-docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_user}}/cnc-worker:latest --builder=raspberry --target production --file core/Dockerfile.worker --push core
+docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_user}}/cnc-worker:latest --builder=raspberry --target production --file src/Dockerfile.worker --push src
 ```
 
 **NOTE:** You may have to log in with `docker login` previous to run the build command.
@@ -218,21 +288,14 @@ The CNC worker should start automatically when running `docker compose --profile
 In case you don't use Docker or just want to run it manually, you can follow the next steps.
 
 ```bash
-# 1. Move to worker folder
-$ cd core/worker
-
-# 2. Start Celery's worker server
-$ celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
+# Start Celery's worker server
+$ make start-worker
 ```
 
 Optionally, if you are going to make changes in the worker's code and want to see them in real time, you can start the Celery worker with auto-reload.
 
 ```bash
-# 1. Move to worker folder
-$ cd core/worker
-
-# 2. Start Celery's worker server with auto-reload
-$ watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app tasks worker --loglevel=INFO --logfile=logs/celery.log
+$ cd src && uv run watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log
 ```
 
 ### Start the Celery worker manually (Windows)
@@ -242,34 +305,41 @@ Due to a known problem with Celery's default pool (prefork), it is not as straig
 - **solo**: The solo pool is a simple, single-threaded execution pool. It simply executes incoming tasks in the same process and thread as the worker.
 
 ```bash
-$ celery --app worker worker --loglevel=INFO --logfile=logs/celery.log --pool=solo
+$ cd src && uv run celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=solo
 ```
 
 - **threads**: The threads in the threads pool type are managed directly by the operating system kernel. As long as Python's ThreadPoolExecutor supports Windows threads, this pool type will work on Windows.
 
 ```bash
-$ celery --app worker worker --loglevel=INFO --logfile=logs/celery.log --pool=threads
+$ cd src && uv run celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=threads
 ```
 
 - **gevent**: The [gevent package](http://www.gevent.org/) officially supports Windows, so it remains a suitable option for IO-bound task processing on Windows. Downside is that you have to install it first.
 
 ```bash
 # 1. Install gevent
-# Option 1: If you use Conda
-$ conda install -c anaconda gevent
-
-# Option 2: If you use pip
-$ pip install gevent
+$ cd src && uv add gevent
 
 # 2. Start Celery's worker server
-$ celery --app worker worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
+$ cd src && uv run celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
 ## :wrench: Running tests
 
-You can use the following command to execute tests (unit, linter, type check):
+You can use the following commands to execute tests and quality checks:
+
 ```bash
-$ make run-tests
+# Run all tests
+$ make test
+
+# Run tests for a specific service
+$ make test-core
+$ make test-api
+$ make test-worker
+$ make test-desktop
+
+# Run all quality checks (lint + typecheck + test)
+$ make check
 ```
 
 ## :memo: License
