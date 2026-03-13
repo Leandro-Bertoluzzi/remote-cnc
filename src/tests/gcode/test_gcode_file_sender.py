@@ -91,12 +91,12 @@ class TestGcodeFileSender:
         # Mock GRBL methods
         mock_grbl_get_buffer_fill = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'getBufferFill',
+            'get_buffer_fill',
             return_value=10.0
         )
         mock_grbl_send_command = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'sendCommand'
+            'send_command'
         )
 
         # Mock file
@@ -113,7 +113,7 @@ class TestGcodeFileSender:
         # Mock GRBL methods
         mock_grbl_send_command = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'sendCommand'
+            'send_command'
         )
 
         # Call method under test
@@ -126,7 +126,7 @@ class TestGcodeFileSender:
         # Mock GRBL methods
         mock_grbl_send_command = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'sendCommand'
+            'send_command'
         )
 
         # Mock file
@@ -145,12 +145,12 @@ class TestGcodeFileSender:
         # Mock GRBL methods
         mock_grbl_get_buffer_fill = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'getBufferFill',
+            'get_buffer_fill',
             return_value=100.0
         )
         mock_grbl_send_command = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'sendCommand'
+            'send_command'
         )
 
         # Mock file
@@ -167,12 +167,12 @@ class TestGcodeFileSender:
         # Mock GRBL methods
         mock_grbl_get_buffer_fill = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'getBufferFill',
+            'get_buffer_fill',
             return_value=10.0
         )
         mock_grbl_send_command = mocker.patch.object(
             self.file_sender.grbl_controller,
-            'sendCommand'
+            'send_command'
         )
 
         # Mock file

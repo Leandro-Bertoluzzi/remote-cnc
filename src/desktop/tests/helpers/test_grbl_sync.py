@@ -39,7 +39,7 @@ class TestGrblSync:
         # Mock GRBL monitor methods
         mocker.patch.object(
             self.grbl_controller.grbl_monitor,
-            'getLog',
+            'get_log',
             return_value='A message'
         )
 

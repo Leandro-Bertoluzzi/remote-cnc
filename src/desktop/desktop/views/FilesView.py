@@ -44,9 +44,9 @@ class FilesView(BaseListView):
         db_session = SessionLocal()
         file_manager = FileManager(FILES_FOLDER_PATH, db_session)
         try:
-            file_id = file_manager.create_file(USER_ID, name, path)
-            generate_file_report(file_id)
-            create_thumbnail(file_id)
+            file = file_manager.create_file(USER_ID, name, path)
+            generate_file_report(file.id)
+            create_thumbnail(file.id)
         except (DuplicatedFileNameError, DuplicatedFileError) as error:
             self.showWarning(
                 'Archivo repetido',

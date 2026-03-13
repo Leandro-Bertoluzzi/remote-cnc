@@ -43,7 +43,7 @@ def test_execute_tasks(mocker: MockerFixture):
     mocker.patch.object(GrblStatus, 'get_parser_state')
     mocker.patch.object(
         GrblController,
-        'getCommandsCount',
+        'get_commands_count',
         side_effect=get_commands_count
     )
     mocker.patch.object(GrblStatus, 'failed', return_value=False)
@@ -148,7 +148,7 @@ def test_execute_tasks_file_error(mocker: MockerFixture):
     mocker.patch.object(GrblStatus, 'get_parser_state')
 
     # Mock FS methods
-    mocker.patch('tasks.getFilePath')
+    mocker.patch('tasks.get_file_path')
 
     # Mock file sender methods
     mocker.patch.object(
@@ -188,7 +188,7 @@ def test_execute_tasks_grbl_error(mocker: MockerFixture):
     mock_disconnect = mocker.patch.object(GrblController, 'disconnect')
     mocker.patch.object(GrblStatus, 'get_status_report')
     mocker.patch.object(GrblStatus, 'get_parser_state')
-    mocker.patch.object(GrblController, 'getCommandsCount', return_value=0)
+    mocker.patch.object(GrblController, 'get_commands_count', return_value=0)
 
     # Mock file sender methods
     mocker.patch.object(GcodeFileSender, 'start', return_value=3)
@@ -269,7 +269,7 @@ def test_execute_tasks_pause(mocker: MockerFixture):
     mocker.patch.object(GrblStatus, 'get_parser_state')
     mocker.patch.object(
         GrblController,
-        'getCommandsCount',
+        'get_commands_count',
         side_effect=get_commands_count
     )
     mocker.patch.object(GrblStatus, 'failed', return_value=False)

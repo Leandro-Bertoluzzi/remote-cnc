@@ -7,14 +7,13 @@ from core.utilities.redisPubSubManager import RedisPubSubManagerSync
 
 # Constants
 PUBSUB_CHANNEL = 'grbl_messages'
-
-_LOG_LEVELS = ['critical', 'error', 'warning', 'info', 'debug']
+LOG_LEVELS = ['critical', 'error', 'warning', 'info', 'debug']
 
 
 class GrblMonitor:
     def __init__(self, logger: logging.Logger):
         # Configure logs queue for external monitor
-        self.queue_log: Queue[str] = Queue()
+        self.logs_queue: Queue[str] = Queue()
 
         # Configure logger
         self.logger = logger
@@ -34,7 +33,7 @@ class GrblMonitor:
     # LOGGER
 
     def _log(self, level: str, log: str, queue: bool = False, exc_info: bool = None):
-        if level not in _LOG_LEVELS:
+        if level not in LOG_LEVELS:
             return
 
         log_method = getattr(self.logger, level)
@@ -44,7 +43,7 @@ class GrblMonitor:
             log_method(log)
 
         if queue:
-            self.queueLog(log)
+            self.queue_log(log)
 
     def debug(self, log: str, queue: bool = False):
         self._log('debug', log, queue=queue)
@@ -67,7 +66,7 @@ class GrblMonitor:
             self.logger.debug('[Sent] command: {}'.format(command))
             return
         self.logger.info('[Sent] command: {}'.format(command))
-        self.queueLog(command)
+        self.queue_log(command)
 
         # Publish in PubSub
         self._publish('sent', command)
@@ -83,29 +82,28 @@ class GrblMonitor:
 
         self.logger.info(received_str)
         self.logger.info(parsed_str)
-        self.queueLog(message)
+        self.queue_log(message)
 
         # Publish in PubSub
         self._publish('received', message)
 
     # LOGS QUEUE MANAGEMENT
 
-    def queueLog(self, log: str):
-        """Adds a message to the log queue.
+    def queue_log(self, log: str):
+        """
+        Adds a message to the log queue.
         This queue can be accessed by an external monitor.
         """
-        self.queue_log.put(log)
+        self.logs_queue.put(log)
 
-    def hasLogs(self) -> bool:
-        """Tell if there are any queued logs.
-        """
-        return self.queue_log.qsize() > 0
+    def has_logs(self) -> bool:
+        """Tell if there are any queued logs."""
+        return self.logs_queue.qsize() > 0
 
-    def getLog(self) -> str:
-        """Returns a log from the log queue.
-        """
+    def get_log(self) -> str:
+        """Returns a log from the log queue."""
         try:
-            return self.queue_log.get_nowait()
+            return self.logs_queue.get_nowait()
         except Empty:
             return ''
 

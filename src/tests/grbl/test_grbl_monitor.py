@@ -23,7 +23,7 @@ class TestGrblMonitor:
     def test_debug(self, mocker, queue):
         # Mock methods
         mock_logger = mocker.patch.object(self.grbl_logger, 'debug')
-        mock_queue = mocker.patch.object(self.grbl_monitor, 'queueLog')
+        mock_queue = mocker.patch.object(self.grbl_monitor, 'queue_log')
 
         # Call method under test
         self.grbl_monitor.debug('Test message', queue)
@@ -36,7 +36,7 @@ class TestGrblMonitor:
     def test_info(self, mocker, queue):
         # Mock methods
         mock_logger = mocker.patch.object(self.grbl_logger, 'info')
-        mock_queue = mocker.patch.object(self.grbl_monitor, 'queueLog')
+        mock_queue = mocker.patch.object(self.grbl_monitor, 'queue_log')
 
         # Call method under test
         self.grbl_monitor.info('Test message', queue)
@@ -49,7 +49,7 @@ class TestGrblMonitor:
     def test_warning(self, mocker, queue):
         # Mock methods
         mock_logger = mocker.patch.object(self.grbl_logger, 'warning')
-        mock_queue = mocker.patch.object(self.grbl_monitor, 'queueLog')
+        mock_queue = mocker.patch.object(self.grbl_monitor, 'queue_log')
 
         # Call method under test
         self.grbl_monitor.warning('Test message', queue)
@@ -62,7 +62,7 @@ class TestGrblMonitor:
     def test_error(self, mocker, queue):
         # Mock methods
         mock_logger = mocker.patch.object(self.grbl_logger, 'error')
-        mock_queue = mocker.patch.object(self.grbl_monitor, 'queueLog')
+        mock_queue = mocker.patch.object(self.grbl_monitor, 'queue_log')
 
         # Call method under test
         self.grbl_monitor.error('Test message', queue)
@@ -75,7 +75,7 @@ class TestGrblMonitor:
     def test_critical(self, mocker, queue):
         # Mock methods
         mock_logger = mocker.patch.object(self.grbl_logger, 'critical')
-        mock_queue = mocker.patch.object(self.grbl_monitor, 'queueLog')
+        mock_queue = mocker.patch.object(self.grbl_monitor, 'queue_log')
 
         # Call method under test
         self.grbl_monitor.critical('Test message', exc_info=False, queue=queue)
@@ -89,7 +89,7 @@ class TestGrblMonitor:
         # Mock methods
         mock_logger_debug = mocker.patch.object(self.grbl_logger, 'debug')
         mock_logger_info = mocker.patch.object(self.grbl_logger, 'info')
-        mock_queue = mocker.patch.object(self.grbl_monitor, 'queueLog')
+        mock_queue = mocker.patch.object(self.grbl_monitor, 'queue_log')
 
         # Call method under test
         self.grbl_monitor.sent('Test command', debug)
@@ -104,7 +104,7 @@ class TestGrblMonitor:
         # Mock methods
         mock_logger_debug = mocker.patch.object(self.grbl_logger, 'debug')
         mock_logger_info = mocker.patch.object(self.grbl_logger, 'info')
-        mock_queue = mocker.patch.object(self.grbl_monitor, 'queueLog')
+        mock_queue = mocker.patch.object(self.grbl_monitor, 'queue_log')
 
         # Auxiliary variables
         debug = (msgType == GRBL_MSG_STATUS)
@@ -122,11 +122,11 @@ class TestGrblMonitor:
         mock_queue = mocker.spy(Queue, 'put')
 
         # Call method under test
-        self.grbl_monitor.queueLog('Testing...')
+        self.grbl_monitor.queue_log('Testing...')
 
         # Assertions
         assert mock_queue.call_count == 1
-        assert self.grbl_monitor.queue_log.get_nowait() == 'Testing...'
+        assert self.grbl_monitor.logs_queue.get_nowait() == 'Testing...'
 
     @pytest.mark.parametrize(
             'amount,expected', [
@@ -138,7 +138,7 @@ class TestGrblMonitor:
         mock_queue_size = mocker.patch.object(Queue, 'qsize', return_value=amount)
 
         # Call method under test
-        response = self.grbl_monitor.hasLogs()
+        response = self.grbl_monitor.has_logs()
 
         # Assertions
         assert mock_queue_size.call_count == 1
@@ -146,15 +146,15 @@ class TestGrblMonitor:
 
     def test_get_queue_logs(self, mocker):
         # Mock queue contents
-        self.grbl_monitor.queue_log.put('Log 1')
-        self.grbl_monitor.queue_log.put('Log 2')
-        self.grbl_monitor.queue_log.put('Log 3')
+        self.grbl_monitor.logs_queue.put('Log 1')
+        self.grbl_monitor.logs_queue.put('Log 2')
+        self.grbl_monitor.logs_queue.put('Log 3')
 
         # Spy queue methods
         mock_queue_get = mocker.spy(Queue, 'get_nowait')
 
         # Call method under test
-        response = self.grbl_monitor.getLog()
+        response = self.grbl_monitor.get_log()
 
         # Assertions
         assert mock_queue_get.call_count == 1
@@ -169,7 +169,7 @@ class TestGrblMonitor:
         )
 
         # Call method under test
-        response = self.grbl_monitor.getLog()
+        response = self.grbl_monitor.get_log()
 
         # Assertions
         assert mock_queue_get.call_count == 1

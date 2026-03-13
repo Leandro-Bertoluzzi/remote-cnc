@@ -221,7 +221,7 @@ class TestControlView:
         # Mock methods
         mock_grbl_query_settings = mocker.patch.object(
             GrblController,
-            'getGrblSettings',
+            'get_grbl_settings',
             return_value=grbl_mocks.grbl_settings
         )
 
@@ -236,7 +236,7 @@ class TestControlView:
         # Mock methods
         mock_grbl_home_cyle = mocker.patch.object(
             GrblController,
-            'handleHomingCycle'
+            'handle_homing_cycle'
         )
 
         # Mock QMessageBox methods
@@ -253,7 +253,7 @@ class TestControlView:
         # Mock methods
         mock_grbl_disable_alarm = mocker.patch.object(
             GrblController,
-            'disableAlarm'
+            'disable_alarm'
         )
 
         # Call method under test
@@ -266,7 +266,7 @@ class TestControlView:
         # Mock methods
         mock_grbl_toggle_checkmode = mocker.patch.object(
             GrblController,
-            'toggleCheckMode'
+            'toggle_check_mode'
         )
 
         # Mock QMessageBox methods
@@ -371,7 +371,7 @@ class TestControlView:
         )
         mock_grbl_set_settings = mocker.patch.object(
             GrblController,
-            'setSettings'
+            'set_settings'
         )
 
         # Mock GrblConfigurationDialog methods
@@ -401,7 +401,7 @@ class TestControlView:
         )
         mock_grbl_set_settings = mocker.patch.object(
             GrblController,
-            'setSettings'
+            'set_settings'
         )
 
         # Mock GrblConfigurationDialog methods

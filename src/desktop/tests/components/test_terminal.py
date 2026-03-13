@@ -34,6 +34,6 @@ class TestTerminal:
         self.terminal.send_line()
 
         # Assertions
-        self.grbl_controller.sendCommand.assert_called_once()
-        self.grbl_controller.sendCommand.assert_called_with('A G-code command')
+        self.grbl_controller.send_command.assert_called_once()
+        self.grbl_controller.send_command.assert_called_with('A G-code command')
         assert self.terminal.input.text() == ''

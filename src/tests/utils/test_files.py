@@ -32,12 +32,12 @@ def test_getFileNameInFolder():
     assert getFileNameInFolder(current, searched) == expected
 
 
-def test_getFilePath():
+def test_get_file_path():
     base_path = 'path/to/gcode_files/'
     file_name = 'file.txt'
     expected = Path('path/to/gcode_files/1/file.txt')
     files_helper = FileSystemHelper(base_path)
-    assert files_helper.getFilePath(1, file_name) == expected
+    assert files_helper.get_file_path(1, file_name) == expected
 
 
 def test_computeSHA256FromFile(mocker):
@@ -67,15 +67,13 @@ def test_computeSHA256(mocker):
     assert computeSHA256(file_name) == expected_hash
 
 
-@pytest.mark.parametrize('user_folder_exists', [True, False])
-def test_saveFile(mocker, user_folder_exists):
+def test_save_file(mocker):
     file = BinaryIO()
     file_name = 'file.gcode'
     user_id = 1
     expected = Path('path/to/gcode_files/1/file.gcode')
 
     # Mock folder creation
-    mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
     mock_create_dir = mocker.patch.object(Path, 'mkdir')
 
     # Mock file open
@@ -86,16 +84,16 @@ def test_saveFile(mocker, user_folder_exists):
     mock_copy_file = mocker.patch.object(shutil, 'copyfileobj')
 
     # Call the method under test
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-    result = files_helper.saveFile(user_id, file, file_name)
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+    result = files_helper.save_file(user_id, file, file_name)
 
     # Assertions
     assert result == expected
-    assert mock_create_dir.call_count == (0 if user_folder_exists else 1)
+    assert mock_create_dir.call_count == 1
     assert mock_copy_file.call_count == 1
 
 
-def test_saveFile_with_invalid_name(mocker):
+def test_save_file_with_invalid_name(mocker):
     file = BinaryIO()
     file_name = 'file.invalid'
     user_id = 1
@@ -108,8 +106,8 @@ def test_saveFile_with_invalid_name(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-        files_helper.saveFile(user_id, file, file_name)
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+        files_helper.save_file(user_id, file, file_name)
     assert 'Invalid file format, must be one of: ' in str(error.value)
 
     # Assertions
@@ -117,7 +115,7 @@ def test_saveFile_with_invalid_name(mocker):
     assert mock_copy_file.call_count == 0
 
 
-def test_saveFile_with_os_error(mocker):
+def test_save_file_with_os_error(mocker):
     file = BinaryIO()
     file_name = 'file.gcode'
     user_id = 1
@@ -127,37 +125,34 @@ def test_saveFile_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-        files_helper.saveFile(user_id, file, file_name)
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+        files_helper.save_file(user_id, file, file_name)
     assert 'There was an error writing the file in the file system' in str(error.value)
 
 
-@pytest.mark.parametrize('user_folder_exists', [True, False])
-def test_copyFile(mocker, user_folder_exists):
+def test_copy_file(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
     user_id = 1
     expected = Path('path/to/gcode_files/1/file.gcode')
 
     # Mock folder creation
-    mocker.patch.object(Path, 'is_dir', return_value=user_folder_exists)
     mock_create_dir = mocker.patch.object(Path, 'mkdir')
-    create_dir_call_count = 0 if user_folder_exists else 1
 
     # Mock file copy
     mock_copy_file = mocker.patch.object(shutil, 'copy')
 
     # Call the method under test
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-    result = files_helper.copyFile(user_id, original_path, file_name)
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+    result = files_helper.copy_file(user_id, original_path, file_name)
 
     # Assertions
     assert result == expected
-    assert mock_create_dir.call_count == create_dir_call_count
+    assert mock_create_dir.call_count == 1
     assert mock_copy_file.call_count == 1
 
 
-def test_copyFile_with_invalid_name(mocker):
+def test_copy_file_with_invalid_name(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.invalid'
     user_id = 1
@@ -170,8 +165,8 @@ def test_copyFile_with_invalid_name(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-        files_helper.copyFile(user_id, original_path, file_name)
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+        files_helper.copy_file(user_id, original_path, file_name)
     assert 'Invalid file format, must be one of: ' in str(error.value)
 
     # Assertions
@@ -179,7 +174,7 @@ def test_copyFile_with_invalid_name(mocker):
     assert mock_copy_file.call_count == 0
 
 
-def test_copyFile_with_os_error(mocker):
+def test_copy_file_with_os_error(mocker):
     original_path = 'path/to/file.gcode'
     file_name = 'file.gcode'
     user_id = 1
@@ -189,12 +184,12 @@ def test_copyFile_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-        files_helper.copyFile(user_id, original_path, file_name)
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+        files_helper.copy_file(user_id, original_path, file_name)
     assert 'There was an error writing the file in the file system' in str(error.value)
 
 
-def test_renameFile(mocker):
+def test_rename_file(mocker):
     # Set variables
     file_name = 'file_20220610-192900.gcode'
     new_file_name = 'file-updated.gcode'
@@ -208,15 +203,15 @@ def test_renameFile(mocker):
     mock_rename_file = mocker.patch.object(Path, 'rename')
 
     # Call the method under test
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-    result = files_helper.renameFile(user_id, file_name, new_file_name)
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+    result = files_helper.rename_file(user_id, file_name, new_file_name)
 
     # Assertions
     assert result == expected
     assert mock_rename_file.call_count == 1
 
 
-def test_renameFile_with_invalid_name(mocker):
+def test_rename_file_with_invalid_name(mocker):
     file_name = 'file_20220610-192900.gcode'
     new_file_name = 'file-updated.invalid'
     user_id = 1
@@ -226,15 +221,15 @@ def test_renameFile_with_invalid_name(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-        files_helper.renameFile(user_id, file_name, new_file_name)
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+        files_helper.rename_file(user_id, file_name, new_file_name)
     assert 'Invalid file format, must be one of: ' in str(error.value)
 
     # Assertions
     assert mock_rename_file.call_count == 0
 
 
-def test_renameFile_with_os_error(mocker):
+def test_rename_file_with_os_error(mocker):
     file_name = '1/file_20220610-192900.gcode'
     new_file_name = 'file-updated.gcode'
     user_id = 1
@@ -244,12 +239,12 @@ def test_renameFile_with_os_error(mocker):
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-        files_helper.renameFile(user_id, file_name, new_file_name)
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+        files_helper.rename_file(user_id, file_name, new_file_name)
     assert 'There was an error renaming the file in the file system' in str(error.value)
 
 
-def test_deleteFile(mocker):
+def test_delete_file(mocker):
     file_name = 'file_20230720-192900.gcode'
     user_id = 1
 
@@ -257,17 +252,17 @@ def test_deleteFile(mocker):
     mock_remove_file = mocker.patch.object(Path, 'unlink')
 
     # Assertions
-    files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-    files_helper.deleteFile(user_id, file_name)
+    files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+    files_helper.delete_file(user_id, file_name)
     assert mock_remove_file.call_count == 1
 
 
-def test_deleteFile_with_os_error(mocker):
+def test_delete_file_with_os_error(mocker):
     # Mock file removal and simulate exception
     mocker.patch.object(Path, 'unlink', side_effect=Exception('mocked error'))
 
     # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        files_helper = FileSystemHelper(basePath='path/to/gcode_files/')
-        files_helper.deleteFile(1, 'file_name')
+        files_helper = FileSystemHelper(base_path='path/to/gcode_files/')
+        files_helper.delete_file(1, 'file_name')
     assert 'There was an error removing the file from the file system' in str(error.value)

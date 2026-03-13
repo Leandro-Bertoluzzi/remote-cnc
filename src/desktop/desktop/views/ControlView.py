@@ -249,17 +249,17 @@ class ControlView(BaseView):
     # GRBL ACTIONS
 
     def query_device_settings(self):
-        self.device_settings = self.grbl_controller.getGrblSettings()
+        self.device_settings = self.grbl_controller.get_grbl_settings()
 
     def run_homing_cycle(self):
-        self.grbl_controller.handleHomingCycle()
+        self.grbl_controller.handle_homing_cycle()
         self.showWarning('Homing', "Iniciando ciclo de home")
 
     def disable_alarm(self):
-        self.grbl_controller.disableAlarm()
+        self.grbl_controller.disable_alarm()
 
     def toggle_check_mode(self):
-        self.grbl_controller.toggleCheckMode()
+        self.grbl_controller.toggle_check_mode()
 
         # Update internal state
         self.checkmode = not self.checkmode
@@ -296,8 +296,8 @@ class ControlView(BaseView):
             )
             return
         if self.grbl_status.paused():
-            self.grbl_controller.setPaused(False)
-        self.grbl_controller.restartCommandsCount()
+            self.grbl_controller.set_paused(False)
+        self.grbl_controller.restart_commands_count()
 
         # Update code editor
         self.code_editor.setReadOnly(True)
@@ -314,7 +314,7 @@ class ControlView(BaseView):
         # Pause/Resume GRBL controller
         paused = self.file_streamer.is_paused()
         self.pause_button.setText('Retomar' if paused else 'Pausar')
-        self.grbl_controller.setPaused(paused)
+        self.grbl_controller.set_paused(paused)
 
     def stop_file_stream(self):
         self.code_editor.setReadOnly(False)
@@ -333,7 +333,7 @@ class ControlView(BaseView):
         if not settings:
             return
 
-        self.grbl_controller.setSettings(settings)
+        self.grbl_controller.set_settings(settings)
         self.showInfo(
             'Configuración de GRBL',
             '¡La configuración de GRBL fue actualizada correctamente!'
