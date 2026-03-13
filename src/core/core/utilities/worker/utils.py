@@ -3,7 +3,7 @@ from functools import reduce
 from typing import Any, Optional
 from typing_extensions import TypedDict
 from core.utilities.storage import add_value_with_id
-from core.utilities.worker.scheduler import app, executeTask
+from core.utilities.worker.scheduler import app, execute_task
 
 # Types definition
 RegisteredTaskList = dict[str, list[str]]
@@ -62,7 +62,7 @@ def get_worker_status() -> WorkerStatus:
 def send_task_to_worker(db_task_id: int) -> str:
     """Request the task to be executed by the worker.
     """
-    worker_task = executeTask.delay(
+    worker_task = execute_task(
         db_task_id,
         SERIAL_PORT,
         SERIAL_BAUDRATE

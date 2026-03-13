@@ -1,6 +1,6 @@
 from core.config import SERIAL_PORT, SERIAL_BAUDRATE
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
-from core.utilities.worker.scheduler import cncServer, COMMANDS_CHANNEL
+from core.utilities.worker.scheduler import cnc_server, COMMANDS_CHANNEL
 import core.utilities.worker.utils as worker
 import core.utilities.grbl.grblUtils as grblUtils
 from core.utilities.serial import SerialService
@@ -35,7 +35,7 @@ def start_cnc_server(admin: GetAdminDep):
     if worker.is_worker_running():
         raise HTTPException(400, detail='Equipo ocupado: Hay una tarea en progreso')
 
-    worker_task = cncServer.delay(
+    worker_task = cnc_server(
         SERIAL_PORT,
         SERIAL_BAUDRATE
     )

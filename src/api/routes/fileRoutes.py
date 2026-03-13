@@ -2,7 +2,7 @@ from core.config import FILES_FOLDER_PATH
 from core.database.repositories.fileRepository import FileRepository
 from core.database.types import FileReport
 from core.utilities.fileManager import FileManager
-from core.utilities.worker.scheduler import createThumbnail, generateFileReport
+from core.utilities.worker.scheduler import create_thumbnail, generate_file_report
 from fastapi import APIRouter, HTTPException, UploadFile
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
@@ -86,8 +86,8 @@ def upload_file(
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     try:
         new_file = file_manager.upload_file(user.id, file.filename, file.file)
-        generateFileReport.delay(new_file.id)
-        createThumbnail.delay(new_file.id)
+        generate_file_report(new_file.id)
+        create_thumbnail(new_file.id)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -130,7 +130,7 @@ def generate_thumbnail(
     admin: GetAdminDep
 ):
     try:
-        createThumbnail.delay(file_id)
+        create_thumbnail(file_id)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
@@ -143,7 +143,7 @@ def generate_report(
     admin: GetAdminDep
 ):
     try:
-        generateFileReport.delay(file_id)
+        generate_file_report(file_id)
     except Exception as error:
         raise HTTPException(400, detail=str(error))
 
