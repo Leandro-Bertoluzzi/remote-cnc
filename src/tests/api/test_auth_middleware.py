@@ -1,4 +1,4 @@
-from api.app import app
+from api.main import app
 from core.database.base import Base
 from core.database.models import User
 import datetime

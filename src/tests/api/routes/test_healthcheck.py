@@ -1,4 +1,4 @@
-from api.app import app
+from api.main import app
 from fastapi.testclient import TestClient
 
 

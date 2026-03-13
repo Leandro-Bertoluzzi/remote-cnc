@@ -3,7 +3,7 @@ from celery.utils.log import get_task_logger
 import json
 import time
 
-from start_worker import app
+from worker.main import app
 from core.config import FILES_FOLDER_PATH
 from core.database.base import SessionLocal
 from core.database.models import TaskStatus
