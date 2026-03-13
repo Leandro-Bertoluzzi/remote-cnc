@@ -1,0 +1,53 @@
+[project]
+name = "cnc-admin"
+version = "0.1.0"
+description = "Monorepo for CNC admin: API, Worker, and Desktop applications"
+requires-python = ">=3.9"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["core", "api", "worker", "desktop"]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4,<8",
+    "pytest-cov>=4.1,<5",
+    "pytest-env>=1.1,<2",
+    "pytest-mock>=3.10,<4",
+    "pytest-sqlalchemy-mock",
+    "flake8>=6.1,<7",
+    "mypy>=1.5,<2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests", "api/tests", "worker/tests", "desktop/tests"]
+addopts = "--cov=. --cov-report=html"
+env = [
+    "SERIAL_PORT=COMx",
+    "USER_ID=1",
+]
+
+[tool.coverage.run]
+omit = ["**/__init__.py", "tests/*", "*/tests/*", "core/alembic/*", "tests/mocks/*"]
+
+[tool.flake8]
+exclude = [
+    "venv",
+    ".venv",
+    "__pycache__",
+    "core/alembic/env.py",
+    "*.mako",
+    "htmlcov",
+    "core/core/utilities/grbl/constants.py",
+]
+max-line-length = 100
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pytestqt.*"
+ignore_missing_imports = true
