@@ -7,12 +7,15 @@ __pycache__/
 # Environments
 .env*
 venv/
-environment.yml
+env-dev/
+.venv/
 
 # Test related files
 tests/
+*/tests/
 htmlcov/
 .coverage
+mocks/
 
 # Documentation
 docs/
@@ -46,3 +49,8 @@ setup.cfg
 
 # Reverse proxy
 nginx/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
