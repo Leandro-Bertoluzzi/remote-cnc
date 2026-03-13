@@ -1,8 +1,10 @@
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 
-# Take environment variables from .env.
-load_dotenv()
+# Load .env from project root (../../.. relative to this file = src/core/core -> root)
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
+load_dotenv(_PROJECT_ROOT / '.env')
 
 # DB connection
 DB_PORT = os.environ.get('DB_PORT')
