@@ -1,4 +1,4 @@
-from mocks import grbl_mocks
+from tests.mocks import grbl as grbl_mocks
 
 task_metadata_in_progress = {
     'status': 'PROGRESS',

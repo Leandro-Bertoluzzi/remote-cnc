@@ -3,7 +3,7 @@ from core.utilities.grbl.grblLineParser import GrblLineParser
 from core.utilities.grbl.grblMonitor import GrblMonitor
 from core.utilities.grbl.grblStatus import GrblStatus
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_FEEDBACK, GRBL_MSG_STARTUP, GRBL_RESULT_OK
-import mocks.grbl_mocks as grbl_mocks
+import tests.mocks.grbl as grbl_mocks
 from core.utilities.serial import SerialService
 from serial import SerialException
 import logging

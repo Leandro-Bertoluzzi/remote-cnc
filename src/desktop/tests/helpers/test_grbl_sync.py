@@ -1,5 +1,5 @@
 from core.utilities.grbl.grblController import GrblController
-import mocks.grbl_mocks as grbl_mocks
+import tests.mocks.grbl as grbl_mocks
 from desktop.helpers.grblSync import GrblSync
 from logging import Logger
 from PyQt5.QtCore import QTimer
