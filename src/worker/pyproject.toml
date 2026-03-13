@@ -11,7 +11,7 @@ dependencies = [
     "pillow>=10.4,<11",
     "PyQt5==5.15.11",
     "PyVirtualDisplay>=3.0,<4",
-    "vtk>=9.3",
+    "vtk>=9.3,<9.5",
 ]
 
 [build-system]

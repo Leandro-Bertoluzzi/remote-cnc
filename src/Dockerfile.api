@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster AS base
+FROM python:3.12-slim-bookworm AS base
 
 # Install system dependencies
 RUN apt-get update \
@@ -33,14 +33,14 @@ COPY core/alembic core/alembic
 COPY core/alembic.ini core/alembic.ini
 COPY api/ api/
 
-# Sync again to install the actual workspace packages (core + api) from source
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-editable --package cnc-api
-
 # ---------- targets ----------
 FROM base AS development
-CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --package cnc-api
+CMD ["uv", "run", "--no-sync", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 FROM base AS production
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-editable --package cnc-api
 # If running behind a proxy like Nginx or Traefik add --proxy-headers
-CMD ["uv", "run", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers", "--root-path", "/api"]
+CMD ["uv", "run", "--no-sync", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers", "--root-path", "/api"]
