@@ -5,7 +5,7 @@ from core.utilities.fileManager import FileManager
 import datetime
 import hashlib
 import pytest   # noqa: F401
-from conftest import engine, test_admin, test_user, TestingSession
+from api_db import engine, test_admin, test_user, TestingSession
 
 
 # Seed data

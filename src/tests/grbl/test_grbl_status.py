@@ -1,6 +1,6 @@
 from core.utilities.grbl.constants import GrblActiveState
 from core.utilities.grbl.grblStatus import GrblStatus
-import tests.mocks.grbl as grbl_mocks
+import mocks.grbl as grbl_mocks
 import pytest
 
 

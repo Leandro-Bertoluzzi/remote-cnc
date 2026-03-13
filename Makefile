@@ -5,22 +5,25 @@
 # ---------------------------------------------------------------------------
 
 SRC     := src
-UV_RUN  := cd $(SRC) && uv run
+
+ifeq ($(OS),Windows_NT)
+    UV := $(USERPROFILE)\.local\bin\uv.exe
+else
+    UV := uv
+endif
+
+UV_RUN  := cd $(SRC) && $(UV) run
 COMPOSE := docker compose
 
 # ===== Setup ==============================================================
 
 .PHONY: install sync lock
 
-install:          ## First-time setup: install uv, sync deps, create venv
-	@command -v uv >/dev/null 2>&1 || { echo "Installing uv..."; curl -LsSf https://astral.sh/uv/install.sh | sh; }
-	cd $(SRC) && uv sync
-
 sync:             ## Install / update all workspace deps from lockfile
-	cd $(SRC) && uv sync
+	cd $(SRC) && $(UV) sync
 
 lock:             ## Re-resolve & update uv.lock
-	cd $(SRC) && uv lock
+	cd $(SRC) && $(UV) lock
 
 # ===== Quality ============================================================
 
@@ -36,9 +39,11 @@ test-api:         ## Run API tests only
 	$(UV_RUN) pytest api/tests/
 
 test-worker:      ## Run worker tests only
+	cd $(SRC) && $(UV) sync --package cnc-worker
 	$(UV_RUN) pytest worker/tests/
 
 test-desktop:     ## Run desktop tests only
+	cd $(SRC) && $(UV) sync --package cnc-desktop
 	$(UV_RUN) pytest desktop/tests/
 
 lint:             ## Run flake8 linter
@@ -54,7 +59,7 @@ check: lint typecheck test   ## lint + typecheck + test
 .PHONY: start-desktop start-api start-worker
 
 start-desktop:    ## Launch the desktop (PyQt5) app
-	$(UV_RUN) python desktop/main.py
+	$(UV_RUN) python -m desktop.main
 
 start-api:        ## Launch the API with uvicorn (dev)
 	$(UV_RUN) uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
@@ -67,13 +72,13 @@ start-worker:     ## Launch the Celery worker locally
 .PHONY: db-upgrade db-downgrade db-revision db-seed
 
 db-upgrade:       ## Apply pending Alembic migrations
-	cd $(SRC)/core && uv run alembic upgrade head
+	cd $(SRC)/core && $(UV) run alembic upgrade head
 
 db-downgrade:     ## Revert last Alembic migration
-	cd $(SRC)/core && uv run alembic downgrade -1
+	cd $(SRC)/core && $(UV) run alembic downgrade -1
 
 db-revision:      ## Auto-generate a new Alembic revision (pass MSG="description")
-	cd $(SRC)/core && uv run alembic revision --autogenerate -m "$(MSG)"
+	cd $(SRC)/core && $(UV) run alembic revision --autogenerate -m "$(MSG)"
 
 db-seed:          ## Seed the database with initial data
 	$(UV_RUN) python db_seeder.py

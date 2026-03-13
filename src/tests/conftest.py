@@ -30,6 +30,13 @@ def sqlalchemy_mock_config():
                 "email": "test2@testing.com",
                 "password": "testpassword2",
                 "role": "admin"
+            },
+            {
+                "id": 3,
+                "name": "User 3",
+                "email": "test3@testing.com",
+                "password": "testpassword3",
+                "role": "user"
             }
         ]),
         ("tools", [

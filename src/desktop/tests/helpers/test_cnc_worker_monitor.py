@@ -1,7 +1,7 @@
 from celery.result import AsyncResult
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
-import tests.mocks.grbl as grbl_mocks
-import tests.mocks.worker as worker_mocks
+import mocks.grbl as grbl_mocks
+import mocks.worker as worker_mocks
 from core.utilities.grbl.types import Status, ParserState
 from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
 from PyQt5.QtCore import QTimer

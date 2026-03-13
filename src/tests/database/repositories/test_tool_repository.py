@@ -56,7 +56,7 @@ class TestToolRepository:
         tools_before = tool_repository.get_all_tools()
 
         # Call method under test
-        tool_repository.remove_tool(id=1)
+        tool_repository.remove_tool(id=2)
 
         # Assertions
         tools_after = tool_repository.get_all_tools()

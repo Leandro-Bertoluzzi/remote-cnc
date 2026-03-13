@@ -16,7 +16,6 @@ def test_start_connection(mocker: MockerFixture, open_port):
     serial_service.interface.is_open = open_port
 
     def side_effect_close_port():
-        nonlocal serial_service
         serial_service.interface.is_open = False
 
     # Mock serial port methods

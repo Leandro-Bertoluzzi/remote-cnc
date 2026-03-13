@@ -6,27 +6,40 @@ requires-python = ">=3.9"
 
 [tool.uv]
 package = false
+override-dependencies = ["PyQt5-Qt5==5.15.2"]
 
 [tool.uv.workspace]
 members = ["core", "api", "worker", "desktop"]
 
+[tool.uv.sources]
+cnc-core    = { workspace = true }
+cnc-api     = { workspace = true }
+cnc-worker  = { workspace = true }
+cnc-desktop = { workspace = true }
+
 [dependency-groups]
 dev = [
+    # Workspace members (installed as editable)
+    "cnc-core",
+    "cnc-api",
+    # Test tools
     "pytest>=7.4,<8",
     "pytest-cov>=4.1,<5",
     "pytest-env>=1.1,<2",
     "pytest-mock>=3.10,<4",
     "pytest-sqlalchemy-mock",
     "flake8>=6.1,<7",
+    "Flake8-pyproject>=1.2,<2",
     "mypy>=1.5,<2",
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
 testpaths = ["tests", "api/tests", "worker/tests", "desktop/tests"]
-addopts = "--cov=. --cov-report=html"
+pythonpath = ["tests", "api/tests"]
+addopts = "--import-mode=importlib --cov=. --cov-report=html"
 env = [
     "SERIAL_PORT=COMx",
+    "SERIAL_BAUDRATE=115200",
     "USER_ID=1",
 ]
 
@@ -47,6 +60,13 @@ max-line-length = 100
 
 [tool.mypy]
 ignore_missing_imports = true
+explicit_package_bases = true
+exclude = [
+    "tests/conftest\\.py",
+    "api/tests/conftest\\.py",
+    "desktop/tests/conftest\\.py",
+    "worker/tests/conftest\\.py",
+]
 
 [[tool.mypy.overrides]]
 module = "pytestqt.*"

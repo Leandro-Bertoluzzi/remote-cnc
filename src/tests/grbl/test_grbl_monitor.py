@@ -13,6 +13,9 @@ class TestGrblMonitor:
         # Mock logger methods
         mocker.patch.object(self.grbl_logger, 'addHandler')
 
+        # Mock Redis so no real connection is attempted
+        mocker.patch('core.utilities.grbl.grblMonitor.RedisPubSubManagerSync')
+
         # Instantiate controller
         self.grbl_monitor = GrblMonitor(self.grbl_logger)
 
