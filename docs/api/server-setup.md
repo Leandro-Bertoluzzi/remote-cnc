@@ -22,7 +22,6 @@ You can run the API in a Docker container. This will also start the following se
 - PostgreSQL DB.
 - Message broker (Redis).
 - CNC worker.
-- DB admin (adminer).
 
 ```bash
 $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d

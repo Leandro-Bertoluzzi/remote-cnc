@@ -75,7 +75,7 @@ There is a folder for each subproject in docs, which contain instructions to sta
 
 ### Set up database
 
-You can execute the script `deployment/db_schema.py` in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](docs/db/db-management.md#execute-a-sql-script).
+You can copy the script `deployment/db_schema.py` to the Raspberry and follow [these steps](docs/db/db-management.md#execute-a-sql-script).
 
 ## :checkered_flag: Development
 
@@ -132,7 +132,6 @@ $ make install
 
 The easiest way to run the needed services is with `Docker`. This will start the API and the following services:
 - PostgreSQL DB.
-- Adminer, to manage the DB.
 - Message broker (Redis).
 - Flower, to monitor the Celery worker.
 
@@ -187,7 +186,7 @@ docker exec -it remote-cnc-worker-sim /bin/bash simport.sh
 
 ### Manage database
 
-To see your database, you can either use the `adminer` container which renders an admin in `http://localhost:8080` when running the `docker-compose.yaml`; or connect to it with a client like [DBeaver](https://dbeaver.io/).
+To see your database, you can connect to it with a client like [DBeaver](https://dbeaver.io/).
 
 You can manage database migrations with the following Makefile targets (which wrap Alembic commands):
 
@@ -254,7 +253,7 @@ $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d
 ### Database migrations
 
 1. Generate a SQL script for the migration following [these steps](rpi/db-management.md#generate-sql-from-migrations-development).
-1. You can either execute the migration script in production with the `adminer` service, or copy it to the Raspberry and follow [these steps](rpi/db-management.md#execute-a-sql-script).
+1. You can copy the migration script to the Raspberry and follow [these steps](rpi/db-management.md#execute-a-sql-script).
 
 ### Update CNC worker Docker image
 

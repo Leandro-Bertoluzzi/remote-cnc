@@ -59,7 +59,6 @@ You can start containers for the required services via `docker compose`:
 - PostgreSQL DB.
 - Message broker (Redis).
 - CNC worker.
-- DB admin (adminer).
 
 ```bash
 $ docker compose -f docker-compose.yml -f docker-compose.production.yml --profile=worker up -d

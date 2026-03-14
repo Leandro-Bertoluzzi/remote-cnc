@@ -54,14 +54,6 @@ services:
     container_name: remote-cnc-testdb
     profiles: ["test"]
 
-  adminer:
-    image: adminer:4.8.1
-    depends_on:
-      - postgresql
-    ports:
-      - "8080:8080"
-    container_name: remote-cnc-adminer
-
   redis:
     image: redis:6-alpine
     ports:
