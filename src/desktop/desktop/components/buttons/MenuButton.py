@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QPushButton
 from desktop.helpers.utils import applyStylesheet
+from PyQt5.QtWidgets import QPushButton
 
 
 class MenuButton(QPushButton):

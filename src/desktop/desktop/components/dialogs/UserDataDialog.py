@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QComboBox
-from PyQt5.QtCore import Qt
 from core.database.models import VALID_ROLES
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLineEdit
 
 
 class UserDataDialog(QDialog):
@@ -23,10 +23,10 @@ class UserDataDialog(QDialog):
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
 
         layout = QFormLayout(self)
-        layout.addRow('Nombre', self.name)
-        layout.addRow('Correo electrónico', self.email)
-        layout.addRow('Contraseña', self.password)
-        layout.addRow('Rol', self.role)
+        layout.addRow("Nombre", self.name)
+        layout.addRow("Correo electrónico", self.email)
+        layout.addRow("Contraseña", self.password)
+        layout.addRow("Rol", self.role)
         layout.addWidget(buttonBox)
 
         buttonBox.accepted.connect(self.accept)
@@ -34,7 +34,7 @@ class UserDataDialog(QDialog):
 
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
-        self.setWindowTitle('Crear usuario' if not userInfo else 'Actualizar usuario')
+        self.setWindowTitle("Crear usuario" if not userInfo else "Actualizar usuario")
 
     def getInputs(self):
         return (self.name.text(), self.email.text(), self.password.text(), self.role.currentText())

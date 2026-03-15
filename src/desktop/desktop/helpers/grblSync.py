@@ -1,14 +1,14 @@
 from core.utilities.grbl.grblController import GrblController
-from PyQt5.QtCore import pyqtSignal, QObject, QTimer
+from PyQt5.QtCore import QObject, QTimer, pyqtSignal
 
 # Constants
-STATUS_POLL = 50       # miliseconds
-COMMANDS_POLL = 100    # miliseconds
+STATUS_POLL = 50  # miliseconds
+COMMANDS_POLL = 100  # miliseconds
 
 
 class GrblSync(QObject):
-    """Utility class to sync a GRBL device with some widget via signals.
-    """
+    """Utility class to sync a GRBL device with some widget via signals."""
+
     # SIGNALS
 
     new_message = pyqtSignal(str)
@@ -58,10 +58,7 @@ class GrblSync(QObject):
         parserstate = self.grbl_status.get_parser_state()
 
         # Emit new status signal
-        self.new_status.emit(
-            status,
-            parserstate
-        )
+        self.new_status.emit(status, parserstate)
 
         # Check error status
         if self.grbl_status.failed() and not self._has_error:

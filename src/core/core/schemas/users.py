@@ -1,15 +1,16 @@
-from core.database.types import RoleType
 from pydantic import BaseModel, EmailStr, Field
+
+from core.database.types import RoleType
 
 
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
     password: str = Field(
-        regex=r'\b^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,20}$\b',
-        description='Password must be 8-20 characters long with upper and lower case \
-            letters, numbers and special characters (@$!%*#?&)'
-        )
+        regex=r"\b^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,20}$\b",
+        description="Password must be 8-20 characters long with upper and lower case \
+            letters, numbers and special characters (@$!%*#?&)",
+    )
     role: RoleType
 
 

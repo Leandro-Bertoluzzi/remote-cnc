@@ -1,13 +1,14 @@
 import json
 import logging
-from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_STATUS
 from queue import Empty, Queue
 from typing import Optional
+
+from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_STATUS
 from core.utilities.redisPubSubManager import RedisPubSubManagerSync
 
 # Constants
-PUBSUB_CHANNEL = 'grbl_messages'
-LOG_LEVELS = ['critical', 'error', 'warning', 'info', 'debug']
+PUBSUB_CHANNEL = "grbl_messages"
+LOG_LEVELS = ["critical", "error", "warning", "info", "debug"]
 
 
 class GrblMonitor:
@@ -46,36 +47,36 @@ class GrblMonitor:
             self.queue_log(log)
 
     def debug(self, log: str, queue: bool = False):
-        self._log('debug', log, queue=queue)
+        self._log("debug", log, queue=queue)
 
     def info(self, log: str, queue: bool = False):
-        self._log('info', log, queue=queue)
+        self._log("info", log, queue=queue)
 
     def warning(self, log: str, queue: bool = False):
-        self._log('warning', log, queue=queue)
+        self._log("warning", log, queue=queue)
 
     def error(self, log: str, queue: bool = False):
-        self._log('error', log, queue=queue)
+        self._log("error", log, queue=queue)
 
     def critical(self, log: str, exc_info: bool = True, queue: bool = False):
-        self._log('critical', log, queue=queue, exc_info=exc_info)
+        self._log("critical", log, queue=queue, exc_info=exc_info)
 
     def sent(self, command: str, debug: bool = False):
-        command = command.strip()   # Strip all EOL characters for consistency
+        command = command.strip()  # Strip all EOL characters for consistency
         if debug:
-            self.logger.debug('[Sent] command: {}'.format(command))
+            self.logger.debug("[Sent] command: {}".format(command))
             return
-        self.logger.info('[Sent] command: {}'.format(command))
+        self.logger.info("[Sent] command: {}".format(command))
         self.queue_log(command)
 
         # Publish in PubSub
-        self._publish('sent', command)
+        self._publish("sent", command)
 
     def received(self, message: str, msgType: Optional[str], payload: dict[str, str]):
-        received_str = '[Received] Message from GRBL: {}'.format(message)
-        parsed_str = '[Parsed] Message type: {}| Payload: {}'.format(msgType, payload)
+        received_str = "[Received] Message from GRBL: {}".format(message)
+        parsed_str = "[Parsed] Message type: {}| Payload: {}".format(msgType, payload)
 
-        if (msgType == GRBL_MSG_STATUS):
+        if msgType == GRBL_MSG_STATUS:
             self.logger.debug(received_str)
             self.logger.debug(parsed_str)
             return
@@ -85,7 +86,7 @@ class GrblMonitor:
         self.queue_log(message)
 
         # Publish in PubSub
-        self._publish('received', message)
+        self._publish("received", message)
 
     # LOGS QUEUE MANAGEMENT
 
@@ -105,13 +106,10 @@ class GrblMonitor:
         try:
             return self.logs_queue.get_nowait()
         except Empty:
-            return ''
+            return ""
 
     # PUBSUB
 
     def _publish(self, msgType: str, message: str):
-        pubsub_message = json.dumps({
-            'type': msgType,
-            'message': message
-        })
+        pubsub_message = json.dumps({"type": msgType, "message": message})
         self.redis.publish(PUBSUB_CHANNEL, pubsub_message)

@@ -1,6 +1,6 @@
 from celery.result import AsyncResult
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
-from PyQt5.QtCore import pyqtSignal, QObject, QTimer
+from PyQt5.QtCore import QObject, QTimer, pyqtSignal
 
 # Constants
 STATUS_POLL = 100  # miliseconds
@@ -10,6 +10,7 @@ class CncWorkerMonitor(QObject):
     """Utility class to monitor the status of the active task in worker
     and know if it is finished.
     """
+
     # CLASS ATTRIBUTES
     device_enabled = True
 
@@ -25,7 +26,7 @@ class CncWorkerMonitor(QObject):
         super().__init__()
 
         # Attributes definition
-        self.active_task = ''
+        self.active_task = ""
 
         # Create and configure timer
         self.monitor = QTimer(self)
@@ -34,10 +35,7 @@ class CncWorkerMonitor(QObject):
 
     # FLOW CONTROL
 
-    def start_task_monitor(
-        self,
-        task_id: str
-    ):
+    def start_task_monitor(self, task_id: str):
         self.active_task = task_id
         self.monitor.start()
 
@@ -51,27 +49,23 @@ class CncWorkerMonitor(QObject):
         task_info = task_state.info
         task_status = task_state.status
 
-        if task_status == 'PROGRESS':
-            sent_lines = task_info.get('sent_lines')
-            processed_lines = task_info.get('processed_lines')
-            total_lines = task_info.get('total_lines')
-            controller_status = task_info.get('status')
-            grbl_parserstate = task_info.get('parserstate')
+        if task_status == "PROGRESS":
+            sent_lines = task_info.get("sent_lines")
+            processed_lines = task_info.get("processed_lines")
+            total_lines = task_info.get("total_lines")
+            controller_status = task_info.get("status")
+            grbl_parserstate = task_info.get("parserstate")
 
             self.task_new_status.emit(
-                sent_lines,
-                processed_lines,
-                total_lines,
-                controller_status,
-                grbl_parserstate
+                sent_lines, processed_lines, total_lines, controller_status, grbl_parserstate
             )
 
-        if task_status == 'SUCCESS':
+        if task_status == "SUCCESS":
             WorkerStoreAdapter.set_device_enabled(False)
             self.stop_task_monitor()
             self.task_finished.emit()
 
-        if task_status == 'FAILURE':
+        if task_status == "FAILURE":
             WorkerStoreAdapter.set_device_enabled(False)
             self.stop_task_monitor()
             self.task_failed.emit(str(task_info))

@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_ECHO
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgEcho(GrblParserGeneric):
@@ -12,15 +13,14 @@ class GrblParserMsgEcho(GrblParserGeneric):
     Example:
         - [echo:G1X0.540Y10.4F100]
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^\[(?:echo:)(.+)\]$', line)
+        matches = re.search(r"^\[(?:echo:)(.+)\]$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
-        payload = {
-            'message': matches.group(1)
-        }
+        payload = {"message": matches.group(1)}
 
         return GRBL_MSG_ECHO, payload

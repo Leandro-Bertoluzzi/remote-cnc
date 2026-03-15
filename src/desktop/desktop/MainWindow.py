@@ -1,9 +1,10 @@
-from desktop.components.StatusBar import StatusBar
 import core.utilities.worker.utils as worker
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
-from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
+
+from desktop.components.StatusBar import StatusBar
+from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
 from desktop.views.MainMenu import MainMenu
 
 
@@ -24,16 +25,16 @@ class MainWindow(QMainWindow):
         self.initialized = 0
 
         # Initial status
-        self.status_bar.updateWorkerStatus('DESCONECTADO')
-        self.status_bar.updateDeviceStatus('---')
+        self.status_bar.updateWorkerStatus("DESCONECTADO")
+        self.status_bar.updateDeviceStatus("---")
         if worker.is_worker_on():
-            self.status_bar.updateDeviceStatus('HABILITADO')
-            self.status_bar.updateWorkerStatus('CONECTADO')
+            self.status_bar.updateDeviceStatus("HABILITADO")
+            self.status_bar.updateWorkerStatus("CONECTADO")
             if not WorkerStoreAdapter.is_device_enabled():
                 self.status_bar.setEnableBtnVisible(True)
-                self.status_bar.updateDeviceStatus('DESHABILITADO')
+                self.status_bar.updateDeviceStatus("DESHABILITADO")
             if worker.is_worker_running():
-                self.status_bar.updateDeviceStatus('TRABAJANDO...')
+                self.status_bar.updateDeviceStatus("TRABAJANDO...")
 
         # Signals and slots
         self.worker_monitor.task_finished.connect(self.on_task_finished)
@@ -70,9 +71,9 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent):
         confirmation = QMessageBox.question(
             self,
-            'Cerrar aplicación',
-            '¿Realmente desea cerrar la aplicación?',
-            QMessageBox.Yes | QMessageBox.Cancel
+            "Cerrar aplicación",
+            "¿Realmente desea cerrar la aplicación?",
+            QMessageBox.Yes | QMessageBox.Cancel,
         )
 
         if confirmation == QMessageBox.Yes:
@@ -97,37 +98,37 @@ class MainWindow(QMainWindow):
     # Slots
 
     def on_task_finished(self):
-        self.status_bar.updateDeviceStatus('DESHABILITADO')
+        self.status_bar.updateDeviceStatus("DESHABILITADO")
         self.status_bar.setEnableBtnVisible(True)
         QMessageBox.information(
             self,
-            'Tarea finalizada',
-            '¡La tarea programada fue finalizada con éxito!\n'
-            'Antes de poder ejecutar otra tarea, deberá preparar '
-            'el área de trabajo y habilitar el equipo',
-            QMessageBox.Ok
+            "Tarea finalizada",
+            "¡La tarea programada fue finalizada con éxito!\n"
+            "Antes de poder ejecutar otra tarea, deberá preparar "
+            "el área de trabajo y habilitar el equipo",
+            QMessageBox.Ok,
         )
 
     def on_task_failed(self, error_msg: str):
-        self.status_bar.updateDeviceStatus('ERROR')
+        self.status_bar.updateDeviceStatus("ERROR")
         self.status_bar.setEnableBtnVisible(True)
         QMessageBox.critical(
             self,
-            'Tarea interrumpida',
-            'Se encontró un error durante la ejecución de la tarea programada\n\n'
-            'Detalle del error:\n'
-            f'{error_msg}',
-            QMessageBox.Ok
+            "Tarea interrumpida",
+            "Se encontró un error durante la ejecución de la tarea programada\n\n"
+            "Detalle del error:\n"
+            f"{error_msg}",
+            QMessageBox.Ok,
         )
 
     # Other methods
 
     def startWorkerMonitor(self, task_worker_id: str):
-        self.status_bar.updateDeviceStatus('TRABAJANDO...')
+        self.status_bar.updateDeviceStatus("TRABAJANDO...")
         self.worker_monitor.start_task_monitor(task_worker_id)
-        self.status_bar.setTemporalStatusMessage('Iniciado el monitor del worker')
+        self.status_bar.setTemporalStatusMessage("Iniciado el monitor del worker")
 
     def enable_device(self):
         WorkerStoreAdapter.set_device_enabled(True)
         self.status_bar.setEnableBtnVisible(False)
-        self.status_bar.updateDeviceStatus('HABILITADO')
+        self.status_bar.updateDeviceStatus("HABILITADO")

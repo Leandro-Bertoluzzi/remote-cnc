@@ -1,29 +1,31 @@
-from PyQt5.QtWidgets import QWidget, QGridLayout
+from typing import TYPE_CHECKING
+
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QGridLayout, QWidget
+
 from desktop.components.buttons.MainMenuButton import MainMenuButton
 from desktop.views.ControlView import ControlView
 from desktop.views.FilesView import FilesView
 from desktop.views.InventoryView import InventoryView
 from desktop.views.MonitorView import MonitorView
-from desktop.views.UsersView import UsersView
 from desktop.views.TasksView import TasksView
-from typing import TYPE_CHECKING
+from desktop.views.UsersView import UsersView
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
 
 
 class MainMenu(QWidget):
-    def __init__(self, parent: 'MainWindow'):
+    def __init__(self, parent: "MainWindow"):
         super(MainMenu, self).__init__(parent)
 
         # Buttons
-        btn_tasks = self.createButton('Tareas', 'tasks.svg', TasksView)
-        btn_monitor = self.createButton('Monitoreo', 'monitor.svg', MonitorView)
-        btn_files = self.createButton('Archivos', 'files.svg', FilesView)
-        btn_control = self.createButton('Control y\ncalibración', 'control.svg', ControlView)
-        btn_users = self.createButton('Usuarios', 'users.svg', UsersView)
-        btn_inventory = self.createButton('Inventario', 'inventory.svg', InventoryView)
+        btn_tasks = self.createButton("Tareas", "tasks.svg", TasksView)
+        btn_monitor = self.createButton("Monitoreo", "monitor.svg", MonitorView)
+        btn_files = self.createButton("Archivos", "files.svg", FilesView)
+        btn_control = self.createButton("Control y\ncalibración", "control.svg", ControlView)
+        btn_users = self.createButton("Usuarios", "users.svg", UsersView)
+        btn_inventory = self.createButton("Inventario", "inventory.svg", InventoryView)
 
         # Menu layout
         layout = QGridLayout()

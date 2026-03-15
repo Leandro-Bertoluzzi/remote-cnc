@@ -1,9 +1,9 @@
-from desktop.containers.WidgetsHList import WidgetsHList
 from core.utilities.grbl.grblController import GrblController
 from core.utilities.grbl.grblUtils import JOG_DISTANCE_ABSOLUTE
+from desktop.containers.WidgetsHList import WidgetsHList
 from desktop.mixins.JogController import JogController
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QDialogButtonBox
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout
 
 
 class AbsoluteMoveDialog(QDialog, JogController):
@@ -15,11 +15,11 @@ class AbsoluteMoveDialog(QDialog, JogController):
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
-        layout.addWidget(QLabel('Mover a posición (absoluta): '))
+        layout.addWidget(QLabel("Mover a posición (absoluta): "))
         self.abs_controls = self.create_abs_controls()
         layout.addWidget(self.abs_controls)
 
-        label_feedrate = QLabel('Avance:')
+        label_feedrate = QLabel("Avance:")
         # TO DO -> Actualizar feedrate según estado del dispositivo
         # TO DO -> Actualizar max y min feedrate según la configuración de GRBL
         # $110=800.000 (x max rate, mm/min)
@@ -40,14 +40,14 @@ class AbsoluteMoveDialog(QDialog, JogController):
         buttonBox.rejected.connect(self.reject)
         layout.addWidget(buttonBox)
 
-        self.setWindowTitle('Mover a')
+        self.setWindowTitle("Mover a")
 
     def getInputs(self):
         return (
             self.input_x.value(),
             self.input_y.value(),
             self.input_z.value(),
-            self.input_feedrate.value()
+            self.input_feedrate.value(),
         )
 
     # UI methods
@@ -62,11 +62,9 @@ class AbsoluteMoveDialog(QDialog, JogController):
         self.input_x = self.create_double_spinbox(0, 200, 0.25, 2)
         self.input_y = self.create_double_spinbox(0, 200, 0.25, 2)
         self.input_z = self.create_double_spinbox(0, 200, 0.25, 2)
-        return WidgetsHList([
-            QLabel('X: '), self.input_x,
-            QLabel('Y: '), self.input_y,
-            QLabel('Z: '), self.input_z
-        ])
+        return WidgetsHList(
+            [QLabel("X: "), self.input_x, QLabel("Y: "), self.input_y, QLabel("Z: "), self.input_z]
+        )
 
     def set_units(self, button):
         selected_id = self.control_units.id(button)
@@ -79,9 +77,9 @@ class AbsoluteMoveDialog(QDialog, JogController):
             self.input_y,
             self.input_z,
         ]:
-            input.setSuffix(unit_info['suffix'])
+            input.setSuffix(unit_info["suffix"])
 
-        self.input_feedrate.setSuffix(unit_info['suffix'] + '/min')
+        self.input_feedrate.setSuffix(unit_info["suffix"] + "/min")
 
     # GRBL controller interaction
 

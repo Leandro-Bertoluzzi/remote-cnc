@@ -1,10 +1,10 @@
 import pytest
-from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.models import Material
+from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 
 
 class TestMaterialDataDialog:
-    materialInfo = Material(name='Example material', description='Just a material')
+    materialInfo = Material(name="Example material", description="Just a material")
 
     def test_material_data_dialog_init(self, qtbot):
         dialog = MaterialDataDialog()
@@ -17,9 +17,9 @@ class TestMaterialDataDialog:
         dialog = MaterialDataDialog(materialInfo=material_info)
         qtbot.addWidget(dialog)
 
-        expectedName = self.materialInfo.name if material_info else ''
-        expectedDescription = self.materialInfo.description if material_info else ''
-        expectedWindowTitle = 'Actualizar material' if material_info else 'Agregar material'
+        expectedName = self.materialInfo.name if material_info else ""
+        expectedDescription = self.materialInfo.description if material_info else ""
+        expectedWindowTitle = "Actualizar material" if material_info else "Agregar material"
 
         assert dialog.name.text() == expectedName
         assert dialog.description.toPlainText() == expectedDescription
@@ -30,7 +30,7 @@ class TestMaterialDataDialog:
         qtbot.addWidget(dialog)
 
         # Interaction with widget
-        dialog.name.setText('Updated material name')
-        dialog.description.setPlainText('Updated material description')
+        dialog.name.setText("Updated material name")
+        dialog.description.setPlainText("Updated material description")
 
-        assert dialog.getInputs() == ('Updated material name', 'Updated material description')
+        assert dialog.getInputs() == ("Updated material name", "Updated material description")

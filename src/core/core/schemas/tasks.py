@@ -1,7 +1,9 @@
-from core.database.types import StatusType
 import datetime
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
+
+from core.database.types import StatusType
 
 
 class TaskCreate(BaseModel):
@@ -9,12 +11,12 @@ class TaskCreate(BaseModel):
     file_id: int
     tool_id: int
     material_id: int
-    note: Optional[str] = ''
+    note: Optional[str] = ""
 
 
 class TaskUpdateStatus(BaseModel):
     status: StatusType
-    cancellation_reason: Optional[str] = ''
+    cancellation_reason: Optional[str] = ""
 
 
 class TaskUpdate(BaseModel):

@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_FEEDBACK
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgFeedback(GrblParserGeneric):
@@ -13,15 +14,14 @@ class GrblParserMsgFeedback(GrblParserGeneric):
         - Grbl v0.9: [Message]
         - Grbl v1.1: [MSG: Message]
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^\[(?:MSG:)?(.+)\]$', line)
+        matches = re.search(r"^\[(?:MSG:)?(.+)\]$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
-        payload = {
-            'message': matches.group(1)
-        }
+        payload = {"message": matches.group(1)}
 
         return GRBL_MSG_FEEDBACK, payload

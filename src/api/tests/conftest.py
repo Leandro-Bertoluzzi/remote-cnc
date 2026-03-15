@@ -1,9 +1,9 @@
-from api.main import app
-from fastapi.testclient import TestClient
 import api.middleware.authMiddleware as authMiddleware
 import api.middleware.dbMiddleware as dbMiddleware
 import pytest
-from api_db import test_user, test_admin, TestingSession
+from api.main import app
+from api_db import TestingSession, test_admin, test_user
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -26,10 +26,12 @@ def client() -> TestClient:
         finally:
             database.close()
 
-    app.dependency_overrides.update({
-        authMiddleware.auth_user: mock_auth_user,
-        authMiddleware.auth_admin: mock_auth_admin,
-        dbMiddleware.get_db: get_test_db
-    })
+    app.dependency_overrides.update(
+        {
+            authMiddleware.auth_user: mock_auth_user,
+            authMiddleware.auth_admin: mock_auth_admin,
+            dbMiddleware.get_db: get_test_db,
+        }
+    )
 
     return TestClient(app=app)

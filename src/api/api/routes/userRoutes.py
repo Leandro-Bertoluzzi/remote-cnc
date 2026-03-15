@@ -1,33 +1,27 @@
 from core.database.repositories.userRepository import UserRepository
+from core.schemas.general import GenericResponse
+from core.schemas.users import UserCreate, UserResponse, UserUpdate
 from fastapi import APIRouter, HTTPException
+
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
-from core.schemas.general import GenericResponse
-from core.schemas.users import UserCreate, UserUpdate, UserResponse
 
 userRoutes = APIRouter(prefix="/users", tags=["Users"])
 
 
-@userRoutes.get('')
-@userRoutes.get('/')
-@userRoutes.get('/all')
-def get_users(
-    admin: GetAdminDep,
-    db_session: GetDbSession
-) -> list[UserResponse]:
+@userRoutes.get("")
+@userRoutes.get("/")
+@userRoutes.get("/all")
+def get_users(admin: GetAdminDep, db_session: GetDbSession) -> list[UserResponse]:
     repository = UserRepository(db_session)
     users = repository.get_all_users()
 
     return [UserResponse.from_orm(user) for user in users]
 
 
-@userRoutes.post('', response_model=UserResponse)
-@userRoutes.post('/', response_model=UserResponse)
-def create_new_user(
-    request: UserCreate,
-    admin: GetAdminDep,
-    db_session: GetDbSession
-):
+@userRoutes.post("", response_model=UserResponse)
+@userRoutes.post("/", response_model=UserResponse)
+def create_new_user(request: UserCreate, admin: GetAdminDep, db_session: GetDbSession):
     name = request.name
     email = request.email
     password = request.password
@@ -37,15 +31,12 @@ def create_new_user(
         repository = UserRepository(db_session)
         return repository.create_user(name, email, password, role)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
 
-@userRoutes.put('/{user_id}', response_model=UserResponse)
+@userRoutes.put("/{user_id}", response_model=UserResponse)
 def update_existing_user(
-    user_id: int,
-    request: UserUpdate,
-    admin: GetAdminDep,
-    db_session: GetDbSession
+    user_id: int, request: UserUpdate, admin: GetAdminDep, db_session: GetDbSession
 ):
     name = request.name
     email = request.email
@@ -57,24 +48,20 @@ def update_existing_user(
 
         return UserResponse.from_orm(result)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
 
-@userRoutes.delete('/{user_id}', response_model=GenericResponse)
-def remove_existing_user(
-    user_id: int,
-    admin: GetAdminDep,
-    db_session: GetDbSession
-):
+@userRoutes.delete("/{user_id}", response_model=GenericResponse)
+def remove_existing_user(user_id: int, admin: GetAdminDep, db_session: GetDbSession):
     try:
         repository = UserRepository(db_session)
         repository.remove_user(user_id)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
-    return {'success': 'El usuario fue eliminado con éxito'}
+    return {"success": "El usuario fue eliminado con éxito"}
 
 
-@userRoutes.get('/auth', response_model=UserResponse)
+@userRoutes.get("/auth", response_model=UserResponse)
 def authenticate(user: GetUserDep):
     return UserResponse.from_orm(user)

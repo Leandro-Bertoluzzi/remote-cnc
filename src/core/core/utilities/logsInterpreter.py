@@ -1,7 +1,7 @@
 import os
-from pathlib import Path
-from typing import Optional, Generator
 import re
+from pathlib import Path
+from typing import Generator, Optional
 
 # Custom types
 # Levels: 'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'
@@ -14,15 +14,15 @@ class LogsInterpreter:
     def interpret_log(cls, log: str) -> Optional[Log]:
         # Parse log
         # [DD/MM/YYYY hh:mm:ss] LEVEL: Message
-        log_regex = r'^\[(\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2})\] (\w+): (.+)$'
+        log_regex = r"^\[(\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2})\] (\w+): (.+)$"
         log_matches = re.search(log_regex, log)
 
-        if (not log_matches):
+        if not log_matches:
             return None
 
         # Parse message
         # [TYPE?] Message
-        msg_regex = r'^(?:\[(\w+)\] )?(.+)$'
+        msg_regex = r"^(?:\[(\w+)\] )?(.+)$"
         message = log_matches.group(3)
         msg_matches = re.search(msg_regex, message)
 

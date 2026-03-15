@@ -1,7 +1,8 @@
 from core.utilities.grbl.grblController import GrblController
-from desktop.helpers.utils import applyStylesheet
-from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
+
+from desktop.helpers.utils import applyStylesheet
 
 
 class Terminal(QWidget):
@@ -25,10 +26,10 @@ class Terminal(QWidget):
         layout.addWidget(self.input)
 
         # Apply custom styles
-        applyStylesheet(self, __file__, 'Terminal.qss')
+        applyStylesheet(self, __file__, "Terminal.qss")
 
     def display_text(self, text):
-        self.display_screen.insertPlainText(text + '\n')
+        self.display_screen.insertPlainText(text + "\n")
 
     def send_line(self):
         line = self.input.text()

@@ -2,14 +2,15 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from api.routes.cncRoutes import cncRoutes
 from api.routes.fileRoutes import fileRoutes
 from api.routes.logRoutes import logRoutes
 from api.routes.materialRoutes import materialRoutes
 from api.routes.monitorRoutes import monitorRoutes
 from api.routes.rootRoutes import rootRoutes
-from api.routes.toolRoutes import toolRoutes
 from api.routes.taskRoutes import taskRoutes
+from api.routes.toolRoutes import toolRoutes
 from api.routes.userRoutes import userRoutes
 from api.routes.workerRoutes import workerRoutes
 
@@ -17,7 +18,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

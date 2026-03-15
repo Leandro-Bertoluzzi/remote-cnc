@@ -1,7 +1,14 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, \
-    QPushButton, QFileDialog
-from PyQt5.QtCore import Qt
 import os
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QFileDialog,
+    QFormLayout,
+    QLineEdit,
+    QPushButton,
+)
 
 
 class FileDataDialog(QDialog):
@@ -10,11 +17,11 @@ class FileDataDialog(QDialog):
 
         self.name = QLineEdit(self)
         self.name.setEnabled(False)
-        self.file = QPushButton('Select file')
+        self.file = QPushButton("Select file")
         self.file.clicked.connect(self.openFile)
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
         self.buttonBox.setEnabled(False)
-        self.file_path = ''
+        self.file_path = ""
 
         if fileInfo:
             self.name.setText(fileInfo.file_name)
@@ -22,9 +29,9 @@ class FileDataDialog(QDialog):
             self.buttonBox.setEnabled(True)
 
         layout = QFormLayout(self)
-        layout.addRow('Nombre', self.name)
+        layout.addRow("Nombre", self.name)
         if not fileInfo:
-            layout.addRow('Archivo', self.file)
+            layout.addRow("Archivo", self.file)
         layout.addWidget(self.buttonBox)
 
         self.buttonBox.accepted.connect(self.accept)
@@ -32,14 +39,11 @@ class FileDataDialog(QDialog):
 
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
-        self.setWindowTitle('Subir archivo' if not fileInfo else 'Actualizar archivo')
+        self.setWindowTitle("Subir archivo" if not fileInfo else "Actualizar archivo")
 
     def openFile(self):
         filename, filter = QFileDialog.getOpenFileName(
-            self,
-            "Select a File",
-            "C:\\",
-            "G code files (*.txt *.gcode *.nc)"
+            self, "Select a File", "C:\\", "G code files (*.txt *.gcode *.nc)"
         )
         if filename:
             self.file_path = filename

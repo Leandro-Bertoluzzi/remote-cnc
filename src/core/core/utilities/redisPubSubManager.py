@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Any, Optional
+
 import redis
 import redis.asyncio as aioredis
 from redis.asyncio.client import PubSub
-from typing import Any, Optional
 
-from core.config import REDIS_HOST, REDIS_PORT, REDIS_DB_STORAGE
+from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 
 # Custom types
 PubSubMessage = Optional[dict[str, Any]]
@@ -81,10 +82,7 @@ class RedisPubSubManager(ABC):
 class RedisPubSubManagerAsync(RedisPubSubManager):
     async def _get_redis_connection(self) -> aioredis.Redis:
         self.redis_connection = await aioredis.Redis(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            db=REDIS_DB_STORAGE,
-            auto_close_connection_pool=False
+            host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB_STORAGE, auto_close_connection_pool=False
         )
 
     async def connect(self) -> None:
@@ -110,11 +108,7 @@ class RedisPubSubManagerAsync(RedisPubSubManager):
 
 class RedisPubSubManagerSync(RedisPubSubManager):
     def _get_redis_connection(self) -> None:
-        self.redis_connection = redis.Redis(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            db=REDIS_DB_STORAGE
-        )
+        self.redis_connection = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB_STORAGE)
 
     def connect(self) -> None:
         self._get_redis_connection()

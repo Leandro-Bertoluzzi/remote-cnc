@@ -1,6 +1,7 @@
+from typing import Annotated
+
 from core.utilities.redisPubSubManager import RedisPubSubManagerAsync
 from fastapi import Depends
-from typing import Annotated
 
 
 async def get_pubsub():

@@ -5,13 +5,13 @@ from core.utilities.security import hash_password
 # Database initial data
 INITIAL_DATA = [
     # Materials
-    Material('Fibrofácil 3mm', 'Plancha de madera delgada.'),
-    Material('PCB FR4', 'Placa de circuito impreso de fibra de vidrio.'),
+    Material("Fibrofácil 3mm", "Plancha de madera delgada."),
+    Material("PCB FR4", "Placa de circuito impreso de fibra de vidrio."),
     # Tools
-    Tool('Mecha HSS 5mm', 'Mecha de acero rápido para taladrado de madera y materiales blandos.'),
-    Tool('Fresa plana 6mm', 'Fresa plana, para trabajos de desbaste en madera.'),
+    Tool("Mecha HSS 5mm", "Mecha de acero rápido para taladrado de madera y materiales blandos."),
+    Tool("Fresa plana 6mm", "Fresa plana, para trabajos de desbaste en madera."),
     # Users
-    User('Admin', 'admin@test.com', hash_password('password'), 'admin')
+    User("Admin", "admin@test.com", hash_password("password"), "admin"),
 ]
 
 

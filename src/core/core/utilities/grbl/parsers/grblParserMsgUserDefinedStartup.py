@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_USER_DEFINED_STARTUP
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgUserDefinedStartup(GrblParserGeneric):
@@ -10,16 +11,14 @@ class GrblParserMsgUserDefinedStartup(GrblParserGeneric):
     Example:
         - $N0=G54
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^(\$N[^=]+)=(.*)\s*', line)
+        matches = re.search(r"^(\$N[^=]+)=(.*)\s*", line)
 
-        if (not matches):
+        if not matches:
             return None
 
-        payload = {
-            'name': matches.group(1),
-            'value': matches.group(2)
-        }
+        payload = {"name": matches.group(1), "value": matches.group(2)}
 
         return GRBL_MSG_USER_DEFINED_STARTUP, payload

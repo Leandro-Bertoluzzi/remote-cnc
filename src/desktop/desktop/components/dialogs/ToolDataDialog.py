@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QTextEdit
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QTextEdit
 
 
 class ToolDataDialog(QDialog):
@@ -16,8 +16,8 @@ class ToolDataDialog(QDialog):
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
 
         layout = QFormLayout(self)
-        layout.addRow('Nombre', self.name)
-        layout.addRow('Descripción (opcional)', self.description)
+        layout.addRow("Nombre", self.name)
+        layout.addRow("Descripción (opcional)", self.description)
         layout.addWidget(buttonBox)
 
         buttonBox.accepted.connect(self.accept)
@@ -25,7 +25,7 @@ class ToolDataDialog(QDialog):
 
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
-        self.setWindowTitle('Agregar herramienta' if not toolInfo else 'Actualizar herramienta')
+        self.setWindowTitle("Agregar herramienta" if not toolInfo else "Actualizar herramienta")
 
     def getInputs(self):
         return (self.name.text(), self.description.toPlainText())

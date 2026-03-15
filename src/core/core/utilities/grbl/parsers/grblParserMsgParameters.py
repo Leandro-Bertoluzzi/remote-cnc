@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_PARAMS
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgParameters(GrblParserGeneric):
@@ -20,41 +21,40 @@ class GrblParserMsgParameters(GrblParserGeneric):
         [TLO:0.000]
         [PRB:0.000,0.000,0.000:0]
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^\[(G54|G55|G56|G57|G58|G59|G28|G30|G92|TLO|PRB):(.+)\]$', line)
+        matches = re.search(r"^\[(G54|G55|G56|G57|G58|G59|G28|G30|G92|TLO|PRB):(.+)\]$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
         # Gxx, TLO or PRB
         name = matches.group(1)
         value = matches.group(2)
 
-        payload = {
-            'name': name
-        }
+        payload = {"name": name}
 
         # [Gxx:0.000,0.000,0.000]
-        if (re.search(r'^G\d+$', name)):
-            axes = ['x', 'y', 'z']
-            values = value.split(',')
-            payload['value'] = {}
+        if re.search(r"^G\d+$", name):
+            axes = ["x", "y", "z"]
+            values = value.split(",")
+            payload["value"] = {}
             for i in range(len(values)):
-                payload['value'][axes[i]] = float(values[i])
+                payload["value"][axes[i]] = float(values[i])
 
         # [TLO:0.000]
-        if (name == 'TLO'):
-            payload['value'] = float(value)
+        if name == "TLO":
+            payload["value"] = float(value)
 
         # [PRB:0.000,0.000,0.000:1]
-        if (name == 'PRB'):
-            axes = ['x', 'y', 'z']
-            [valuesStr, result] = value.split(':')
-            values = valuesStr.split(',')
-            payload['value'] = {}
+        if name == "PRB":
+            axes = ["x", "y", "z"]
+            [valuesStr, result] = value.split(":")
+            values = valuesStr.split(",")
+            payload["value"] = {}
             for i in range(len(values)):
-                payload['value'][axes[i]] = float(values[i])
-            payload['value']['result'] = (result == '1')
+                payload["value"][axes[i]] = float(values[i])
+            payload["value"]["result"] = result == "1"
 
         return GRBL_MSG_PARAMS, payload

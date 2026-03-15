@@ -11,8 +11,7 @@ class SerialService:
         return serial_ports.comports()
 
     def startConnection(self, port: str, baudrate: int, timeout: int = 2) -> str:
-        """Closes any previous connection and starts a new one.
-        """
+        """Closes any previous connection and starts a new one."""
         # Close any previous serial connection
         if self.interface.is_open:
             self.interface.close()
@@ -35,28 +34,25 @@ class SerialService:
         return self.interface.in_waiting
 
     def sendBytes(self, code: bytes):
-        """Sends byte(s) via serial port.
-        """
+        """Sends byte(s) via serial port."""
         self.interface.write(code)
 
     def sendLine(self, code: str):
-        """Sends a line via serial port.
-        """
+        """Sends a line via serial port."""
         # Strip all EOL characters for consistency
-        message = code.strip() + '\n'
+        message = code.strip() + "\n"
         # Send line
         self.interface.write(message.encode())
 
     def readLine(self) -> str:
-        """Waits for response with carriage return.
-        """
-        return str(self.interface.readline().decode('ascii', 'ignore')).strip()
+        """Waits for response with carriage return."""
+        return str(self.interface.readline().decode("ascii", "ignore")).strip()
 
     def readLineUntilMessage(self, max_retries: int = 30) -> str:
         """Waits for response with carriage return.
         Ignores empty messages and timeouts until an actual message arrives.
         """
-        response = ''
+        response = ""
         retries = 0
         while not response and retries <= max_retries:
             response = self.readLine().strip()
@@ -64,8 +60,7 @@ class SerialService:
         return response
 
     def stopConnection(self):
-        """Closes any previous connection.
-        """
+        """Closes any previous connection."""
         if self.interface.is_open:
             self.interface.close()
         return

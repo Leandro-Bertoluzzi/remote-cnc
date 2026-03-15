@@ -1,10 +1,12 @@
-from pathlib import Path
 import shutil
-from sqlalchemy.orm import Session
+from pathlib import Path
 from typing import BinaryIO
+
+from sqlalchemy.orm import Session
+
 from core.database.models import File
 from core.database.repositories.fileRepository import FileRepository
-from core.utilities.files import computeSHA256, computeSHA256FromFile, FileSystemHelper
+from core.utilities.files import FileSystemHelper, computeSHA256, computeSHA256FromFile
 
 
 class FileManager:
@@ -112,22 +114,15 @@ class FileManager:
 
         # Check if the file is repeated
         # can raise DuplicatedFileNameError
-        repository.check_file_exists(user_id, new_name, 'impossible-hash')
+        repository.check_file_exists(user_id, new_name, "impossible-hash")
 
         # Save the original file name, in case we have to recover it
         files_helper = FileSystemHelper(self.base_path)
-        original_path = files_helper.get_file_path(
-            file.user_id,
-            file.file_name
-        )
+        original_path = files_helper.get_file_path(file.user_id, file.file_name)
 
         # Update file in the file system
         # Can raise (InvalidFile, FileSystemError)
-        updated_path = files_helper.rename_file(
-            file.user_id,
-            file.file_name,
-            new_name
-        )
+        updated_path = files_helper.rename_file(file.user_id, file.file_name, new_name)
 
         # Update the entry for the file in the DB
         # Can raise (EntityNotFoundError, DatabaseError)
@@ -169,10 +164,7 @@ class FileManager:
         """
         # Save a backup of the file, in case we have to recover it
         files_helper = FileSystemHelper(self.base_path)
-        file_path = files_helper.get_file_path(
-            file.user_id,
-            file.file_name
-        )
+        file_path = files_helper.get_file_path(file.user_id, file.file_name)
         self._backup_file(file_path)
 
         # Remove the file from the file system

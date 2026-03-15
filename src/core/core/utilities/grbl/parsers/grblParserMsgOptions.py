@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_OPTIONS
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgOptions(GrblParserGeneric):
@@ -16,21 +17,18 @@ class GrblParserMsgOptions(GrblParserGeneric):
         - [OPT:,15,128]
         - [OPT:VL,15,128]
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^\[(?:OPT:)(.+)\]$', line)
+        matches = re.search(r"^\[(?:OPT:)(.+)\]$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
         # Values are split by commas (,)
         # We ignore the first "[OPT:" and the last character "]"
-        values = re.split(r',', line[5:-1])
+        values = re.split(r",", line[5:-1])
 
-        payload = {
-            'optionCode': values[0],
-            'blockBufferSize': values[1],
-            'rxBufferSize': values[2]
-        }
+        payload = {"optionCode": values[0], "blockBufferSize": values[1], "rxBufferSize": values[2]}
 
         return GRBL_MSG_OPTIONS, payload

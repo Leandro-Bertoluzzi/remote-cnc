@@ -1,20 +1,20 @@
+import pytest
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.MainWindow import MainWindow
-import pytest
+from desktop.views.MonitorView import MonitorView
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
-from desktop.views.MonitorView import MonitorView
 
 
 class TestMonitorView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
-        mocker.patch('core.worker.utils.is_worker_running', return_value=False)
+        mocker.patch("core.worker.utils.is_worker_running", return_value=False)
 
         # Mock other methods
-        mocker.patch.object(MonitorView, 'connect_worker')
+        mocker.patch.object(MonitorView, "connect_worker")
 
         # Create an instance of MonitorView
         self.parent = mock_window
@@ -22,18 +22,12 @@ class TestMonitorView:
         qtbot.addWidget(self.monitor_view)
 
     @pytest.mark.parametrize("device_busy", [False, True])
-    def test_monitor_view_init(
-        self,
-        qtbot: QtBot,
-        mocker: MockerFixture,
-        helpers,
-        device_busy
-    ):
+    def test_monitor_view_init(self, qtbot: QtBot, mocker: MockerFixture, helpers, device_busy):
         # Reset parent mocks call count
         self.parent.addToolBar.reset_mock()
 
         # Mock worker monitor methods
-        mocker.patch('core.worker.utils.is_worker_running', return_value=device_busy)
+        mocker.patch("core.worker.utils.is_worker_running", return_value=device_busy)
 
         # Create an instance of MonitorView
         monitor_view = MonitorView(self.parent)
@@ -52,15 +46,15 @@ class TestMonitorView:
         self.monitor_view.backToMenu()
 
         # Assertions
-        self.parent.removeToolBar.call_count == 1
+        assert self.parent.removeToolBar.call_count == 1
         self.parent.backToMenu.assert_called_once()
 
     def test_monitor_view_update_device_status(self, mocker: MockerFixture):
         # Mock methods
-        mock_set_status = mocker.patch.object(ControllerStatus, 'set_status')
-        mock_set_feedrate = mocker.patch.object(ControllerStatus, 'set_feedrate')
-        mock_set_spindle = mocker.patch.object(ControllerStatus, 'set_spindle')
-        mock_set_tool = mocker.patch.object(ControllerStatus, 'set_tool')
+        mock_set_status = mocker.patch.object(ControllerStatus, "set_status")
+        mock_set_feedrate = mocker.patch.object(ControllerStatus, "set_feedrate")
+        mock_set_spindle = mocker.patch.object(ControllerStatus, "set_spindle")
+        mock_set_tool = mocker.patch.object(ControllerStatus, "set_tool")
 
         # Call method under test
         self.monitor_view.update_device_status({}, 50.0, 500.0, 1)

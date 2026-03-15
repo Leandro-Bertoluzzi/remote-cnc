@@ -1,10 +1,10 @@
-import shutil
 import hashlib
+import shutil
 from contextlib import suppress
 from pathlib import Path
 from typing import BinaryIO
 
-ALLOWED_FILE_EXTENSIONS = {'txt', 'gcode', 'nc'}
+ALLOWED_FILE_EXTENSIONS = {"txt", "gcode", "nc"}
 
 # Custom exceptions
 
@@ -74,7 +74,7 @@ def changeFileExtension(file_path: str, new_extension: str) -> str:
 
 
 def createFileIfNotExists(file_path: str):
-    with suppress(FileExistsError), open(file_path, 'x') as file:
+    with suppress(FileExistsError), open(file_path, "x") as file:
         file.write("")
 
 
@@ -96,8 +96,7 @@ class FileSystemHelper:
         - Description:
             Checks if the file has a valid file extension
         """
-        return '.' in filename and \
-            filename.rsplit('.', 1)[1].lower() in ALLOWED_FILE_EXTENSIONS
+        return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_FILE_EXTENSIONS
 
     def _user_folder(self, user_id: int) -> Path:
         """Returns the path to the user's folder, creating it if necessary."""
@@ -122,7 +121,7 @@ class FileSystemHelper:
 
         # Check if the file format is a valid one
         if not self._is_valid_filename(filename):
-            raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+            raise InvalidFile(f"Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}")
 
         destination = self._user_folder(user_id) / filename
         try:
@@ -130,8 +129,8 @@ class FileSystemHelper:
                 shutil.copyfileobj(file, buffer)
         except Exception as error:
             raise FileSystemError(
-                f'There was an error writing the file in the file system: {error}'
-            )
+                f"There was an error writing the file in the file system: {error}"
+            ) from error
 
         return destination
 
@@ -140,15 +139,15 @@ class FileSystemHelper:
 
         # Check if the file format is a valid one
         if not self._is_valid_filename(filename):
-            raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+            raise InvalidFile(f"Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}")
 
         destination = self._user_folder(user_id) / filename
         try:
             shutil.copy(original_path, destination)
         except Exception as error:
             raise FileSystemError(
-                f'There was an error writing the file in the file system: {error}'
-            )
+                f"There was an error writing the file in the file system: {error}"
+            ) from error
 
         return destination
 
@@ -157,7 +156,7 @@ class FileSystemHelper:
 
         # Check if the file format is a valid one
         if not self._is_valid_filename(new_filename):
-            raise InvalidFile(f'Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}')
+            raise InvalidFile(f"Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}")
 
         user_folder = self._user_folder(user_id)
         try:
@@ -166,8 +165,8 @@ class FileSystemHelper:
             current_file_path.rename(new_file_path)
         except Exception as error:
             raise FileSystemError(
-                f'There was an error renaming the file in the file system: {error}'
-            )
+                f"There was an error renaming the file in the file system: {error}"
+            ) from error
 
         return new_file_path
 
@@ -180,8 +179,8 @@ class FileSystemHelper:
             file_whole_path.unlink(missing_ok=True)
         except Exception as error:
             raise FileSystemError(
-                f'There was an error removing the file from the file system: {error}'
-            )
+                f"There was an error removing the file from the file system: {error}"
+            ) from error
 
     def read_file(self, user_id: int, filename: str) -> str:
         """Reads the content of a file in the file system."""
@@ -191,6 +190,4 @@ class FileSystemHelper:
             with open(file_path, "r") as content:
                 return content.read()
         except Exception as error:
-            raise FileSystemError(
-                f'There was an error reading the file: {error}'
-            )
+            raise FileSystemError(f"There was an error reading the file: {error}") from error

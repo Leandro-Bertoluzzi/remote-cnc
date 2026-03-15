@@ -1,13 +1,13 @@
 from core.utilities.storage import delete_value, get_value, set_value
 
 # Constants (keys)
-WORKER_IS_ENABLED_KEY = 'worker_enabled'
-WORKER_REQUEST_KEY = 'worker_request'
-WORKER_IS_PAUSED_KEY = 'worker_paused'
+WORKER_IS_ENABLED_KEY = "worker_enabled"
+WORKER_REQUEST_KEY = "worker_request"
+WORKER_IS_PAUSED_KEY = "worker_paused"
 
 # Constants (values)
-WORKER_PAUSE_REQUEST = 'grbl_pause'
-WORKER_RESUME_REQUEST = 'grbl_resume'
+WORKER_PAUSE_REQUEST = "grbl_pause"
+WORKER_RESUME_REQUEST = "grbl_resume"
 
 
 class WorkerStoreAdapter:
@@ -18,7 +18,7 @@ class WorkerStoreAdapter:
     @classmethod
     def set_device_enabled(cls, enabled: bool):
         if enabled:
-            return set_value(WORKER_IS_ENABLED_KEY, 'True')
+            return set_value(WORKER_IS_ENABLED_KEY, "True")
 
         delete_value(WORKER_IS_ENABLED_KEY)
 
@@ -29,7 +29,7 @@ class WorkerStoreAdapter:
     @classmethod
     def set_device_paused(cls, paused: bool):
         if paused:
-            return set_value(WORKER_IS_PAUSED_KEY, 'True')
+            return set_value(WORKER_IS_PAUSED_KEY, "True")
 
         delete_value(WORKER_IS_PAUSED_KEY)
 

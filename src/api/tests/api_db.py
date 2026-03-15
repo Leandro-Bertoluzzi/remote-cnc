@@ -3,23 +3,20 @@
 Extracted from conftest.py to avoid name collision with the core test conftest
 when both 'tests/' and 'api/tests/' are on pythonpath.
 """
+
 from core.database.models import User
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-
 # Authorized users
 test_user = User(
-    "User",
-    "user@test.com",
-    "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy",
-    "user"
+    "User", "user@test.com", "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy", "user"
 )
 test_admin = User(
     "Admin",
     "admin@test.com",
     "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy",
-    "admin"
+    "admin",
 )
 
 

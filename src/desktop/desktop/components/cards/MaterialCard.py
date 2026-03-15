@@ -1,8 +1,8 @@
-from desktop.components.cards.Card import Card
-from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from core.database.base import SessionLocal
 from core.database.models import Material
 from core.database.repositories.materialRepository import MaterialRepository
+from desktop.components.cards.Card import Card
+from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from desktop.helpers.utils import needs_confirmation
 
 
@@ -14,7 +14,7 @@ class MaterialCard(Card):
         self.setup_ui()
 
     def setup_ui(self):
-        description = f'Material {self.material.id}: {self.material.name}'
+        description = f"Material {self.material.id}: {self.material.name}"
         self.setDescription(description)
 
         self.addButton("Editar", self.updateMaterial)
@@ -31,23 +31,17 @@ class MaterialCard(Card):
             repository = MaterialRepository(db_session)
             repository.update_material(self.material.id, name, description)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
         self.getView().refreshLayout()
 
-    @needs_confirmation('¿Realmente desea eliminar el material?', 'Eliminar material')
+    @needs_confirmation("¿Realmente desea eliminar el material?", "Eliminar material")
     def removeMaterial(self):
         try:
             db_session = SessionLocal()
             repository = MaterialRepository(db_session)
             repository.remove_material(self.material.id)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
         self.getView().refreshLayout()

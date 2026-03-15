@@ -6,17 +6,17 @@ from pytestqt.qtbot import QtBot
 
 class TestMenuButton:
     def test_menu_button_init(self, qtbot: QtBot):
-        button = MenuButton('Test Button')
+        button = MenuButton("Test Button")
         qtbot.addWidget(button)
 
-        assert button.text() == 'Test Button'
+        assert button.text() == "Test Button"
         assert button.isVisible() is False
         assert button.receivers(button.clicked) == 0
 
     def test_menu_button_on_click(self, qtbot, mocker):
         mock_on_click = mocker.Mock()
 
-        button = MenuButton('Test Button', onClick=mock_on_click)
+        button = MenuButton("Test Button", onClick=mock_on_click)
         qtbot.addWidget(button)
         button.click()
 
@@ -28,7 +28,7 @@ class TestMenuButton:
         parent.redirectToView = mocker.Mock()
 
         # Instantiate button
-        button = MenuButton('Test Button', goToView='Test view', parent=parent)
+        button = MenuButton("Test Button", goToView="Test view", parent=parent)
         qtbot.addWidget(button)
 
         # User interaction

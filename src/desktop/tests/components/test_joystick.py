@@ -1,6 +1,6 @@
+import pytest
 from desktop.components.Joystick import Joystick
 from PyQt5.QtWidgets import QDoubleSpinBox, QLabel
-import pytest
 
 
 class TestJoystick:
@@ -27,20 +27,20 @@ class TestJoystick:
 
         # Assertions
         assert self.joystick.units == 1
-        assert self.joystick.input_x.suffix() == ' in'
-        assert self.joystick.input_y.suffix() == ' in'
-        assert self.joystick.input_z.suffix() == ' in'
-        assert self.joystick.input_feedrate.suffix() == ' in/min'
+        assert self.joystick.input_x.suffix() == " in"
+        assert self.joystick.input_y.suffix() == " in"
+        assert self.joystick.input_z.suffix() == " in"
+        assert self.joystick.input_feedrate.suffix() == " in/min"
 
         # Trigger action under test
         self.joystick.control_units.button(0).click()
 
         # Assertions
         assert self.joystick.units == 0
-        assert self.joystick.input_x.suffix() == ' mm'
-        assert self.joystick.input_y.suffix() == ' mm'
-        assert self.joystick.input_z.suffix() == ' mm'
-        assert self.joystick.input_feedrate.suffix() == ' mm/min'
+        assert self.joystick.input_x.suffix() == " mm"
+        assert self.joystick.input_y.suffix() == " mm"
+        assert self.joystick.input_z.suffix() == " mm"
+        assert self.joystick.input_feedrate.suffix() == " mm/min"
 
     def test_joystick_incremental_move(self, mocker):
         # Mock widget state
@@ -51,7 +51,7 @@ class TestJoystick:
         self.joystick.units = 1
 
         # Mock method
-        mock_send_jog_command = mocker.patch.object(Joystick, 'send_jog_command')
+        mock_send_jog_command = mocker.patch.object(Joystick, "send_jog_command")
 
         # Trigger action under test
         self.joystick.make_incremental_move(1, 1, 1)()
@@ -60,11 +60,11 @@ class TestJoystick:
         mock_send_jog_command.assert_called_once()
 
         jog_params = {
-            'x': 1.5,
-            'y': 1.3,
-            'z': 1.2,
-            'feedrate': 500.0,
-            'distance_mode': 'distance_incremental'
+            "x": 1.5,
+            "y": 1.3,
+            "z": 1.2,
+            "feedrate": 500.0,
+            "distance_mode": "distance_incremental",
         }
         mock_send_jog_command.assert_called_with(*jog_params.values())
 
@@ -77,7 +77,7 @@ class TestJoystick:
         self.joystick.units = 1
 
         # Mock method
-        mock_send_jog_command = mocker.patch.object(Joystick, 'send_jog_command')
+        mock_send_jog_command = mocker.patch.object(Joystick, "send_jog_command")
 
         # Trigger action under test
         self.joystick.make_incremental_move(0, 0, 0)()
@@ -99,19 +99,12 @@ class TestJoystick:
         self.joystick.units = 0
 
         # Trigger action under test
-        self.joystick.send_jog_command(1.5, 1.3, 1.2, 500.0, 'distance_incremental')
+        self.joystick.send_jog_command(1.5, 1.3, 1.2, 500.0, "distance_incremental")
 
         # Assertions
         self.grbl_controller.jog.assert_called_once()
 
-        jog_params = {
-            'x': 1.5,
-            'y': 1.3,
-            'z': 1.2,
-            'feedrate': 500.0
-        }
+        jog_params = {"x": 1.5, "y": 1.3, "z": 1.2, "feedrate": 500.0}
         self.grbl_controller.jog.assert_called_with(
-            *jog_params.values(),
-            units='milimeters',
-            distance_mode='distance_incremental'
+            *jog_params.values(), units="milimeters", distance_mode="distance_incremental"
         )

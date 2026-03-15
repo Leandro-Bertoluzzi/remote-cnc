@@ -1,47 +1,42 @@
-from celery import Task
-from celery.utils.log import get_task_logger
 import json
 import time
 
-from worker.main import app
+from celery import Task
+from celery.utils.log import get_task_logger
 from core.config import FILES_FOLDER_PATH
 from core.database.base import SessionLocal
 from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
-from core.utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
-from core.utilities.grbl.grblController import GrblController
 from core.utilities.files import FileSystemHelper
-from core.utilities.loggerFactory import setup_task_logger, setup_stream_logger
+from core.utilities.gcode.gcodeFileSender import FinishedFile, GcodeFileSender
+from core.utilities.grbl.grblController import GrblController
+from core.utilities.loggerFactory import setup_stream_logger, setup_task_logger
 from core.utilities.redisPubSubManager import RedisPubSubManagerSync
 from core.utilities.worker.workerStatusManager import WorkerStatusManager
+from worker.main import app
 
 # Constants
-SEND_INTERVAL = 0.10    # Seconds
-STATUS_POLL = 0.10      # Seconds
-STATUS_CHANNEL = 'grbl_status'
-COMMANDS_CHANNEL = 'worker_commands'
+SEND_INTERVAL = 0.10  # Seconds
+STATUS_POLL = 0.10  # Seconds
+STATUS_CHANNEL = "grbl_status"
+COMMANDS_CHANNEL = "worker_commands"
 
 
-@app.task(name='execute_task', bind=True, ignore_result=True)
-def executeTask(
-    self: Task,
-    task_id: int,
-    serial_port: str,
-    serial_baudrate: int
-) -> bool:
+@app.task(name="execute_task", bind=True, ignore_result=True)
+def executeTask(self: Task, task_id: int, serial_port: str, serial_baudrate: int) -> bool:
     db_session = SessionLocal()
     repository = TaskRepository(db_session)
     # 1. Check if there is a task currently in progress, in which case return an exception
     if repository.are_there_tasks_in_progress():
-        raise Exception('Ya hay una tarea en progreso, por favor espere a que termine')
+        raise Exception("Ya hay una tarea en progreso, por favor espere a que termine")
 
     # 2. Get the file for the requested task
     task = repository.get_task_by_id(task_id)
     if not task:
-        raise Exception('No se encontró la tarea en la base de datos')
+        raise Exception("No se encontró la tarea en la base de datos")
 
     if task.status != TaskStatus.APPROVED.value:
-        raise Exception('La tarea tiene un estado incorrecto: {}'.format(task.status))
+        raise Exception("La tarea tiene un estado incorrecto: {}".format(task.status))
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
     file_path = files_helper.get_file_path(task.file.user_id, task.file.file_name)
@@ -71,13 +66,13 @@ def executeTask(
         total_lines = file_sender.start() + 1
     except Exception as error:
         cnc.disconnect()
-        worker_logger.critical('Error al abrir el archivo: {}'.format(file_path))
+        worker_logger.critical("Error al abrir el archivo: {}".format(file_path))
         worker_logger.critical(error)
         raise error
 
     # Once sure the file exists, mark the task as 'in progress' in the DB
     repository.update_task_status(task.id, TaskStatus.IN_PROGRESS.value)
-    worker_logger.info('Comenzada la ejecución del archivo: {}'.format(file_path))
+    worker_logger.info("Comenzada la ejecución del archivo: {}".format(file_path))
 
     # 5. Start a PubSub manager to notify updates and listen to requests
     redis = RedisPubSubManagerSync()
@@ -95,21 +90,23 @@ def executeTask(
             parserstate = cnc_status.get_parser_state()
             processed_lines = cnc.get_commands_count()
             self.update_state(
-                state='PROGRESS',
+                state="PROGRESS",
                 meta={
-                    'sent_lines': sent_lines,
-                    'processed_lines': processed_lines,
-                    'total_lines': total_lines,
-                    'status': status,
-                    'parserstate': parserstate
+                    "sent_lines": sent_lines,
+                    "processed_lines": processed_lines,
+                    "total_lines": total_lines,
+                    "status": status,
+                    "parserstate": parserstate,
+                },
+            )
+            message = json.dumps(
+                {
+                    "processed_lines": processed_lines,
+                    "total_lines": total_lines,
+                    "status": status,
+                    "parserstate": parserstate,
                 }
             )
-            message = json.dumps({
-                'processed_lines': processed_lines,
-                'total_lines': total_lines,
-                'status': status,
-                'parserstate': parserstate
-            })
             redis.publish(STATUS_CHANNEL, message)
 
             if cnc_status.finished():
@@ -144,26 +141,23 @@ def executeTask(
             try:
                 sent_lines = file_sender.send_line()
             except FinishedFile:
-                cnc.send_command('G4 P0')    # Ask to wait for finish
+                cnc.send_command("G4 P0")  # Ask to wait for finish
                 sent_lines += 1
                 finished_sending = True
                 file_sender.stop()
 
             # update task progress
             self.update_state(
-                state='PROGRESS',
+                state="PROGRESS",
                 meta={
-                    'sent_lines': sent_lines,
-                    'processed_lines': processed_lines,
-                    'total_lines': total_lines,
-                    'status': status,
-                    'parserstate': parserstate
-                }
+                    "sent_lines": sent_lines,
+                    "processed_lines": processed_lines,
+                    "total_lines": total_lines,
+                    "status": status,
+                    "parserstate": parserstate,
+                },
             )
-            message = json.dumps({
-                'sent_lines': sent_lines,
-                'total_lines': total_lines
-            })
+            message = json.dumps({"sent_lines": sent_lines, "total_lines": total_lines})
             redis.publish(STATUS_CHANNEL, message)
 
             ts = t
@@ -175,7 +169,7 @@ def executeTask(
     redis.disconnect()
 
     if cnc_status.failed():
-        worker_logger.critical('Error durante la ejecución del archivo: {}'.format(file_path))
+        worker_logger.critical("Error durante la ejecución del archivo: {}".format(file_path))
         repository.update_task_status(task.id, TaskStatus.FAILED.value)
 
         error_message = cnc_status.get_error_message()
@@ -183,25 +177,21 @@ def executeTask(
         raise Exception(error_message)
 
     # SUCCESS
-    worker_logger.info('Finalizada la ejecución del archivo: {}'.format(file_path))
+    worker_logger.info("Finalizada la ejecución del archivo: {}".format(file_path))
     repository.update_task_status(task.id, TaskStatus.FINISHED.value)
 
 
-@app.task(name='cnc_server', bind=True, ignore_result=True)
-def cncServer(
-    self: Task,
-    serial_port: str,
-    serial_baudrate: int
-) -> bool:
+@app.task(name="cnc_server", bind=True, ignore_result=True)
+def cncServer(self: Task, serial_port: str, serial_baudrate: int) -> bool:
     db_session = SessionLocal()
     repository = TaskRepository(db_session)
     # 1. Check if there is a task currently in progress, in which case return an exception
     if repository.are_there_tasks_in_progress():
-        raise Exception('Hay una tarea en progreso, por favor espere a que termine')
+        raise Exception("Hay una tarea en progreso, por favor espere a que termine")
 
     # 2. Instantiate a GrblController object and start communication with Arduino
     worker_logger = get_task_logger(__name__)
-    task_logger = setup_stream_logger('cnc_server', worker_logger.level)
+    task_logger = setup_stream_logger("cnc_server", worker_logger.level)
     cnc = GrblController(logger=task_logger)
     cnc_status = cnc.grbl_status
     cnc.connect(serial_port, serial_baudrate)
@@ -218,7 +208,7 @@ def cncServer(
 
     # 4. Send G-code lines in a loop until the user requests the disconnection
     tp = time.time()  # last time a command was sent and info was queried
-    worker_logger.info('**Iniciado servidor de comandos CNC**')
+    worker_logger.info("**Iniciado servidor de comandos CNC**")
 
     while True:
         t = time.time()
@@ -227,21 +217,12 @@ def cncServer(
         if t - tp > STATUS_POLL:
             status = cnc_status.get_status_report()
             parserstate = cnc_status.get_parser_state()
-            self.update_state(
-                state='PROGRESS',
-                meta={
-                    'status': status,
-                    'parserstate': parserstate
-                }
-            )
-            message = json.dumps({
-                'status': status,
-                'parserstate': parserstate
-            })
+            self.update_state(state="PROGRESS", meta={"status": status, "parserstate": parserstate})
+            message = json.dumps({"status": status, "parserstate": parserstate})
             redis.publish(STATUS_CHANNEL, message)
 
             if cnc_status.finished():
-                worker_logger.info('Encontrado comando de fin de programa, desconectando...')
+                worker_logger.info("Encontrado comando de fin de programa, desconectando...")
                 break
 
             # Check if PAUSE or RESUME was requested
@@ -259,8 +240,8 @@ def cncServer(
 
             # Check if a command was requested
             received = redis.get_message()
-            if received is not None and 'data' in received.keys():
-                data: bytes = received['data']
+            if received is not None and "data" in received.keys():
+                data: bytes = received["data"]
                 cnc.send_command(data.decode())
 
             tp = t
@@ -270,10 +251,8 @@ def cncServer(
 
     cnc.disconnect()
 
-    message = json.dumps({
-        'status': cnc_status.get_status_report()
-    })
+    message = json.dumps({"status": cnc_status.get_status_report()})
     redis.publish(STATUS_CHANNEL, message)
 
     redis.disconnect()
-    worker_logger.info('**Finalizado servidor de comandos CNC**')
+    worker_logger.info("**Finalizado servidor de comandos CNC**")

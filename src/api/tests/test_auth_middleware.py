@@ -1,25 +1,22 @@
+import datetime
+
+import api.middleware.dbMiddleware as dbMiddleware
 from api.main import app
+from api_db import TestingSession, engine
 from core.database.base import Base
 from core.database.models import User
-import datetime
 from fastapi.testclient import TestClient
 from jwt import ExpiredSignatureError, InvalidSignatureError
-import api.middleware.dbMiddleware as dbMiddleware
-from api_db import engine, TestingSession
-
 
 # Example users
 test_user = User(
-    "User",
-    "user@test.com",
-    "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy",
-    "user"
+    "User", "user@test.com", "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy", "user"
 )
 test_admin = User(
     "Admin",
     "admin@test.com",
     "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy",
-    "admin"
+    "admin",
 )
 
 
@@ -54,20 +51,17 @@ class TestAuthMiddleware:
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)
 
-# --------------------------------------------------------------------- #
-# -------------------------------- USER ------------------------------- #
-# --------------------------------------------------------------------- #
+    # --------------------------------------------------------------------- #
+    # -------------------------------- USER ------------------------------- #
+    # --------------------------------------------------------------------- #
 
     def test_auth_user_header(self, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
-            return_value={
-                'user_id': 1,
-                'exp': datetime.datetime.now() + datetime.timedelta(1)
-            },
+            "api.middleware.authMiddleware.verify_token",
+            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
         )
 
         # Query endpoint under test
@@ -80,11 +74,8 @@ class TestAuthMiddleware:
     def test_auth_user_query(self, mocker):
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
-            return_value={
-                'user_id': 1,
-                'exp': datetime.datetime.now() + datetime.timedelta(1)
-            },
+            "api.middleware.authMiddleware.verify_token",
+            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
         )
 
         # Query endpoint under test
@@ -107,7 +98,7 @@ class TestAuthMiddleware:
 
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
+            "api.middleware.authMiddleware.verify_token",
             side_effect=ExpiredSignatureError(),
         )
 
@@ -124,7 +115,7 @@ class TestAuthMiddleware:
 
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
+            "api.middleware.authMiddleware.verify_token",
             side_effect=InvalidSignatureError(),
         )
 
@@ -141,11 +132,8 @@ class TestAuthMiddleware:
 
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
-            return_value={
-                'user_id': 500,
-                'exp': datetime.datetime.now() + datetime.timedelta(1)
-            },
+            "api.middleware.authMiddleware.verify_token",
+            return_value={"user_id": 500, "exp": datetime.datetime.now() + datetime.timedelta(1)},
         )
 
         # Query endpoint under test
@@ -161,16 +149,13 @@ class TestAuthMiddleware:
 
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
-            return_value={
-                'user_id': 1,
-                'exp': datetime.datetime.now() + datetime.timedelta(1)
-            },
+            "api.middleware.authMiddleware.verify_token",
+            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
         )
         # Mock DB method to simulate exception
         mock_get_user = mocker.patch(
-            'api.middleware.authMiddleware.UserRepository.get_user_by_id',
-            side_effect=Exception('There was an error')
+            "api.middleware.authMiddleware.UserRepository.get_user_by_id",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -182,20 +167,17 @@ class TestAuthMiddleware:
         assert response.status_code == 400
         assert response.json()["detail"] == "There was an error"
 
-# --------------------------------------------------------------------- #
-# ------------------------------- ADMIN ------------------------------- #
-# --------------------------------------------------------------------- #
+    # --------------------------------------------------------------------- #
+    # ------------------------------- ADMIN ------------------------------- #
+    # --------------------------------------------------------------------- #
 
     def test_auth_admin_header(self, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
-            return_value={
-                'user_id': 2,
-                'exp': datetime.datetime.now() + datetime.timedelta(1)
-            },
+            "api.middleware.authMiddleware.verify_token",
+            return_value={"user_id": 2, "exp": datetime.datetime.now() + datetime.timedelta(1)},
         )
 
         # Query endpoint under test
@@ -208,11 +190,8 @@ class TestAuthMiddleware:
     def test_auth_admin_query(self, mocker):
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
-            return_value={
-                'user_id': 2,
-                'exp': datetime.datetime.now() + datetime.timedelta(1)
-            },
+            "api.middleware.authMiddleware.verify_token",
+            return_value={"user_id": 2, "exp": datetime.datetime.now() + datetime.timedelta(1)},
         )
 
         # Query endpoint under test
@@ -227,11 +206,8 @@ class TestAuthMiddleware:
 
         # Mock JWT validation
         mock_verify_token = mocker.patch(
-            'api.middleware.authMiddleware.verify_token',
-            return_value={
-                'user_id': 1,
-                'exp': datetime.datetime.now() + datetime.timedelta(1)
-            },
+            "api.middleware.authMiddleware.verify_token",
+            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
         )
 
         # Query endpoint under test

@@ -1,11 +1,12 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QPushButton
-from PyQt5.QtCore import Qt
+from typing import TYPE_CHECKING, Callable
+
 from desktop.helpers.utils import applyStylesheet
-from typing import Callable, TYPE_CHECKING
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow               # pragma: no cover
-    from views.BaseListView import BaseListView     # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
+    from views.BaseListView import BaseListView  # pragma: no cover
 
 
 class Card(QWidget):
@@ -36,25 +37,18 @@ class Card(QWidget):
     def setDescription(self, description: str) -> None:
         self.label_description.setText(description)
 
-    def addButton(
-        self,
-        text: str,
-        callback: Callable,
-        enabled: bool = True
-    ) -> None:
+    def addButton(self, text: str, callback: Callable, enabled: bool = True) -> None:
         button = QPushButton(text)
         button.clicked.connect(callback)
         button.setEnabled(enabled)
         self.layout_buttons.addWidget(button)
 
-    def getView(self) -> 'BaseListView':
-        """Get the view containing this card.
-        """
+    def getView(self) -> "BaseListView":
+        """Get the view containing this card."""
         return self.parent()  # type: ignore
 
-    def getWindow(self) -> 'MainWindow':
-        """Get the application's main window.
-        """
+    def getWindow(self) -> "MainWindow":
+        """Get the application's main window."""
         return self.parent().parent()  # type: ignore
 
     # Notifications

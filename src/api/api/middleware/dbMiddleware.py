@@ -1,7 +1,8 @@
+from typing import Annotated
+
 from core.database.base import SessionLocal
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from typing import Annotated
 
 
 def get_db():

@@ -1,24 +1,26 @@
 import re
+
 from core.utilities.grbl.constants import GRBL_SETTINGS
 
 # Constants
-JOG_UNIT_MILIMETERS = 'milimeters'
-JOG_UNIT_INCHES = 'inches'
-JOG_DISTANCE_ABSOLUTE = 'distance_absolute'
-JOG_DISTANCE_INCREMENTAL = 'distance_incremental'
+JOG_UNIT_MILIMETERS = "milimeters"
+JOG_UNIT_INCHES = "inches"
+JOG_DISTANCE_ABSOLUTE = "distance_absolute"
+JOG_DISTANCE_INCREMENTAL = "distance_incremental"
 
 # Regular expressions
-grbl_setting_pattern = re.compile(r'^\$(\d+)=(\d+\.?\d*)$')
+grbl_setting_pattern = re.compile(r"^\$(\d+)=(\d+\.?\d*)$")
 
 
 def build_jog_command(
-        x: float,
-        y: float,
-        z: float,
-        feedrate: float, *,
-        units=None,
-        distance_mode=None,
-        machine_coordinates=False
+    x: float,
+    y: float,
+    z: float,
+    feedrate: float,
+    *,
+    units=None,
+    distance_mode=None,
+    machine_coordinates=False,
 ) -> str:
     """
     Builds a 'jog' command from the parameters.
@@ -66,7 +68,7 @@ def is_setting_update_command(command) -> bool:
     """
     matches = grbl_setting_pattern.search(command)
 
-    if (not matches):
+    if not matches:
         return False
 
     parameter = matches.group(1)
@@ -79,6 +81,6 @@ def is_setting_update_command(command) -> bool:
 
 def get_grbl_setting(key: str):
     for element in GRBL_SETTINGS:
-        if element['setting'] == key:
+        if element["setting"] == key:
             return element
     return None

@@ -1,9 +1,9 @@
+import pytest
 from desktop.components.buttons.MainMenuButton import MainMenuButton
 from desktop.MainWindow import MainWindow
-import pytest
+from desktop.views.MainMenu import MainMenu
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
-from desktop.views.MainMenu import MainMenu
 
 
 class TestMainMenu:

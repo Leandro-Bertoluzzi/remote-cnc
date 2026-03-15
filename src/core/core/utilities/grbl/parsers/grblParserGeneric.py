@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from core.utilities.grbl.types import GrblResponse
 from typing import Optional
+
+from core.utilities.grbl.types import GrblResponse
 
 
 class GrblParserGeneric(ABC):
-    """Base class to define GRBL message parsers
-    """
+    """Base class to define GRBL message parsers"""
+
     @staticmethod
     @abstractmethod
     def parse(line: str) -> Optional[GrblResponse]:
@@ -18,4 +19,4 @@ class GrblParserGeneric(ABC):
             A tuple containing the message type and payload,
             or None if the line is not a valid GRBL message.
         """
-        raise NotImplementedError   # pragma: no cover
+        raise NotImplementedError  # pragma: no cover

@@ -1,12 +1,12 @@
+import datetime
+import hashlib
+
+import pytest  # noqa: F401
+from api_db import TestingSession, engine, test_admin, test_user
 from celery.result import AsyncResult
 from core.database.base import Base
 from core.database.models import File, Material, Task, Tool
 from core.utilities.fileManager import FileManager
-import datetime
-import hashlib
-import pytest   # noqa: F401
-from api_db import engine, test_admin, test_user, TestingSession
-
 
 # Seed data
 creation_time = datetime.datetime(2000, 1, 1, 0, 0, 0)
@@ -46,9 +46,9 @@ class TestRoutes:
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)
 
-# --------------------------------------------------------------------- #
-# ------------------------------- USERS ------------------------------- #
-# --------------------------------------------------------------------- #
+    # --------------------------------------------------------------------- #
+    # ------------------------------- USERS ------------------------------- #
+    # --------------------------------------------------------------------- #
 
     def test_user_auth(self, client):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -59,13 +59,8 @@ class TestRoutes:
         # Assertions
         assert response.status_code == 200
         assert response.json() == {
-            'message': 'Successfully authenticated',
-            'data': {
-                "id": 1,
-                "name": "User",
-                "email": "user@test.com",
-                "role": "user"
-            }
+            "message": "Successfully authenticated",
+            "data": {"id": 1, "name": "User", "email": "user@test.com", "role": "user"},
         }
 
     def test_login(self, client):
@@ -104,8 +99,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.get_user_by_email',
-            side_effect=Exception('There was an error looking for the user')
+            "routes.userRoutes.UserRepository.get_user_by_email",
+            side_effect=Exception("There was an error looking for the user"),
         )
 
         # Query endpoint under test
@@ -120,8 +115,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.generate_token',
-            side_effect=Exception('There was an error generating the token')
+            "routes.userRoutes.generate_token",
+            side_effect=Exception("There was an error generating the token"),
         )
 
         # Query endpoint under test
@@ -141,18 +136,8 @@ class TestRoutes:
         assert response.status_code == 200
         assert len(response.json()) == 2
         assert response.json() == [
-            {
-                "id": 1,
-                "name": "User",
-                "email": "user@test.com",
-                "role": "user"
-            },
-            {
-                "id": 2,
-                "name": "Admin",
-                "email": "admin@test.com",
-                "role": "admin"
-            }
+            {"id": 1, "name": "User", "email": "user@test.com", "role": "user"},
+            {"id": 2, "name": "Admin", "email": "admin@test.com", "role": "admin"},
         ]
 
     def test_create_user(self, client):
@@ -160,7 +145,7 @@ class TestRoutes:
             "name": "testuser",
             "email": "testuser@nofoobar.com",
             "password": "aVerySecureP@ssw0rd",
-            "role": "user"
+            "role": "user",
         }
         headers = {"Authorization": "Bearer a-valid-token"}
 
@@ -178,14 +163,14 @@ class TestRoutes:
             "name": "testuser2",
             "email": "testuser2@nofoobar.com",
             "password": "aVerySecureP@ssw0rd",
-            "role": "user"
+            "role": "user",
         }
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.create_user',
-            side_effect=Exception('There was an error')
+            "routes.userRoutes.UserRepository.create_user",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -196,11 +181,7 @@ class TestRoutes:
         assert response.json()["detail"] == "There was an error"
 
     def test_update_user(self, client):
-        data = {
-            "name": "testupdate",
-            "email": "updateduser@nofoobar.com",
-            "role": "user"
-        }
+        data = {"name": "testupdate", "email": "updateduser@nofoobar.com", "role": "user"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Query endpoint under test
@@ -213,17 +194,13 @@ class TestRoutes:
         assert response.json()["role"] == "user"
 
     def test_update_user_error(self, client, mocker):
-        data = {
-            "name": "testupdate",
-            "email": "updateduser@nofoobar.com",
-            "role": "user"
-        }
+        data = {"name": "testupdate", "email": "updateduser@nofoobar.com", "role": "user"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.update_user',
-            side_effect=Exception('There was an error')
+            "routes.userRoutes.UserRepository.update_user",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -248,8 +225,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.remove_user',
-            side_effect=Exception('There was an error')
+            "routes.userRoutes.UserRepository.remove_user",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -259,9 +236,9 @@ class TestRoutes:
         assert response.status_code == 400
         assert response.json()["detail"] == "There was an error"
 
-# --------------------------------------------------------------------- #
-# ------------------------------- FILES ------------------------------- #
-# --------------------------------------------------------------------- #
+    # --------------------------------------------------------------------- #
+    # ------------------------------- FILES ------------------------------- #
+    # --------------------------------------------------------------------- #
 
     def test_get_files_from_user(self, client):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -273,18 +250,8 @@ class TestRoutes:
         assert response.status_code == 200
         assert len(response.json()) == 2
         assert response.json() == [
-            {
-                "id": 1,
-                "name": "file_1.gcode",
-                "user_id": 1,
-                "created_at": "2000-01-01T00:00:00"
-            },
-            {
-                "id": 2,
-                "name": "file_2.gcode",
-                "user_id": 1,
-                "created_at": "2000-01-01T00:00:00"
-            }
+            {"id": 1, "name": "file_1.gcode", "user_id": 1, "created_at": "2000-01-01T00:00:00"},
+            {"id": 2, "name": "file_2.gcode", "user_id": 1, "created_at": "2000-01-01T00:00:00"},
         ]
 
     def test_get_all_files(self, client):
@@ -297,24 +264,9 @@ class TestRoutes:
         assert response.status_code == 200
         assert len(response.json()) == 3
         assert response.json() == [
-            {
-                "id": 1,
-                "name": "file_1.gcode",
-                "user_id": 1,
-                "created_at": "2000-01-01T00:00:00"
-            },
-            {
-                "id": 2,
-                "name": "file_2.gcode",
-                "user_id": 1,
-                "created_at": "2000-01-01T00:00:00"
-            },
-            {
-                "id": 3,
-                "name": "file_3.gcode",
-                "user_id": 2,
-                "created_at": "2000-01-01T00:00:00"
-            }
+            {"id": 1, "name": "file_1.gcode", "user_id": 1, "created_at": "2000-01-01T00:00:00"},
+            {"id": 2, "name": "file_2.gcode", "user_id": 1, "created_at": "2000-01-01T00:00:00"},
+            {"id": 3, "name": "file_3.gcode", "user_id": 2, "created_at": "2000-01-01T00:00:00"},
         ]
 
     def test_create_file(self, client, mocker):
@@ -323,8 +275,8 @@ class TestRoutes:
 
         # Mock FS method to simulate file operation
         mocker.patch.object(FileManager, "upload_file", return_value=3)
-        mocker.patch('routes.fileRoutes.generateFileReport.delay')
-        mocker.patch('routes.fileRoutes.createThumbnail.delay')
+        mocker.patch("routes.fileRoutes.generateFileReport.delay")
+        mocker.patch("routes.fileRoutes.createThumbnail.delay")
 
         # Query endpoint under test
         response = client.post("/files/", files=files, headers=headers)
@@ -342,9 +294,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json()["detail"] == (
-            "Ya existe un archivo con el nombre <<file_1.gcode>>"
-        )
+        assert response.json()["detail"] == ("Ya existe un archivo con el nombre <<file_1.gcode>>")
 
     def test_create_file_duplicated_content(self, client):
         files = {"file": ("another_file.gcode", b"G54", "text/plain")}
@@ -355,9 +305,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json()["detail"] == (
-            "El archivo <<file_1.gcode>> tiene el mismo contenido"
-        )
+        assert response.json()["detail"] == ("El archivo <<file_1.gcode>> tiene el mismo contenido")
 
     def test_create_file_error(self, client, mocker):
         files = {"file": ("another_file.gcode", b"G54 G90", "text/plain")}
@@ -365,9 +313,7 @@ class TestRoutes:
 
         # Mock FS method to simulate exception
         mocker.patch.object(
-            FileManager,
-            "upload_file",
-            side_effect=Exception('There was an error saving the file')
+            FileManager, "upload_file", side_effect=Exception("There was an error saving the file")
         )
 
         # Query endpoint under test
@@ -399,7 +345,7 @@ class TestRoutes:
         mocker.patch.object(
             FileManager,
             "rename_file_by_id",
-            side_effect=Exception('There was an error updating the file')
+            side_effect=Exception("There was an error updating the file"),
         )
 
         # Query endpoint under test
@@ -429,7 +375,7 @@ class TestRoutes:
         mocker.patch.object(
             FileManager,
             "remove_file_by_id",
-            side_effect=Exception('There was an error removing the file')
+            side_effect=Exception("There was an error removing the file"),
         )
 
         # Query endpoint under test
@@ -439,9 +385,9 @@ class TestRoutes:
         assert response.status_code == 400
         assert response.json()["detail"] == "There was an error removing the file"
 
-# --------------------------------------------------------------------- #
-# ------------------------------- TOOLS ------------------------------- #
-# --------------------------------------------------------------------- #
+    # --------------------------------------------------------------------- #
+    # ------------------------------- TOOLS ------------------------------- #
+    # --------------------------------------------------------------------- #
 
     def test_get_tools(self, client):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -457,14 +403,14 @@ class TestRoutes:
                 "id": 1,
                 "name": "Tool 1",
                 "description": "A very useful tool",
-                "added_at": "2000-01-01T00:00:00"
+                "added_at": "2000-01-01T00:00:00",
             },
             {
                 "id": 2,
                 "name": "Tool 2",
                 "description": "A not so useful tool",
-                "added_at": "2000-01-01T00:00:00"
-            }
+                "added_at": "2000-01-01T00:00:00",
+            },
         ]
 
     def test_create_tool(self, client):
@@ -485,8 +431,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.toolRoutes.ToolRepository.create_tool',
-            side_effect=Exception('There was an error')
+            "routes.toolRoutes.ToolRepository.create_tool",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -514,8 +460,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.toolRoutes.ToolRepository.update_tool',
-            side_effect=Exception('There was an error')
+            "routes.toolRoutes.ToolRepository.update_tool",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -540,8 +486,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.toolRoutes.ToolRepository.remove_tool',
-            side_effect=Exception('There was an error')
+            "routes.toolRoutes.ToolRepository.remove_tool",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -551,9 +497,9 @@ class TestRoutes:
         assert response.status_code == 400
         assert response.json()["detail"] == "There was an error"
 
-# --------------------------------------------------------------------- #
-# ----------------------------- MATERIALS ----------------------------- #
-# --------------------------------------------------------------------- #
+    # --------------------------------------------------------------------- #
+    # ----------------------------- MATERIALS ----------------------------- #
+    # --------------------------------------------------------------------- #
 
     def test_get_materials(self, client):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -569,14 +515,14 @@ class TestRoutes:
                 "id": 1,
                 "name": "Material 1",
                 "description": "A very useful material",
-                "added_at": "2000-01-01T00:00:00"
+                "added_at": "2000-01-01T00:00:00",
             },
             {
                 "id": 2,
                 "name": "Material 2",
                 "description": "A not so useful material",
-                "added_at": "2000-01-01T00:00:00"
-            }
+                "added_at": "2000-01-01T00:00:00",
+            },
         ]
 
     def test_create_material(self, client):
@@ -597,8 +543,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.materialRoutes.MaterialRepository.create_material',
-            side_effect=Exception('There was an error')
+            "routes.materialRoutes.MaterialRepository.create_material",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -609,10 +555,7 @@ class TestRoutes:
         assert response.json()["detail"] == "There was an error"
 
     def test_update_material(self, client):
-        data = {
-            "name": "Updated material",
-            "description": "An updated material"
-        }
+        data = {"name": "Updated material", "description": "An updated material"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Query endpoint under test
@@ -624,16 +567,13 @@ class TestRoutes:
         assert response.json()["description"] == "An updated material"
 
     def test_update_material_error(self, client, mocker):
-        data = {
-            "name": "Updated material",
-            "description": "An updated material"
-        }
+        data = {"name": "Updated material", "description": "An updated material"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.materialRoutes.MaterialRepository.update_material',
-            side_effect=Exception('There was an error')
+            "routes.materialRoutes.MaterialRepository.update_material",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -658,8 +598,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.materialRoutes.MaterialRepository.remove_material',
-            side_effect=Exception('There was an error')
+            "routes.materialRoutes.MaterialRepository.remove_material",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -669,9 +609,9 @@ class TestRoutes:
         assert response.status_code == 400
         assert response.json()["detail"] == "There was an error"
 
-# --------------------------------------------------------------------- #
-# ------------------------------- TASKS ------------------------------- #
-# --------------------------------------------------------------------- #
+    # --------------------------------------------------------------------- #
+    # ------------------------------- TASKS ------------------------------- #
+    # --------------------------------------------------------------------- #
 
     def test_get_tasks_from_user(self, client):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -695,7 +635,7 @@ class TestRoutes:
                 "note": "A note",
                 "admin_id": None,
                 "cancellation_reason": None,
-                "created_at": "2000-01-01T00:00:00"
+                "created_at": "2000-01-01T00:00:00",
             },
             {
                 "id": 2,
@@ -709,8 +649,8 @@ class TestRoutes:
                 "note": "A note",
                 "admin_id": None,
                 "cancellation_reason": None,
-                "created_at": "2000-01-01T00:00:00"
-            }
+                "created_at": "2000-01-01T00:00:00",
+            },
         ]
 
     def test_get_all_tasks(self, client):
@@ -735,7 +675,7 @@ class TestRoutes:
                 "note": "A note",
                 "admin_id": None,
                 "cancellation_reason": None,
-                "created_at": "2000-01-01T00:00:00"
+                "created_at": "2000-01-01T00:00:00",
             },
             {
                 "id": 3,
@@ -749,7 +689,7 @@ class TestRoutes:
                 "note": "A note",
                 "admin_id": None,
                 "cancellation_reason": None,
-                "created_at": "2000-01-01T00:00:00"
+                "created_at": "2000-01-01T00:00:00",
             },
             {
                 "id": 2,
@@ -763,18 +703,12 @@ class TestRoutes:
                 "note": "A note",
                 "admin_id": None,
                 "cancellation_reason": None,
-                "created_at": "2000-01-01T00:00:00"
-            }
+                "created_at": "2000-01-01T00:00:00",
+            },
         ]
 
     def test_create_task(self, client):
-        data = {
-            "file_id": 1,
-            "tool_id": 1,
-            "material_id": 1,
-            "name": "New task",
-            "note": "A note"
-        }
+        data = {"file_id": 1, "tool_id": 1, "material_id": 1, "name": "New task", "note": "A note"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Query endpoint under test
@@ -790,19 +724,13 @@ class TestRoutes:
         assert response.json()["status"] == "pending_validation"
 
     def test_create_task_error(self, client, mocker):
-        data = {
-            "file_id": 1,
-            "tool_id": 1,
-            "material_id": 1,
-            "name": "New task",
-            "note": "A note"
-        }
+        data = {"file_id": 1, "tool_id": 1, "material_id": 1, "name": "New task", "note": "A note"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.taskRoutes.TaskRepository.create_task',
-            side_effect=Exception('There was an error creating the task in DB')
+            "routes.taskRoutes.TaskRepository.create_task",
+            side_effect=Exception("There was an error creating the task in DB"),
         )
 
         # Query endpoint under test
@@ -810,7 +738,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json() == {'detail': 'There was an error creating the task in DB'}
+        assert response.json() == {"detail": "There was an error creating the task in DB"}
 
     def test_update_task(self, client):
         data = {
@@ -819,7 +747,7 @@ class TestRoutes:
             "material_id": 2,
             "name": "Updated task",
             "note": "A new note",
-            "priority": 5
+            "priority": 5,
         }
         headers = {"Authorization": "Bearer a-valid-token"}
 
@@ -842,14 +770,14 @@ class TestRoutes:
             "material_id": 2,
             "name": "Updated task",
             "note": "A new note",
-            "priority": 5
+            "priority": 5,
         }
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.taskRoutes.TaskRepository.update_task',
-            side_effect=Exception('There was an error updating the task in DB')
+            "routes.taskRoutes.TaskRepository.update_task",
+            side_effect=Exception("There was an error updating the task in DB"),
         )
 
         # Query endpoint under test
@@ -857,12 +785,10 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json() == {'detail': 'There was an error updating the task in DB'}
+        assert response.json() == {"detail": "There was an error updating the task in DB"}
 
     def test_update_task_status(self, client):
-        data = {
-            "status": "cancelled"
-        }
+        data = {"status": "cancelled"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Query endpoint under test
@@ -873,15 +799,13 @@ class TestRoutes:
         assert response.json()["status"] == "on_hold"
 
     def test_update_task_status_error(self, client, mocker):
-        data = {
-            "status": "on_hold"
-        }
+        data = {"status": "on_hold"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.taskRoutes.TaskRepository.update_task_status',
-            side_effect=Exception('There was an error updating the task in DB')
+            "routes.taskRoutes.TaskRepository.update_task_status",
+            side_effect=Exception("There was an error updating the task in DB"),
         )
 
         # Query endpoint under test
@@ -889,7 +813,7 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json() == {'detail': 'There was an error updating the task in DB'}
+        assert response.json() == {"detail": "There was an error updating the task in DB"}
 
     def test_remove_task(self, client):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -899,15 +823,15 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 200
-        assert response.json() == {'success': 'La tarea fue eliminada con éxito'}
+        assert response.json() == {"success": "La tarea fue eliminada con éxito"}
 
     def test_remove_task_error(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.taskRoutes.TaskRepository.remove_task',
-            side_effect=Exception('There was an error removing the task from DB')
+            "routes.taskRoutes.TaskRepository.remove_task",
+            side_effect=Exception("There was an error removing the task from DB"),
         )
 
         # Query endpoint under test
@@ -915,11 +839,11 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json() == {'detail': 'There was an error removing the task from DB'}
+        assert response.json() == {"detail": "There was an error removing the task from DB"}
 
-# ---------------------------------------------------------------------- #
-# ------------------------------- WORKER ------------------------------- #
-# ---------------------------------------------------------------------- #
+    # ---------------------------------------------------------------------- #
+    # ------------------------------- WORKER ------------------------------- #
+    # ---------------------------------------------------------------------- #
 
     def test_get_worker_task_status_in_progress(self, client, mocker):
         headers = {"Authorization": "Bearer a-valid-token"}
@@ -929,42 +853,36 @@ class TestRoutes:
 
         # Mock Celery task metadata
         task_metadata = {
-            'status': 'PROGRESS',
-            'result': {
-                'processed_lines': 10,
-                'sent_lines': 15,
-                'total_lines': 20,
-                'status': {
-                    'activeState': 'IDLE',
-                    'subState': None,
-                    'mpos': {'x': 1.0, 'y': 1.0, 'z': 1.0},
-                    'wpos': {'x': 1.0, 'y': 1.0, 'z': 1.0},
-                    'ov': [1, 2, 3],
-                    'wco': {'x': 1.0, 'y': 1.0, 'z': 1.0},
-                    'pinstate': None,
-                    'buffer': None,
-                    'line': None,
-                    'accessoryState': None
+            "status": "PROGRESS",
+            "result": {
+                "processed_lines": 10,
+                "sent_lines": 15,
+                "total_lines": 20,
+                "status": {
+                    "activeState": "IDLE",
+                    "subState": None,
+                    "mpos": {"x": 1.0, "y": 1.0, "z": 1.0},
+                    "wpos": {"x": 1.0, "y": 1.0, "z": 1.0},
+                    "ov": [1, 2, 3],
+                    "wco": {"x": 1.0, "y": 1.0, "z": 1.0},
+                    "pinstate": None,
+                    "buffer": None,
+                    "line": None,
+                    "accessoryState": None,
                 },
-                'parserstate': {
-                    'modal': {'key': 'value'},
-                    'tool': 1,
-                    'feedrate': 100.0,
-                    'spindle': 100.0
-                }
-            }
+                "parserstate": {
+                    "modal": {"key": "value"},
+                    "tool": 1,
+                    "feedrate": 100.0,
+                    "spindle": 100.0,
+                },
+            },
         }
 
         # Mock Celery methods
-        mock_query_task = mocker.patch.object(
-            AsyncResult,
-            '__init__',
-            return_value=None
-        )
+        mock_query_task = mocker.patch.object(AsyncResult, "__init__", return_value=None)
         mock_query_task_info = mocker.patch.object(
-            AsyncResult,
-            '_get_task_meta',
-            return_value=task_metadata
+            AsyncResult, "_get_task_meta", return_value=task_metadata
         )
 
         # Query endpoint under test
@@ -973,30 +891,30 @@ class TestRoutes:
         # Assertions
         assert response.status_code == 200
         assert response.json() == {
-            'status': 'PROGRESS',
-            'processed_lines': 10,
-            'sent_lines': 15,
-            'total_lines': 20,
-            'cnc_status': {
-                'activeState': 'IDLE',
-                'subState': None,
-                'mpos': {'x': 1.0, 'y': 1.0, 'z': 1.0},
-                'wpos': {'x': 1.0, 'y': 1.0, 'z': 1.0},
-                'ov': [1, 2, 3],
-                'wco': {'x': 1.0, 'y': 1.0, 'z': 1.0},
-                'pinstate': None,
-                'buffer': None,
-                'line': None,
-                'accessoryState': None
+            "status": "PROGRESS",
+            "processed_lines": 10,
+            "sent_lines": 15,
+            "total_lines": 20,
+            "cnc_status": {
+                "activeState": "IDLE",
+                "subState": None,
+                "mpos": {"x": 1.0, "y": 1.0, "z": 1.0},
+                "wpos": {"x": 1.0, "y": 1.0, "z": 1.0},
+                "ov": [1, 2, 3],
+                "wco": {"x": 1.0, "y": 1.0, "z": 1.0},
+                "pinstate": None,
+                "buffer": None,
+                "line": None,
+                "accessoryState": None,
             },
-            'cnc_parserstate': {
-                'modal': {'key': 'value'},
-                'tool': 1,
-                'feedrate': 100.0,
-                'spindle': 100.0
+            "cnc_parserstate": {
+                "modal": {"key": "value"},
+                "tool": 1,
+                "feedrate": 100.0,
+                "spindle": 100.0,
             },
-            'result': None,
-            'error': None
+            "result": None,
+            "error": None,
         }
         assert mock_query_task.call_count == 1
         assert mock_query_task_info.call_count == 3
@@ -1008,21 +926,12 @@ class TestRoutes:
         mocker.patch("routes.workerRoutes.worker.is_worker_on", return_value=True)
 
         # Mock Celery task metadata
-        task_metadata = {
-            'status': 'FAILURE',
-            'result': Exception('There was an error')
-        }
+        task_metadata = {"status": "FAILURE", "result": Exception("There was an error")}
 
         # Mock Celery methods
-        mock_query_task = mocker.patch.object(
-            AsyncResult,
-            '__init__',
-            return_value=None
-        )
+        mock_query_task = mocker.patch.object(AsyncResult, "__init__", return_value=None)
         mock_query_task_info = mocker.patch.object(
-            AsyncResult,
-            '_get_task_meta',
-            return_value=task_metadata
+            AsyncResult, "_get_task_meta", return_value=task_metadata
         )
 
         # Query endpoint under test
@@ -1031,14 +940,14 @@ class TestRoutes:
         # Assertions
         assert response.status_code == 200
         assert response.json() == {
-            'status': 'FAILURE',
-            'processed_lines': None,
-            'sent_lines': None,
-            'total_lines': None,
-            'cnc_status': None,
-            'cnc_parserstate': None,
-            'result': None,
-            'error': 'There was an error'
+            "status": "FAILURE",
+            "processed_lines": None,
+            "sent_lines": None,
+            "total_lines": None,
+            "cnc_status": None,
+            "cnc_parserstate": None,
+            "result": None,
+            "error": "There was an error",
         }
         assert mock_query_task.call_count == 1
         assert mock_query_task_info.call_count == 3
@@ -1050,38 +959,28 @@ class TestRoutes:
         mocker.patch("routes.workerRoutes.worker.is_worker_on", return_value=True)
 
         # Mock Celery task metadata
-        task_metadata = {
-            'status': 'SUCCESS',
-            'result': True
-        }
+        task_metadata = {"status": "SUCCESS", "result": True}
 
         # Mock Celery methods
-        mock_query_task = mocker.patch.object(
-            AsyncResult,
-            '__init__',
-            return_value=None
-        )
+        mock_query_task = mocker.patch.object(AsyncResult, "__init__", return_value=None)
         mock_query_task_info = mocker.patch.object(
-            AsyncResult,
-            '_get_task_meta',
-            return_value=task_metadata
+            AsyncResult, "_get_task_meta", return_value=task_metadata
         )
 
         # Query endpoint under test
-        response = client.get(
-            "/worker/status/test-worker-task-id", headers=headers)
+        response = client.get("/worker/status/test-worker-task-id", headers=headers)
 
         # Assertions
         assert response.status_code == 200
         assert response.json() == {
-            'status': 'SUCCESS',
-            'processed_lines': None,
-            'sent_lines': None,
-            'total_lines': None,
-            'cnc_status': None,
-            'cnc_parserstate': None,
-            'result': True,
-            'error': None
+            "status": "SUCCESS",
+            "processed_lines": None,
+            "sent_lines": None,
+            "total_lines": None,
+            "cnc_status": None,
+            "cnc_parserstate": None,
+            "result": True,
+            "error": None,
         }
         assert mock_query_task.call_count == 1
         assert mock_query_task_info.call_count == 5
@@ -1094,9 +993,7 @@ class TestRoutes:
 
         # Mock Celery methods
         mock_query_task = mocker.patch.object(
-            AsyncResult,
-            '__init__',
-            side_effect=Exception('mocked-error')
+            AsyncResult, "__init__", side_effect=Exception("mocked-error")
         )
 
         # Query endpoint under test
@@ -1104,5 +1001,5 @@ class TestRoutes:
 
         # Assertions
         assert response.status_code == 400
-        assert response.json() == {'detail': 'mocked-error'}
+        assert response.json() == {"detail": "mocked-error"}
         assert mock_query_task.call_count == 1

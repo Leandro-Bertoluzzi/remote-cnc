@@ -1,5 +1,5 @@
+from conftest import TestingSession, engine, test_admin, test_user
 from core.database.base import Base
-from conftest import engine, test_admin, test_user, TestingSession
 
 
 class TestRoutes:
@@ -25,13 +25,8 @@ class TestRoutes:
         # Assertions
         assert response.status_code == 200
         assert response.json() == {
-            'message': 'Successfully authenticated',
-            'data': {
-                "id": 1,
-                "name": "User",
-                "email": "user@test.com",
-                "role": "user"
-            }
+            "message": "Successfully authenticated",
+            "data": {"id": 1, "name": "User", "email": "user@test.com", "role": "user"},
         }
 
     def test_login(self, client):
@@ -70,8 +65,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.get_user_by_email',
-            side_effect=Exception('There was an error looking for the user')
+            "routes.userRoutes.UserRepository.get_user_by_email",
+            side_effect=Exception("There was an error looking for the user"),
         )
 
         # Query endpoint under test
@@ -86,8 +81,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.generate_token',
-            side_effect=Exception('There was an error generating the token')
+            "routes.userRoutes.generate_token",
+            side_effect=Exception("There was an error generating the token"),
         )
 
         # Query endpoint under test
@@ -107,16 +102,8 @@ class TestRoutes:
         assert response.status_code == 200
         assert len(response.json()) == 2
         assert response.json() == [
-            {
-                "name": "User",
-                "email": "user@test.com",
-                "role": "user"
-            },
-            {
-                "name": "Admin",
-                "email": "admin@test.com",
-                "role": "admin"
-            }
+            {"name": "User", "email": "user@test.com", "role": "user"},
+            {"name": "Admin", "email": "admin@test.com", "role": "admin"},
         ]
 
     def test_create_user(self, client):
@@ -124,7 +111,7 @@ class TestRoutes:
             "name": "testuser",
             "email": "testuser@nofoobar.com",
             "password": "aVerySecureP@ssw0rd",
-            "role": "user"
+            "role": "user",
         }
         headers = {"Authorization": "Bearer a-valid-token"}
 
@@ -142,14 +129,14 @@ class TestRoutes:
             "name": "testuser2",
             "email": "testuser2@nofoobar.com",
             "password": "aVerySecureP@ssw0rd",
-            "role": "user"
+            "role": "user",
         }
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.create_user',
-            side_effect=Exception('There was an error')
+            "routes.userRoutes.UserRepository.create_user",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -160,11 +147,7 @@ class TestRoutes:
         assert response.json()["detail"] == "There was an error"
 
     def test_update_user(self, client):
-        data = {
-            "name": "testupdate",
-            "email": "updateduser@nofoobar.com",
-            "role": "user"
-        }
+        data = {"name": "testupdate", "email": "updateduser@nofoobar.com", "role": "user"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Query endpoint under test
@@ -175,17 +158,13 @@ class TestRoutes:
         assert response.json() == {"success": "The user was successfully updated"}
 
     def test_update_user_error(self, client, mocker):
-        data = {
-            "name": "testupdate",
-            "email": "updateduser@nofoobar.com",
-            "role": "user"
-        }
+        data = {"name": "testupdate", "email": "updateduser@nofoobar.com", "role": "user"}
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.update_user',
-            side_effect=Exception('There was an error')
+            "routes.userRoutes.UserRepository.update_user",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -210,8 +189,8 @@ class TestRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.userRoutes.UserRepository.remove_user',
-            side_effect=Exception('There was an error')
+            "routes.userRoutes.UserRepository.remove_user",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test

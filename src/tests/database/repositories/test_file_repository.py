@@ -1,7 +1,10 @@
-from core.database.models import File
-from core.database.repositories.fileRepository import FileRepository, DuplicatedFileError, \
-    DuplicatedFileNameError
 import pytest
+from core.database.models import File
+from core.database.repositories.fileRepository import (
+    DuplicatedFileError,
+    DuplicatedFileNameError,
+    FileRepository,
+)
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -9,8 +12,8 @@ class TestFileRepository:
     def test_create_file(self, mocked_session):
         file_repository = FileRepository(mocked_session)
         user_id = 1
-        file_name = 'new-file.gcode'
-        file_hash = 'hash-for-new-file'
+        file_name = "new-file.gcode"
+        file_hash = "hash-for-new-file"
 
         # Call method under test
         new_file = file_repository.create_file(user_id, file_name, file_hash)
@@ -28,9 +31,7 @@ class TestFileRepository:
 
         # Call method under test, expecting no exceptions
         file_repository.check_file_exists(
-            user_id=1,
-            file_name='new-file',
-            file_hash='hash-for-new-file'
+            user_id=1, file_name="new-file", file_hash="hash-for-new-file"
         )
 
     def test_get_all_files_from_user(self, mocked_session):
@@ -67,8 +68,8 @@ class TestFileRepository:
     def test_update_file(self, mocked_session):
         file_repository = FileRepository(mocked_session)
         user_id = 1
-        file_name = 'updated-file.gcode'
-        file_hash = 'hash-for-updated-file'
+        file_name = "updated-file.gcode"
+        file_hash = "hash-for-updated-file"
 
         # Call method under test
         updated_file = file_repository.update_file(1, user_id, file_name, file_hash)
@@ -91,17 +92,15 @@ class TestFileRepository:
 
     def test_error_create_file_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'add', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "add", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.create_file(
-                user_id=1,
-                file_name='name.gcode',
-                file_hash='path/to/files/name.gcode'
+                user_id=1, file_name="name.gcode", file_hash="path/to/files/name.gcode"
             )
-        assert 'Error creating the file in the DB' in str(error.value)
+        assert "Error creating the file in the DB" in str(error.value)
 
     def test_check_file_exists_repeated_name(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -109,11 +108,9 @@ class TestFileRepository:
         # Call the method under test and assert exception
         with pytest.raises(DuplicatedFileNameError) as error:
             file_repository.check_file_exists(
-                user_id=1,
-                file_name='file-1.gcode',
-                file_hash='hash-for-new-file'
+                user_id=1, file_name="file-1.gcode", file_hash="hash-for-new-file"
             )
-        assert str(error.value) == 'Ya existe un archivo con el nombre <<file-1.gcode>>'
+        assert str(error.value) == "Ya existe un archivo con el nombre <<file-1.gcode>>"
 
     def test_check_file_exists_duplicated_content(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -121,11 +118,9 @@ class TestFileRepository:
         # Call the method under test and assert exception
         with pytest.raises(DuplicatedFileError) as error:
             file_repository.check_file_exists(
-                user_id=1,
-                file_name='new-file.gcode',
-                file_hash='hashed-content'
+                user_id=1, file_name="new-file.gcode", file_hash="hashed-content"
             )
-        assert str(error.value) == 'El archivo <<file-1.gcode>> tiene el mismo contenido'
+        assert str(error.value) == "El archivo <<file-1.gcode>> tiene el mismo contenido"
 
     def test_error_get_all_files_from_non_existing_user(self, mocked_session):
         # Mock DB method to simulate exception
@@ -134,27 +129,27 @@ class TestFileRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.get_all_files_from_user(user_id=5000)
-        assert str(error.value) == 'User with ID 5000 not found'
+        assert str(error.value) == "User with ID 5000 not found"
 
     def test_error_get_all_files_from_user_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.get_all_files_from_user(user_id=1)
-        assert 'Error looking for user in the DB' in str(error.value)
+        assert "Error looking for user in the DB" in str(error.value)
 
     def test_error_get_all_files_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.get_all_files()
-        assert 'Error retrieving files from the DB' in str(error.value)
+        assert "Error retrieving files from the DB" in str(error.value)
 
     def test_error_get_non_existing_file_by_id(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -162,17 +157,17 @@ class TestFileRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.get_file_by_id(id=5000)
-        assert str(error.value) == 'File with ID 5000 was not found'
+        assert str(error.value) == "File with ID 5000 was not found"
 
     def test_error_get_file_by_id_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.get_file_by_id(id=1)
-        assert 'Error looking for file with ID 1 in the DB' in str(error.value)
+        assert "Error looking for file with ID 1 in the DB" in str(error.value)
 
     def test_error_update_non_existing_file(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -180,26 +175,21 @@ class TestFileRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.update_file(
-                id=5000,
-                user_id=1,
-                file_name='name.gcode',
-                file_hash='path/to/files/name.gcode'
+                id=5000, user_id=1, file_name="name.gcode", file_hash="path/to/files/name.gcode"
             )
-        assert str(error.value) == 'File with ID 5000 was not found'
+        assert str(error.value) == "File with ID 5000 was not found"
 
     def test_error_update_file_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.update_file(
-                id=1, user_id=1,
-                file_name='name.gcode',
-                file_hash='path/to/files/name.gcode'
+                id=1, user_id=1, file_name="name.gcode", file_hash="path/to/files/name.gcode"
             )
-        assert 'Error updating the file in the DB' in str(error.value)
+        assert "Error updating the file in the DB" in str(error.value)
 
     def test_error_remove_non_existing_file(self, mocked_session):
         file_repository = FileRepository(mocked_session)
@@ -207,14 +197,14 @@ class TestFileRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.remove_file(id=5000)
-        assert str(error.value) == 'File with ID 5000 was not found'
+        assert str(error.value) == "File with ID 5000 was not found"
 
     def test_error_remove_file_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             file_repository.remove_file(id=1)
-        assert 'Error removing the file from the DB' in str(error.value)
+        assert "Error removing the file from the DB" in str(error.value)

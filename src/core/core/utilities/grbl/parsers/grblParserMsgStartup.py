@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_STARTUP
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgStartup(GrblParserGeneric):
@@ -14,20 +15,20 @@ class GrblParserMsgStartup(GrblParserGeneric):
         - Grbl 1.1h ['$' for help] LongMill build Feb 25, 2020
         - myCustomGrbl 2.0.0 ['$' for help]
     """
+
     @staticmethod
     def parse(line):
         matches = re.search(
-            r'^([a-zA-Z0-9]+)\s+((?:\d+\.){1,2}\d+[a-zA-Z0-9\-\.]*)([^\[]*\[[^\]]+\].*)?',
-            line
+            r"^([a-zA-Z0-9]+)\s+((?:\d+\.){1,2}\d+[a-zA-Z0-9\-\.]*)([^\[]*\[[^\]]+\].*)?", line
         )
 
-        if (not matches):
+        if not matches:
             return None
 
         payload = {
-            'firmware': matches.group(1),
-            'version': matches.group(2),
-            'message': matches.group(3)
+            "firmware": matches.group(1),
+            "version": matches.group(2),
+            "message": matches.group(3),
         }
 
         return GRBL_MSG_STARTUP, payload

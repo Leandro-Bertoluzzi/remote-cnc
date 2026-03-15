@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_HELP
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgHelp(GrblParserGeneric):
@@ -9,15 +10,14 @@ class GrblParserMsgHelp(GrblParserGeneric):
     Example:
         - [HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x]
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^\[(?:HLP:)(.+)\]$', line)
+        matches = re.search(r"^\[(?:HLP:)(.+)\]$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
-        payload = {
-            'message': matches.group(1)
-        }
+        payload = {"message": matches.group(1)}
 
         return GRBL_MSG_HELP, payload

@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QTextEdit
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QTextEdit
 
 
 class MaterialDataDialog(QDialog):
@@ -16,8 +16,8 @@ class MaterialDataDialog(QDialog):
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
 
         layout = QFormLayout(self)
-        layout.addRow('Nombre', self.name)
-        layout.addRow('Descripción (opcional)', self.description)
+        layout.addRow("Nombre", self.name)
+        layout.addRow("Descripción (opcional)", self.description)
         layout.addWidget(buttonBox)
 
         buttonBox.accepted.connect(self.accept)
@@ -25,7 +25,7 @@ class MaterialDataDialog(QDialog):
 
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
-        self.setWindowTitle('Agregar material' if not materialInfo else 'Actualizar material')
+        self.setWindowTitle("Agregar material" if not materialInfo else "Actualizar material")
 
     def getInputs(self):
         return (self.name.text(), self.description.toPlainText())
