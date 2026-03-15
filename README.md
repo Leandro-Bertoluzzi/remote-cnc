@@ -36,6 +36,7 @@
 ## :dart: About
 
 This repository comprises two related applications:
+
 - **Desktop**: A small desktop app to monitor and control an Arduino-based CNC machine, optimized for touchscreen.
 - **API**: REST API to integrate the app's functionalities in a remote client.
 
@@ -67,9 +68,12 @@ The following tools were used in this project:
 
 Before starting :checkered_flag:, you need to have [Python](https://www.python.org/), [uv](https://docs.astral.sh/uv/) and [Docker](https://www.docker.com/) installed.
 
+Optionally, install [just](https://just.systems/) to use the project's command runner (`justfile`). See the [available recipes](#available-recipes) for a full reference.
+
 ## :checkered_flag: Installation
 
 There is a folder for each subproject in docs, which contain instructions to start using them in production:
+
 - Desktop: See installation docs for desktop app [here](docs/desktop/installation.md).
 - API: See installation docs for API [here](docs/api/server-setup.md).
 
@@ -114,6 +118,53 @@ src/
     └── mocks/
 ```
 
+### Available recipes
+
+The `justfile` at the root of the repository contains all common development and operations commands, organised by group. Run `just` (no arguments) to see the full list at any time.
+
+> `*` Requires Docker containers to be running.
+
+| Recipe                                | Group    | Description                                   |
+| ------------------------------------- | -------- | --------------------------------------------- |
+| `sync`                                | setup    | Install / update deps from lockfile           |
+| `lock`                                | setup    | Re-resolve & update `uv.lock`                 |
+| `test`                                | quality  | Run all tests                                 |
+| `test-core`                           | quality  | Core / shared tests                           |
+| `test-api`                            | quality  | API tests                                     |
+| `test-worker`                         | quality  | Worker tests                                  |
+| `test-desktop`                        | quality  | Desktop tests                                 |
+| `lint`                                | quality  | Run linter                                    |
+| `lint-fix`                            | quality  | Run linter with auto-fix                      |
+| `format`                              | quality  | Run formatter                                 |
+| `typecheck`                           | quality  | Run type checker                              |
+| `check`                               | quality  | lint + typecheck + test                       |
+| `start-api`                           | run      | Start the API with uvicorn (dev)              |
+| `start-desktop`                       | run      | Start the desktop (PyQt5) app                 |
+| `start-desktop-watch`                 | run      | Desktop app with auto-reload                  |
+| `start-worker`                        | run      | Start the Celery worker                       |
+| `start-worker-watch`                  | run      | Celery worker with auto-reload                |
+| `db-upgrade`                          | database | Apply pending migrations (local)              |
+| `db-downgrade`                        | database | Revert last migration (local)                 |
+| `db-revision <msg>`                   | database | Auto-generate a new migration                 |
+| `db-seed`                             | database | Seed the database (local)                     |
+| `db-generate-schema`                  | database | Export full schema as SQL                     |
+| `db-generate-migration <start> <end>` | database | Export SQL for a migration range              |
+| `db-upgrade-docker` `*`               | database | Apply migrations in the API container         |
+| `db-seed-docker` `*`                  | database | Seed the database in the API container        |
+| `db-backup` `*`                       | database | Backup DB from the PostgreSQL container       |
+| `db-execute-script <path>` `*`        | database | Run a SQL script against the DB container     |
+| `docker-up`                           | docker   | Start API + infra (no worker)                 |
+| `docker-up-sim`                       | docker   | Start everything + simulated worker           |
+| `docker-down`                         | docker   | Stop all containers                           |
+| `docker-build`                        | docker   | Rebuild Docker images                         |
+| `docker-logs`                         | docker   | Tail logs of all containers                   |
+| `docker-shell` `*`                    | docker   | Open a shell in the API container             |
+| `docker-simport` `*`                  | docker   | Start virtual serial port (simulator)         |
+| `deploy-create-builder`               | deploy   | Create multi-arch buildx builder (once)       |
+| `deploy-api <user>`                   | deploy   | Build & push multi-arch API image             |
+| `deploy-worker <user>`                | deploy   | Build & push multi-arch worker image          |
+| `clean`                               | cleanup  | Remove compiled files, caches, logs, coverage |
+
 ### First-time setup
 
 ```bash
@@ -125,21 +176,23 @@ $ cd remote-cnc
 $ cp .env.example .env
 
 # 3. Install all dependencies (creates a single virtualenv for the workspace)
-$ make install
+$ just sync
 ```
 
 ### Running with Docker (recommended)
 
 The easiest way to run the needed services is with `Docker`. This will start the API and the following services:
+
 - PostgreSQL DB.
 - Message broker (Redis).
 - Flower, to monitor the Celery worker.
 
 ```bash
-$ make docker-up
+$ just docker-up
 ```
 
 if you want to also start the CNC worker (Celery) in a container (Linux only, see [this section](#gear-cnc-worker)):
+
 ```bash
 $ docker compose --profile=worker up -d
 ```
@@ -150,16 +203,17 @@ Open [http://localhost:8000](http://localhost:8000) with your browser to check i
 
 ```bash
 # Start the API
-$ make start-api
+$ just start-api
 
 # Start the desktop app
-$ make start-desktop
+$ just start-desktop
 
 # Start the Celery worker
-$ make start-worker
+$ just start-worker
 ```
 
 You can find further information in each subproject's docs folder:
+
 - Desktop: See development docs for desktop app [here](docs/desktop/development.md).
 - API: See development docs for API [here](docs/api/development.md).
 
@@ -188,44 +242,45 @@ docker exec -it remote-cnc-worker-sim /bin/bash simport.sh
 
 To see your database, you can connect to it with a client like [DBeaver](https://dbeaver.io/).
 
-You can manage database migrations with the following Makefile targets (which wrap Alembic commands):
+You can manage database migrations with the following `just` recipes (which wrap Alembic commands):
 
 - Apply all migrations:
 
 ```bash
-$ make db-upgrade
+$ just db-upgrade
 ```
 
 - Revert last migration:
 
 ```bash
-$ make db-downgrade
+$ just db-downgrade
 ```
 
 - Auto-generate a new revision:
 
 ```bash
-$ make db-revision MSG="add users table"
+$ just db-revision "add users table"
 ```
 
 - Seed DB with initial data:
 
 ```bash
-$ make db-seed
+$ just db-seed
 ```
 
 More info about Alembic usage [here](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
 
-If you are using `docker compose`, you can run the following commands to apply database migrations and seeder:
+If you are using `docker compose`, you can apply migrations and seed the database without entering the container:
 
 ```bash
-$ docker exec remote-cnc-api bash -c "cd core && uv run alembic upgrade head"
-$ docker exec remote-cnc-api bash -c "uv run python db_seeder.py"
+$ just db-upgrade-docker
+$ just db-seed-docker
 ```
 
 ## :rocket: Deploy changes
 
 There is a folder for each subproject in docs, which contain instructions to deploy changes to production:
+
 - Desktop: See deployment docs for desktop app [here](docs/desktop/deployment.md).
 - API: See deployment docs for API [here](docs/api/deployment.md).
 
@@ -234,6 +289,7 @@ There is a folder for each subproject in docs, which contain instructions to dep
 If we modify the Docker image for the API or Worker, or we just need to update the version of one of the other services, we have to follow the next steps.
 
 1. If not logged, log in to your Docker account:
+
 ```bash
 $ docker login
 ```
@@ -288,7 +344,7 @@ In case you don't use Docker or just want to run it manually, you can follow the
 
 ```bash
 # Start Celery's worker server
-$ make start-worker
+$ just start-worker
 ```
 
 Optionally, if you are going to make changes in the worker's code and want to see them in real time, you can start the Celery worker with auto-reload.
@@ -329,16 +385,16 @@ You can use the following commands to execute tests and quality checks:
 
 ```bash
 # Run all tests
-$ make test
+$ just test
 
 # Run tests for a specific service
-$ make test-core
-$ make test-api
-$ make test-worker
-$ make test-desktop
+$ just test-core
+$ just test-api
+$ just test-worker
+$ just test-desktop
 
 # Run all quality checks (lint + typecheck + test)
-$ make check
+$ just check
 ```
 
 ## :memo: License
