@@ -46,8 +46,14 @@ test-desktop:     ## Run desktop tests only
 	cd $(SRC) && $(UV) sync --package cnc-desktop
 	$(UV_RUN) pytest desktop/tests/
 
-lint:             ## Run flake8 linter
-	$(UV_RUN) flake8
+lint:             ## Run ruff linter
+	$(UV_RUN) ruff check .
+
+lint.fix:         ## Run ruff linter fixer
+	$(UV_RUN) ruff check --fix .
+
+format:           ## Run ruff formatter
+	$(UV_RUN) ruff format .
 
 typecheck:        ## Run mypy type checker
 	$(UV_RUN) mypy .
