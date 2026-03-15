@@ -73,11 +73,11 @@ The coverage report is available in the folder `/htmlcov`.
 ### Code style linter
 
 ```bash
-$ ruff check
+$ uv run ruff check
 ```
 
 ### Type check
 
 ```bash
-$ mypy .
+$ uv run ty check
 ```
