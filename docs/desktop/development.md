@@ -73,7 +73,7 @@ The coverage report is available in the folder `/htmlcov`.
 ### Code style linter
 
 ```bash
-$ flake8
+$ ruff check
 ```
 
 ### Type check
