@@ -1,18 +1,19 @@
-from core.database.models import File, Material, Task, Tool
-from PyQt5.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QComboBox, QTextEdit
-from PyQt5.QtCore import Qt
 from typing import Optional
+
+from core.database.models import File, Material, Task, Tool
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QTextEdit
 
 
 class TaskDataDialog(QDialog):
     def __init__(
-            self,
-            files: list[File]=[],
-            tools: list[Tool]=[],
-            materials: list[Material]=[],
-            taskInfo: Optional[Task]=None,
-            parent=None
-        ):
+        self,
+        files: list[File],
+        tools: list[Tool],
+        materials: list[Material],
+        taskInfo: Optional[Task] = None,
+        parent=None,
+    ):
         super(TaskDataDialog, self).__init__(parent)
 
         self.files = files
@@ -42,11 +43,11 @@ class TaskDataDialog(QDialog):
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
 
         layout = QFormLayout(self)
-        layout.addRow('Nombre', self.name)
-        layout.addRow('Archivo', self.file)
-        layout.addRow('Herramienta', self.tool)
-        layout.addRow('Material', self.material)
-        layout.addRow('Nota adicional (opcional)', self.note)
+        layout.addRow("Nombre", self.name)
+        layout.addRow("Archivo", self.file)
+        layout.addRow("Herramienta", self.tool)
+        layout.addRow("Material", self.material)
+        layout.addRow("Nota adicional (opcional)", self.note)
         layout.addWidget(buttonBox)
 
         buttonBox.accepted.connect(self.accept)
@@ -54,7 +55,7 @@ class TaskDataDialog(QDialog):
 
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
-        self.setWindowTitle('Crear tarea' if not taskInfo else 'Actualizar tarea')
+        self.setWindowTitle("Crear tarea" if not taskInfo else "Actualizar tarea")
 
     def getInputs(self):
         return (
@@ -62,19 +63,13 @@ class TaskDataDialog(QDialog):
             self.tools[self.tool.currentIndex()].id,
             self.materials[self.material.currentIndex()].id,
             self.name.text(),
-            self.note.toPlainText()
+            self.note.toPlainText(),
         )
 
 
 class TaskFromFileDialog(TaskDataDialog):
-    def __init__(
-            self,
-            file: File,
-            tools: list[Tool]=[],
-            materials: list[Material]=[],
-            parent=None
-        ):
+    def __init__(self, file: File, tools: list[Tool], materials: list[Material], parent=None):
         super(TaskFromFileDialog, self).__init__([file], tools, materials, None, parent)
 
         self.file.setEnabled(False)
-        self.setWindowTitle('Crear tarea')
+        self.setWindowTitle("Crear tarea")

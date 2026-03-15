@@ -1,11 +1,12 @@
 from abc import abstractmethod
+
 from PyQt5.QtCore import QRect, QSize, Qt
 from PyQt5.QtGui import QColor, QPainter, QPaintEvent, QResizeEvent, QTextBlock
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget
 
 
 class IndexArea(QWidget):
-    def __init__(self, editor: 'IndexedTextEdit'):
+    def __init__(self, editor: "IndexedTextEdit"):
         super().__init__(editor)
         self.textEditor = editor
 
@@ -42,12 +43,7 @@ class IndexedTextEdit(QPlainTextEdit):
         if dy:
             self.indexArea.scroll(0, dy)
         else:
-            self.indexArea.update(
-                0,
-                rect.y(),
-                self.indexArea.width(),
-                rect.height()
-            )
+            self.indexArea.update(0, rect.y(), self.indexArea.width(), rect.height())
 
         if rect.contains(self.viewport().rect()):
             self.updateIndexAreaWidth(0)
@@ -56,14 +52,7 @@ class IndexedTextEdit(QPlainTextEdit):
         super().resizeEvent(event)
 
         cr = self.contentsRect()
-        self.indexArea.setGeometry(
-            QRect(
-                cr.left(),
-                cr.top(),
-                self.indexAreaWidth(),
-                cr.height()
-            )
-        )
+        self.indexArea.setGeometry(QRect(cr.left(), cr.top(), self.indexAreaWidth(), cr.height()))
 
     def indexAreaPaintEvent(self, event: QPaintEvent):
         painter = QPainter(self.indexArea)
@@ -85,14 +74,7 @@ class IndexedTextEdit(QPlainTextEdit):
 
             if block.isVisible() and (bottom >= event.rect().top()):
                 index = self.setIndex(block)
-                painter.drawText(
-                    0,
-                    int(top),
-                    self.indexArea.width(),
-                    height,
-                    Qt.AlignRight,
-                    index
-                )
+                painter.drawText(0, int(top), self.indexArea.width(), height, Qt.AlignRight, index)
 
             block = block.next()
             top = bottom
@@ -102,12 +84,12 @@ class IndexedTextEdit(QPlainTextEdit):
 
     @abstractmethod
     def indexAreaWidth(self):
-        raise NotImplementedError    # pragma: no cover
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     def setIndex(self, block: QTextBlock) -> str:
-        raise NotImplementedError    # pragma: no cover
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     def setIndexPenColor(self, block: QTextBlock) -> QColor:
-        raise NotImplementedError    # pragma: no cover
+        raise NotImplementedError  # pragma: no cover

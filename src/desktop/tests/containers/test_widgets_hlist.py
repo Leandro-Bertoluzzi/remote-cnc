@@ -1,14 +1,14 @@
 from desktop.containers.WidgetsHList import WidgetsHList
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton
+from PyQt5.QtWidgets import QLabel, QPushButton, QWidget
 
 
 class TestWidgetsHList:
     def test_widgets_hlist_init(self, qtbot, helpers):
         widgets = [
-            QLabel('label 1'),
-            QPushButton('button 1'),
-            QLabel('label 2'),
-            QPushButton('button 1'),
+            QLabel("label 1"),
+            QPushButton("button 1"),
+            QLabel("label 2"),
+            QPushButton("button 1"),
         ]
         widgets_list = WidgetsHList(widgets)
         qtbot.addWidget(widgets_list)

@@ -14,7 +14,7 @@ def test_task(mocked_session):
     task_str = repr(task)
 
     # Assertions
-    assert task_str == '<Task: Task 1, status: pending_approval, created at: 2023-12-25 00:00:00>'
+    assert task_str == "<Task: Task 1, status: pending_approval, created at: 2023-12-25 00:00:00>"
 
 
 def test_file(mocked_session):
@@ -26,7 +26,7 @@ def test_file(mocked_session):
     file_str = repr(file)
 
     # Assertions
-    assert file_str == '<File: file-1.gcode, user ID: 1, created at: 2023-12-25 00:00:00>'
+    assert file_str == "<File: file-1.gcode, user ID: 1, created at: 2023-12-25 00:00:00>"
 
 
 def test_tool(mocked_session):
@@ -38,7 +38,7 @@ def test_tool(mocked_session):
     tool_str = repr(tool)
 
     # Assertions
-    assert tool_str == '<Tool: tool 1, description: It is a tool, added at: 2023-12-25 00:00:00>'
+    assert tool_str == "<Tool: tool 1, description: It is a tool, added at: 2023-12-25 00:00:00>"
 
 
 def test_material(mocked_session):
@@ -51,7 +51,7 @@ def test_material(mocked_session):
 
     # Assertions
     assert material_str == (
-        '<Material: material 1, description: It is a material, added at: 2023-12-25 00:00:00>'
+        "<Material: material 1, description: It is a material, added at: 2023-12-25 00:00:00>"
     )
 
 
@@ -64,4 +64,4 @@ def test_user(mocked_session):
     user_str = repr(user)
 
     # Assertions
-    assert user_str == '<User: User 1, email: test@testing.com, role: user>'
+    assert user_str == "<User: User 1, email: test@testing.com, role: user>"

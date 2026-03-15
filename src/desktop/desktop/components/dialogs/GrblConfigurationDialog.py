@@ -1,8 +1,14 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QTableWidget, \
-    QTableWidgetItem, QHeaderView
+from core.utilities.grbl.types import GrblSettings
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from core.utilities.grbl.types import GrblSettings
+from PyQt5.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QHeaderView,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+)
 
 
 class GrblConfigurationDialog(QDialog):
@@ -17,14 +23,7 @@ class GrblConfigurationDialog(QDialog):
         self.settings = QTableWidget(self)
         self.settings.setRowCount(len(device_settings))
         self.settings.setColumnCount(4)
-        self.settings.setHorizontalHeaderLabels(
-            [
-                'value',
-                'message',
-                'units',
-                'description'
-            ]
-        )
+        self.settings.setHorizontalHeaderLabels(["value", "message", "units", "description"])
         self.settings.setVerticalHeaderLabels(device_settings.keys())
 
         header = self.settings.horizontalHeader()
@@ -46,14 +45,14 @@ class GrblConfigurationDialog(QDialog):
         # Draw the table
         index = 0
         for setting in device_settings.values():
-            messageCell = QTableWidgetItem(setting['message'])
+            messageCell = QTableWidgetItem(setting["message"])
             messageCell.setFlags(Qt.ItemIsEnabled)
-            unitsCell = QTableWidgetItem(setting['units'])
+            unitsCell = QTableWidgetItem(setting["units"])
             unitsCell.setFlags(Qt.ItemIsEnabled)
-            descriptionCell = QTableWidgetItem(setting['description'])
+            descriptionCell = QTableWidgetItem(setting["description"])
             descriptionCell.setFlags(Qt.ItemIsEnabled)
 
-            self.settings.setItem(index, 0, QTableWidgetItem(setting['value']))
+            self.settings.setItem(index, 0, QTableWidgetItem(setting["value"]))
             self.settings.setItem(index, 1, messageCell)
             self.settings.setItem(index, 2, unitsCell)
             self.settings.setItem(index, 3, descriptionCell)
@@ -67,7 +66,7 @@ class GrblConfigurationDialog(QDialog):
 
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
-        self.setWindowTitle('Configurar GRBL')
+        self.setWindowTitle("Configurar GRBL")
 
     def updateModifiedItems(self, row, _):
         parameter = self.settings.verticalHeaderItem(row).text()

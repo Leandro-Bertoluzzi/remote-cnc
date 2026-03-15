@@ -1,10 +1,10 @@
-from desktop.components.text.IndexedTextEdit import IndexedTextEdit
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QTextFormat, QSyntaxHighlighter, QTextCharFormat, \
-    QFont, QTextBlock
-from PyQt5.QtWidgets import QPushButton, QFileDialog, QMessageBox, \
-    QPlainTextEdit, QTextEdit
 import re
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextBlock, QTextCharFormat, QTextFormat
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QPlainTextEdit, QPushButton, QTextEdit
+
+from desktop.components.text.IndexedTextEdit import IndexedTextEdit
 
 
 class GCodeHighlighter(QSyntaxHighlighter):
@@ -28,47 +28,47 @@ class GCodeHighlighter(QSyntaxHighlighter):
         mword_format = QTextCharFormat()
         mword_format.setFontWeight(QFont.Bold)
         mword_format.setForeground(Qt.green)
-        mword_pattern = r'[Mm]\d{1,2}(?=\s|$)'
+        mword_pattern = r"[Mm]\d{1,2}(?=\s|$)"
         self.add_mapping(mword_pattern, mword_format)
 
         gword_format = QTextCharFormat()
         gword_format.setFontWeight(QFont.Bold)
         gword_format.setForeground(Qt.blue)
-        gword_pattern = r'[Gg]\d{1,2}(?=\s|$)'
+        gword_pattern = r"[Gg]\d{1,2}(?=\s|$)"
         self.add_mapping(gword_pattern, gword_format)
 
         comment_format = QTextCharFormat()
         comment_format.setForeground(QColor("#117506"))
-        self.add_mapping(r'\(.+\)', comment_format)
-        self.add_mapping(r';.+$', comment_format)
+        self.add_mapping(r"\(.+\)", comment_format)
+        self.add_mapping(r";.+$", comment_format)
 
         speed_feed_format = QTextCharFormat()
         speed_feed_format.setForeground(Qt.blue)
-        speed_pattern = r'([Ss])\s?\d+'
-        feed_pattern = r'([EeFf])\s?\.?\d+(\.\d*)?'
+        speed_pattern = r"([Ss])\s?\d+"
+        feed_pattern = r"([EeFf])\s?\.?\d+(\.\d*)?"
         self.add_mapping(speed_pattern, speed_feed_format)
         self.add_mapping(feed_pattern, speed_feed_format)
 
         program_format = QTextCharFormat()
         program_format.setForeground(QColor("#69ad4c"))
-        line_number_pattern = r'^[N]\d+'
+        line_number_pattern = r"^[N]\d+"
         self.add_mapping(line_number_pattern, program_format)
 
         xyz_format = QTextCharFormat()
         xyz_format.setForeground(QColor("#b0791a"))
-        xyz_pattern = r'[XxYyZz]\s?\-?\d*\.?\d+\.?'
+        xyz_pattern = r"[XxYyZz]\s?\-?\d*\.?\d+\.?"
         self.add_mapping(xyz_pattern, xyz_format)
 
         ijk_format = QTextCharFormat()
         ijk_format.setForeground(QColor("#d4490d"))
-        ijk_pattern = r'[IiJjKk]\s?\-?\d*\.?\d+\.?'
+        ijk_pattern = r"[IiJjKk]\s?\-?\d*\.?\d+\.?"
         self.add_mapping(ijk_pattern, ijk_format)
 
         params_format = QTextCharFormat()
         params_format.setForeground(QColor("#8b4cad"))
-        radius_pattern = r'[R]\s?\-?\d*\.?\d+\.?'
-        dwell_time_pattern = r'[P]\s?\d?\.?\d+\.?'
-        tool_pattern = r'[T]\s?\d+'
+        radius_pattern = r"[R]\s?\-?\d*\.?\d+\.?"
+        dwell_time_pattern = r"[P]\s?\d?\.?\d+\.?"
+        tool_pattern = r"[T]\s?\d+"
         self.add_mapping(radius_pattern, params_format)
         self.add_mapping(dwell_time_pattern, params_format)
         self.add_mapping(tool_pattern, params_format)
@@ -76,7 +76,7 @@ class GCodeHighlighter(QSyntaxHighlighter):
         grbl_format = QTextCharFormat()
         grbl_format.setFontWeight(QFont.Bold)
         grbl_format.setForeground(Qt.gray)
-        grbl_pattern = r'^\$[a-zA-Z\$#]'
+        grbl_pattern = r"^\$[a-zA-Z\$#]"
         self.add_mapping(grbl_pattern, grbl_format)
 
 
@@ -86,7 +86,7 @@ class CodeEditor(IndexedTextEdit):
 
         # State variables
         self.modified = False
-        self.file_path = ''
+        self.file_path = ""
 
         # Custom UI management
         self.highlighter = GCodeHighlighter(self)
@@ -100,34 +100,29 @@ class CodeEditor(IndexedTextEdit):
         self.setStyleSheet("background-color: 'white';")
 
     def set_modified(self):
-        """Marks the content as modified.
-        """
+        """Marks the content as modified."""
         self.modified = True
 
     def get_modified(self):
-        """Indicates if the content has changes without saving.
-        """
+        """Indicates if the content has changes without saving."""
         return self.modified
 
     def get_file_path(self):
-        """Returns the path to the open file.
-        """
+        """Returns the path to the open file."""
         return self.file_path
 
     def new_file(self):
-        """Empties the editor.
-        """
+        """Empties the editor."""
         if self.modified and not self.ask_to_save_changes():
             return
 
-        self.setPlainText('')
+        self.setPlainText("")
         self.modified = False
 
     # Server FS + DB methods
 
     def open_file(self):
-        """Loads the content of the selected file in the DB.
-        """
+        """Loads the content of the selected file in the DB."""
         pass
 
     def save_file(self) -> bool:
@@ -145,16 +140,12 @@ class CodeEditor(IndexedTextEdit):
     # Local FS methods
 
     def import_file(self):
-        """Loads the content of the selected file in the local File system.
-        """
+        """Loads the content of the selected file in the local File system."""
         if self.modified and not self.ask_to_save_changes():
             return
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Importar archivo",
-            "C:\\",
-            "G code files (*.txt *.gcode *.nc)"
+            self, "Importar archivo", "C:\\", "G code files (*.txt *.gcode *.nc)"
         )
         if file_path:
             with open(file_path, "r") as content:
@@ -180,10 +171,7 @@ class CodeEditor(IndexedTextEdit):
         Returns False when the user cancels the action, True otherwise.
         """
         file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Exportar archivo",
-            "C:\\",
-            "G code files (*.txt *.gcode *.nc)"
+            self, "Exportar archivo", "C:\\", "G code files (*.txt *.gcode *.nc)"
         )
         if file_path:
             content = self.toPlainText()
@@ -200,16 +188,14 @@ class CodeEditor(IndexedTextEdit):
         """
         confirmation = QMessageBox()
         confirmation.setIcon(QMessageBox.Question)
-        confirmation.setText('¿Desea guardar el avance primero?')
-        confirmation.setWindowTitle('Guardar cambios')
-        confirmation.setStandardButtons(
-            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
-        )
-        btnExport = QPushButton('Exportar')
+        confirmation.setText("¿Desea guardar el avance primero?")
+        confirmation.setWindowTitle("Guardar cambios")
+        confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        btnExport = QPushButton("Exportar")
         confirmation.addButton(btnExport, QMessageBox.AcceptRole)
         choice = confirmation.exec()
 
-        if (confirmation.clickedButton() == btnExport):
+        if confirmation.clickedButton() == btnExport:
             return self.export_file()
 
         if choice == QMessageBox.Yes:
@@ -226,7 +212,7 @@ class CodeEditor(IndexedTextEdit):
         while count >= 10:
             count /= 10
             digits += 1
-        space = 3 + self.fontMetrics().width('9') * digits
+        space = 3 + self.fontMetrics().width("9") * digits
         return space
 
     def setIndex(self, block: QTextBlock) -> str:

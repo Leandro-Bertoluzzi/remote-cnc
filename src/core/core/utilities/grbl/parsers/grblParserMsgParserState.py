@@ -1,15 +1,16 @@
 import re
-from core.utilities.grbl.constants import GRBL_MODAL_GROUPS
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
-from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_PARSER_STATE
 from typing import Any
+
+from core.utilities.grbl.constants import GRBL_MODAL_GROUPS
+from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_PARSER_STATE
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 def findGroup(code: str) -> str:
     for element in GRBL_MODAL_GROUPS:
-        if code in element['modes']:
-            return element['group']
-    return ''
+        if code in element["modes"]:
+            return element["group"]
+    return ""
 
 
 class GrblParserMsgParserState(GrblParserGeneric):
@@ -22,31 +23,32 @@ class GrblParserMsgParserState(GrblParserGeneric):
     Example:
         - [GC:G0 G54 G17 G21 G90 G94 M5 M9 T0 F0.0 S0]
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^\[(?:GC:)?((?:[a-zA-Z][0-9]+(?:\.[0-9]*)?\s*)+)\]$', line)
+        matches = re.search(r"^\[(?:GC:)?((?:[a-zA-Z][0-9]+(?:\.[0-9]*)?\s*)+)\]$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
-        words_not_trimmed = matches.group(1).split(' ')
+        words_not_trimmed = matches.group(1).split(" ")
         words = map(str.strip, words_not_trimmed)
 
-        payload: dict[str, Any] = {'modal': {}}
+        payload: dict[str, Any] = {"modal": {}}
 
         for word in words:
-            if word[0] == 'G' or word[0] == 'M':
+            if word[0] == "G" or word[0] == "M":
                 group = findGroup(word)
                 try:
-                    prevWord = payload['modal'][group]
-                    payload['modal'][group] = [prevWord, word]
+                    prevWord = payload["modal"][group]
+                    payload["modal"][group] = [prevWord, word]
                 except Exception:
-                    payload['modal'][group] = word
-            if word[0] == 'T':
-                payload['tool'] = int(word[1:])
-            if word[0] == 'F':
-                payload['feedrate'] = float(word[1:])
-            if word[0] == 'S':
-                payload['spindle'] = float(word[1:])
+                    payload["modal"][group] = word
+            if word[0] == "T":
+                payload["tool"] = int(word[1:])
+            if word[0] == "F":
+                payload["feedrate"] = float(word[1:])
+            if word[0] == "S":
+                payload["spindle"] = float(word[1:])
 
         return GRBL_MSG_PARSER_STATE, payload

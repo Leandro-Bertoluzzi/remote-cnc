@@ -1,6 +1,6 @@
+import pytest
 from desktop.components.Terminal import Terminal
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit
-import pytest
 
 
 class TestTerminal:
@@ -17,23 +17,23 @@ class TestTerminal:
         # Assertions
         assert helpers.count_widgets(self.terminal.layout(), QPlainTextEdit) == 1
         assert helpers.count_widgets(self.terminal.layout(), QLineEdit) == 1
-        assert self.terminal.display_screen.toPlainText() == ''
+        assert self.terminal.display_screen.toPlainText() == ""
 
     def test_terminal_display_text(self):
         # Call method under test
-        self.terminal.display_text('some text')
+        self.terminal.display_text("some text")
 
         # Assertions
-        assert self.terminal.display_screen.toPlainText() == 'some text\n'
+        assert self.terminal.display_screen.toPlainText() == "some text\n"
 
     def test_terminal_send_line(self):
         # Mock state of widget
-        self.terminal.input.setText('A G-code command')
+        self.terminal.input.setText("A G-code command")
 
         # Call method under test
         self.terminal.send_line()
 
         # Assertions
         self.grbl_controller.send_command.assert_called_once()
-        self.grbl_controller.send_command.assert_called_with('A G-code command')
-        assert self.terminal.input.text() == ''
+        self.grbl_controller.send_command.assert_called_with("A G-code command")
+        assert self.terminal.input.text() == ""

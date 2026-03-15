@@ -1,7 +1,6 @@
+from conftest import TestingSession, engine
 from core.database.base import Base
 from core.database.models import Material
-from conftest import engine, TestingSession
-
 
 # Example materials
 test_material1 = Material("Material 1", "A very useful material")
@@ -32,14 +31,8 @@ class TestMaterialRoutes:
         assert response.status_code == 200
         assert len(response.json()) == 2
         assert response.json() == [
-            {
-                "name": "Material 1",
-                "description": "A very useful material"
-            },
-            {
-                "name": "Material 2",
-                "description": "A not so useful material"
-            }
+            {"name": "Material 1", "description": "A very useful material"},
+            {"name": "Material 2", "description": "A not so useful material"},
         ]
 
     def test_create_material(self, client):
@@ -60,8 +53,8 @@ class TestMaterialRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.materialRoutes.MaterialRepository.create_material',
-            side_effect=Exception('There was an error')
+            "routes.materialRoutes.MaterialRepository.create_material",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -88,8 +81,8 @@ class TestMaterialRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.materialRoutes.MaterialRepository.update_material',
-            side_effect=Exception('There was an error')
+            "routes.materialRoutes.MaterialRepository.update_material",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -114,8 +107,8 @@ class TestMaterialRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.materialRoutes.MaterialRepository.remove_material',
-            side_effect=Exception('There was an error')
+            "routes.materialRoutes.MaterialRepository.remove_material",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test

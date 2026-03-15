@@ -1,13 +1,14 @@
+import csv
+import io
+import re
+from datetime import datetime
+from pathlib import Path
+
+from core.config import LOGS_FOLDER_PATH
+from core.schemas.logs import LogsResponse
 from core.utilities.files import getFilesInFolder
 from core.utilities.loggerFactory import LOGS_DATETIME_FORMAT
 from core.utilities.logsInterpreter import LogsInterpreter
-import csv
-from datetime import datetime
-import io
-from pathlib import Path
-import re
-from core.schemas.logs import LogsResponse
-from core.config import LOGS_FOLDER_PATH
 
 _LOG_FILE_FIXED_NAMES = {
     "celery.log": "Registros del worker",
@@ -30,26 +31,23 @@ def classify_log_files() -> list[LogsResponse]:
         if not file.endswith(".log"):
             continue
 
-        if file.startswith('task_'):
+        if file.startswith("task_"):
             # task_{formatted_name}_{YYYYMMDD_hhmmss}.log
-            file_regex = r'^task_(\w+)_(\d{8}_\d{6})\.log$'
+            file_regex = r"^task_(\w+)_(\d{8}_\d{6})\.log$"
             log_matches = re.search(file_regex, file)
 
             source_file = log_matches.group(1)
             date_string = log_matches.group(2)
 
             date_time = datetime.strptime(date_string, LOGS_DATETIME_FORMAT)
-            date = date_time.strftime('%d/%m/%Y')
-            time = date_time.strftime('%H:%M:%S')
+            date = date_time.strftime("%d/%m/%Y")
+            time = date_time.strftime("%H:%M:%S")
 
             description = f"Ejecución del archivo <<{source_file}>> el día {date} a las {time}"
         elif file in _LOG_FILE_FIXED_NAMES.keys():
             description = _LOG_FILE_FIXED_NAMES[file]
 
-        classified_files.append({
-            'file_name': file,
-            'description': description
-        })
+        classified_files.append({"file_name": file, "description": description})
 
     return classified_files
 
@@ -60,7 +58,7 @@ def generate_log_csv(log_path: Path) -> str:
     # Use the csv.writer to write the list to the BytesIO object
     csv_writer = csv.writer(csv_file)
 
-    headers = ['Fecha y hora', 'Nivel', 'Tipo', 'Mensaje']
+    headers = ["Fecha y hora", "Nivel", "Tipo", "Mensaje"]
     csv_writer.writerow(headers)
 
     logs = LogsInterpreter.interpret_file(log_path)

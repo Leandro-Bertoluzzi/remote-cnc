@@ -1,14 +1,14 @@
-from core.utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from core.utilities.gcode.gcodeFileSender import FinishedFile, GcodeFileSender
 from core.utilities.grbl.grblController import GrblController
-from PyQt5.QtCore import pyqtSignal, QObject, QTimer
+from PyQt5.QtCore import QObject, QTimer, pyqtSignal
 
 # Constants
-SEND_INTERVAL = 100     # miliseconds
+SEND_INTERVAL = 100  # miliseconds
 
 
 class FileStreamer(QObject):
-    """Utility class to open a file and send it to the GRBL device, line by line.
-    """
+    """Utility class to open a file and send it to the GRBL device, line by line."""
+
     # SIGNALS
     finished = pyqtSignal()
     sent_line = pyqtSignal(int)
@@ -19,7 +19,7 @@ class FileStreamer(QObject):
         super().__init__()
 
         # Attributes definition
-        self.file_sender = GcodeFileSender(grbl_controller, '')
+        self.file_sender = GcodeFileSender(grbl_controller, "")
 
         # Create and configure timers
         self.file_manager = QTimer(self)

@@ -1,50 +1,52 @@
-from core.utilities.grbl.constants import GrblActiveState
-from core.utilities.grbl.types import Coordinates, GrblControllerState, GrblError, PositionType
 from enum import Enum
 from typing import Optional
+
+from core.utilities.grbl.constants import GrblActiveState
+from core.utilities.grbl.types import Coordinates, GrblControllerState, GrblError, PositionType
 
 # Flags
 
 
 class GrblStatusFlag(Enum):
-    CONNECTED = 'connected' # Machine is connected
-    STOP = 'stop'           # Request to stop current run
-    FINISHED = 'finished'   # Notification of program end (M2/M30)
-    PAUSED = 'paused'       # Machine is on Hold
-    ALARM = 'alarm'         # Display alarm message
+    CONNECTED = "connected"  # Machine is connected
+    STOP = "stop"  # Request to stop current run
+    FINISHED = "finished"  # Notification of program end (M2/M30)
+    PAUSED = "paused"  # Machine is on Hold
+    ALARM = "alarm"  # Display alarm message
+
 
 # Constants
 
 
 DEFAULT_GRBL_CONTROLLER_STATE = {
-    'status': {
-        'activeState': '',
-        'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-        'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-        'ov': [],
-        'subState': None,
-        'wco': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-        'pinstate': None,
-        'buffer': None,
-        'line': None,
-        'accessoryState': None
+    "status": {
+        "activeState": "",
+        "mpos": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "wpos": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "ov": [],
+        "subState": None,
+        "wco": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "pinstate": None,
+        "buffer": None,
+        "line": None,
+        "accessoryState": None,
     },
-    'parserstate': {
-        'modal': {
-            'motion': 'G0',
-            'wcs': 'G54',
-            'plane': 'G17',
-            'units': 'G21',
-            'distance': 'G90',
-            'feedrate': 'G94',
-            'program': 'M0',
-            'spindle': 'M5',
-            'coolant': 'M9'
+    "parserstate": {
+        "modal": {
+            "motion": "G0",
+            "wcs": "G54",
+            "plane": "G17",
+            "units": "G21",
+            "distance": "G90",
+            "feedrate": "G94",
+            "program": "M0",
+            "spindle": "M5",
+            "coolant": "M9",
         },
-        'tool': 0,
-        'feedrate': 0.0,
-        'spindle': 0.0
-    }
+        "tool": 0,
+        "feedrate": 0.0,
+        "spindle": 0.0,
+    },
 }
 
 
@@ -65,17 +67,17 @@ class GrblStatus:
         self._flags[key] = value
 
     def set_active_state(self, state: str):
-        self._state['status']['activeState'] = state
+        self._state["status"]["activeState"] = state
 
     def update_status(self, status: dict[str, str]):
-        self._state['status'].update(status)
+        self._state["status"].update(status)
 
     def update_parser_state(self, parser_state: dict[str, str]):
-        self._state['parserstate'].update(parser_state)
+        self._state["parserstate"].update(parser_state)
 
     def set_tool(self, tool_index: int):
         """Sets the GRBL device's current tool."""
-        self._state['parserstate']['tool'] = tool_index
+        self._state["parserstate"]["tool"] = tool_index
 
     def set_error(self, line: str, data: GrblError):
         self._error_line = line
@@ -100,7 +102,7 @@ class GrblStatus:
 
         Example: { 'x': 0.000, 'y': 0.000, 'z': 0.000 }
         """
-        return self._state['status'][pos_type]
+        return self._state["status"][pos_type]
 
     def get_modal(self) -> dict[str, str]:
         """Returns the GRBL device's current modal state.
@@ -128,33 +130,33 @@ class GrblStatus:
             - 'spindle': M3: Spindle (cw), M4: Spindle (ccw), M5: Spindle off
             - 'coolant': M7: Mist coolant, M8: Flood coolant, M9: Coolant off, [M7,M8]: Both on
         """
-        return self._state['parserstate']['modal']
+        return self._state["parserstate"]["modal"]
 
     def get_feedrate(self) -> float:
         """Returns the GRBL device's current feed rate."""
-        return self._state['parserstate']['feedrate']
+        return self._state["parserstate"]["feedrate"]
 
     def get_spindle(self) -> float:
         """Returns the GRBL device's current spindle speed."""
-        return self._state['parserstate']['spindle']
+        return self._state["parserstate"]["spindle"]
 
     def get_tool(self) -> int:
         """Returns the GRBL device's current tool."""
-        return self._state['parserstate']['tool']
+        return self._state["parserstate"]["tool"]
 
     def get_status_report(self):
         """Returns a status report of the device."""
-        return self._state['status']
+        return self._state["status"]
 
     def get_parser_state(self):
         """Returns the current status of the Gcode parser."""
-        return self._state['parserstate']
+        return self._state["parserstate"]
 
     # Checkers
 
     def _check_active_state(self, state: GrblActiveState) -> bool:
         """Helper method to check the active state."""
-        return self._state['status'].get('activeState') == state.value
+        return self._state["status"].get("activeState") == state.value
 
     def is_alarm(self) -> bool:
         """Checks if the GRBL device is currently in ALARM state."""
@@ -188,13 +190,13 @@ class GrblStatus:
         if not self.failed():
             return
 
-        error_message = 'There was an error'
+        error_message = "There was an error"
 
         if self.is_alarm():
-            error_message = 'An alarm was triggered'
+            error_message = "An alarm was triggered"
 
         return (
-            f'{error_message} (code: {self._error_data["code"]}) '
-            f'while executing line: {self._error_line}\n'
-            f'{self._error_data["message"]}:{self._error_data["description"]}'
+            f"{error_message} (code: {self._error_data['code']}) "
+            f"while executing line: {self._error_line}\n"
+            f"{self._error_data['message']}:{self._error_data['description']}"
         )

@@ -1,9 +1,10 @@
-from core.utilities.gcode.gcodeFileSender import GcodeFileSender, FinishedFile
+from logging import Logger
+
+import pytest
+from core.utilities.gcode.gcodeFileSender import FinishedFile, GcodeFileSender
 from core.utilities.grbl.grblController import GrblController
 from desktop.helpers.fileStreamer import FileStreamer
-from logging import Logger
 from PyQt5.QtCore import QTimer
-import pytest
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 
@@ -12,24 +13,24 @@ class TestFileStreamer:
     @pytest.fixture(autouse=True)
     def setup_method(self):
         # Mock GRBL controller object
-        self.grbl_controller = GrblController(Logger('test-logger'))
+        self.grbl_controller = GrblController(Logger("test-logger"))
 
         # Create an instance of FileStreamer
         self.file_streamer = FileStreamer(self.grbl_controller)
 
     def test_file_set_file_path(self):
         # Call method under test
-        self.file_streamer.set_file('/path/to/file.nc')
+        self.file_streamer.set_file("/path/to/file.nc")
 
         # Assertions
-        assert self.file_streamer.file_sender.file_path == '/path/to/file.nc'
+        assert self.file_streamer.file_sender.file_path == "/path/to/file.nc"
 
     def test_file_streamer_start(self, mocker: MockerFixture):
         # Mock Gcode sender method
-        mock_sender_start = mocker.patch.object(GcodeFileSender, 'start')
+        mock_sender_start = mocker.patch.object(GcodeFileSender, "start")
 
         # Mock timer method
-        mock_timer_start = mocker.patch.object(QTimer, 'start')
+        mock_timer_start = mocker.patch.object(QTimer, "start")
 
         # Call method under test
         self.file_streamer.start()
@@ -40,7 +41,7 @@ class TestFileStreamer:
 
     def test_file_streamer_pause(self, mocker: MockerFixture):
         # Mock Gcode sender method
-        mock_sender_pause = mocker.patch.object(GcodeFileSender, 'pause')
+        mock_sender_pause = mocker.patch.object(GcodeFileSender, "pause")
 
         # Call method under test
         self.file_streamer.pause()
@@ -50,7 +51,7 @@ class TestFileStreamer:
 
     def test_file_streamer_resume(self, mocker: MockerFixture):
         # Mock Gcode sender method
-        mock_sender_resume = mocker.patch.object(GcodeFileSender, 'resume')
+        mock_sender_resume = mocker.patch.object(GcodeFileSender, "resume")
 
         # Call method under test
         self.file_streamer.resume()
@@ -60,7 +61,7 @@ class TestFileStreamer:
 
     def test_file_streamer_toggle_paused(self, mocker: MockerFixture):
         # Mock Gcode sender method
-        mock_sender_toggle_paused = mocker.patch.object(GcodeFileSender, 'toggle_paused')
+        mock_sender_toggle_paused = mocker.patch.object(GcodeFileSender, "toggle_paused")
 
         # Call method under test
         self.file_streamer.toggle_paused()
@@ -70,10 +71,10 @@ class TestFileStreamer:
 
     def test_file_streamer_stop(self, mocker: MockerFixture):
         # Mock Gcode sender method
-        mock_sender_stop = mocker.patch.object(GcodeFileSender, 'stop')
+        mock_sender_stop = mocker.patch.object(GcodeFileSender, "stop")
 
         # Mock timer method
-        mock_timer_stop = mocker.patch.object(QTimer, 'stop')
+        mock_timer_stop = mocker.patch.object(QTimer, "stop")
 
         # Call method under test
         self.file_streamer.stop()
@@ -84,7 +85,7 @@ class TestFileStreamer:
 
     def test_file_streamer_send_line(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock Gcode sender method
-        mock_send_line = mocker.patch.object(GcodeFileSender, 'send_line')
+        mock_send_line = mocker.patch.object(GcodeFileSender, "send_line")
 
         # Call method under test and wait for signal
         with qtbot.waitSignal(self.file_streamer.sent_line, raising=True):
@@ -96,9 +97,7 @@ class TestFileStreamer:
     def test_file_streamer_send_whole_file(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock Gcode sender method
         mock_send_line = mocker.patch.object(
-            GcodeFileSender,
-            'send_line',
-            side_effect=FinishedFile()
+            GcodeFileSender, "send_line", side_effect=FinishedFile()
         )
 
         # Call method under test and wait for signal

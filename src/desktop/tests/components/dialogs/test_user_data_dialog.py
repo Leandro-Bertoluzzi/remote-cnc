@@ -1,10 +1,10 @@
 import pytest
+from core.database.models import VALID_ROLES, User
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from core.database.models import User, VALID_ROLES
 
 
 class TestUserDataDialog:
-    userInfo = User(name='John Doe', email='test@testing.com', password='1234', role='admin')
+    userInfo = User(name="John Doe", email="test@testing.com", password="1234", role="admin")
 
     def test_user_data_dialog_init(self, qtbot):
         dialog = UserDataDialog()
@@ -17,11 +17,11 @@ class TestUserDataDialog:
         dialog = UserDataDialog(userInfo=user_info)
         qtbot.addWidget(dialog)
 
-        expectedName = self.userInfo.name if user_info is not None else ''
-        expectedEmail = self.userInfo.email if user_info is not None else ''
+        expectedName = self.userInfo.name if user_info is not None else ""
+        expectedEmail = self.userInfo.email if user_info is not None else ""
         expectedPasswordEnabled = False if user_info is not None else True
         expectedRoleIndex = VALID_ROLES.index(self.userInfo.role) if user_info is not None else 0
-        expectedWindowTitle = 'Actualizar usuario' if user_info is not None else 'Crear usuario'
+        expectedWindowTitle = "Actualizar usuario" if user_info is not None else "Crear usuario"
 
         assert dialog.name.text() == expectedName
         assert dialog.email.text() == expectedEmail
@@ -34,8 +34,8 @@ class TestUserDataDialog:
         qtbot.addWidget(dialog)
 
         # Interaction with widget
-        dialog.name.setText('Updated Name')
-        dialog.email.setText('updated@testing.com')
-        dialog.role.setCurrentIndex(VALID_ROLES.index('user'))
+        dialog.name.setText("Updated Name")
+        dialog.email.setText("updated@testing.com")
+        dialog.role.setCurrentIndex(VALID_ROLES.index("user"))
 
-        assert dialog.getInputs() == ('Updated Name', 'updated@testing.com', '', 'user')
+        assert dialog.getInputs() == ("Updated Name", "updated@testing.com", "", "user")

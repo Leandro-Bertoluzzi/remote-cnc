@@ -1,13 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QLayout, QHBoxLayout, QVBoxLayout, QPushButton
-from PyQt5.QtCore import Qt
 from typing import Callable
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QHBoxLayout, QLayout, QPushButton, QVBoxLayout, QWidget
 
 ButtonInfo = tuple[str, Callable[[], None]]
 
 
 class ButtonList(QWidget):
-    def __init__(self, options: list[ButtonInfo] = [], vertical=True, parent=None):
+    def __init__(self, options: list[ButtonInfo], vertical=True, parent=None):
         super(ButtonList, self).__init__(parent)
 
         layout: QLayout = QHBoxLayout()
@@ -16,7 +16,7 @@ class ButtonList(QWidget):
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
-        for (label, action) in options:
+        for label, action in options:
             button = QPushButton(label)
             button.clicked.connect(action)
             layout.addWidget(button)

@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_VERSION
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgVersion(GrblParserGeneric):
@@ -14,19 +15,17 @@ class GrblParserMsgVersion(GrblParserGeneric):
         - [VER:1.1d.20161014:]
         - [VER:1.1d.20161014:Some string]
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^\[(?:VER:)(.+)\]$', line)
+        matches = re.search(r"^\[(?:VER:)(.+)\]$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
         # Use the colons (:) to split the values, ignoring the last character "]"
-        values = re.split(r':', line[:-1])
+        values = re.split(r":", line[:-1])
 
-        payload = {
-            'version': values[1],
-            'comment': values[2]
-        }
+        payload = {"version": values[1], "comment": values[2]}
 
         return GRBL_MSG_VERSION, payload

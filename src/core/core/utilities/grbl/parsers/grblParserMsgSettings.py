@@ -1,6 +1,7 @@
 import re
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_SETTING
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgSettings(GrblParserGeneric):
@@ -9,16 +10,14 @@ class GrblParserMsgSettings(GrblParserGeneric):
     Example:
         - $x=val
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^(\$[^=]+)=([^ ]*)\s*', line)
+        matches = re.search(r"^(\$[^=]+)=([^ ]*)\s*", line)
 
-        if (not matches):
+        if not matches:
             return None
 
-        payload = {
-            'name': matches.group(1),
-            'value': matches.group(2)
-        }
+        payload = {"name": matches.group(1), "value": matches.group(2)}
 
         return GRBL_MSG_SETTING, payload

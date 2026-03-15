@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextEdit
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QTextEdit
 
-FROM_CANCEL = 'cancel'
-FROM_REJECT = 'reject'
+FROM_CANCEL = "cancel"
+FROM_REJECT = "reject"
 
 
 class TaskCancelDialog(QDialog):
@@ -12,7 +12,7 @@ class TaskCancelDialog(QDialog):
         layout = QFormLayout(self)
 
         self.note = QTextEdit(self)
-        noteLabel = 'Razón de cancelación' if origin == FROM_CANCEL else 'Razón de rechazo'
+        noteLabel = "Razón de cancelación" if origin == FROM_CANCEL else "Razón de rechazo"
         layout.addRow(noteLabel, self.note)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
@@ -23,7 +23,7 @@ class TaskCancelDialog(QDialog):
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
-        title = 'Cancelar tarea' if origin == FROM_CANCEL else 'Rechazar tarea'
+        title = "Cancelar tarea" if origin == FROM_CANCEL else "Rechazar tarea"
         self.setWindowTitle(title)
 
     def getInput(self):

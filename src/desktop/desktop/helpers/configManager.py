@@ -8,8 +8,7 @@ ConfigDict = dict[str, ConfigSection]
 
 
 class ConfigManager:
-    """Helper class to manage an INI file with options to customize the app
-    """
+    """Helper class to manage an INI file with options to customize the app"""
 
     def __init__(self, config_file: Path):
         self._file = config_file
@@ -26,8 +25,7 @@ class ConfigManager:
     # SETTERS
 
     def add_section(self, section: str):
-        """Add section if it doesn't exist.
-        """
+        """Add section if it doesn't exist."""
         if not self.config.has_section(section):
             self.config.add_section(section)
 
@@ -46,8 +44,7 @@ class ConfigManager:
     # GETTERS
 
     def get_config(self) -> ConfigDict:
-        """Get all sections with their options.
-        """
+        """Get all sections with their options."""
         options: ConfigDict = {}
 
         for section in self.config.sections():
@@ -59,8 +56,7 @@ class ConfigManager:
         return options
 
     def get_section(self, section: str) -> ConfigSection:
-        """Get all options in a section.
-        """
+        """Get all options in a section."""
         if not self.config.has_section(section):
             return []
 

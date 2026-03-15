@@ -1,19 +1,18 @@
 from core.database.repositories.taskRepository import TaskRepository
+from core.schemas.general import GenericResponse
+from core.schemas.tasks import TaskCreate, TaskResponse, TaskUpdate, TaskUpdateStatus
 from fastapi import APIRouter, HTTPException
+
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
-from core.schemas.general import GenericResponse
-from core.schemas.tasks import TaskCreate, TaskUpdate, TaskUpdateStatus, TaskResponse
 
 taskRoutes = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
-@taskRoutes.get('')
-@taskRoutes.get('/')
+@taskRoutes.get("")
+@taskRoutes.get("/")
 def get_tasks_by_user(
-    user: GetUserDep,
-    db_session: GetDbSession,
-    status: str = 'all'
+    user: GetUserDep, db_session: GetDbSession, status: str = "all"
 ) -> list[TaskResponse]:
     repository = TaskRepository(db_session)
     tasks = repository.get_all_tasks_from_user(user.id, status)
@@ -21,11 +20,9 @@ def get_tasks_by_user(
     return [TaskResponse.from_orm(task) for task in tasks]
 
 
-@taskRoutes.get('/all')
+@taskRoutes.get("/all")
 def get_tasks_from_all_users(
-    admin: GetAdminDep,
-    db_session: GetDbSession,
-    status: str = 'all'
+    admin: GetAdminDep, db_session: GetDbSession, status: str = "all"
 ) -> list[TaskResponse]:
     repository = TaskRepository(db_session)
     tasks = repository.get_all_tasks(status)
@@ -33,13 +30,9 @@ def get_tasks_from_all_users(
     return [TaskResponse.from_orm(task) for task in tasks]
 
 
-@taskRoutes.post('', response_model=TaskResponse)
-@taskRoutes.post('/', response_model=TaskResponse)
-def create_new_task(
-    request: TaskCreate,
-    user: GetUserDep,
-    db_session: GetDbSession
-):
+@taskRoutes.post("", response_model=TaskResponse)
+@taskRoutes.post("/", response_model=TaskResponse)
+def create_new_task(request: TaskCreate, user: GetUserDep, db_session: GetDbSession):
     fileId = request.file_id
     toolId = request.tool_id
     materialId = request.material_id
@@ -48,49 +41,31 @@ def create_new_task(
 
     try:
         repository = TaskRepository(db_session)
-        return repository.create_task(
-            user.id,
-            fileId,
-            toolId,
-            materialId,
-            taskName,
-            taskNote
-        )
+        return repository.create_task(user.id, fileId, toolId, materialId, taskName, taskNote)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
 
-@taskRoutes.put('/{task_id}/status', response_model=TaskResponse)
+@taskRoutes.put("/{task_id}/status", response_model=TaskResponse)
 def update_existing_task_status(
-    task_id: int,
-    request: TaskUpdateStatus,
-    user: GetUserDep,
-    db_session: GetDbSession
+    task_id: int, request: TaskUpdateStatus, user: GetUserDep, db_session: GetDbSession
 ):
     taskStatus = request.status
     cancellationReason = request.cancellation_reason
 
-    admin_id = user.id if user.role == 'admin' else None
+    admin_id = user.id if user.role == "admin" else None
 
     try:
         repository = TaskRepository(db_session)
-        result = repository.update_task_status(
-            task_id,
-            taskStatus,
-            admin_id,
-            cancellationReason
-        )
+        result = repository.update_task_status(task_id, taskStatus, admin_id, cancellationReason)
         return TaskResponse.from_orm(result)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
 
-@taskRoutes.put('/{task_id}', response_model=TaskResponse)
+@taskRoutes.put("/{task_id}", response_model=TaskResponse)
 def update_existing_task(
-    task_id: int,
-    request: TaskUpdate,
-    user: GetUserDep,
-    db_session: GetDbSession
+    task_id: int, request: TaskUpdate, user: GetUserDep, db_session: GetDbSession
 ):
     fileId = request.file_id
     toolId = request.tool_id
@@ -102,30 +77,19 @@ def update_existing_task(
     try:
         repository = TaskRepository(db_session)
         result = repository.update_task(
-            task_id,
-            user.id,
-            fileId,
-            toolId,
-            materialId,
-            taskName,
-            taskNote,
-            taskPriority
+            task_id, user.id, fileId, toolId, materialId, taskName, taskNote, taskPriority
         )
         return TaskResponse.from_orm(result)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
 
-@taskRoutes.delete('/{task_id}', response_model=GenericResponse)
-def remove_existing_task(
-    task_id: int,
-    user: GetUserDep,
-    db_session: GetDbSession
-):
+@taskRoutes.delete("/{task_id}", response_model=GenericResponse)
+def remove_existing_task(task_id: int, user: GetUserDep, db_session: GetDbSession):
     try:
         repository = TaskRepository(db_session)
         repository.remove_task(task_id)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
-    return {'success': 'La tarea fue eliminada con éxito'}
+    return {"success": "La tarea fue eliminada con éxito"}

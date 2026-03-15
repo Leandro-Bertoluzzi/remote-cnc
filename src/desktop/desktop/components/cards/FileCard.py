@@ -1,17 +1,17 @@
-from desktop.components.cards.Card import Card
-from desktop.components.dialogs.FileDataDialog import FileDataDialog
-from desktop.components.dialogs.TaskDataDialog import TaskFromFileDialog
-from desktop.config import USER_ID, FILES_FOLDER_PATH
+import core.utilities.worker.utils as worker
 from core.database.base import SessionLocal
 from core.database.exceptions import DatabaseError, EntityNotFoundError
 from core.database.models import File, TaskStatus
 from core.database.repositories.fileRepository import DuplicatedFileNameError
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.utils import get_assets
-from core.utilities.files import InvalidFile, FileSystemError
 from core.utilities.fileManager import FileManager
-import core.utilities.worker.utils as worker
+from core.utilities.files import FileSystemError, InvalidFile
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+from desktop.components.cards.Card import Card
+from desktop.components.dialogs.FileDataDialog import FileDataDialog
+from desktop.components.dialogs.TaskDataDialog import TaskFromFileDialog
+from desktop.config import FILES_FOLDER_PATH, USER_ID
 from desktop.helpers.utils import needs_confirmation
 
 
@@ -27,8 +27,7 @@ class FileCard(Card):
 
     def setup_ui(self):
         description = (
-            f'Archivo {self.file.id}: {self.file.file_name}\n'
-            f'Usuario: {self.file.user.name}'
+            f"Archivo {self.file.id}: {self.file.file_name}\nUsuario: {self.file.user.name}"
         )
         self.setDescription(description)
 
@@ -50,37 +49,22 @@ class FileCard(Card):
         try:
             self.file_manager.rename_file(USER_ID, self.file, name)
         except DuplicatedFileNameError as error:
-            self.showWarning(
-                'Nombre repetido',
-                str(error)
-            )
+            self.showWarning("Nombre repetido", str(error))
         except (InvalidFile, FileSystemError) as error:
-            self.showError(
-                'Error de guardado',
-                str(error)
-            )
+            self.showError("Error de guardado", str(error))
         except (DatabaseError, EntityNotFoundError) as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
         else:
             self.getView().refreshLayout()
 
-    @needs_confirmation('¿Realmente desea eliminar el archivo?', 'Eliminar archivo')
+    @needs_confirmation("¿Realmente desea eliminar el archivo?", "Eliminar archivo")
     def removeFile(self):
         try:
             self.file_manager.remove_file(self.file)
         except FileSystemError as error:
-            self.showError(
-                'Error de borrado',
-                str(error)
-            )
+            self.showError("Error de borrado", str(error))
         except (DatabaseError, EntityNotFoundError) as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
         else:
             self.getView().refreshLayout()
 
@@ -88,10 +72,7 @@ class FileCard(Card):
         try:
             _, materials, tools = get_assets(USER_ID)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
 
         taskDialog = TaskFromFileDialog(self.file, tools, materials)
@@ -112,33 +93,25 @@ class FileCard(Card):
             repository = TaskRepository(db_session)
             repository.create_task(USER_ID, self.file.id, tool_id, material_id, name, note)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
 
-    @needs_confirmation('¿Desea ejecutar la tarea ahora?', 'Ejecutar tarea')
+    @needs_confirmation("¿Desea ejecutar la tarea ahora?", "Ejecutar tarea")
     def executeTaskFromFile(self):
         if not worker.is_worker_on():
             self.showError(
-                'Worker desconectado',
-                'Ejecución cancelada: El worker no está conectado'
+                "Worker desconectado", "Ejecución cancelada: El worker no está conectado"
             )
             return
 
         if not WorkerStoreAdapter.is_device_enabled():
             self.showError(
-                'Equipo deshabilitado',
-                'Ejecución cancelada: El equipo está deshabilitado'
+                "Equipo deshabilitado", "Ejecución cancelada: El equipo está deshabilitado"
             )
             return
 
         if worker.is_worker_running():
-            self.showError(
-                'Equipo ocupado',
-                'Ejecución cancelada: Ya hay una tarea en progreso'
-            )
+            self.showError("Equipo ocupado", "Ejecución cancelada: Ya hay una tarea en progreso")
             return
 
         task_config = self._create_task_dialog()
@@ -157,15 +130,9 @@ class FileCard(Card):
                 USER_ID,
             )
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
 
         worker_task_id = worker.send_task_to_worker(task.id)
         self.getWindow().startWorkerMonitor(worker_task_id)
-        self.showInformation(
-            'Tarea enviada',
-            'Se envió la tarea al equipo para su ejecución'
-        )
+        self.showInformation("Tarea enviada", "Se envió la tarea al equipo para su ejecución")

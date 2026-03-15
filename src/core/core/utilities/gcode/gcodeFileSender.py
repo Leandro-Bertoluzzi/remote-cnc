@@ -1,7 +1,7 @@
 from core.utilities.grbl.grblController import GrblController
 
 # Constants
-MAX_BUFFER_FILL = 75    # Percentage
+MAX_BUFFER_FILL = 75  # Percentage
 
 
 # Custom exceptions
@@ -10,8 +10,8 @@ class FinishedFile(Exception):
 
 
 class GcodeFileSender:
-    """Utility class to open a file and send it to the GRBL device, line by line.
-    """
+    """Utility class to open a file and send it to the GRBL device, line by line."""
+
     # CONSTRUCTOR
 
     def __init__(self, grbl_controller: GrblController, file_path: str):
@@ -51,7 +51,7 @@ class GcodeFileSender:
         self.file_path = file_path
 
     def _open_file(self) -> int:
-        self.gcode = open(self.file_path, 'r')
+        self.gcode = open(self.file_path, "r")
         self.current_line = 0
         self._paused = False
 

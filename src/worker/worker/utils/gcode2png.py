@@ -1,15 +1,15 @@
+from typing import TypedDict
+
 from mayavi import mlab
 from PIL import Image
 from pyvirtualdisplay import Display
-from typing import TypedDict
+
 import worker.utils.gcodeParser as gcode
 
 # Types definition
 Color = tuple[float, float, float]
 Points = TypedDict("Points", {"x": list[float], "y": list[float], "z": list[float]})
-Coordinates = TypedDict(
-    "Coordinates", {"object": Points, "moves": Points}
-)
+Coordinates = TypedDict("Coordinates", {"object": Points, "moves": Points})
 
 
 class GcodeRenderer:

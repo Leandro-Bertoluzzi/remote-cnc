@@ -1,14 +1,14 @@
+import pytest
 from core.database.models import Tool
 from core.database.repositories.toolRepository import ToolRepository
-import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 
 class TestToolRepository:
     def test_create_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)
-        name = 'New Tool'
-        description = 'A new tool'
+        name = "New Tool"
+        description = "A new tool"
 
         # Call method under test
         new_tool = tool_repository.create_tool(name, description)
@@ -36,13 +36,13 @@ class TestToolRepository:
 
         # Assertions
         assert isinstance(tool, Tool)
-        assert tool.name == 'tool 1'
-        assert tool.description == 'It is a tool'
+        assert tool.name == "tool 1"
+        assert tool.description == "It is a tool"
 
     def test_update_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)
-        updated_name = 'Updated Tool'
-        updated_description = 'Updated description'
+        updated_name = "Updated Tool"
+        updated_description = "Updated description"
 
         # Call method under test
         updated_tool = tool_repository.update_tool(1, updated_name, updated_description)
@@ -64,23 +64,23 @@ class TestToolRepository:
 
     def test_error_create_tool_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'add', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "add", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            tool_repository.create_tool(name='name', description='description')
-        assert 'Error creating the tool in the DB' in str(error.value)
+            tool_repository.create_tool(name="name", description="description")
+        assert "Error creating the tool in the DB" in str(error.value)
 
     def test_error_get_all_tools_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'scalars', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             tool_repository.get_all_tools()
-        assert 'Error retrieving tools from the DB' in str(error.value)
+        assert "Error retrieving tools from the DB" in str(error.value)
 
     def test_error_get_non_existing_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)
@@ -88,35 +88,35 @@ class TestToolRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             tool_repository.get_tool_by_id(id=5000)
-        assert str(error.value) == 'Tool with ID 5000 was not found'
+        assert str(error.value) == "Tool with ID 5000 was not found"
 
     def test_error_get_tool_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             tool_repository.get_tool_by_id(id=1)
-        assert 'Error retrieving the tool with ID 1' in str(error.value)
+        assert "Error retrieving the tool with ID 1" in str(error.value)
 
     def test_error_update_non_existing_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            tool_repository.update_tool(id=5000, name='name', description='description')
-        assert str(error.value) == 'Tool with ID 5000 was not found'
+            tool_repository.update_tool(id=5000, name="name", description="description")
+        assert str(error.value) == "Tool with ID 5000 was not found"
 
     def test_error_update_tool_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
-            tool_repository.update_tool(id=1, name='name', description='description')
-        assert 'Error updating the tool in the DB' in str(error.value)
+            tool_repository.update_tool(id=1, name="name", description="description")
+        assert "Error updating the tool in the DB" in str(error.value)
 
     def test_error_remove_non_existing_tool(self, mocked_session):
         tool_repository = ToolRepository(mocked_session)
@@ -124,14 +124,14 @@ class TestToolRepository:
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             tool_repository.remove_tool(id=5000)
-        assert str(error.value) == 'Tool with ID 5000 was not found'
+        assert str(error.value) == "Tool with ID 5000 was not found"
 
     def test_error_remove_tool_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, 'get', side_effect=SQLAlchemyError('mocked error'))
+        mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
             tool_repository.remove_tool(id=1)
-        assert 'Error removing the tool from the DB' in str(error.value)
+        assert "Error removing the tool from the DB" in str(error.value)

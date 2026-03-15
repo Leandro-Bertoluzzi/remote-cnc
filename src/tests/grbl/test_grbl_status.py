@@ -1,7 +1,7 @@
-from core.utilities.grbl.constants import GrblActiveState
-from core.utilities.grbl.grblStatus import GrblStatus
 import mocks.grbl as grbl_mocks
 import pytest
+from core.utilities.grbl.constants import GrblActiveState
+from core.utilities.grbl.grblStatus import GrblStatus
 
 
 class TestGrblStatus:
@@ -11,13 +11,13 @@ class TestGrblStatus:
 
     def test_getters(self):
         # Set test values for controller's parameters
-        self.grbl_status._state['status'] = grbl_mocks.grbl_status
-        self.grbl_status._state['parserstate'] = grbl_mocks.grbl_parserstate
+        self.grbl_status._state["status"] = grbl_mocks.grbl_status
+        self.grbl_status._state["parserstate"] = grbl_mocks.grbl_parserstate
 
         # Call methods under test
         status = self.grbl_status.get_status_report()
-        machine_position = self.grbl_status.get_position('mpos')
-        work_position = self.grbl_status.get_position('wpos')
+        machine_position = self.grbl_status.get_position("mpos")
+        work_position = self.grbl_status.get_position("wpos")
         parser_state = self.grbl_status.get_parser_state()
         modal_group = self.grbl_status.get_modal()
         tool = self.grbl_status.get_tool()
@@ -35,7 +35,7 @@ class TestGrblStatus:
         assert spindle == grbl_mocks.grbl_spindle
 
     @pytest.mark.parametrize(
-        'active_state',
+        "active_state",
         [
             GrblActiveState.IDLE.value,
             GrblActiveState.RUN.value,
@@ -44,12 +44,12 @@ class TestGrblStatus:
             GrblActiveState.HOME.value,
             GrblActiveState.SLEEP.value,
             GrblActiveState.ALARM.value,
-            GrblActiveState.CHECK.value
-        ]
+            GrblActiveState.CHECK.value,
+        ],
     )
     def test_status_checkers(self, active_state):
         # Set test value for controller's active state
-        self.grbl_status._state['status']['activeState'] = active_state
+        self.grbl_status._state["status"]["activeState"] = active_state
 
         # Call methods under test
         is_alarm = self.grbl_status.is_alarm()

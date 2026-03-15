@@ -1,23 +1,21 @@
-from desktop.components.cards.UserCard import UserCard
-from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from core.database.base import SessionLocal
-from core.database.repositories.userRepository import UserRepository
-from desktop.views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 
+from core.database.base import SessionLocal
+from core.database.repositories.userRepository import UserRepository
+
+from desktop.components.cards.UserCard import UserCard
+from desktop.components.dialogs.UserDataDialog import UserDataDialog
+from desktop.views.BaseListView import BaseListView
+
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
 
 
 class UsersView(BaseListView):
-    def __init__(self, parent: 'MainWindow'):
+    def __init__(self, parent: "MainWindow"):
         super(UsersView, self).__init__(parent)
         self.setItemListFromValues(
-            'USUARIOS',
-            '',
-            self.createUserCard,
-            'Crear usuario',
-            self.createUser
+            "USUARIOS", "", self.createUserCard, "Crear usuario", self.createUser
         )
         self.refreshLayout()
 
@@ -40,9 +38,6 @@ class UsersView(BaseListView):
             repository = UserRepository(db_session)
             repository.create_user(name, email, password, role)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
         self.refreshLayout()

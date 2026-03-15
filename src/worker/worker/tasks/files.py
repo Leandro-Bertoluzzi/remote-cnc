@@ -1,13 +1,13 @@
-from worker.main import app
 from core.config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
 from core.database.base import SessionLocal
 from core.database.repositories.fileRepository import FileRepository
-from core.utilities.gcode.gcodeAnalyser import GcodeAnalyser
 from core.utilities.files import FileSystemHelper
+from core.utilities.gcode.gcodeAnalyser import GcodeAnalyser
+from worker.main import app
 from worker.utils.gcode2png import GcodeRenderer
 
 
-@app.task(name='create_thumbnail', ignore_result=True)
+@app.task(name="create_thumbnail", ignore_result=True)
 def createThumbnail(file_id: int) -> bool:
     db_session = SessionLocal()
     repository = FileRepository(db_session)
@@ -15,7 +15,7 @@ def createThumbnail(file_id: int) -> bool:
     # 1. Get the requested file
     file = repository.get_file_by_id(file_id)
     if not file:
-        raise Exception('No se encontró el archivo en la base de datos')
+        raise Exception("No se encontró el archivo en la base de datos")
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
     file_path = files_helper.get_file_path(file.user_id, file.file_name)
@@ -28,7 +28,7 @@ def createThumbnail(file_id: int) -> bool:
     renderer.run(file_path, output, moves=False)
 
 
-@app.task(name='generate_report', ignore_result=True)
+@app.task(name="generate_report", ignore_result=True)
 def generateFileReport(file_id: int) -> bool:
     db_session = SessionLocal()
     repository = FileRepository(db_session)
@@ -36,7 +36,7 @@ def generateFileReport(file_id: int) -> bool:
     # 1. Get the requested file
     file = repository.get_file_by_id(file_id)
     if not file:
-        raise Exception('No se encontró el archivo en la base de datos')
+        raise Exception("No se encontró el archivo en la base de datos")
 
     files_helper = FileSystemHelper(FILES_FOLDER_PATH)
     file_path = files_helper.get_file_path(file.user_id, file.file_name)

@@ -1,15 +1,11 @@
 import pytest
-from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog, FROM_CANCEL, FROM_REJECT
+from desktop.components.dialogs.TaskCancelDialog import FROM_CANCEL, FROM_REJECT, TaskCancelDialog
 
 
 class TestTaskCancelDialog:
     @pytest.mark.parametrize(
-            "origin,expected_title",
-            [
-                (FROM_CANCEL, 'Cancelar tarea'),
-                (FROM_REJECT, 'Rechazar tarea')
-            ]
-        )
+        "origin,expected_title", [(FROM_CANCEL, "Cancelar tarea"), (FROM_REJECT, "Rechazar tarea")]
+    )
     def test_task_data_dialog_init(self, qtbot, origin, expected_title):
         dialog = TaskCancelDialog(origin)
         qtbot.addWidget(dialog)
@@ -22,6 +18,6 @@ class TestTaskCancelDialog:
         qtbot.addWidget(dialog)
 
         # Interaction with widget
-        dialog.note.setPlainText('A valid cancellation reason')
+        dialog.note.setPlainText("A valid cancellation reason")
 
-        assert dialog.getInput() == 'A valid cancellation reason'
+        assert dialog.getInput() == "A valid cancellation reason"

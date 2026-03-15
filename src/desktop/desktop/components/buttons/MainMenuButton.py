@@ -1,13 +1,13 @@
+from core.utilities.files import getFileNameInFolder
 from PyQt5.QtCore import QEvent, Qt
-from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor, QPaintEvent
+from PyQt5.QtGui import QColor, QCursor, QPainter, QPaintEvent, QPixmap
 from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAbstractButton
-from core.utilities.files import getFileNameInFolder
 
-color_text = QColor('#2E1C1C')
-color_hover_border = QColor('black')
-color_hover_fill = QColor('#555555')
-color_hover_text = QColor('#6e0e0e')
+color_text = QColor("#2E1C1C")
+color_hover_border = QColor("black")
+color_hover_fill = QColor("#555555")
+color_hover_text = QColor("#6e0e0e")
 button_size = 240
 
 
@@ -20,7 +20,7 @@ class MainMenuButton(QAbstractButton):
 
         # Customize painter
         self.pixmap = QPixmap(self.imagePath)
-        if self.imagePath.endswith('.svg'):
+        if self.imagePath.endswith(".svg"):
             self.renderer = QSvgRenderer(self.imagePath)
 
         # Customize button
@@ -61,7 +61,7 @@ class MainMenuButton(QAbstractButton):
             pen.setColor(color_hover_text)
         painter.setPen(pen)
 
-        if self.imagePath.endswith('.svg'):
+        if self.imagePath.endswith(".svg"):
             self.renderer.render(painter)
         else:
             painter.drawPixmap(event.rect(), self.pixmap)

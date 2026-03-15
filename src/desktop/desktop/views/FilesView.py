@@ -1,28 +1,34 @@
-from desktop.components.cards.FileCard import FileCard
-from desktop.components.dialogs.FileDataDialog import FileDataDialog
-from desktop.config import USER_ID, FILES_FOLDER_PATH
-from core.database.base import SessionLocal
-from core.database.repositories.fileRepository import DuplicatedFileError, \
-    DuplicatedFileNameError, DatabaseError, FileRepository
-from core.utilities.files import InvalidFile, FileSystemError
-from core.utilities.fileManager import FileManager
-from core.utilities.worker.scheduler import create_thumbnail, generate_file_report
-from desktop.views.BaseListView import BaseListView
 from typing import TYPE_CHECKING
 
+from core.database.base import SessionLocal
+from core.database.repositories.fileRepository import (
+    DatabaseError,
+    DuplicatedFileError,
+    DuplicatedFileNameError,
+    FileRepository,
+)
+from core.utilities.fileManager import FileManager
+from core.utilities.files import FileSystemError, InvalidFile
+from core.utilities.worker.scheduler import create_thumbnail, generate_file_report
+
+from desktop.components.cards.FileCard import FileCard
+from desktop.components.dialogs.FileDataDialog import FileDataDialog
+from desktop.config import FILES_FOLDER_PATH, USER_ID
+from desktop.views.BaseListView import BaseListView
+
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
 
 
 class FilesView(BaseListView):
-    def __init__(self, parent: 'MainWindow'):
+    def __init__(self, parent: "MainWindow"):
         super(FilesView, self).__init__(parent)
         self.setItemListFromValues(
-            'ARCHIVOS',
-            'Aún no hay archivos almacenados',
+            "ARCHIVOS",
+            "Aún no hay archivos almacenados",
             self.createFileCard,
-            'Subir archivo',
-            self.createFile
+            "Subir archivo",
+            self.createFile,
         )
         self.refreshLayout()
 
@@ -48,22 +54,13 @@ class FilesView(BaseListView):
             generate_file_report(file.id)
             create_thumbnail(file.id)
         except (DuplicatedFileNameError, DuplicatedFileError) as error:
-            self.showWarning(
-                'Archivo repetido',
-                str(error)
-            )
+            self.showWarning("Archivo repetido", str(error))
             return
         except (InvalidFile, FileSystemError) as error:
-            self.showError(
-                'Error de guardado',
-                str(error)
-            )
+            self.showError("Error de guardado", str(error))
             return
         except DatabaseError as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
 
         self.refreshLayout()

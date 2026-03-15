@@ -1,54 +1,48 @@
-from desktop.components.cards.TaskCard import TaskCard
-from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from desktop.config import USER_ID
+from typing import TYPE_CHECKING
+
 import core.utilities.worker.utils as worker
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from core.database.base import SessionLocal
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.utils import get_assets
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+
+from desktop.components.cards.TaskCard import TaskCard
+from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
+from desktop.config import USER_ID
 from desktop.views.BaseListView import BaseListView
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
 
 
 class TasksView(BaseListView):
-    def __init__(self, parent: 'MainWindow'):
+    def __init__(self, parent: "MainWindow"):
         super(TasksView, self).__init__(parent)
 
         try:
             self.files, self.materials, self.tools = get_assets(USER_ID)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
 
         self.setItemListFromValues(
-            'TAREAS',
-            'La cola de tareas está vacía',
+            "TAREAS",
+            "La cola de tareas está vacía",
             self.createTaskCard,
-            'Crear tarea',
-            self.createTask
+            "Crear tarea",
+            self.createTask,
         )
         self.refreshLayout()
 
     def createTaskCard(self, task):
         return TaskCard(
-            task,
-            self.device_available,
-            self.files,
-            self.tools,
-            self.materials,
-            parent=self
+            task, self.device_available, self.files, self.tools, self.materials, parent=self
         )
 
     def getItems(self):
         db_session = SessionLocal()
         repository = TaskRepository(db_session)
-        tasks = repository.get_all_tasks_from_user(USER_ID, status='all')
+        tasks = repository.get_all_tasks_from_user(USER_ID, status="all")
 
         # Check if there is a task in progress
         enabled = WorkerStoreAdapter.is_device_enabled()
@@ -68,9 +62,6 @@ class TasksView(BaseListView):
             repository = TaskRepository(db_session)
             repository.create_task(USER_ID, file_id, tool_id, material_id, name, note)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
         self.refreshLayout()

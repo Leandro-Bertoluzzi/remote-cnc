@@ -1,5 +1,5 @@
-from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
 import pytest
+from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
 
 
 class TestAbsoluteMoveDialog:
@@ -29,20 +29,20 @@ class TestAbsoluteMoveDialog:
 
         # Assertions
         assert self.dialog.units == 1
-        assert self.dialog.input_x.suffix() == ' in'
-        assert self.dialog.input_y.suffix() == ' in'
-        assert self.dialog.input_z.suffix() == ' in'
-        assert self.dialog.input_feedrate.suffix() == ' in/min'
+        assert self.dialog.input_x.suffix() == " in"
+        assert self.dialog.input_y.suffix() == " in"
+        assert self.dialog.input_z.suffix() == " in"
+        assert self.dialog.input_feedrate.suffix() == " in/min"
 
         # Trigger action under test
         self.dialog.control_units.button(0).click()
 
         # Assertions
         assert self.dialog.units == 0
-        assert self.dialog.input_x.suffix() == ' mm'
-        assert self.dialog.input_y.suffix() == ' mm'
-        assert self.dialog.input_z.suffix() == ' mm'
-        assert self.dialog.input_feedrate.suffix() == ' mm/min'
+        assert self.dialog.input_x.suffix() == " mm"
+        assert self.dialog.input_y.suffix() == " mm"
+        assert self.dialog.input_z.suffix() == " mm"
+        assert self.dialog.input_feedrate.suffix() == " mm/min"
 
     def test_move_dialog_incremental_move(self, mocker):
         # Mock widget state
@@ -53,7 +53,7 @@ class TestAbsoluteMoveDialog:
         self.dialog.units = 1
 
         # Mock method
-        mock_send_jog_command = mocker.patch.object(AbsoluteMoveDialog, 'send_jog_command')
+        mock_send_jog_command = mocker.patch.object(AbsoluteMoveDialog, "send_jog_command")
 
         # Trigger action under test
         self.dialog.make_absolute_move()
@@ -62,11 +62,11 @@ class TestAbsoluteMoveDialog:
         mock_send_jog_command.assert_called_once()
 
         jog_params = {
-            'x': 1.5,
-            'y': 1.3,
-            'z': 1.2,
-            'feedrate': 500.0,
-            'distance_mode': 'distance_absolute'
+            "x": 1.5,
+            "y": 1.3,
+            "z": 1.2,
+            "feedrate": 500.0,
+            "distance_mode": "distance_absolute",
         }
         mock_send_jog_command.assert_called_with(*jog_params.values())
 
@@ -76,19 +76,12 @@ class TestAbsoluteMoveDialog:
         self.dialog.units = 0
 
         # Trigger action under test
-        self.dialog.send_jog_command(1.5, 1.3, 1.2, 500.0, 'distance_absolute')
+        self.dialog.send_jog_command(1.5, 1.3, 1.2, 500.0, "distance_absolute")
 
         # Assertions
         self.grbl_controller.jog.assert_called_once()
 
-        jog_params = {
-            'x': 1.5,
-            'y': 1.3,
-            'z': 1.2,
-            'feedrate': 500.0
-        }
+        jog_params = {"x": 1.5, "y": 1.3, "z": 1.2, "feedrate": 500.0}
         self.grbl_controller.jog.assert_called_with(
-            *jog_params.values(),
-            units='milimeters',
-            distance_mode='distance_absolute'
+            *jog_params.values(), units="milimeters", distance_mode="distance_absolute"
         )

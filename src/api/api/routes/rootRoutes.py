@@ -1,9 +1,10 @@
 from core.database.repositories.userRepository import UserRepository
 from core.database.types import RoleType
-from core.utilities.security import validate_password, generate_token
+from core.utilities.security import generate_token, validate_password
 from fastapi import APIRouter, HTTPException
-from api.middleware.dbMiddleware import GetDbSession
 from pydantic import BaseModel, EmailStr
+
+from api.middleware.dbMiddleware import GetDbSession
 
 rootRoutes = APIRouter()
 
@@ -17,8 +18,7 @@ class HealthCheck(BaseModel):
     "/health",
     tags=["Healthcheck"],
     summary="Perform a Health Check",
-    response_model=HealthCheck,
-    response_description="Return HTTP Status Code 200 (OK)"
+    response_description="Return HTTP Status Code 200 (OK)",
 )
 def get_health() -> HealthCheck:
     """
@@ -47,16 +47,8 @@ class UserLoginResponse(BaseModel):
     token: str
 
 
-@rootRoutes.post(
-    '/login',
-    tags=["Login"],
-    summary="User login",
-    response_model=UserLoginResponse
-)
-def login(
-    request: UserLogin,
-    db_session: GetDbSession
-):
+@rootRoutes.post("/login", tags=["Login"], summary="User login", response_model=UserLoginResponse)
+def login(request: UserLogin, db_session: GetDbSession):
     email = request.email
     password = request.password
 
@@ -64,18 +56,18 @@ def login(
         repository = UserRepository(db_session)
         user = repository.get_user_by_email(email)
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error
 
     if not user:
-        raise HTTPException(404, detail='No autorizado: Email inválido')
+        raise HTTPException(404, detail="No autorizado: Email inválido")
 
     checks = validate_password(user.password, password)
     if not checks:
-        raise HTTPException(404, detail='No autorizado: Combinación inválida de email y contraseña')
+        raise HTTPException(404, detail="No autorizado: Combinación inválida de email y contraseña")
 
     try:
         userData = user.__dict__
-        userData['token'] = generate_token(user.id)
+        userData["token"] = generate_token(user.id)
         return userData
     except Exception as error:
-        raise HTTPException(400, detail=str(error))
+        raise HTTPException(400, detail=str(error)) from error

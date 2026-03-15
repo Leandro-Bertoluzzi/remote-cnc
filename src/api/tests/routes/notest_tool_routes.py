@@ -1,7 +1,6 @@
+from conftest import TestingSession, engine
 from core.database.base import Base
 from core.database.models import Tool
-from conftest import engine, TestingSession
-
 
 # Example tools
 test_tool1 = Tool("Tool 1", "A very useful tool")
@@ -32,14 +31,8 @@ class TestToolRoutes:
         assert response.status_code == 200
         assert len(response.json()) == 2
         assert response.json() == [
-            {
-                "name": "Tool 1",
-                "description": "A very useful tool"
-            },
-            {
-                "name": "Tool 2",
-                "description": "A not so useful tool"
-            }
+            {"name": "Tool 1", "description": "A very useful tool"},
+            {"name": "Tool 2", "description": "A not so useful tool"},
         ]
 
     def test_create_tool(self, client):
@@ -60,8 +53,8 @@ class TestToolRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.toolRoutes.ToolRepository.create_tool',
-            side_effect=Exception('There was an error')
+            "routes.toolRoutes.ToolRepository.create_tool",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -88,8 +81,8 @@ class TestToolRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.toolRoutes.ToolRepository.update_tool',
-            side_effect=Exception('There was an error')
+            "routes.toolRoutes.ToolRepository.update_tool",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test
@@ -114,8 +107,8 @@ class TestToolRoutes:
 
         # Mock DB method to simulate exception
         mocker.patch(
-            'routes.toolRoutes.ToolRepository.remove_tool',
-            side_effect=Exception('There was an error')
+            "routes.toolRoutes.ToolRepository.remove_tool",
+            side_effect=Exception("There was an error"),
         )
 
         # Query endpoint under test

@@ -1,6 +1,8 @@
-from core.utilities.grbl.types import ParserState, Status
+from typing import Literal, Optional
+
 from pydantic import BaseModel
-from typing import Optional, Literal
+
+from core.utilities.grbl.types import ParserState, Status
 
 
 class WorkerTaskResponse(BaseModel):
@@ -8,7 +10,7 @@ class WorkerTaskResponse(BaseModel):
 
 
 class TaskStatusResponse(BaseModel):
-    status: Literal['PENDING', 'STARTED', 'RETRY', 'FAILURE', 'SUCCESS', 'PROGRESS']
+    status: Literal["PENDING", "STARTED", "RETRY", "FAILURE", "SUCCESS", "PROGRESS"]
     sent_lines: Optional[int]
     processed_lines: Optional[int]
     total_lines: Optional[int]

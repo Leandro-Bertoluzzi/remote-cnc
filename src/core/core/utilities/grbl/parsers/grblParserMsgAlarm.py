@@ -1,7 +1,8 @@
 import re
+
 from core.utilities.grbl.constants import GRBL_ALARMS
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_ALARM
+from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 from core.utilities.grbl.types import GrblError
 
 
@@ -11,25 +12,26 @@ class GrblParserMsgAlarm(GrblParserGeneric):
     Example:
         - ALARM: XX
     """
+
     @staticmethod
     def parse(line):
-        matches = re.search(r'^ALARM:\s*(.+)$', line)
+        matches = re.search(r"^ALARM:\s*(.+)$", line)
 
-        if (not matches):
+        if not matches:
             return None
 
         code = matches.group(1)
         # Find dictionary matching value in list
         alarm = None
         for el in GRBL_ALARMS:
-            if el['code'] == int(code):
+            if el["code"] == int(code):
                 alarm = el
                 break
 
         payload: GrblError = {
-            'code': int(code),
-            'message': alarm['message'] if alarm else '',
-            'description': alarm['description'] if alarm else ''
+            "code": int(code),
+            "message": alarm["message"] if alarm else "",
+            "description": alarm["description"] if alarm else "",
         }
 
         return GRBL_MSG_ALARM, payload

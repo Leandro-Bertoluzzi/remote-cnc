@@ -1,4 +1,5 @@
 from abc import abstractmethod
+
 from core.utilities.grbl.grblController import GrblController
 from core.utilities.grbl.grblUtils import JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QHBoxLayout, QLabel, QRadioButton
@@ -6,8 +7,8 @@ from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QHBoxLayout, QLabel, Q
 
 class JogController:
     UNIT_MAPPING = {
-        0: {'suffix': ' mm', 'distance_unit': JOG_UNIT_MILIMETERS},
-        1: {'suffix': ' in', 'distance_unit': JOG_UNIT_INCHES}
+        0: {"suffix": " mm", "distance_unit": JOG_UNIT_MILIMETERS},
+        1: {"suffix": " in", "distance_unit": JOG_UNIT_INCHES},
     }
 
     def __init__(self):
@@ -18,9 +19,9 @@ class JogController:
         self.grbl_controller = grbl_controller
 
     def create_units_radio_buttons(self) -> tuple[QLabel, QHBoxLayout]:
-        label_units = QLabel('Unidades:')
-        radio_mm = QRadioButton('Milímetros')
-        radio_in = QRadioButton('Pulgadas')
+        label_units = QLabel("Unidades:")
+        radio_mm = QRadioButton("Milímetros")
+        radio_in = QRadioButton("Pulgadas")
 
         layout_units = QHBoxLayout()
         layout_units.addWidget(radio_mm)
@@ -34,11 +35,7 @@ class JogController:
         return label_units, layout_units
 
     def create_double_spinbox(
-            self,
-            limit_low: float,
-            limit_high: float,
-            step: float,
-            precision: int = 2
+        self, limit_low: float, limit_high: float, step: float, precision: int = 2
     ):
         spinbox = QDoubleSpinBox()
         spinbox.setDecimals(precision)
@@ -53,9 +50,7 @@ class JogController:
         units_info = self.UNIT_MAPPING[self.units]
 
         self.grbl_controller.jog(
-            x, y, z, feedrate,
-            units=units_info['distance_unit'],
-            distance_mode=distance_mode
+            x, y, z, feedrate, units=units_info["distance_unit"], distance_mode=distance_mode
         )
 
     # Abstract methods

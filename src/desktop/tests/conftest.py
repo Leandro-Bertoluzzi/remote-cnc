@@ -1,9 +1,10 @@
-from desktop.MainWindow import MainWindow
-from PyQt5.QtWidgets import QLayout, QGridLayout, QWidget
-import pytest
-from pytest_mock.plugin import MockerFixture
 from typing import cast
+
+import pytest
+from desktop.MainWindow import MainWindow
 from desktop.views.BaseListView import BaseListView
+from PyQt5.QtWidgets import QGridLayout, QLayout, QWidget
+from pytest_mock.plugin import MockerFixture
 
 
 # Helper fixtures
@@ -34,13 +35,13 @@ class Helpers:
 def helpers():
     return Helpers
 
+
 # Mock for UI elements
 
 
 @pytest.fixture
 def mock_window(mocker: MockerFixture):
-    """Create a mocked instance of the main window.
-    """
+    """Create a mocked instance of the main window."""
     parent = QWidget()
     parent.addToolBar = mocker.Mock()
     parent.removeToolBar = mocker.Mock()
@@ -52,8 +53,7 @@ def mock_window(mocker: MockerFixture):
 
 @pytest.fixture
 def mock_view(mocker: MockerFixture):
-    """Create a mocked instance of the view containing a widget.
-    """
+    """Create a mocked instance of the view containing a widget."""
     parent = QWidget()
     parent.refreshLayout = mocker.Mock()
     parent.showWarning = mocker.Mock()

@@ -1,47 +1,49 @@
-from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QComboBox, QGridLayout
-from PyQt5.QtCore import Qt
-from desktop.components.buttons.MenuButton import MenuButton
-from desktop.components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
-from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
-from desktop.containers.ButtonGrid import ButtonGrid
-from desktop.containers.ControllerActions import ControllerActions
-from desktop.components.CodeEditor import CodeEditor
-from desktop.components.ControllerStatus import ControllerStatus
-from desktop.components.Joystick import Joystick
-from desktop.components.Terminal import Terminal
-from desktop.components.ToolBar import ToolBar
-from core.config import SERIAL_BAUDRATE
+import logging
+from typing import TYPE_CHECKING
+
 import core.utilities.worker.utils as worker
+from core.config import SERIAL_BAUDRATE
 from core.utilities.grbl.grblController import GrblController
 from core.utilities.grbl.types import GrblSettings, ParserState, Status
 from core.utilities.loggerFactory import setup_stream_logger
 from core.utilities.serial import SerialService
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QComboBox, QGridLayout
+
+from desktop.components.buttons.MenuButton import MenuButton
+from desktop.components.CodeEditor import CodeEditor
+from desktop.components.ControllerStatus import ControllerStatus
+from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
+from desktop.components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
+from desktop.components.Joystick import Joystick
+from desktop.components.Terminal import Terminal
+from desktop.components.ToolBar import ToolBar
+from desktop.containers.ButtonGrid import ButtonGrid
+from desktop.containers.ControllerActions import ControllerActions
 from desktop.helpers.fileStreamer import FileStreamer
 from desktop.helpers.grblSync import GrblSync
-import logging
-from typing import TYPE_CHECKING
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
 
 GRBL_STATUS_DISCONNECTED: Status = {
-    'activeState': 'disconnected',
-    'mpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-    'wpos': {'x': 0.0, 'y': 0.0, 'z': 0.0},
-    'ov': [0, 0, 0],
-    'wco': {'x': 0.0, 'y': 0.0, 'z': 0.0}
+    "activeState": "disconnected",
+    "mpos": {"x": 0.0, "y": 0.0, "z": 0.0},
+    "wpos": {"x": 0.0, "y": 0.0, "z": 0.0},
+    "ov": [0, 0, 0],
+    "wco": {"x": 0.0, "y": 0.0, "z": 0.0},
 }
 
 
 class ControlView(BaseView):
-    def __init__(self, parent: 'MainWindow'):
+    def __init__(self, parent: "MainWindow"):
         super(ControlView, self).__init__(parent)
 
         # STATE MANAGEMENT
         self.connected = False
-        self.port_selected = ''
+        self.port_selected = ""
         self.device_settings: GrblSettings = {}
         self.device_busy = worker.is_worker_running()
 
@@ -63,44 +65,48 @@ class ControlView(BaseView):
     # SETUP METHODS
 
     def setup_grbl_controller(self):
-        """ Setup GRBL controller
-        """
-        grbl_logger = setup_stream_logger('control_view', logging.INFO)
+        """Setup GRBL controller"""
+        grbl_logger = setup_stream_logger("control_view", logging.INFO)
         self.grbl_controller = GrblController(grbl_logger)
         self.grbl_status = self.grbl_controller.grbl_status
         self.checkmode = self.grbl_status.is_checkmode()
 
     def setup_ui(self):
-        """ Setup UI
-        """
+        """Setup UI"""
         layout = QGridLayout(self)
         layout.setAlignment(Qt.AlignCenter)
         self.setLayout(layout)
 
         self.status_monitor = ControllerStatus(parent=self)
-        controller_commands = ButtonGrid([
-            ('Home', self.run_homing_cycle),
-            ('Configurar GRBL', self.configure_grbl),
-            # TODO: Habilitar modo chequeo sólo en estado IDLE
-            ('Modo chequeo', self.toggle_check_mode),
-            # TODO: Habilitar desactivación de alarma sólo en estado ALARM
-            ('Desactivar alarma', self.disable_alarm),
-            ('Mover a', self.move_absolute),
-        ], parent=self)
-        controller_macros = ButtonGrid([
-            ('Sonda Z', lambda: None),
-            ('Buscar centro', lambda: None),
-            ('Cambiar herramienta', lambda: None),
-            ('Dibujar círculo', lambda: None),
-        ], parent=self)
+        controller_commands = ButtonGrid(
+            [
+                ("Home", self.run_homing_cycle),
+                ("Configurar GRBL", self.configure_grbl),
+                # TODO: Habilitar modo chequeo sólo en estado IDLE
+                ("Modo chequeo", self.toggle_check_mode),
+                # TODO: Habilitar desactivación de alarma sólo en estado ALARM
+                ("Desactivar alarma", self.disable_alarm),
+                ("Mover a", self.move_absolute),
+            ],
+            parent=self,
+        )
+        controller_macros = ButtonGrid(
+            [
+                ("Sonda Z", lambda: None),
+                ("Buscar centro", lambda: None),
+                ("Cambiar herramienta", lambda: None),
+                ("Dibujar círculo", lambda: None),
+            ],
+            parent=self,
+        )
         controller_jog = Joystick(self.grbl_controller, parent=self)
         self.control_panel = ControllerActions(
             [
-                (controller_commands, 'Acciones'),
-                (controller_macros, 'Macros'),
-                (controller_jog, 'Jog'),
+                (controller_commands, "Acciones"),
+                (controller_macros, "Macros"),
+                (controller_jog, "Jog"),
             ],
-            parent=self
+            parent=self,
         )
         self.code_editor = CodeEditor(self)
         self.terminal = Terminal(self.grbl_controller, parent=self)
@@ -125,21 +131,23 @@ class ControlView(BaseView):
         layout.addWidget(self.terminal, 1, 1)
 
         layout.addWidget(
-            MenuButton('Volver al menú', onClick=self.backToMenu),
-            2, 0, 1, 2,
-            alignment=Qt.AlignCenter
+            MenuButton("Volver al menú", onClick=self.backToMenu),
+            2,
+            0,
+            1,
+            2,
+            alignment=Qt.AlignCenter,
         )
 
     def __del__(self):
         self.disconnect_device()
 
     def createToolBars(self):
-        """Adds the tool bars to the Main window
-        """
+        """Adds the tool bars to the Main window"""
         file_options = [
-            ('Nuevo', self.code_editor.new_file, False),
-            ('Importar', self.code_editor.import_file, False),
-            ('Exportar', self.code_editor.export_file, False),
+            ("Nuevo", self.code_editor.new_file, False),
+            ("Importar", self.code_editor.import_file, False),
+            ("Exportar", self.code_editor.export_file, False),
         ]
         self.tool_bar_files = ToolBar(file_options, self.getWindow(), self)
 
@@ -147,18 +155,18 @@ class ControlView(BaseView):
             return
 
         exec_options = [
-            ('Ejecutar', self.start_file_stream, False),
-            ('Detener', self.stop_file_stream, False),
-            ('Pausar', self.pause_file_stream, True),
-            ('Conectar', self.toggle_connected, True),
+            ("Ejecutar", self.start_file_stream, False),
+            ("Detener", self.stop_file_stream, False),
+            ("Pausar", self.pause_file_stream, True),
+            ("Conectar", self.toggle_connected, True),
         ]
         self.tool_bar_grbl = ToolBar(exec_options, self.getWindow(), self)
-        self.pause_button = self.tool_bar_grbl.get_options()['pausar']
-        self.connect_button = self.tool_bar_grbl.get_options()['conectar']
+        self.pause_button = self.tool_bar_grbl.get_options()["pausar"]
+        self.connect_button = self.tool_bar_grbl.get_options()["conectar"]
 
         # Connected devices
         combo_ports = QComboBox()
-        combo_ports.addItems([''])
+        combo_ports.addItems([""])
         ports = [port.device for port in SerialService.get_ports()]
         combo_ports.addItems(ports)
         combo_ports.currentTextChanged.connect(self.set_selected_port)
@@ -167,8 +175,7 @@ class ControlView(BaseView):
     # EVENTS
 
     def backToMenu(self):
-        """Removes the tool bar from the main window and goes back to the main menu
-        """
+        """Removes the tool bar from the main window and goes back to the main menu"""
         self.disconnect_device()
         self.getWindow().removeToolBar(self.tool_bar_files)
         if not self.device_busy:
@@ -185,8 +192,7 @@ class ControlView(BaseView):
         self.port_selected = port
 
     def toggle_connected(self):
-        """Open or close the connection with the GRBL device.
-        """
+        """Open or close the connection with the GRBL device."""
         if self.connected:
             self.disconnect_device()
             return
@@ -194,8 +200,7 @@ class ControlView(BaseView):
         self.connect_device()
 
     def connect_device(self):
-        """Open the connection with the GRBL device connected to the selected port.
-        """
+        """Open the connection with the GRBL device connected to the selected port."""
         if not self.port_selected:
             self.connect_button.setChecked(False)
             return
@@ -208,34 +213,33 @@ class ControlView(BaseView):
             response = self.grbl_controller.connect(self.port_selected, SERIAL_BAUDRATE)
         except Exception as error:
             self.connect_button.setChecked(False)
-            self.showError('Error', str(error))
+            self.showError("Error", str(error))
             return
 
-        self.connect_button.setText('Desconectar')
+        self.connect_button.setText("Desconectar")
         self.connected = True
         self.enable_serial_widgets(True)
-        self.write_to_terminal(response['raw'])
+        self.write_to_terminal(response["raw"])
 
         # Configure GRBL sync
         self.grbl_sync.start_monitor()
 
     def disconnect_device(self):
-        """Close the connection with the GRBL device.
-        """
+        """Close the connection with the GRBL device."""
         if not self.connected:
             return
 
         try:
             self.grbl_controller.disconnect()
         except Exception as error:
-            self.showError('Error', str(error))
+            self.showError("Error", str(error))
             return
         self.connected = False
 
         try:
             self.file_streamer.stop()
             self.grbl_sync.stop_monitor()
-            self.connect_button.setText('Conectar')
+            self.connect_button.setText("Conectar")
             self.enable_serial_widgets(False)
             self.status_monitor.set_status(GRBL_STATUS_DISCONNECTED)
         except RuntimeError:
@@ -253,7 +257,7 @@ class ControlView(BaseView):
 
     def run_homing_cycle(self):
         self.grbl_controller.handle_homing_cycle()
-        self.showWarning('Homing', "Iniciando ciclo de home")
+        self.showWarning("Homing", "Iniciando ciclo de home")
 
     def disable_alarm(self):
         self.grbl_controller.disable_alarm()
@@ -264,8 +268,8 @@ class ControlView(BaseView):
         # Update internal state
         self.checkmode = not self.checkmode
         self.showInfo(
-            'Modo de prueba',
-            f"El modo de prueba fue {'activado' if self.checkmode else 'desactivado'}"
+            "Modo de prueba",
+            f"El modo de prueba fue {'activado' if self.checkmode else 'desactivado'}",
         )
 
     # FILE ACTIONS
@@ -275,24 +279,22 @@ class ControlView(BaseView):
 
         if not file_path:
             self.showWarning(
-                'Cambios sin guardar',
-                'Por favor guarde el archivo antes de continuar'
+                "Cambios sin guardar", "Por favor guarde el archivo antes de continuar"
             )
             return
 
         # Check if the file has changes without saving
         if self.code_editor.get_modified():
             self.showWarning(
-                'Cambios sin guardar',
-                'El archivo tiene cambios sin guardar en el editor, por favor guárdelos'
+                "Cambios sin guardar",
+                "El archivo tiene cambios sin guardar en el editor, por favor guárdelos",
             )
             return
 
         # Reset GRBL controller
         if not self.grbl_status.clear_error():
             self.showError(
-                'Alarma activa',
-                'Hay una alarma activa, debe desactivarla antes de continuar.'
+                "Alarma activa", "Hay una alarma activa, debe desactivarla antes de continuar."
             )
             return
         if self.grbl_status.paused():
@@ -313,7 +315,7 @@ class ControlView(BaseView):
 
         # Pause/Resume GRBL controller
         paused = self.file_streamer.is_paused()
-        self.pause_button.setText('Retomar' if paused else 'Pausar')
+        self.pause_button.setText("Retomar" if paused else "Pausar")
         self.grbl_controller.set_paused(paused)
 
     def stop_file_stream(self):
@@ -335,8 +337,7 @@ class ControlView(BaseView):
 
         self.grbl_controller.set_settings(settings)
         self.showInfo(
-            'Configuración de GRBL',
-            '¡La configuración de GRBL fue actualizada correctamente!'
+            "Configuración de GRBL", "¡La configuración de GRBL fue actualizada correctamente!"
         )
 
     def move_absolute(self):
@@ -352,15 +353,11 @@ class ControlView(BaseView):
     def write_to_terminal(self, text):
         self.terminal.display_text(text)
 
-    def update_device_status(
-            self,
-            status: Status,
-            parserstate: ParserState
-    ):
+    def update_device_status(self, status: Status, parserstate: ParserState):
         self.status_monitor.set_status(status)
-        self.status_monitor.set_feedrate(parserstate['feedrate'])
-        self.status_monitor.set_spindle(parserstate['spindle'])
-        self.status_monitor.set_tool(parserstate['tool'])
+        self.status_monitor.set_feedrate(parserstate["feedrate"])
+        self.status_monitor.set_spindle(parserstate["spindle"])
+        self.status_monitor.set_tool(parserstate["tool"])
 
     def update_already_read_lines(self, count: int):
         self.code_editor.markProcessedLines(count)
@@ -368,20 +365,18 @@ class ControlView(BaseView):
     def finished_file_stream(self):
         self.code_editor.setReadOnly(False)
         self.showInfo(
-            'Archivo enviado',
-            'Se terminó de enviar el archivo para su ejecución, por favor espere a que termine.'
+            "Archivo enviado",
+            "Se terminó de enviar el archivo para su ejecución, por favor espere a que termine.",
         )
 
     def failed_command(self, error_message: str):
         self.file_streamer.pause()
 
         self.showError(
-            'Error',
-            f'{error_message}. Por favor, resuelva el error y reinicie la ejecución.'
+            "Error", f"{error_message}. Por favor, resuelva el error y reinicie la ejecución."
         )
 
     def finished_command(self):
-        """An "end of program" command was sent (M2, M30)
-        """
+        """An "end of program" command was sent (M2, M30)"""
         self.file_streamer.stop()
         self.finished_file_stream()

@@ -1,34 +1,36 @@
-from desktop.components.cards.MaterialCard import MaterialCard
-from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
-from desktop.components.cards.ToolCard import ToolCard
-from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
+from typing import TYPE_CHECKING
+
 from core.database.base import SessionLocal
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.toolRepository import ToolRepository
+
+from desktop.components.cards.MaterialCard import MaterialCard
+from desktop.components.cards.ToolCard import ToolCard
+from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
+from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
 from desktop.views.BaseListView import BaseListView
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
 
 
 class InventoryView(BaseListView):
-    def __init__(self, parent: 'MainWindow'):
+    def __init__(self, parent: "MainWindow"):
         super(InventoryView, self).__init__(parent)
 
         self.setItemListFromValues(
-            'HERRAMIENTAS',
-            'Aún no hay herramientas configuradas',
+            "HERRAMIENTAS",
+            "Aún no hay herramientas configuradas",
             self.createToolCard,
-            'Agregar herramienta',
-            self.createTool
+            "Agregar herramienta",
+            self.createTool,
         )
         self.setItemListFromValues(
-            'MATERIALES',
-            'Aún no hay materiales configurados',
+            "MATERIALES",
+            "Aún no hay materiales configurados",
             self.createMaterialCard,
-            'Agregar material',
-            self.createMaterial
+            "Agregar material",
+            self.createMaterial,
         )
         self.refreshLayout()
 
@@ -64,10 +66,7 @@ class InventoryView(BaseListView):
             repository = ToolRepository(db_session)
             repository.create_tool(name, description)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
         self.refreshLayout()
 
@@ -82,9 +81,6 @@ class InventoryView(BaseListView):
             repository = MaterialRepository(db_session)
             repository.create_material(name, description)
         except Exception as error:
-            self.showError(
-                'Error de base de datos',
-                str(error)
-            )
+            self.showError("Error de base de datos", str(error))
             return
         self.refreshLayout()

@@ -1,12 +1,13 @@
-from PyQt5.QtWidgets import QMessageBox, QWidget
 from typing import TYPE_CHECKING
 
+from PyQt5.QtWidgets import QMessageBox, QWidget
+
 if TYPE_CHECKING:
-    from MainWindow import MainWindow   # pragma: no cover
+    from MainWindow import MainWindow  # pragma: no cover
 
 
 class BaseView(QWidget):
-    def __init__(self, parent: 'MainWindow'):
+    def __init__(self, parent: "MainWindow"):
         super(BaseView, self).__init__(parent)
 
     # Notifications
@@ -22,5 +23,5 @@ class BaseView(QWidget):
 
     # Helper methods
 
-    def getWindow(self) -> 'MainWindow':
-        return self.parent()    # type: ignore
+    def getWindow(self) -> "MainWindow":
+        return self.parent()  # type: ignore
