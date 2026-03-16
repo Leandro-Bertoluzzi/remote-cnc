@@ -1,7 +1,7 @@
 import pytest
 from core.database.models import Tool
-from core.database.repositories.toolRepository import ToolRepository
 from desktop.components.ControllerStatus import ControllerStatus
+from desktop.services.toolService import ToolService
 
 
 class TestControllerStatus:
@@ -39,10 +39,10 @@ class TestControllerStatus:
         assert self.controller_status.z_pos.text() == "Z: 3.3 (8.3)"
 
     def test_controller_status_set_tool(self, mocker):
-        # Mock DB methods
+        # Mock service methods
         test_tool = Tool("Test tool", "It is a really useful tool")
         mock_db_get_tool_by_id = mocker.patch.object(
-            ToolRepository, "get_tool_by_id", return_value=test_tool
+            ToolService, "get_tool_by_id", return_value=test_tool
         )
 
         # Call method under test
@@ -58,8 +58,8 @@ class TestControllerStatus:
         self.controller_status.tool.setText("Tool: 1 (Initial tool)")
         self.controller_status.tool_index = 1
 
-        # Mock DB methods
-        mock_db_get_tool_by_id = mocker.patch.object(ToolRepository, "get_tool_by_id")
+        # Mock service methods
+        mock_db_get_tool_by_id = mocker.patch.object(ToolService, "get_tool_by_id")
 
         # Call method under test
         self.controller_status.set_tool(1)
@@ -74,9 +74,9 @@ class TestControllerStatus:
         self.controller_status.tool.setText("Tool: 1 (Initial tool)")
         self.controller_status.tool_index = 1
 
-        # Mock DB methods
+        # Mock service methods
         mock_db_get_tool_by_id = mocker.patch.object(
-            ToolRepository, "get_tool_by_id", side_effect=Exception("mocked-error")
+            ToolService, "get_tool_by_id", side_effect=Exception("mocked-error")
         )
 
         # Call method under test

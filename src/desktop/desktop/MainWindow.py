@@ -1,12 +1,13 @@
 import logging
 
-import core.utilities.worker.utils as worker
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
+from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.StatusBar import StatusBar
 from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
+from desktop.helpers.connectionErrors import get_friendly_error_message
+from desktop.services.deviceService import DeviceService
 from desktop.views.MainMenu import MainMenu
 
 logger = logging.getLogger(__name__)
@@ -43,16 +44,16 @@ class MainWindow(QMainWindow):
         self.status_bar.updateDeviceStatus("---")
 
         try:
-            if not worker.is_worker_on():
+            if not DeviceService.is_worker_connected():
                 return
 
             self.status_bar.updateWorkerStatus("CONECTADO")
             self.status_bar.updateDeviceStatus("HABILITADO")
 
-            if not WorkerStoreAdapter.is_device_enabled():
+            if not DeviceService.is_device_enabled():
                 self.status_bar.setEnableBtnVisible(True)
                 self.status_bar.updateDeviceStatus("DESHABILITADO")
-            elif worker.is_worker_running():
+            elif DeviceService.is_worker_busy():
                 self.status_bar.updateDeviceStatus("TRABAJANDO...")
         except Exception:
             logger.warning("Could not reach worker/Redis — starting in offline mode")
@@ -81,8 +82,22 @@ class MainWindow(QMainWindow):
     # Navigation
 
     def changeView(self, widget):
-        self.centralWidget().deleteLater()
-        self.setCentralWidget(widget(self))
+        old_widget = self.centralWidget()
+        try:
+            new_widget = widget(self)
+        except Exception as error:
+            logger.warning("Error creating view %s: %s", widget.__name__, error)
+            error_msg = get_friendly_error_message(error)
+            error_widget = ConnectionErrorWidget(
+                error_msg,
+                retry_callback=lambda: self.changeView(widget),
+                back_callback=self.backToMenu,
+            )
+            old_widget.deleteLater()
+            self.setCentralWidget(error_widget)
+            return
+        old_widget.deleteLater()
+        self.setCentralWidget(new_widget)
 
     def backToMenu(self):
         self.setCentralWidget(MainMenu(self))
@@ -150,6 +165,16 @@ class MainWindow(QMainWindow):
         self.status_bar.setTemporalStatusMessage("Iniciado el monitor del worker")
 
     def enable_device(self):
-        WorkerStoreAdapter.set_device_enabled(True)
+        try:
+            DeviceService.set_device_enabled(True)
+        except Exception as error:
+            logger.warning("Could not enable device: %s", error)
+            QMessageBox.critical(
+                self,
+                "Error de conexión",
+                get_friendly_error_message(error),
+                QMessageBox.Ok,
+            )
+            return
         self.status_bar.setEnableBtnVisible(False)
         self.status_bar.updateDeviceStatus("HABILITADO")

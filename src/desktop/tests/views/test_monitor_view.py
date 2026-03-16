@@ -2,6 +2,7 @@ import pytest
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.MainWindow import MainWindow
+from desktop.services.deviceService import DeviceService
 from desktop.views.MonitorView import MonitorView
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -10,8 +11,8 @@ from pytestqt.qtbot import QtBot
 class TestMonitorView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
-        # Mock worker monitor methods
-        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=False)
+        # Mock device service methods
+        mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
 
         # Mock other methods
         mocker.patch.object(MonitorView, "connect_worker")
@@ -26,8 +27,8 @@ class TestMonitorView:
         # Reset parent mocks call count
         self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
 
-        # Mock worker monitor methods
-        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=device_busy)
+        # Mock device service methods
+        mocker.patch.object(DeviceService, "is_worker_busy", return_value=device_busy)
 
         # Create an instance of MonitorView
         monitor_view = MonitorView(self.parent)

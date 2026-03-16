@@ -1,6 +1,6 @@
+import logging
 from typing import TYPE_CHECKING
 
-import core.utilities.worker.utils as worker
 from core.utilities.grbl.types import ParserState, Status
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
@@ -8,10 +8,13 @@ from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.TaskProgress import TaskProgress
+from desktop.services.deviceService import DeviceService
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow  # pragma: no cover
+
+logger = logging.getLogger(__name__)
 
 
 class MonitorView(BaseView):
@@ -19,7 +22,11 @@ class MonitorView(BaseView):
         super(MonitorView, self).__init__(parent)
 
         # STATE MANAGEMENT
-        self.device_busy = worker.is_worker_running()
+        try:
+            self.device_busy = DeviceService.is_worker_busy()
+        except Exception:
+            logger.warning("Could not check worker status — assuming idle")
+            self.device_busy = False
 
         # UI
         self.setup_ui()

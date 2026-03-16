@@ -1,10 +1,11 @@
 import pytest
 from core.database.models import User
-from core.database.repositories.userRepository import UserRepository
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.UserCard import UserCard
+from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 from desktop.MainWindow import MainWindow
+from desktop.services.userService import UserService
 from desktop.views.UsersView import UsersView
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from pytest_mock.plugin import MockerFixture
@@ -19,9 +20,9 @@ class TestUsersView:
         user_3 = User(name="John 3", email="test3@testing.com", password="1234", role="user")
         self.users_list = [user_1, user_2, user_3]
 
-        # Patch the getAllUsers method with the mock function
+        # Patch the service method
         self.mock_get_all_users = mocker.patch.object(
-            UserRepository, "get_all_users", return_value=self.users_list
+            UserService, "get_all_users", return_value=self.users_list
         )
 
         # Create an instance of UsersView
@@ -30,7 +31,7 @@ class TestUsersView:
         qtbot.addWidget(self.users_view)
 
     def test_users_view_init(self, helpers):
-        # Validate DB calls
+        # Validate service calls
         self.mock_get_all_users.assert_called_once()
 
         # Validate amount of each type of widget
@@ -39,19 +40,16 @@ class TestUsersView:
 
     def test_users_view_init_db_error(self, mocker: MockerFixture, helpers):
         mock_get_all_users = mocker.patch.object(
-            UserRepository, "get_all_users", side_effect=Exception("mocked-error")
+            UserService, "get_all_users", side_effect=Exception("mocked-error")
         )
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
 
         # Create test view
         users_view = UsersView(self.parent)
 
         # Assertions
         mock_get_all_users.assert_called_once()
-        mock_popup.assert_called_once()
-        assert helpers.count_widgets(users_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(users_view.layout(), ConnectionErrorWidget) == 1
+        assert helpers.count_widgets(users_view.layout(), MenuButton) == 1
         assert helpers.count_widgets(users_view.layout(), UserCard) == 0
 
     def test_users_view_refresh_layout(self, helpers):
@@ -61,7 +59,7 @@ class TestUsersView:
         # Call the refreshLayout method
         self.users_view.refreshLayout()
 
-        # Validate DB calls
+        # Validate service calls
         assert self.mock_get_all_users.call_count == 2
 
         # Validate amount of each type of widget
@@ -69,17 +67,14 @@ class TestUsersView:
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 2
 
     def test_users_view_refresh_layout_db_error(self, mocker: MockerFixture, helpers):
-        # Mock DB methods to simulate error(s)
+        # Mock service methods to simulate error(s)
         # 1st execution: Widget creation (needs to success)
         # 2nd execution: Test case
         mock_get_all_users = mocker.patch.object(
-            UserRepository,
+            UserService,
             "get_all_users",
             side_effect=[self.users_list, Exception("mocked-error")],
         )
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
 
         # Call the method under test
         users_view = UsersView(self.parent)
@@ -87,8 +82,8 @@ class TestUsersView:
 
         # Assertions
         assert mock_get_all_users.call_count == 2
-        assert mock_popup.call_count == 1
-        assert helpers.count_widgets(users_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(users_view.layout(), ConnectionErrorWidget) == 1
+        assert helpers.count_widgets(users_view.layout(), MenuButton) == 1
         assert helpers.count_widgets(users_view.layout(), UserCard) == 0
 
     def test_users_view_create_user(self, mocker: MockerFixture, helpers):
@@ -97,20 +92,20 @@ class TestUsersView:
         mocker.patch.object(UserDataDialog, "exec", return_value=QDialogButtonBox.Save)
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_inputs)
 
-        # Mock DB method
+        # Mock service method
         def side_effect_create_user(name, email, password, role):
             user_4 = User(name="John 4", email="test4@testing.com", password="1234", role="user")
             self.users_list.append(user_4)
             return
 
         mock_create_user = mocker.patch.object(
-            UserRepository, "create_user", side_effect=side_effect_create_user
+            UserService, "create_user", side_effect=side_effect_create_user
         )
 
         # Call the createUser method
         self.users_view.createUser()
 
-        # Validate DB calls
+        # Validate service calls
         assert mock_create_user.call_count == 1
         assert self.mock_get_all_users.call_count == 2
 
@@ -124,9 +119,9 @@ class TestUsersView:
         mocker.patch.object(UserDataDialog, "exec", return_value=QDialogButtonBox.Save)
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_inputs)
 
-        # Mock DB method to simulate exception
+        # Mock service method to simulate exception
         mock_create_user = mocker.patch.object(
-            UserRepository, "create_user", side_effect=Exception("mocked-error")
+            UserService, "create_user", side_effect=Exception("mocked-error")
         )
 
         # Mock QMessageBox methods

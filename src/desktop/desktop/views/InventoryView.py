@@ -1,13 +1,11 @@
 from typing import TYPE_CHECKING
 
-from core.database.base import SessionLocal
-from core.database.repositories.materialRepository import MaterialRepository
-from core.database.repositories.toolRepository import ToolRepository
-
 from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
+from desktop.services.materialService import MaterialService
+from desktop.services.toolService import ToolService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -46,14 +44,10 @@ class InventoryView(BaseListView):
         return self.getMaterials()
 
     def getTools(self):
-        db_session = SessionLocal()
-        repository = ToolRepository(db_session)
-        return repository.get_all_tools()
+        return ToolService.get_all_tools()
 
     def getMaterials(self):
-        db_session = SessionLocal()
-        repository = MaterialRepository(db_session)
-        return repository.get_all_materials()
+        return MaterialService.get_all_materials()
 
     def createTool(self):
         toolDialog = ToolDataDialog()
@@ -62,9 +56,7 @@ class InventoryView(BaseListView):
 
         name, description = toolDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = ToolRepository(db_session)
-            repository.create_tool(name, description)
+            ToolService.create_tool(name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -77,9 +69,7 @@ class InventoryView(BaseListView):
 
         name, description = materialDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = MaterialRepository(db_session)
-            repository.create_material(name, description)
+            MaterialService.create_material(name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

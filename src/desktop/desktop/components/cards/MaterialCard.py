@@ -1,9 +1,8 @@
-from core.database.base import SessionLocal
 from core.database.models import Material
-from core.database.repositories.materialRepository import MaterialRepository
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from desktop.helpers.utils import needs_confirmation
+from desktop.services.materialService import MaterialService
 
 
 class MaterialCard(Card):
@@ -27,9 +26,7 @@ class MaterialCard(Card):
 
         name, description = materialDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = MaterialRepository(db_session)
-            repository.update_material(self.material.id, name, description)
+            MaterialService.update_material(self.material.id, name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -38,9 +35,7 @@ class MaterialCard(Card):
     @needs_confirmation("¿Realmente desea eliminar el material?", "Eliminar material")
     def removeMaterial(self):
         try:
-            db_session = SessionLocal()
-            repository = MaterialRepository(db_session)
-            repository.remove_material(self.material.id)
+            MaterialService.remove_material(self.material.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

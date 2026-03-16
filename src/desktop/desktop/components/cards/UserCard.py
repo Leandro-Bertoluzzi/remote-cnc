@@ -1,9 +1,8 @@
-from core.database.base import SessionLocal
 from core.database.models import User
-from core.database.repositories.userRepository import UserRepository
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 from desktop.helpers.utils import needs_confirmation
+from desktop.services.userService import UserService
 
 
 class UserCard(Card):
@@ -27,9 +26,7 @@ class UserCard(Card):
 
         name, email, _, role = userDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = UserRepository(db_session)
-            repository.update_user(self.user.id, name, email, role)
+            UserService.update_user(self.user.id, name, email, role)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -38,9 +35,7 @@ class UserCard(Card):
     @needs_confirmation("¿Realmente desea eliminar el usuario?", "Eliminar usuario")
     def removeUser(self):
         try:
-            db_session = SessionLocal()
-            repository = UserRepository(db_session)
-            repository.remove_user(self.user.id)
+            UserService.remove_user(self.user.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

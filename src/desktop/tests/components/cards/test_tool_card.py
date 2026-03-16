@@ -1,8 +1,8 @@
 import pytest
 from core.database.models import Tool
-from core.database.repositories.toolRepository import ToolRepository
 from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
+from desktop.services.toolService import ToolService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -34,8 +34,8 @@ class TestToolCard:
         mocker.patch.object(ToolDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(ToolDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock DB method
-        mock_update_tool = mocker.patch.object(ToolRepository, "update_tool")
+        # Mock service method
+        mock_update_tool = mocker.patch.object(ToolService, "update_tool")
 
         # Call the updateTool method
         self.card.updateTool()
@@ -57,9 +57,9 @@ class TestToolCard:
         mocker.patch.object(ToolDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(ToolDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock DB method
+        # Mock service method
         mock_update_tool = mocker.patch.object(
-            ToolRepository, "update_tool", side_effect=Exception("mocked error")
+            ToolService, "update_tool", side_effect=Exception("mocked error")
         )
 
         # Mock parent methods
@@ -81,8 +81,8 @@ class TestToolCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock DB method
-        mock_remove_tool = mocker.patch.object(ToolRepository, "remove_tool")
+        # Mock service method
+        mock_remove_tool = mocker.patch.object(ToolService, "remove_tool")
 
         # Call the removeTool method
         self.card.removeTool()
@@ -94,9 +94,9 @@ class TestToolCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
-        # Mock DB method
+        # Mock service method
         mock_remove_tool = mocker.patch.object(
-            ToolRepository, "remove_tool", side_effect=Exception("mocked error")
+            ToolService, "remove_tool", side_effect=Exception("mocked error")
         )
 
         # Mock parent methods

@@ -12,6 +12,7 @@ from desktop.containers.ControllerActions import ControllerActions
 from desktop.helpers.fileStreamer import FileStreamer
 from desktop.helpers.grblSync import GrblSync
 from desktop.MainWindow import MainWindow
+from desktop.services.deviceService import DeviceService
 from desktop.views.ControlView import ControlView
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QDialog, QMessageBox
@@ -22,8 +23,8 @@ from pytestqt.qtbot import QtBot
 class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
-        # Mock worker monitor methods
-        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=False)
+        # Mock device service methods
+        mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
         # Mock logger factory to avoid file system access
         mocker.patch(
             "desktop.views.ControlView.setup_stream_logger",
@@ -40,8 +41,8 @@ class TestControlView:
         # Reset parent mocks call count
         self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
 
-        # Mock worker monitor methods
-        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=device_busy)
+        # Mock device service methods
+        mocker.patch.object(DeviceService, "is_worker_busy", return_value=device_busy)
 
         # Create an instance of ControlView
         control_view = ControlView(self.parent)

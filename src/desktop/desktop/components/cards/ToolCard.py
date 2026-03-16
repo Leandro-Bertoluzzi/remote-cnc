@@ -1,9 +1,8 @@
-from core.database.base import SessionLocal
 from core.database.models import Tool
-from core.database.repositories.toolRepository import ToolRepository
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
 from desktop.helpers.utils import needs_confirmation
+from desktop.services.toolService import ToolService
 
 
 class ToolCard(Card):
@@ -27,9 +26,7 @@ class ToolCard(Card):
 
         name, description = toolDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = ToolRepository(db_session)
-            repository.update_tool(self.tool.id, name, description)
+            ToolService.update_tool(self.tool.id, name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -38,9 +35,7 @@ class ToolCard(Card):
     @needs_confirmation("¿Realmente desea eliminar la herramienta?", "Eliminar herramienta")
     def removeTool(self):
         try:
-            db_session = SessionLocal()
-            repository = ToolRepository(db_session)
-            repository.remove_tool(self.tool.id)
+            ToolService.remove_tool(self.tool.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

@@ -1,10 +1,8 @@
 import mocks.grbl as grbl_mocks
-import mocks.worker as worker_mocks
 import pytest
-from celery.result import AsyncResult
 from core.utilities.grbl.types import ParserState, Status
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
+from desktop.services.deviceService import DeviceService
 from PyQt5.QtCore import QTimer
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -40,14 +38,11 @@ class TestCncWorkerMonitor:
     def test_cnc_worker_monitor_check_task_status_pending(
         self, qtbot: QtBot, mocker: MockerFixture
     ):
-        # Mock Celery task metadata
-        task_info = "Mocked error message"
-        task_metadata = {"status": "PENDING", "result": task_info}
-
-        # Mock Celery methods
-        mock_query_task = mocker.patch.object(AsyncResult, "__init__", return_value=None)
-        mock_query_task_info = mocker.patch.object(
-            AsyncResult, "_get_task_meta", return_value=task_metadata
+        # Mock DeviceService to return PENDING status
+        mock_get_status = mocker.patch.object(
+            DeviceService,
+            "get_celery_task_status",
+            return_value={"status": "PENDING", "info": "Mocked error message"},
         )
 
         # Call method under test
@@ -63,8 +58,7 @@ class TestCncWorkerMonitor:
             self.cnc_worker_monitor.check_task_status()
 
         # Assertions
-        assert mock_query_task.call_count == 1
-        assert mock_query_task_info.call_count == 2
+        assert mock_get_status.call_count == 1
         # qtbot.TimeoutError is not raised, so I can manually
         # check whether the signal was triggered:
         assert blocker.signal_triggered is False
@@ -72,10 +66,18 @@ class TestCncWorkerMonitor:
     def test_cnc_worker_monitor_check_task_status_progress(
         self, qtbot: QtBot, mocker: MockerFixture
     ):
-        # Mock Celery methods
-        mock_query_task = mocker.patch.object(AsyncResult, "__init__", return_value=None)
-        mock_query_task_info = mocker.patch.object(
-            AsyncResult, "_get_task_meta", return_value=worker_mocks.task_metadata_in_progress
+        # Mock DeviceService to return PROGRESS status
+        progress_info = {
+            "sent_lines": 15,
+            "processed_lines": 10,
+            "total_lines": 20,
+            "status": grbl_mocks.grbl_status,
+            "parserstate": grbl_mocks.grbl_parserstate,
+        }
+        mock_get_status = mocker.patch.object(
+            DeviceService,
+            "get_celery_task_status",
+            return_value={"status": "PROGRESS", "info": progress_info},
         )
 
         # Validate parameters in emitted signal
@@ -103,18 +105,18 @@ class TestCncWorkerMonitor:
             self.cnc_worker_monitor.check_task_status()
 
         # Assertions
-        assert mock_query_task.call_count == 1
-        assert mock_query_task_info.call_count == 2
+        assert mock_get_status.call_count == 1
 
     def test_cnc_worker_monitor_check_task_status_failed(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock Celery methods
-        mock_query_task = mocker.patch.object(AsyncResult, "__init__", return_value=None)
-        mock_query_task_info = mocker.patch.object(
-            AsyncResult, "_get_task_meta", return_value=worker_mocks.task_metadata_failure
+        # Mock DeviceService to return FAILURE status
+        mock_get_status = mocker.patch.object(
+            DeviceService,
+            "get_celery_task_status",
+            return_value={"status": "FAILURE", "info": "Mocked error message"},
         )
 
-        # Mock other methods from the class
-        mock_disable_device = mocker.patch.object(WorkerStoreAdapter, "set_device_enabled")
+        # Mock device disable call
+        mock_disable_device = mocker.patch.object(DeviceService, "set_device_enabled")
 
         # Validate parameters in emitted signal
         def validate_failed_signal(message: str):
@@ -129,27 +131,26 @@ class TestCncWorkerMonitor:
             self.cnc_worker_monitor.check_task_status()
 
         # Assertions
-        assert mock_query_task.call_count == 1
-        assert mock_query_task_info.call_count == 2
+        assert mock_get_status.call_count == 1
         assert mock_disable_device.call_count == 1
 
     def test_cnc_worker_monitor_check_task_status_finished(
         self, qtbot: QtBot, mocker: MockerFixture
     ):
-        # Mock Celery methods
-        mock_query_task = mocker.patch.object(AsyncResult, "__init__", return_value=None)
-        mock_query_task_info = mocker.patch.object(
-            AsyncResult, "_get_task_meta", return_value=worker_mocks.task_metadata_success
+        # Mock DeviceService to return SUCCESS status
+        mock_get_status = mocker.patch.object(
+            DeviceService,
+            "get_celery_task_status",
+            return_value={"status": "SUCCESS", "info": {}},
         )
 
-        # Mock other methods from the class
-        mock_disable_device = mocker.patch.object(WorkerStoreAdapter, "set_device_enabled")
+        # Mock device disable call
+        mock_disable_device = mocker.patch.object(DeviceService, "set_device_enabled")
 
         # Call method under test and wait for signal
         with qtbot.waitSignal(self.cnc_worker_monitor.task_finished, raising=True):
             self.cnc_worker_monitor.check_task_status()
 
         # Assertions
-        assert mock_query_task.call_count == 1
-        assert mock_query_task_info.call_count == 2
+        assert mock_get_status.call_count == 1
         assert mock_disable_device.call_count == 1
