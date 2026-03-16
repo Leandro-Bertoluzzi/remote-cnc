@@ -11,13 +11,13 @@ class WorkerTaskResponse(BaseModel):
 
 class TaskStatusResponse(BaseModel):
     status: Literal["PENDING", "STARTED", "RETRY", "FAILURE", "SUCCESS", "PROGRESS"]
-    sent_lines: Optional[int]
-    processed_lines: Optional[int]
-    total_lines: Optional[int]
-    cnc_status: Optional[Status]
-    cnc_parserstate: Optional[ParserState]
-    result: Optional[bool]
-    error: Optional[str]
+    sent_lines: Optional[int] = None
+    processed_lines: Optional[int] = None
+    total_lines: Optional[int] = None
+    cnc_status: Optional[Status] = None
+    cnc_parserstate: Optional[ParserState] = None
+    result: Optional[bool] = None
+    error: Optional[str] = None
 
 
 class WorkerOnResponse(BaseModel):

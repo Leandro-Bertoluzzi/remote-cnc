@@ -69,9 +69,13 @@ class GrblConfigurationDialog(QDialog):
         self.setWindowTitle("Configurar GRBL")
 
     def updateModifiedItems(self, row, _):
-        parameter = self.settings.verticalHeaderItem(row).text()
-        value = self.settings.item(row, 0).text()
-        self.settings.item(row, 0).setBackground(QColor(19, 178, 45))
+        header_item = self.settings.verticalHeaderItem(row)
+        value_item = self.settings.item(row, 0)
+        if header_item is None or value_item is None:
+            return
+        parameter = header_item.text()
+        value = value_item.text()
+        value_item.setBackground(QColor(19, 178, 45))
         self.modifiedSettings[parameter] = value
 
     def getModifiedInputs(self):

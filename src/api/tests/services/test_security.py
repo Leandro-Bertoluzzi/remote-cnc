@@ -5,14 +5,11 @@ from jwt import ExpiredSignatureError, InvalidSignatureError
 
 class mydatetime(security.datetime.datetime):
     @classmethod
-    def now(cls):
+    def now(cls, tz=None):
         return security.datetime.datetime(2050, 12, 30, 18, 0, 0, 0)
 
 
 def test_generate_token(monkeypatch):
-    # Manually generated token
-    expected_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjI1NTYxMjI0MDB9.2ISWda0JDBdD-Ee-7zibI6sVpB5hreinj3k_vLQExDU"  # noqa: E501
-
     # Mock env variables
     monkeypatch.setattr(security, "TOKEN_SECRET", "secret-example")
 
@@ -22,8 +19,10 @@ def test_generate_token(monkeypatch):
     # Call method under test
     token = security.generate_token(user_id=1)
 
-    # Assertions
-    assert token == expected_token
+    # Verify token can be decoded back and contains correct payload
+    decoded = security.verify_token(token)
+    assert decoded["user_id"] == 1
+    assert decoded["exp"] == 2556122400
 
 
 def test_verify_token(monkeypatch):

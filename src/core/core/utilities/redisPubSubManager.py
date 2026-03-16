@@ -1,9 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, Protocol
 
 import redis
 import redis.asyncio as aioredis
-from redis.asyncio.client import PubSub
 
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 
@@ -11,121 +9,116 @@ from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 PubSubMessage = Optional[dict[str, Any]]
 
 
-class RedisPubSubManager(ABC):
-    def __init__(self):
-        self.redis_connection = None
-        self.pubsub = None
-
-    @abstractmethod
-    def _get_redis_connection(self) -> None:
-        """
-        Establishes a connection to Redis.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def connect(self) -> None:
-        """
-        Connects to the Redis server and initializes the pubsub client.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def publish(self, channel: str, message: str) -> None:
-        """
-        Publishes a message to a specific Redis channel.
-
-        Args:
-            channel (str): Channel.
-            message (str): Message to be published.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    async def get_message(self) -> PubSubMessage:
-        """
-        Get the next message in subscribed topic(s) if one is available, otherwise None.
-
-        Returns:
-            PubSubMessage: Message published to subscribed topic(s).
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def subscribe(self, channel: str) -> PubSub:
-        """
-        Subscribes to a Redis channel.
-
-        Args:
-            channel (str): Channel to subscribe to.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def unsubscribe(self, channel: str) -> None:
-        """
-        Unsubscribes from a Redis channel.
-
-        Args:
-            channel (str): Channel to unsubscribe from.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def disconnect(self) -> None:
-        """
-        Disconnects from the Redis server and unsubscribes from all channels.
-        """
-        raise NotImplementedError
+# ---------------------------------------------------------------------------
+# Protocols – define the contracts without mixing sync/async signatures
+# ---------------------------------------------------------------------------
 
 
-class RedisPubSubManagerAsync(RedisPubSubManager):
-    async def _get_redis_connection(self) -> aioredis.Redis:
-        self.redis_connection = await aioredis.Redis(
-            host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB_STORAGE, auto_close_connection_pool=False
-        )
+class PubSubPublisher(Protocol):
+    """Minimal publish interface (sync or async callers import the concrete class)."""
+
+    def connect(self) -> None: ...
+    def disconnect(self) -> None: ...
+
+
+# ---------------------------------------------------------------------------
+# Async implementation
+# ---------------------------------------------------------------------------
+
+
+class RedisPubSubManagerAsync:
+    """Async Redis PubSub manager (for use with FastAPI / asyncio)."""
+
+    def __init__(
+        self,
+        host: str = REDIS_HOST,
+        port: int = REDIS_PORT,
+        db: int = REDIS_DB_STORAGE,
+    ):
+        self._host = host
+        self._port = port
+        self._db = db
+        self.redis_connection: aioredis.Redis | None = None
+        self.pubsub: aioredis.client.PubSub | None = None
 
     async def connect(self) -> None:
-        await self._get_redis_connection()
+        self.redis_connection = aioredis.Redis(
+            host=self._host,
+            port=self._port,
+            db=self._db,
+            auto_close_connection_pool=False,
+        )
         self.pubsub = self.redis_connection.pubsub()
 
     async def publish(self, channel: str, message: str) -> None:
+        assert self.redis_connection is not None, "Call connect() first"
         await self.redis_connection.publish(channel, message)
 
     async def get_message(self) -> PubSubMessage:
+        assert self.pubsub is not None, "Call connect() first"
         return await self.pubsub.get_message(ignore_subscribe_messages=True)
 
     async def subscribe(self, channel: str) -> None:
+        assert self.pubsub is not None, "Call connect() first"
         await self.pubsub.subscribe(channel)
 
     async def unsubscribe(self, channel: str) -> None:
+        assert self.pubsub is not None, "Call connect() first"
         await self.pubsub.unsubscribe(channel)
 
     async def disconnect(self) -> None:
-        await self.pubsub.unsubscribe()
-        self.pubsub = None
+        if self.pubsub is not None:
+            await self.pubsub.unsubscribe()
+            self.pubsub = None
+        if self.redis_connection is not None:
+            await self.redis_connection.aclose()
+            self.redis_connection = None
 
 
-class RedisPubSubManagerSync(RedisPubSubManager):
-    def _get_redis_connection(self) -> None:
-        self.redis_connection = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB_STORAGE)
+# ---------------------------------------------------------------------------
+# Sync implementation
+# ---------------------------------------------------------------------------
+
+
+class RedisPubSubManagerSync:
+    """Synchronous Redis PubSub manager (for use in workers / desktop)."""
+
+    def __init__(
+        self,
+        host: str = REDIS_HOST,
+        port: int = REDIS_PORT,
+        db: int = REDIS_DB_STORAGE,
+    ):
+        self._host = host
+        self._port = port
+        self._db = db
+        self.redis_connection: redis.Redis | None = None
+        self.pubsub: redis.client.PubSub | None = None
 
     def connect(self) -> None:
-        self._get_redis_connection()
+        self.redis_connection = redis.Redis(host=self._host, port=self._port, db=self._db)
         self.pubsub = self.redis_connection.pubsub()
 
     def publish(self, channel: str, message: str) -> None:
+        assert self.redis_connection is not None, "Call connect() first"
         self.redis_connection.publish(channel, message)
 
     def get_message(self) -> PubSubMessage:
+        assert self.pubsub is not None, "Call connect() first"
         return self.pubsub.get_message(ignore_subscribe_messages=True)
 
     def subscribe(self, channel: str) -> None:
+        assert self.pubsub is not None, "Call connect() first"
         self.pubsub.subscribe(channel)
 
     def unsubscribe(self, channel: str) -> None:
+        assert self.pubsub is not None, "Call connect() first"
         self.pubsub.unsubscribe(channel)
 
     def disconnect(self) -> None:
-        self.pubsub.unsubscribe()
-        self.pubsub = None
+        if self.pubsub is not None:
+            self.pubsub.unsubscribe()
+            self.pubsub = None
+        if self.redis_connection is not None:
+            self.redis_connection.close()
+            self.redis_connection = None

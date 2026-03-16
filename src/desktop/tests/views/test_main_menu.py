@@ -23,4 +23,4 @@ class TestMainMenu:
         self.main_menu.redirectToView("Another view")
 
         # Validate amount of each type of widget
-        assert self.parent.changeView.call_count == 1
+        assert self.parent.changeView.call_count == 1  # type: ignore[attr-defined]

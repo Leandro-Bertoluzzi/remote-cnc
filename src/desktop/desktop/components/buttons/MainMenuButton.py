@@ -35,7 +35,7 @@ class MainMenuButton(QAbstractButton):
             self.view = goToView
             self.clicked.connect(self.redirectToView)
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, e: QPaintEvent) -> None:
         painter = QPainter(self)
 
         pen = painter.pen()
@@ -54,7 +54,7 @@ class MainMenuButton(QAbstractButton):
         painter.setFont(font)
 
         if self.hover:
-            painter.drawRoundedRect(event.rect(), 15, 15)
+            painter.drawRoundedRect(e.rect(), 15, 15)
 
         pen.setColor(color_text)
         if self.hover:
@@ -64,20 +64,22 @@ class MainMenuButton(QAbstractButton):
         if self.imagePath.endswith(".svg"):
             self.renderer.render(painter)
         else:
-            painter.drawPixmap(event.rect(), self.pixmap)
+            painter.drawPixmap(e.rect(), self.pixmap)
 
-        painter.drawText(event.rect(), Qt.AlignBottom + Qt.AlignHCenter, self.text())
+        painter.drawText(e.rect(), Qt.AlignBottom + Qt.AlignHCenter, self.text())
 
-    def enterEvent(self, event: QEvent):
+    def enterEvent(self, a0: QEvent) -> None:
         self.hover = True
-        event.accept()
+        a0.accept()
 
-    def leaveEvent(self, event: QEvent):
+    def leaveEvent(self, a0: QEvent) -> None:
         self.hover = False
-        event.accept()
+        a0.accept()
 
     def sizeHint(self):
         return self.size()
 
     def redirectToView(self):
-        self.parent().redirectToView(self.view)
+        parent = self.parent()
+        if parent is not None:
+            parent.redirectToView(self.view)  # type: ignore[attr-defined]

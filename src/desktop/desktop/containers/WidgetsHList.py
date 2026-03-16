@@ -1,8 +1,10 @@
+from collections.abc import Sequence
+
 from PyQt5.QtWidgets import QHBoxLayout, QWidget
 
 
 class WidgetsHList(QWidget):
-    def __init__(self, widgets: list[QWidget], parent=None):
+    def __init__(self, widgets: Sequence[QWidget], parent=None):
         super(WidgetsHList, self).__init__(parent)
 
         layout = QHBoxLayout()

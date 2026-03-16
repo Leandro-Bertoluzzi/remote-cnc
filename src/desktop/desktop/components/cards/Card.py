@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, cast
 
 from desktop.helpers.utils import applyStylesheet
 from PyQt5.QtCore import Qt
@@ -45,11 +45,12 @@ class Card(QWidget):
 
     def getView(self) -> "BaseListView":
         """Get the view containing this card."""
-        return self.parent()  # type: ignore
+        return cast("BaseListView", self.parent())
 
     def getWindow(self) -> "MainWindow":
         """Get the application's main window."""
-        return self.parent().parent()  # type: ignore
+        view = cast("BaseListView", self.parent())
+        return cast("MainWindow", view.parent())
 
     # Notifications
 

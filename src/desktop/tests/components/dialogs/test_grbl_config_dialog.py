@@ -21,10 +21,14 @@ class TestGrblConfigurationDialog:
         assert helpers.count_widgets(layout, QDialogButtonBox) == 1
         assert dialog.settings.rowCount() == 1
         assert dialog.settings.columnCount() == 4
-        assert dialog.settings.item(0, 0).text() == "1"
-        assert dialog.settings.item(0, 1).text() == "Step idle delay"
-        assert dialog.settings.item(0, 2).text() == "milliseconds"
-        assert dialog.settings.item(0, 3).text() == "Sets a short hold delay..."
+        item_0_0 = dialog.settings.item(0, 0)
+        item_0_1 = dialog.settings.item(0, 1)
+        item_0_2 = dialog.settings.item(0, 2)
+        item_0_3 = dialog.settings.item(0, 3)
+        assert item_0_0 is not None and item_0_0.text() == "1"
+        assert item_0_1 is not None and item_0_1.text() == "Step idle delay"
+        assert item_0_2 is not None and item_0_2.text() == "milliseconds"
+        assert item_0_3 is not None and item_0_3.text() == "Sets a short hold delay..."
         assert dialog.modifiedSettings == {}
 
     def test_grbl_configuration_dialog_update_table(self, qtbot):
@@ -46,7 +50,9 @@ class TestGrblConfigurationDialog:
         qtbot.addWidget(dialog)
 
         # Interact with the widget
-        dialog.settings.item(0, 0).setText("2")
+        item = dialog.settings.item(0, 0)
+        assert item is not None
+        item.setText("2")
 
         # Assertions
         assert dialog.modifiedSettings == {"$1": "2"}
@@ -70,7 +76,9 @@ class TestGrblConfigurationDialog:
         qtbot.addWidget(dialog)
 
         # Interact with the widget
-        dialog.settings.item(0, 0).setText("2")
+        item = dialog.settings.item(0, 0)
+        assert item is not None
+        item.setText("2")
         response = dialog.getModifiedInputs()
 
         # Assertions

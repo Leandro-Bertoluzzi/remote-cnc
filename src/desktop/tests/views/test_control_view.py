@@ -1,3 +1,5 @@
+import logging
+
 import mocks.grbl as grbl_mocks
 import pytest
 from core.utilities.grbl.grblController import GrblController
@@ -21,7 +23,12 @@ class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
-        mocker.patch("core.worker.utils.is_worker_running", return_value=False)
+        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=False)
+        # Mock logger factory to avoid file system access
+        mocker.patch(
+            "desktop.views.ControlView.setup_stream_logger",
+            return_value=logging.getLogger("test_control_view"),
+        )
 
         # Create an instance of ControlView
         self.parent = mock_window
@@ -31,10 +38,10 @@ class TestControlView:
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_control_view_init(self, qtbot: QtBot, mocker: MockerFixture, helpers, device_busy):
         # Reset parent mocks call count
-        self.parent.addToolBar.reset_mock()
+        self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
 
         # Mock worker monitor methods
-        mocker.patch("core.worker.utils.is_worker_running", return_value=device_busy)
+        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=device_busy)
 
         # Create an instance of ControlView
         control_view = ControlView(self.parent)
@@ -49,7 +56,7 @@ class TestControlView:
         assert helpers.count_grid_widgets(layout, Terminal) == 1
 
         # More assertions
-        assert self.parent.addToolBar.call_count == (1 if device_busy else 2)
+        assert self.parent.addToolBar.call_count == (1 if device_busy else 2)  # type: ignore[union-attr]
         assert control_view.checkmode is False
 
     @pytest.mark.parametrize("device_busy", [False, True])
@@ -61,8 +68,8 @@ class TestControlView:
         self.control_view.backToMenu()
 
         # Assertions
-        assert self.parent.removeToolBar.call_count == (1 if device_busy else 2)
-        self.parent.backToMenu.assert_called_once()
+        assert self.parent.removeToolBar.call_count == (1 if device_busy else 2)  # type: ignore[union-attr]
+        self.parent.backToMenu.assert_called_once()  # type: ignore[attr-defined]
 
     def test_control_view_close_event(self, mocker: MockerFixture):
         # Mock methods

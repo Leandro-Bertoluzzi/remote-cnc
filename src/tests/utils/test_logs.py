@@ -50,7 +50,9 @@ class TestLogsInterpreter:
         self, log, expected_time, expected_level, expected_type, expected_message
     ):
         # Call method under test
-        time, level, msg_type, message = LogsInterpreter.interpret_log(log)
+        result = LogsInterpreter.interpret_log(log)
+        assert result is not None
+        time, level, msg_type, message = result
 
         # Assertions
         assert time == expected_time

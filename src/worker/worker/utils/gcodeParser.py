@@ -1,6 +1,6 @@
 import math
 import re
-from typing import Literal, Optional, TypedDict
+from typing import Literal, TypedDict
 
 # Types definition
 Offset = TypedDict("Offset", {"x": float, "y": float, "z": float})
@@ -54,17 +54,19 @@ class GcodeParser:
             else:
                 self.warn(f"Unknown code '{code}'")
 
-    def parseArgs(self, args: Optional[str]):
+    def parseArgs(self, args: str | None) -> dict[str, float]:
+        if not args:
+            return {}
+
         dic = {}
-        if args:
-            bits = args.split()
-            for bit in bits:
-                identifier = bit[0].lower()
-                try:
-                    coord = float(bit[1:])
-                except ValueError:
-                    coord = 1
-                dic[identifier] = coord
+        bits = args.split()
+        for bit in bits:
+            identifier = bit[0].lower()
+            try:
+                coord = float(bit[1:])
+            except ValueError:
+                coord = 1
+            dic[identifier] = coord
         return dic
 
     def parse_G00(self, args):
@@ -161,12 +163,14 @@ class GcodeModel:
         # the segments
         self.segments: list[Segment] = []
         self.distance = 0
-        self.bbox: Optional[BBox] = None
+        self.bbox: BBox | None = None
 
     def do_G0_G1(self, args: dict, type: Literal["G0", "G1"]):
         # G0/G1: Rapid/Controlled move
         # clone previous coords
-        coords: Coordinate = dict(self.relative)
+        coords = Coordinate(
+            x=self.relative["x"], y=self.relative["y"], z=self.relative["z"], F=self.relative["F"]
+        )
         # update changed coords
         for axis in args.keys():
             if axis in coords:
@@ -227,7 +231,7 @@ class GcodeModel:
         self.distance = 0
 
         # extender helper
-        def extend(bbox: Optional[BBox], coords):
+        def extend(bbox: BBox | None, coords):
             if bbox is None:
                 return BBox(coords)
             else:
@@ -269,12 +273,12 @@ class GcodeModel:
 
 
 class Segment:
-    def __init__(self, type: str, coords: list[Coordinate], lineNb: int, line: str):
+    def __init__(self, type: str, coords: Coordinate, lineNb: int, line: str):
         self.type = type
         self.coords = coords
         self.lineNb = lineNb
         self.line = line
-        self.distance = None
+        self.distance: float | None = None
 
     def __str__(self):
         return (

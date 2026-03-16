@@ -17,4 +17,6 @@ class MenuButton(QPushButton):
         applyStylesheet(self, __file__, "MenuButton.qss")
 
     def redirectToView(self):
-        self.parent().redirectToView(self.view)
+        parent = self.parent()
+        if parent is not None:
+            parent.redirectToView(self.view)  # type: ignore[attr-defined]

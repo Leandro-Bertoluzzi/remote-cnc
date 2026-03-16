@@ -23,10 +23,10 @@ class TestTaskDataDialog:
         self.taskInfo.material = material
         self.taskInfo.tool = tool
 
-        # Mock arrays from DB
-        self.files = [{"id": item.id, "name": item.file_name} for item in [file]]
-        self.materials = [{"id": item.id, "name": item.name} for item in [material]]
-        self.tools = [{"id": item.id, "name": item.name} for item in [tool]]
+        # Model lists for the dialog
+        self.files: list[File] = [file]
+        self.materials: list[Material] = [material]
+        self.tools: list[Tool] = [tool]
 
     def test_task_data_dialog_init(self, qtbot):
         # Instantiate the dialog

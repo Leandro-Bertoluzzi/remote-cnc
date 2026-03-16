@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ToolRequest(BaseModel):
@@ -9,10 +9,9 @@ class ToolRequest(BaseModel):
 
 
 class ToolResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     description: str
     added_at: datetime.datetime
-
-    class Config:
-        orm_mode = True

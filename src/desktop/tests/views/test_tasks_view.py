@@ -4,6 +4,7 @@ from core.database.repositories.fileRepository import FileRepository
 from core.database.repositories.materialRepository import MaterialRepository
 from core.database.repositories.taskRepository import TaskRepository
 from core.database.repositories.toolRepository import ToolRepository
+from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.cards.TaskCard import TaskCard
@@ -35,6 +36,10 @@ class TestTasksView:
 
         # Patch the constructor of UI components
         mocker.patch.object(TaskCard, "setup_ui")
+
+        # Patch worker/device status checks used by TasksView.getItems()
+        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=False)
+        mocker.patch.object(WorkerStoreAdapter, "is_device_enabled", return_value=False)
 
         # Create an instance of TasksView
         self.parent = mock_window

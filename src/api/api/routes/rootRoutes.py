@@ -49,25 +49,16 @@ class UserLoginResponse(BaseModel):
 
 @rootRoutes.post("/login", tags=["Login"], summary="User login", response_model=UserLoginResponse)
 def login(request: UserLogin, db_session: GetDbSession):
-    email = request.email
-    password = request.password
-
-    try:
-        repository = UserRepository(db_session)
-        user = repository.get_user_by_email(email)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
+    repository = UserRepository(db_session)
+    user = repository.get_user_by_email(request.email)
 
     if not user:
         raise HTTPException(404, detail="No autorizado: Email inválido")
 
-    checks = validate_password(user.password, password)
+    checks = validate_password(user.password, request.password)
     if not checks:
         raise HTTPException(404, detail="No autorizado: Combinación inválida de email y contraseña")
 
-    try:
-        userData = user.__dict__
-        userData["token"] = generate_token(user.id)
-        return userData
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
+    userData = user.__dict__
+    userData["token"] = generate_token(user.id)
+    return userData

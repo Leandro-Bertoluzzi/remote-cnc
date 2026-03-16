@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from core.database.types import StatusType
 
@@ -11,12 +11,12 @@ class TaskCreate(BaseModel):
     file_id: int
     tool_id: int
     material_id: int
-    note: Optional[str] = ""
+    note: str = ""
 
 
 class TaskUpdateStatus(BaseModel):
     status: StatusType
-    cancellation_reason: Optional[str] = ""
+    cancellation_reason: str = ""
 
 
 class TaskUpdate(BaseModel):
@@ -29,6 +29,8 @@ class TaskUpdate(BaseModel):
 
 
 class TaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     status: str
@@ -41,6 +43,3 @@ class TaskResponse(BaseModel):
     admin_id: Optional[int] = None
     cancellation_reason: Optional[str] = None
     created_at: datetime.datetime
-
-    class Config:
-        orm_mode = True

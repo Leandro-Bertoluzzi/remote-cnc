@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGridLayout, QWidget
@@ -42,4 +42,4 @@ class MainMenu(QWidget):
         return MainMenuButton(label, icon, viewLink, parent=self)
 
     def redirectToView(self, view):
-        self.parent().changeView(view)
+        cast("MainWindow", self.parent()).changeView(view)

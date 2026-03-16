@@ -2,7 +2,7 @@
 name = "cnc-desktop"
 version = "0.1.0"
 description = "Desktop app for CNC admin (PyQt5)"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "cnc-core",
     "PyQt5==5.15.11",

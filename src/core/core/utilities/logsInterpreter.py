@@ -26,6 +26,9 @@ class LogsInterpreter:
         message = log_matches.group(3)
         msg_matches = re.search(msg_regex, message)
 
+        if not msg_matches:
+            return None
+
         return (
             log_matches.group(1),
             log_matches.group(2),

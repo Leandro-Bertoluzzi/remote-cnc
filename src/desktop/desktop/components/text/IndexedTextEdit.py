@@ -13,8 +13,8 @@ class IndexArea(QWidget):
     def sizeHint(self):
         return QSize(self.textEditor.indexAreaWidth(), 0)
 
-    def paintEvent(self, event: QPaintEvent):
-        self.textEditor.indexAreaPaintEvent(event)
+    def paintEvent(self, a0: QPaintEvent) -> None:
+        self.textEditor.indexAreaPaintEvent(a0)
 
 
 class IndexedTextEdit(QPlainTextEdit):
@@ -48,8 +48,8 @@ class IndexedTextEdit(QPlainTextEdit):
         if rect.contains(self.viewport().rect()):
             self.updateIndexAreaWidth(0)
 
-    def resizeEvent(self, event: QResizeEvent):
-        super().resizeEvent(event)
+    def resizeEvent(self, e: QResizeEvent) -> None:
+        super().resizeEvent(e)
 
         cr = self.contentsRect()
         self.indexArea.setGeometry(QRect(cr.left(), cr.top(), self.indexAreaWidth(), cr.height()))

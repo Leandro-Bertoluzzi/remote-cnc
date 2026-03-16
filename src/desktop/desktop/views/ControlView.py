@@ -18,7 +18,7 @@ from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
 from desktop.components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from desktop.components.Joystick import Joystick
 from desktop.components.Terminal import Terminal
-from desktop.components.ToolBar import ToolBar
+from desktop.components.ToolBar import ToolBar, ToolBarOptionInfo
 from desktop.containers.ButtonGrid import ButtonGrid
 from desktop.containers.ControllerActions import ControllerActions
 from desktop.helpers.fileStreamer import FileStreamer
@@ -144,7 +144,7 @@ class ControlView(BaseView):
 
     def createToolBars(self):
         """Adds the tool bars to the Main window"""
-        file_options = [
+        file_options: list[ToolBarOptionInfo] = [
             ("Nuevo", self.code_editor.new_file, False),
             ("Importar", self.code_editor.import_file, False),
             ("Exportar", self.code_editor.export_file, False),
@@ -154,7 +154,7 @@ class ControlView(BaseView):
         if self.device_busy:
             return
 
-        exec_options = [
+        exec_options: list[ToolBarOptionInfo] = [
             ("Ejecutar", self.start_file_stream, False),
             ("Detener", self.stop_file_stream, False),
             ("Pausar", self.pause_file_stream, True),
@@ -182,9 +182,9 @@ class ControlView(BaseView):
             self.getWindow().removeToolBar(self.tool_bar_grbl)
         self.getWindow().backToMenu()
 
-    def closeEvent(self, event: QCloseEvent):
+    def closeEvent(self, a0: QCloseEvent) -> None:
         self.disconnect_device()
-        return super().closeEvent(event)
+        return super().closeEvent(a0)
 
     # SERIAL PORT ACTIONS
 
@@ -208,12 +208,15 @@ class ControlView(BaseView):
         if self.connected:
             return
 
-        response = {}
         try:
             response = self.grbl_controller.connect(self.port_selected, SERIAL_BAUDRATE)
         except Exception as error:
             self.connect_button.setChecked(False)
             self.showError("Error", str(error))
+            return
+
+        if response is None:
+            self.connect_button.setChecked(False)
             return
 
         self.connect_button.setText("Desconectar")

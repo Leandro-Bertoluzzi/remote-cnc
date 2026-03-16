@@ -19,7 +19,7 @@ def get_files(user: GetUserDep, db_session: GetDbSession) -> list[FileResponse]:
     repository = FileRepository(db_session)
     files = repository.get_all_files_from_user(user.id)
 
-    return [FileResponse.from_orm(file) for file in files]
+    return [FileResponse.model_validate(file) for file in files]
 
 
 @fileRoutes.get("/all", response_model_by_alias=False)
@@ -27,88 +27,62 @@ def get_files_from_all_users(admin: GetAdminDep, db_session: GetDbSession) -> li
     repository = FileRepository(db_session)
     files = repository.get_all_files()
 
-    return [FileResponse.from_orm(file) for file in files]
+    return [FileResponse.model_validate(file) for file in files]
 
 
 @fileRoutes.get("/{file_id}", response_model_by_alias=False, response_model=FileResponse)
 def get_file(file_id: int, user: GetUserDep, db_session: GetDbSession):
     repository = FileRepository(db_session)
-    try:
-        result = repository.get_file_by_id(file_id)
-        return FileResponse.from_orm(result)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
+    result = repository.get_file_by_id(file_id)
+    return FileResponse.model_validate(result)
 
 
 @fileRoutes.get("/{file_id}/content", response_model=FileContentResponse)
 def get_file_content(file_id: int, user: GetUserDep, db_session: GetDbSession):
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
-    try:
-        return {"content": file_manager.read_file(file_id)}
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
+    return {"content": file_manager.read_file(file_id)}
 
 
 @fileRoutes.get("/{file_id}/report")
 def get_file_report(file_id: int, user: GetUserDep, db_session: GetDbSession) -> FileReport:
     repository = FileRepository(db_session)
-    try:
-        file = repository.get_file_by_id(file_id)
-        return file.report
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
+    file = repository.get_file_by_id(file_id)
+    return file.report
 
 
 @fileRoutes.post("", response_model_by_alias=False, response_model=FileResponse)
 @fileRoutes.post("/", response_model_by_alias=False, response_model=FileResponse)
 def upload_file(file: UploadFile, user: GetUserDep, db_session: GetDbSession):
+    if not file.filename:
+        raise HTTPException(400, detail="Filename is required")
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
-    try:
-        new_file = file_manager.upload_file(user.id, file.filename, file.file)
-        generate_file_report(new_file.id)
-        create_thumbnail(new_file.id)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
-
+    new_file = file_manager.upload_file(user.id, file.filename, file.file)
+    generate_file_report(new_file.id)
+    create_thumbnail(new_file.id)
     return new_file
 
 
 @fileRoutes.put("/{file_id}", response_model_by_alias=False, response_model=FileResponse)
 def update_file_name(file_id: int, request: FileUpdate, user: GetUserDep, db_session: GetDbSession):
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
-    try:
-        result = file_manager.rename_file_by_id(user.id, file_id, request.file_name)
-        return FileResponse.from_orm(result)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
+    result = file_manager.rename_file_by_id(user.id, file_id, request.file_name)
+    return FileResponse.model_validate(result)
 
 
 @fileRoutes.delete("/{file_id}", response_model=GenericResponse)
 def remove_existing_file(file_id: int, user: GetUserDep, db_session: GetDbSession):
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
-    try:
-        file_manager.remove_file_by_id(file_id)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
-
+    file_manager.remove_file_by_id(file_id)
     return {"success": "El archivo fue eliminado con éxito"}
 
 
 @fileRoutes.post("/{file_id}/thumbnail", response_model=GenericResponse)
 def generate_thumbnail(file_id: int, admin: GetAdminDep):
-    try:
-        create_thumbnail(file_id)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
-
+    create_thumbnail(file_id)
     return {"success": "La generación de la vista previa fue solicitada con éxito"}
 
 
 @fileRoutes.post("/{file_id}/report", response_model=GenericResponse)
 def generate_report(file_id: int, admin: GetAdminDep):
-    try:
-        generate_file_report(file_id)
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
-
+    generate_file_report(file_id)
     return {"success": "La generación del reporte fue solicitada con éxito"}

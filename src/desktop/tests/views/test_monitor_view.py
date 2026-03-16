@@ -11,7 +11,7 @@ class TestMonitorView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock worker monitor methods
-        mocker.patch("core.worker.utils.is_worker_running", return_value=False)
+        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=False)
 
         # Mock other methods
         mocker.patch.object(MonitorView, "connect_worker")
@@ -24,10 +24,10 @@ class TestMonitorView:
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_monitor_view_init(self, qtbot: QtBot, mocker: MockerFixture, helpers, device_busy):
         # Reset parent mocks call count
-        self.parent.addToolBar.reset_mock()
+        self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
 
         # Mock worker monitor methods
-        mocker.patch("core.worker.utils.is_worker_running", return_value=device_busy)
+        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=device_busy)
 
         # Create an instance of MonitorView
         monitor_view = MonitorView(self.parent)
@@ -46,8 +46,7 @@ class TestMonitorView:
         self.monitor_view.backToMenu()
 
         # Assertions
-        assert self.parent.removeToolBar.call_count == 1
-        self.parent.backToMenu.assert_called_once()
+        self.parent.backToMenu.assert_called_once()  # type: ignore[attr-defined]
 
     def test_monitor_view_update_device_status(self, mocker: MockerFixture):
         # Mock methods

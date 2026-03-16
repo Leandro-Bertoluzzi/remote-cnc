@@ -1,5 +1,6 @@
 import re
 from collections import Counter
+from pathlib import Path
 from typing import Pattern
 
 from core.utilities.gcode.constants import GCODE_VALID_GCODES, GCODE_VALID_MCODES
@@ -19,7 +20,7 @@ t_pattern = re.compile(r"^(?!;|\().*(T\d+)", re.MULTILINE)
 class GcodeAnalyser:
     """Utility class to get values of interest from a gcode file."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str | Path):
         # Attributes definition
         self.file_path = file_path
 

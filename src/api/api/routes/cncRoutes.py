@@ -17,11 +17,7 @@ cncRoutes = APIRouter(prefix="/cnc", tags=["CNC"])
 
 @cncRoutes.get("/ports")
 def get_available_ports(admin: GetAdminDep):
-    try:
-        available_ports = SerialService.get_ports()
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
-
+    available_ports = SerialService.get_ports()
     return {"ports": available_ports}
 
 

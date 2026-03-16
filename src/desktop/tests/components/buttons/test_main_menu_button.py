@@ -80,7 +80,7 @@ class TestMainMenuButton:
     def test_main_menu_button_go_to_view(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock parent
         parent = QWidget()
-        parent.redirectToView = mocker.Mock()
+        parent.redirectToView = mocker.Mock()  # type: ignore[attr-defined]
 
         # Instantiate button
         button = MainMenuButton("Test Button", "image.png", goToView="Test view", parent=parent)
@@ -90,4 +90,4 @@ class TestMainMenuButton:
         button.click()
 
         # Assertions
-        parent.redirectToView.assert_called_once()
+        parent.redirectToView.assert_called_once()  # type: ignore[attr-defined]
