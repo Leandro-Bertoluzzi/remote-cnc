@@ -88,7 +88,7 @@ class GrblController:
         self._sumcline = 0  # Amount of bytes in GRBL buffer
         self.commands_count = 0  # Amount of already processed commands
 
-    def connect(self, port: str, baudrate: int) -> dict[str, str]:
+    def connect(self, port: str, baudrate: int) -> dict[str, str] | None:
         """Starts the GRBL device connected to the given port."""
         try:
             response = self.serial.startConnection(port, baudrate, SERIAL_TIMEOUT)
@@ -369,7 +369,7 @@ class GrblController:
             self.grbl_monitor.error(f"Error sending {label}: {e}")
             return
 
-        cmd_str = print(repr(cmd)[2:-1])  # Convert bytes to string for logging
+        cmd_str = repr(cmd)[2:-1]  # Convert bytes to string for logging
         self.grbl_monitor.sent(cmd_str)
         self.grbl_monitor.info(f"Requested {label}")
 

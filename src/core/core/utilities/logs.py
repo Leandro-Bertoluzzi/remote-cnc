@@ -36,6 +36,9 @@ def classify_log_files() -> list[LogsResponse]:
             file_regex = r"^task_(\w+)_(\d{8}_\d{6})\.log$"
             log_matches = re.search(file_regex, file)
 
+            if not log_matches:
+                continue
+
             source_file = log_matches.group(1)
             date_string = log_matches.group(2)
 

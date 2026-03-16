@@ -2,7 +2,7 @@
 name = "cnc-worker"
 version = "0.1.0"
 description = "Celery worker for CNC task execution"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "cnc-core",
     "configobj>=5.0,<6",

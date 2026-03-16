@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QToolBar, QToolButton
 
 # Custom types
-ToolBarOptionInfo = tuple[str, Callable[[], None], bool]
+ToolBarOptionInfo = tuple[str, Callable[[], object], bool]
 ToolBarOptionRefs = dict[str, QToolButton]
 
 

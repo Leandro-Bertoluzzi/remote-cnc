@@ -56,5 +56,5 @@ class JogController:
     # Abstract methods
 
     @abstractmethod
-    def set_units(self, _):
+    def set_units(self, button: object) -> None:
         raise NotImplementedError

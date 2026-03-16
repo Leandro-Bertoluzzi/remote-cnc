@@ -28,12 +28,15 @@ class GrblMonitor:
         for h in self.logger.handlers:
             if isinstance(h, logging.FileHandler):
                 self.logger.removeHandler(h)
-        # Unsubscribes from PubSub
-        self.redis.disconnect()
+        # Unsubscribes from PubSub (best-effort; Redis may be unavailable)
+        try:
+            self.redis.disconnect()
+        except Exception:
+            pass
 
     # LOGGER
 
-    def _log(self, level: str, log: str, queue: bool = False, exc_info: bool = None):
+    def _log(self, level: str, log: str, queue: bool = False, exc_info: bool | None = None):
         if level not in LOG_LEVELS:
             return
 

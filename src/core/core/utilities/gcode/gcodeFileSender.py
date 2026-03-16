@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from core.utilities.grbl.grblController import GrblController
 
 # Constants
@@ -14,7 +16,7 @@ class GcodeFileSender:
 
     # CONSTRUCTOR
 
-    def __init__(self, grbl_controller: GrblController, file_path: str):
+    def __init__(self, grbl_controller: GrblController, file_path: str | Path):
         # Attributes definition
         self.grbl_controller = grbl_controller
         self.file_path = file_path

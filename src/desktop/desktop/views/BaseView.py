@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
@@ -24,4 +24,4 @@ class BaseView(QWidget):
     # Helper methods
 
     def getWindow(self) -> "MainWindow":
-        return self.parent()  # type: ignore
+        return cast("MainWindow", self.parent())

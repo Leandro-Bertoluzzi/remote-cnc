@@ -1,3 +1,5 @@
+import logging
+
 import core.utilities.worker.utils as worker
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
@@ -6,6 +8,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from desktop.components.StatusBar import StatusBar
 from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
 from desktop.views.MainMenu import MainMenu
+
+logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
@@ -24,27 +28,44 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
         self.initialized = 0
 
-        # Initial status
-        self.status_bar.updateWorkerStatus("DESCONECTADO")
-        self.status_bar.updateDeviceStatus("---")
-        if worker.is_worker_on():
-            self.status_bar.updateDeviceStatus("HABILITADO")
-            self.status_bar.updateWorkerStatus("CONECTADO")
-            if not WorkerStoreAdapter.is_device_enabled():
-                self.status_bar.setEnableBtnVisible(True)
-                self.status_bar.updateDeviceStatus("DESHABILITADO")
-            if worker.is_worker_running():
-                self.status_bar.updateDeviceStatus("TRABAJANDO...")
+        # Initial status — wrapped to survive broker/Redis being offline
+        self._refresh_worker_status()
 
         # Signals and slots
         self.worker_monitor.task_finished.connect(self.on_task_finished)
         self.worker_monitor.task_failed.connect(self.on_task_failed)
 
+    # Worker status
+
+    def _refresh_worker_status(self) -> None:
+        """Query worker/Redis for current status, gracefully handling connection failures."""
+        self.status_bar.updateWorkerStatus("DESCONECTADO")
+        self.status_bar.updateDeviceStatus("---")
+
+        try:
+            if not worker.is_worker_on():
+                return
+
+            self.status_bar.updateWorkerStatus("CONECTADO")
+            self.status_bar.updateDeviceStatus("HABILITADO")
+
+            if not WorkerStoreAdapter.is_device_enabled():
+                self.status_bar.setEnableBtnVisible(True)
+                self.status_bar.updateDeviceStatus("DESHABILITADO")
+            elif worker.is_worker_running():
+                self.status_bar.updateDeviceStatus("TRABAJANDO...")
+        except Exception:
+            logger.warning("Could not reach worker/Redis — starting in offline mode")
+            self.status_bar.updateWorkerStatus("ERROR DE CONEXIÓN")
+
     # UI
 
     def adjustWindowSize(self) -> None:
         # Available space in screen
-        available = QApplication.desktop().availableGeometry()
+        desktop = QApplication.desktop()
+        if desktop is None:
+            return
+        available = desktop.availableGeometry()
 
         # Calculate frame size (window title and borders)
         frame_width = self.frameGeometry().width() - self.width()
@@ -68,7 +89,7 @@ class MainWindow(QMainWindow):
 
     # Events
 
-    def closeEvent(self, event: QCloseEvent):
+    def closeEvent(self, a0: QCloseEvent) -> None:
         confirmation = QMessageBox.question(
             self,
             "Cerrar aplicación",
@@ -77,13 +98,13 @@ class MainWindow(QMainWindow):
         )
 
         if confirmation == QMessageBox.Yes:
-            self.centralWidget().closeEvent(event)
-            event.accept()
+            self.centralWidget().closeEvent(a0)
+            a0.accept()
         else:
-            event.ignore()
+            a0.ignore()
 
-    def resizeEvent(self, event: QResizeEvent) -> None:
-        super().resizeEvent(event)
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        super().resizeEvent(a0)
 
         if self.initialized == 1:
             self.adjustWindowSize()
@@ -92,7 +113,7 @@ class MainWindow(QMainWindow):
         if self.initialized == 0:
             self.initialized = 1
 
-    def showEvent(self, _: QShowEvent) -> None:
+    def showEvent(self, a0: QShowEvent) -> None:
         self.showMaximized()
 
     # Slots

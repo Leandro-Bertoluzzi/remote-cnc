@@ -253,7 +253,9 @@ class TestTaskCard:
         task_metadata = {"status": status_worker, "result": task_info}
 
         # Mock Redis methods
-        mocker.patch("components.cards.TaskCard.get_value_from_id", return_value=worker_task_id)
+        mocker.patch(
+            "desktop.components.cards.TaskCard.get_value_from_id", return_value=worker_task_id
+        )
         mocker.patch.object(WorkerStoreAdapter, "is_device_paused", return_value=False)
 
         # Mock Celery methods
@@ -396,10 +398,13 @@ class TestTaskCard:
         mock_error_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
         # Mock worker monitor methods
         mocker.patch.object(WorkerStoreAdapter, "is_device_enabled", return_value=device_enabled)
-        mocker.patch("core.worker.utils.is_worker_running", return_value=task_in_progress)
+        mocker.patch("core.utilities.worker.utils.is_worker_on", return_value=True)
+        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=task_in_progress)
 
         # Mock task manager methods
-        mock_add_task_in_queue = mocker.patch("components.cards.TaskCard.send_task_to_worker")
+        mock_add_task_in_queue = mocker.patch(
+            "desktop.components.cards.TaskCard.worker.send_task_to_worker"
+        )
 
         # Call the approveTask method
         self.card.runTask()

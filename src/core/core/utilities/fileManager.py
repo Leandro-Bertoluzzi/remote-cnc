@@ -208,7 +208,7 @@ class FileManager:
     def _rollback_created(self, file_path: Path):
         file_path.unlink(missing_ok=True)
 
-    def _rollback_renamed(self, file_path: Path, old_name: str):
+    def _rollback_renamed(self, file_path: Path, old_name: str | Path):
         file_path.rename(old_name)
 
     def _rollback_removed(self, file_path: Path):

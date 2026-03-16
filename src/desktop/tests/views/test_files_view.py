@@ -129,15 +129,15 @@ class TestFilesView:
             file_4 = File(user_id=1, file_name="example-file-4", file_hash="hash-for-new-file")
             file_4.user = self.user_test
             self.files_list.append(file_4)
-            return 4
+            return file_4
 
         mock_create_file = mocker.patch.object(
             FileManager, "create_file", side_effect=side_effect_create_file
         )
 
         # Mock call to worker
-        mock_generate_report = mocker.patch("views.FilesView.generateFileReport.delay")
-        mock_create_thumbnail = mocker.patch("views.FilesView.createThumbnail.delay")
+        mock_generate_report = mocker.patch("desktop.views.FilesView.generate_file_report")
+        mock_create_thumbnail = mocker.patch("desktop.views.FilesView.create_thumbnail")
 
         # Call the createFile method
         self.files_view.createFile()
@@ -178,8 +178,8 @@ class TestFilesView:
         )
 
         # Mock call to worker
-        mock_generate_report = mocker.patch("views.FilesView.generateFileReport.delay")
-        mock_create_thumbnail = mocker.patch("views.FilesView.createThumbnail.delay")
+        mock_generate_report = mocker.patch("desktop.views.FilesView.generate_file_report")
+        mock_create_thumbnail = mocker.patch("desktop.views.FilesView.create_thumbnail")
 
         # Call the method under test
         self.files_view.createFile()

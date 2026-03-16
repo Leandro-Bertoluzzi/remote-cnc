@@ -53,7 +53,7 @@ def test_computeSHA256FromFile(mocker):
     mocker.patch("builtins.open", mocked_file_data)
 
     # Call method under test
-    with open("/path/to/file") as test_file:
+    with open("/path/to/file", "rb") as test_file:
         computed_hash = computeSHA256FromFile(test_file)
 
     # Assertions

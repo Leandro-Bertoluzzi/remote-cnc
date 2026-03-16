@@ -42,7 +42,7 @@ class Task(Base):
     note: Mapped[str] = mapped_column(String(150), default=TASK_EMPTY_NOTE)
     status: Mapped[str] = mapped_column(String(50), default=TaskStatus.INITIAL.value)
     priority: Mapped[int] = mapped_column(Integer, default=TASK_DEFAULT_PRIORITY)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default_factory=datetime.now)
     status_updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, init=False)
     cancellation_reason: Mapped[Optional[str]] = mapped_column(String(150), init=False)
 
@@ -67,7 +67,7 @@ class File(Base):
     file_name: Mapped[str] = mapped_column(String(150))
     file_hash: Mapped[str] = mapped_column(String(150))
     report: Mapped[Optional[JSON]] = mapped_column(JSON, init=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default_factory=datetime.now)
 
     # Virtual columns
     tasks: Mapped[list["Task"]] = relationship(
@@ -85,7 +85,7 @@ class Tool(Base):
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(150))
-    added_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
+    added_at: Mapped[datetime] = mapped_column(DateTime, default_factory=datetime.now)
 
     # Virtual columns
     tasks: Mapped[list["Task"]] = relationship(
@@ -102,7 +102,7 @@ class Material(Base):
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(150))
-    added_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now())
+    added_at: Mapped[datetime] = mapped_column(DateTime, default_factory=datetime.now)
 
     # Virtual columns
     tasks: Mapped[list["Task"]] = relationship(

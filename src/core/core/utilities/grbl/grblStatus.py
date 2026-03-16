@@ -186,9 +186,12 @@ class GrblStatus:
 
     # Utilities
 
-    def get_error_message(self):
+    def get_error_message(self) -> str | None:
         if not self.failed():
-            return
+            return None
+
+        if self._error_data is None:
+            return f"Unknown error while executing line: {self._error_line}"
 
         error_message = "There was an error"
 

@@ -10,7 +10,7 @@ class SerialService:
     def get_ports(cls):
         return serial_ports.comports()
 
-    def startConnection(self, port: str, baudrate: int, timeout: int = 2) -> str:
+    def startConnection(self, port: str, baudrate: int, timeout: float = 2) -> str:
         """Closes any previous connection and starts a new one."""
         # Close any previous serial connection
         if self.interface.is_open:

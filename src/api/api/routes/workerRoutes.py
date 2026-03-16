@@ -1,3 +1,5 @@
+from typing import Any
+
 import core.utilities.worker.utils as worker
 from core.schemas.worker import (
     DeviceEnabledResponse,
@@ -45,7 +47,7 @@ def get_worker_task_status(user: GetUserDep, worker_task_id: str):
     except Exception as error:
         raise HTTPException(400, detail=str(error)) from error
 
-    response = {"status": task_status}
+    response: dict[str, Any] = {"status": task_status}
 
     if task_state.failed():
         # If the task raised an exception, 'info' will be the exception instance

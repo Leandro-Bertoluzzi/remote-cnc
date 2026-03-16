@@ -1,6 +1,10 @@
+import logging
+
 from celery.result import AsyncResult
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal
+
+logger = logging.getLogger(__name__)
 
 # Constants
 STATUS_POLL = 100  # miliseconds
@@ -45,9 +49,13 @@ class CncWorkerMonitor(QObject):
     # SLOTS
 
     def check_task_status(self):
-        task_state = AsyncResult(self.active_task)
-        task_info = task_state.info
-        task_status = task_state.status
+        try:
+            task_state = AsyncResult(self.active_task)
+            task_info = task_state.info
+            task_status = task_state.status
+        except Exception:
+            logger.warning("Lost connection to broker while monitoring task %s", self.active_task)
+            return
 
         if task_status == "PROGRESS":
             sent_lines = task_info.get("sent_lines")
