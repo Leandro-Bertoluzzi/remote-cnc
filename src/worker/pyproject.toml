@@ -6,12 +6,12 @@ requires-python = ">=3.12"
 dependencies = [
     "cnc-core",
     "configobj>=5.0,<6",
-    "mayavi>=4.8",
-    "numpy>=1.26",
+    "mayavi>=4.8; sys_platform == 'linux'",
+    "numpy>=1.26; sys_platform == 'linux'",
     "pillow>=10.4,<11",
     "PyQt5==5.15.11",
-    "PyVirtualDisplay>=3.0,<4",
-    "vtk>=9.3,<9.5",
+    "PyVirtualDisplay>=3.0,<4; sys_platform == 'linux'",
+    "vtk>=9.3,<9.5; sys_platform == 'linux'",
 ]
 
 [build-system]

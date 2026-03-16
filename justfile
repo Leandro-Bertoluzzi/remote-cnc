@@ -10,6 +10,9 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfileLoadTime", "-Command"]
 # Load .env file automatically (makes $DB_USER, $DB_NAME, etc. available)
 set dotenv-load
 
+# Avoid hardlink issues when cache and venv are on different filesystems
+export UV_LINK_MODE := "copy"
+
 # Show available recipes grouped by category
 [private]
 default:
@@ -57,14 +60,14 @@ test-api:
 [group('quality')]
 [working-directory: 'src']
 test-worker:
-    uv sync --package cnc-worker
+    uv sync
     uv run pytest worker/tests/
 
 # Run desktop tests only
 [group('quality')]
 [working-directory: 'src']
 test-desktop:
-    uv sync --package cnc-desktop
+    uv sync
     uv run pytest desktop/tests/
 
 # Run linter
