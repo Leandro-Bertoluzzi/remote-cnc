@@ -1,17 +1,18 @@
-import core.utilities.worker.utils as worker
-from celery.result import AsyncResult
-from core.database.base import SessionLocal
+import logging
+
 from core.database.models import TASK_DEFAULT_PRIORITY, File, Material, Task, TaskStatus, Tool
-from core.database.repositories.taskRepository import TaskRepository
-from core.utilities.storage import get_value_from_id
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.components.TaskProgress import TaskProgress
 from desktop.config import USER_ID
+from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.utils import needs_confirmation
+from desktop.services.deviceService import DeviceService
+from desktop.services.taskService import TaskService
 from PyQt5.QtWidgets import QPushButton, QSizePolicy
+
+logger = logging.getLogger(__name__)
 
 
 class TaskCard(Card):
@@ -41,7 +42,10 @@ class TaskCard(Card):
     def setup_ui(self):
         self.paused = False
         if self.task.status == TaskStatus.IN_PROGRESS.value:
-            self.paused = WorkerStoreAdapter.is_device_paused()
+            try:
+                self.paused = DeviceService.is_device_paused()
+            except Exception:
+                logger.warning("Could not check device paused state")
 
         self.setup_buttons(self.task.status)
 
@@ -56,15 +60,17 @@ class TaskCard(Card):
         self.check_task_status()
 
     def check_task_status(self):
-        # Check if it has a worker task ID
-        task_worker_id = get_value_from_id("task", self.task.id)
-        if not task_worker_id:
+        try:
+            result = TaskService.get_task_worker_status(self.task.id)
+        except Exception:
+            logger.warning("Could not query worker status for task %s", self.task.id)
             return
 
-        # Get status in worker
-        task_state: AsyncResult = AsyncResult(task_worker_id)
-        task_info = task_state.info
-        task_status = task_state.status
+        if result is None:
+            return
+
+        task_info = result["info"]
+        task_status = result["status"]
 
         if task_status == "PROGRESS" and self.task.status == TaskStatus.IN_PROGRESS.value:
             self.show_task_progress(task_info)
@@ -136,9 +142,7 @@ class TaskCard(Card):
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            repository.update_task(
+            TaskService.update_task(
                 self.task.id,
                 self.task.user_id,
                 file_id,
@@ -156,9 +160,7 @@ class TaskCard(Card):
     @needs_confirmation("¿Realmente desea eliminar la tarea?", "Eliminar tarea")
     def removeTask(self):
         try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            repository.remove_task(self.task.id)
+            TaskService.remove_task(self.task.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -184,9 +186,7 @@ class TaskCard(Card):
 
     def updateTaskStatus(self, new_status: TaskStatus, cancellation_reason: str = ""):
         try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            repository.update_task_status(
+            TaskService.update_task_status(
                 self.task.id, new_status.value, USER_ID, cancellation_reason
             )
         except Exception as error:
@@ -200,9 +200,7 @@ class TaskCard(Card):
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            repository.create_task(self.task.user_id, file_id, tool_id, material_id, name, note)
+            TaskService.create_task(self.task.user_id, file_id, tool_id, material_id, name, note)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -210,23 +208,22 @@ class TaskCard(Card):
 
     @needs_confirmation("¿Desea ejecutar la tarea ahora?", "Ejecutar tarea")
     def runTask(self):
-        if not worker.is_worker_on():
-            self.showError(
-                "Worker desconectado", "Ejecución cancelada: El worker no está conectado"
-            )
+        try:
+            unavailable_reason = DeviceService.check_device_availability()
+        except Exception as error:
+            self.showError("Error de conexión", get_friendly_error_message(error))
             return
 
-        if not WorkerStoreAdapter.is_device_enabled():
-            self.showError(
-                "Equipo deshabilitado", "Ejecución cancelada: El equipo está deshabilitado"
-            )
+        if unavailable_reason:
+            self.showError("No disponible", unavailable_reason)
             return
 
-        if worker.is_worker_running():
-            self.showError("Equipo ocupado", "Ejecución cancelada: Ya hay una tarea en progreso")
+        try:
+            worker_task_id = TaskService.send_task_to_worker(self.task.id)
+        except Exception as error:
+            self.showError("Error de conexión", get_friendly_error_message(error))
             return
 
-        worker_task_id = worker.send_task_to_worker(self.task.id)
         self.getWindow().startWorkerMonitor(worker_task_id)
         self.showInformation("Tarea enviada", "Se envió la tarea al equipo para su ejecución")
         self.getView().refreshLayout()
@@ -242,9 +239,13 @@ class TaskCard(Card):
             if isinstance(widget, QPushButton):
                 widget.setText("Pausar" if self.paused else "Retomar")
 
-        if self.paused:
-            WorkerStoreAdapter.request_pause()
-        else:
-            WorkerStoreAdapter.request_resume()
+        try:
+            if self.paused:
+                DeviceService.request_pause()
+            else:
+                DeviceService.request_resume()
+        except Exception as error:
+            self.showError("Error de conexión", get_friendly_error_message(error))
+            return
 
         self.paused = not self.paused

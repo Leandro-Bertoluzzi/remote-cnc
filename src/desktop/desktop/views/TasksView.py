@@ -1,18 +1,20 @@
+import logging
 from typing import TYPE_CHECKING
 
-import core.utilities.worker.utils as worker
-from core.database.base import SessionLocal
-from core.database.repositories.taskRepository import TaskRepository
-from core.database.utils import get_assets
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
-
 from desktop.components.cards.TaskCard import TaskCard
+from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.config import USER_ID
+from desktop.helpers.connectionErrors import get_friendly_error_message
+from desktop.services.assetService import AssetService
+from desktop.services.deviceService import DeviceService
+from desktop.services.taskService import TaskService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow  # pragma: no cover
+
+logger = logging.getLogger(__name__)
 
 
 class TasksView(BaseListView):
@@ -20,9 +22,17 @@ class TasksView(BaseListView):
         super(TasksView, self).__init__(parent)
 
         try:
-            self.files, self.materials, self.tools = get_assets(USER_ID)
+            self.files, self.materials, self.tools = AssetService.get_assets(USER_ID)
         except Exception as error:
-            self.showError("Error de base de datos", str(error))
+            error_msg = get_friendly_error_message(error)
+            self.layout().addWidget(
+                ConnectionErrorWidget(
+                    error_msg,
+                    retry_callback=lambda: parent.changeView(TasksView),
+                    back_callback=parent.backToMenu,
+                    parent=self,
+                )
+            )
             return
 
         self.setItemListFromValues(
@@ -40,14 +50,14 @@ class TasksView(BaseListView):
         )
 
     def getItems(self):
-        db_session = SessionLocal()
-        repository = TaskRepository(db_session)
-        tasks = repository.get_all_tasks_from_user(USER_ID, status="all")
+        tasks = TaskService.get_all_tasks(USER_ID, status="all")
 
         # Check if there is a task in progress
-        enabled = WorkerStoreAdapter.is_device_enabled()
-        running = worker.is_worker_running()
-        self.device_available = enabled and not running
+        try:
+            self.device_available = DeviceService.is_device_available()
+        except Exception:
+            logger.warning("Could not check device availability")
+            self.device_available = False
 
         return tasks
 
@@ -58,9 +68,7 @@ class TasksView(BaseListView):
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = TaskRepository(db_session)
-            repository.create_task(USER_ID, file_id, tool_id, material_id, name, note)
+            TaskService.create_task(USER_ID, file_id, tool_id, material_id, name, note)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

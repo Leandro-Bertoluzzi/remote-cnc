@@ -1,7 +1,6 @@
 import logging
 from typing import TYPE_CHECKING
 
-import core.utilities.worker.utils as worker
 from core.config import SERIAL_BAUDRATE
 from core.utilities.grbl.grblController import GrblController
 from core.utilities.grbl.types import GrblSettings, ParserState, Status
@@ -23,10 +22,13 @@ from desktop.containers.ButtonGrid import ButtonGrid
 from desktop.containers.ControllerActions import ControllerActions
 from desktop.helpers.fileStreamer import FileStreamer
 from desktop.helpers.grblSync import GrblSync
+from desktop.services.deviceService import DeviceService
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
     from MainWindow import MainWindow  # pragma: no cover
+
+logger = logging.getLogger(__name__)
 
 GRBL_STATUS_DISCONNECTED: Status = {
     "activeState": "disconnected",
@@ -45,7 +47,12 @@ class ControlView(BaseView):
         self.connected = False
         self.port_selected = ""
         self.device_settings: GrblSettings = {}
-        self.device_busy = worker.is_worker_running()
+
+        try:
+            self.device_busy = DeviceService.is_worker_busy()
+        except Exception:
+            logger.warning("Could not check worker status — assuming idle")
+            self.device_busy = False
 
         self.setup_grbl_controller()
         self.setup_ui()

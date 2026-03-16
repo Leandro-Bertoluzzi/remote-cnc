@@ -1,8 +1,8 @@
 import pytest
 from core.database.models import Material
-from core.database.repositories.materialRepository import MaterialRepository
 from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
+from desktop.services.materialService import MaterialService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -36,8 +36,8 @@ class TestMaterialCard:
         mocker.patch.object(MaterialDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock DB method
-        mock_update_material = mocker.patch.object(MaterialRepository, "update_material")
+        # Mock service method
+        mock_update_material = mocker.patch.object(MaterialService, "update_material")
 
         # Call the updateMaterial method
         self.card.updateMaterial()
@@ -59,9 +59,9 @@ class TestMaterialCard:
         mocker.patch.object(MaterialDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock DB method
+        # Mock service method
         mock_update_material = mocker.patch.object(
-            MaterialRepository, "update_material", side_effect=Exception("mocked error")
+            MaterialService, "update_material", side_effect=Exception("mocked error")
         )
 
         # Mock parent methods
@@ -83,8 +83,8 @@ class TestMaterialCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock DB method
-        mock_remove_material = mocker.patch.object(MaterialRepository, "remove_material")
+        # Mock service method
+        mock_remove_material = mocker.patch.object(MaterialService, "remove_material")
 
         # Call the removeMaterial method
         self.card.removeMaterial()
@@ -96,9 +96,9 @@ class TestMaterialCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
-        # Mock DB method
+        # Mock service method
         mock_remove_material = mocker.patch.object(
-            MaterialRepository, "remove_material", side_effect=Exception("mocked error")
+            MaterialService, "remove_material", side_effect=Exception("mocked error")
         )
 
         # Mock parent methods

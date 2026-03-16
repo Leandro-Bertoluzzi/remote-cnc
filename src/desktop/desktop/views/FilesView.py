@@ -1,19 +1,13 @@
 from typing import TYPE_CHECKING
 
-from core.database.base import SessionLocal
-from core.database.repositories.fileRepository import (
-    DatabaseError,
-    DuplicatedFileError,
-    DuplicatedFileNameError,
-    FileRepository,
-)
-from core.utilities.fileManager import FileManager
+from core.database.exceptions import DatabaseError
+from core.database.repositories.fileRepository import DuplicatedFileError, DuplicatedFileNameError
 from core.utilities.files import FileSystemError, InvalidFile
-from core.utilities.worker.scheduler import create_thumbnail, generate_file_report
 
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
-from desktop.config import FILES_FOLDER_PATH, USER_ID
+from desktop.config import USER_ID
+from desktop.services.fileService import FileService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -36,9 +30,7 @@ class FilesView(BaseListView):
         return FileCard(item, self)
 
     def getItems(self):
-        db_session = SessionLocal()
-        repository = FileRepository(db_session)
-        return repository.get_all_files()
+        return FileService.get_all_files()
 
     def createFile(self):
         fileDialog = FileDataDialog()
@@ -47,12 +39,8 @@ class FilesView(BaseListView):
 
         name, path = fileDialog.getInputs()
 
-        db_session = SessionLocal()
-        file_manager = FileManager(FILES_FOLDER_PATH, db_session)
         try:
-            file = file_manager.create_file(USER_ID, name, path)
-            generate_file_report(file.id)
-            create_thumbnail(file.id)
+            FileService.create_file(USER_ID, name, path)
         except (DuplicatedFileNameError, DuplicatedFileError) as error:
             self.showWarning("Archivo repetido", str(error))
             return

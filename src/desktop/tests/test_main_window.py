@@ -1,6 +1,6 @@
 import pytest
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from desktop.MainWindow import MainWindow
+from desktop.services.deviceService import DeviceService
 from desktop.views.MainMenu import MainMenu
 from desktop.views.UsersView import UsersView
 from PyQt5.QtGui import QCloseEvent
@@ -16,10 +16,10 @@ class TestMainWindow:
     def test_main_window_init(
         self, qtbot: QtBot, mocker: MockerFixture, worker_on, worker_running, device_enabled
     ):
-        # Mock worker monitor methods
-        mocker.patch("core.utilities.worker.utils.is_worker_on", return_value=worker_on)
-        mocker.patch("core.utilities.worker.utils.is_worker_running", return_value=worker_running)
-        mocker.patch.object(WorkerStoreAdapter, "is_device_enabled", return_value=device_enabled)
+        # Mock device service methods
+        mocker.patch.object(DeviceService, "is_worker_connected", return_value=worker_on)
+        mocker.patch.object(DeviceService, "is_worker_busy", return_value=worker_running)
+        mocker.patch.object(DeviceService, "is_device_enabled", return_value=device_enabled)
 
         # Mock QMessageBox method
         mocker.patch.object(QMessageBox, "question", return_value=QMessageBox.Yes)
@@ -44,8 +44,8 @@ class TestMainWindow:
         assert window.status_bar.label_device.text() == expected_device_status
 
     def test_main_window_changes_view(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock worker monitor methods
-        mocker.patch("core.utilities.worker.utils.is_worker_on", return_value=False)
+        # Mock device service methods
+        mocker.patch.object(DeviceService, "is_worker_connected", return_value=False)
 
         # Instantiate window
         window = MainWindow()
@@ -69,8 +69,8 @@ class TestMainWindow:
     def test_main_window_close_event(
         self, qtbot: QtBot, mocker: MockerFixture, msgBoxResponse, expectedMethodCalls
     ):
-        # Mock worker monitor methods
-        mocker.patch("core.utilities.worker.utils.is_worker_on", return_value=False)
+        # Mock device service methods
+        mocker.patch.object(DeviceService, "is_worker_connected", return_value=False)
 
         # Instantiate window
         window = MainWindow()

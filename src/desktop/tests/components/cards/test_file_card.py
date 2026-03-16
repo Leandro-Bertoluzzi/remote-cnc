@@ -2,10 +2,10 @@ import pytest
 from core.database.exceptions import DatabaseError
 from core.database.models import File, User
 from core.database.repositories.fileRepository import DuplicatedFileNameError
-from core.utilities.fileManager import FileManager
 from core.utilities.files import FileSystemError
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
+from desktop.services.fileService import FileService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -42,8 +42,8 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock file manager methods
-        mock_rename_file = mocker.patch.object(FileManager, "rename_file")
+        # Mock file service methods
+        mock_rename_file = mocker.patch.object(FileService, "rename_file")
 
         # Call the updateFile method
         self.card.updateFile()
@@ -61,8 +61,8 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock file manager methods
-        mock_rename_file = mocker.patch.object(FileManager, "rename_file")
+        # Mock file service methods
+        mock_rename_file = mocker.patch.object(FileService, "rename_file")
 
         # Call the updateFile method
         self.card.updateFile()
@@ -76,9 +76,9 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock file manager methods
+        # Mock file service methods
         mock_rename_file = mocker.patch.object(
-            FileManager, "rename_file", side_effect=DuplicatedFileNameError("mocked error")
+            FileService, "rename_file", side_effect=DuplicatedFileNameError("mocked error")
         )
 
         # Mock parent methods
@@ -97,9 +97,9 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock file manager methods
+        # Mock file service methods
         mock_rename_file = mocker.patch.object(
-            FileManager, "rename_file", side_effect=FileSystemError("mocked error")
+            FileService, "rename_file", side_effect=FileSystemError("mocked error")
         )
 
         # Mock parent methods
@@ -118,9 +118,9 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock file manager methods
+        # Mock file service methods
         mock_rename_file = mocker.patch.object(
-            FileManager, "rename_file", side_effect=DatabaseError("mocked error")
+            FileService, "rename_file", side_effect=DatabaseError("mocked error")
         )
 
         # Mock parent methods
@@ -140,8 +140,8 @@ class TestFileCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock file manager methods
-        mock_delete_file = mocker.patch.object(FileManager, "remove_file")
+        # Mock file service methods
+        mock_delete_file = mocker.patch.object(FileService, "remove_file")
 
         # Call the removeFile method
         self.card.removeFile()
@@ -153,9 +153,9 @@ class TestFileCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
-        # Mock file manager methods
+        # Mock file service methods
         mock_delete_file = mocker.patch.object(
-            FileManager, "remove_file", side_effect=FileSystemError("mocked error")
+            FileService, "remove_file", side_effect=FileSystemError("mocked error")
         )
 
         # Mock parent methods
@@ -172,9 +172,9 @@ class TestFileCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
-        # Mock file manager methods
+        # Mock file service methods
         mock_delete_file = mocker.patch.object(
-            FileManager, "remove_file", side_effect=DatabaseError("mocked error")
+            FileService, "remove_file", side_effect=DatabaseError("mocked error")
         )
 
         # Mock parent methods

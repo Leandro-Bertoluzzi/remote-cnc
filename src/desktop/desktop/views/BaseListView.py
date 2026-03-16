@@ -8,6 +8,8 @@ from typing_extensions import TypedDict
 
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.MsgCard import MsgCard
+from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
+from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
@@ -52,7 +54,19 @@ class BaseListView(BaseView):
                 list_definition["items"] = self.getItems()
                 self.current_index += 1
             except Exception as error:
-                self.showError("Error de base de datos", str(error))
+                error_msg = get_friendly_error_message(error)
+                self.layout().addWidget(
+                    ConnectionErrorWidget(
+                        error_msg,
+                        retry_callback=self.refreshLayout,
+                        back_callback=self.getWindow().backToMenu,
+                        parent=self,
+                    )
+                )
+                self.layout().addWidget(
+                    MenuButton("Volver al menú", onClick=self.getWindow().backToMenu)
+                )
+                self.update()
                 return
 
         for list_definition in self.lists:

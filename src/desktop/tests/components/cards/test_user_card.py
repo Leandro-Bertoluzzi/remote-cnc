@@ -1,8 +1,8 @@
 import pytest
 from core.database.models import User
-from core.database.repositories.userRepository import UserRepository
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
+from desktop.services.userService import UserService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -34,8 +34,8 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock DB method
-        mock_update_user = mocker.patch.object(UserRepository, "update_user")
+        # Mock service method
+        mock_update_user = mocker.patch.object(UserService, "update_user")
 
         # Call the updateUser method
         self.card.updateUser()
@@ -58,9 +58,9 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock DB method
+        # Mock service method
         mock_update_user = mocker.patch.object(
-            UserRepository, "update_user", side_effect=Exception("mocked error")
+            UserService, "update_user", side_effect=Exception("mocked error")
         )
 
         # Mock parent methods
@@ -82,8 +82,8 @@ class TestUserCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock DB method
-        mock_remove_user = mocker.patch.object(UserRepository, "remove_user")
+        # Mock service method
+        mock_remove_user = mocker.patch.object(UserService, "remove_user")
 
         # Call the removeUser method
         self.card.removeUser()
@@ -95,9 +95,9 @@ class TestUserCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
-        # Mock DB method
+        # Mock service method
         mock_remove_user = mocker.patch.object(
-            UserRepository, "remove_user", side_effect=Exception("mocked error")
+            UserService, "remove_user", side_effect=Exception("mocked error")
         )
 
         # Mock parent methods

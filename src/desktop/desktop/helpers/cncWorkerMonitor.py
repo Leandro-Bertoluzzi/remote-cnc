@@ -1,8 +1,8 @@
 import logging
 
-from celery.result import AsyncResult
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal
+
+from desktop.services.deviceService import DeviceService
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,9 @@ class CncWorkerMonitor(QObject):
 
     def check_task_status(self):
         try:
-            task_state = AsyncResult(self.active_task)
-            task_info = task_state.info
-            task_status = task_state.status
+            result = DeviceService.get_celery_task_status(self.active_task)
+            task_info = result["info"]
+            task_status = result["status"]
         except Exception:
             logger.warning("Lost connection to broker while monitoring task %s", self.active_task)
             return
@@ -69,11 +69,17 @@ class CncWorkerMonitor(QObject):
             )
 
         if task_status == "SUCCESS":
-            WorkerStoreAdapter.set_device_enabled(False)
+            try:
+                DeviceService.set_device_enabled(False)
+            except Exception:
+                logger.warning("Could not disable device after task success")
             self.stop_task_monitor()
             self.task_finished.emit()
 
         if task_status == "FAILURE":
-            WorkerStoreAdapter.set_device_enabled(False)
+            try:
+                DeviceService.set_device_enabled(False)
+            except Exception:
+                logger.warning("Could not disable device after task failure")
             self.stop_task_monitor()
             self.task_failed.emit(str(task_info))

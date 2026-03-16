@@ -1,10 +1,8 @@
 from typing import TYPE_CHECKING
 
-from core.database.base import SessionLocal
-from core.database.repositories.userRepository import UserRepository
-
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
+from desktop.services.userService import UserService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -23,9 +21,7 @@ class UsersView(BaseListView):
         return UserCard(user, self)
 
     def getItems(self):
-        db_session = SessionLocal()
-        repository = UserRepository(db_session)
-        return repository.get_all_users()
+        return UserService.get_all_users()
 
     def createUser(self):
         userDialog = UserDataDialog()
@@ -34,9 +30,7 @@ class UsersView(BaseListView):
 
         name, email, password, role = userDialog.getInputs()
         try:
-            db_session = SessionLocal()
-            repository = UserRepository(db_session)
-            repository.create_user(name, email, password, role)
+            UserService.create_user(name, email, password, role)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

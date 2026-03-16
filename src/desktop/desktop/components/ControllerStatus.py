@@ -1,10 +1,9 @@
-from core.database.base import SessionLocal
-from core.database.repositories.toolRepository import ToolRepository
 from core.utilities.grbl.types import Status
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from desktop.helpers.utils import applyStylesheet
+from desktop.services.toolService import ToolService
 
 
 class ControllerStatus(QWidget):
@@ -74,9 +73,7 @@ class ControllerStatus(QWidget):
         self.tool_index = tool_index
 
     def _get_tool_info(self, tool_index: int):
-        with SessionLocal() as db_session:
-            repository = ToolRepository(db_session)
-            return repository.get_tool_by_id(tool_index)
+        return ToolService.get_tool_by_id(tool_index)
 
     def set_feedrate(self, feedrate: float):
         self.feedrate.setText(f"Feed rate: {feedrate}")
