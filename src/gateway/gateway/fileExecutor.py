@@ -203,6 +203,8 @@ class FileExecutor:
             return
 
         # Read and send next line
+        if self._gcode is None:
+            return
         line = self._gcode.readline()
         if not line:
             # EOF — wait for GRBL to finish processing remaining commands
