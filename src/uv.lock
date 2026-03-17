@@ -8,6 +8,7 @@ members = [
     "cnc-api",
     "cnc-core",
     "cnc-desktop",
+    "cnc-gateway",
     "cnc-worker",
 ]
 overrides = [{ name = "pyqt5-qt5", specifier = "==5.15.2" }]
@@ -279,6 +280,7 @@ dev = [
     { name = "cnc-api" },
     { name = "cnc-core" },
     { name = "cnc-desktop" },
+    { name = "cnc-gateway" },
     { name = "cnc-worker" },
     { name = "pyqt5-stubs" },
     { name = "pytest" },
@@ -299,6 +301,7 @@ dev = [
     { name = "cnc-api", editable = "api" },
     { name = "cnc-core", editable = "core" },
     { name = "cnc-desktop", editable = "desktop" },
+    { name = "cnc-gateway", editable = "gateway" },
     { name = "cnc-worker", editable = "worker" },
     { name = "pyqt5-stubs", specifier = ">=5.15" },
     { name = "pytest", specifier = ">=7.4,<9" },
@@ -419,6 +422,17 @@ dev = [
     { name = "pyqt5-stubs", specifier = ">=5.15" },
     { name = "pytest-qt", specifier = ">=4.4,<5" },
 ]
+
+[[package]]
+name = "cnc-gateway"
+version = "0.1.0"
+source = { editable = "gateway" }
+dependencies = [
+    { name = "cnc-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "cnc-core", editable = "core" }]
 
 [[package]]
 name = "cnc-worker"

@@ -1,0 +1,41 @@
+FROM python:3.12-slim-bookworm AS base
+
+# Install system dependencies (psycopg2 build, serial access)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential libpq-dev \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set uv environment variables
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /app
+
+# ---------- dependency layer (cached while lockfile unchanged) ----------
+COPY pyproject.toml uv.lock ./
+COPY core/pyproject.toml core/pyproject.toml
+COPY gateway/pyproject.toml gateway/pyproject.toml
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-workspace --package cnc-gateway
+
+# ---------- source layer ----------
+COPY core/core core/core
+COPY gateway/ gateway/
+
+# ---------- targets ----------
+FROM base AS production
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-editable --package cnc-gateway
+CMD ["uv", "run", "--no-sync", "python", "-m", "gateway.main"]
+
+FROM base AS development
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-editable --package cnc-gateway
+CMD ["uv", "run", "--no-sync", "python", "-m", "gateway.main"]

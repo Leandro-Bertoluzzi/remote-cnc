@@ -9,13 +9,14 @@ package = false
 override-dependencies = ["PyQt5-Qt5==5.15.2"]
 
 [tool.uv.workspace]
-members = ["core", "api", "worker", "desktop"]
+members = ["core", "api", "worker", "desktop", "gateway"]
 
 [tool.uv.sources]
 cnc-core    = { workspace = true }
 cnc-api     = { workspace = true }
 cnc-worker  = { workspace = true }
 cnc-desktop = { workspace = true }
+cnc-gateway = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -24,6 +25,7 @@ dev = [
     "cnc-api",
     "cnc-desktop",
     "cnc-worker",
+    "cnc-gateway",
     # Test tools
     "pytest>=7.4,<9",
     "pytest-cov>=6.0",
