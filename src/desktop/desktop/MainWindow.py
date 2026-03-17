@@ -57,7 +57,9 @@ class MainWindow(QMainWindow):
                 self.status_bar.updateDeviceStatus("TRABAJANDO...")
         except Exception:
             logger.warning("Could not reach worker/Redis — starting in offline mode")
-            self.status_bar.updateWorkerStatus("ERROR DE CONEXIÓN")
+            self.status_bar.setTemporalStatusMessage(
+                "No se pudo conectar con el worker, iniciando en modo offline...", 5000
+            )
 
     # UI
 
