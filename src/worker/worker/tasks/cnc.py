@@ -14,7 +14,6 @@ entirely by the CNC Gateway process.
 import json
 import logging
 
-from celery import Task
 from celery.utils.log import get_task_logger
 from core.config import FILES_FOLDER_PATH
 from core.database.base import SessionLocal
@@ -24,7 +23,6 @@ from core.utilities.files import FileSystemHelper
 from core.utilities.gateway.constants import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
-    EVENT_FILE_PROGRESS,
 )
 from core.utilities.gateway.gatewayClient import GatewayClient
 from worker.main import app
@@ -37,7 +35,7 @@ FILE_EVENT_TIMEOUT = 24 * 60 * 60  # 24 h
 
 
 @app.task(name="execute_task", bind=True, ignore_result=True)
-def executeTask(self: Task, task_id: int) -> None:
+def executeTask(self, task_id: int) -> None:
     """Orchestrate a G-code file execution via the CNC Gateway.
 
     This task is purely a DB-orchestration wrapper:
@@ -92,8 +90,8 @@ def executeTask(self: Task, task_id: int) -> None:
 
         gateway.request_file_execution(session_id, file_path, task.id)
 
-        # 6. Wait for file_finished or file_failed, relaying progress
-        _wait_for_completion(self, pubsub, task.id, worker_logger)
+        # 6. Wait for file_finished or file_failed
+        _wait_for_completion(pubsub, task.id, worker_logger)
 
         # 7. Determine final status
         # If _wait_for_completion returned normally, the file finished successfully
@@ -141,16 +139,15 @@ class _FileExecutionFailed(Exception):
 
 
 def _wait_for_completion(
-    celery_task: Task,
     pubsub,
     task_id: int,
     task_logger,
 ) -> None:
     """Block on PubSub waiting for file_finished or file_failed.
 
-    Relays progress events as Celery PROGRESS state updates so that
-    existing callers (``AsyncResult``, ``GET /worker/status/<id>``)
-    continue to work.
+    Progress monitoring is handled by consumers that subscribe directly
+    to the ``grbl_status`` channel (Desktop, Web SSE). This function
+    only cares about the terminal events.
     """
     import time
 
@@ -175,17 +172,7 @@ def _wait_for_completion(
         if event_task_id is not None and event_task_id != task_id:
             continue
 
-        if event_type == EVENT_FILE_PROGRESS:
-            celery_task.update_state(
-                state="PROGRESS",
-                meta={
-                    "sent_lines": event.get("sent_lines", 0),
-                    "processed_lines": event.get("processed_lines", 0),
-                    "total_lines": event.get("total_lines", 0),
-                },
-            )
-
-        elif event_type == EVENT_FILE_FINISHED:
+        if event_type == EVENT_FILE_FINISHED:
             task_logger.info(
                 "Archivo finalizado: %d/%d líneas",
                 event.get("sent_lines", 0),

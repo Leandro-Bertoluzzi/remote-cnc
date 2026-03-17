@@ -161,9 +161,9 @@ class MainWindow(QMainWindow):
 
     # Other methods
 
-    def startWorkerMonitor(self, task_worker_id: str):
+    def startWorkerMonitor(self):
         self.status_bar.updateDeviceStatus("TRABAJANDO...")
-        self.worker_monitor.start_task_monitor(task_worker_id)
+        self.worker_monitor.start_task_monitor()
         self.status_bar.setTemporalStatusMessage("Iniciado el monitor del worker")
 
     def enable_device(self):

@@ -41,11 +41,6 @@ class TaskCard(Card):
 
     def setup_ui(self):
         self.paused = False
-        if self.task.status == TaskStatus.IN_PROGRESS.value:
-            try:
-                self.paused = DeviceService.is_device_paused()
-            except Exception:
-                logger.warning("Could not check device paused state")
 
         self.setup_buttons(self.task.status)
 
@@ -219,12 +214,12 @@ class TaskCard(Card):
             return
 
         try:
-            worker_task_id = TaskService.send_task_to_worker(self.task.id)
+            TaskService.send_task_to_worker(self.task.id)
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
 
-        self.getWindow().startWorkerMonitor(worker_task_id)
+        self.getWindow().startWorkerMonitor()
         self.showInformation("Tarea enviada", "Se envió la tarea al equipo para su ejecución")
         self.getView().refreshLayout()
 
