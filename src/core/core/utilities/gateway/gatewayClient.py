@@ -208,9 +208,13 @@ class GatewayClient:
         self,
         session_id: str,
         file_path: str,
-        task_id: int,
+        task_id: int | None = None,
     ) -> None:
-        """Request the Gateway to start executing a G-code file."""
+        """Request the Gateway to start executing a G-code file.
+
+        *task_id* may be ``None`` for ad-hoc executions initiated from the
+        Desktop's ControlView (no DB task involved).
+        """
         msg = _make_message(
             MSG_FILE_START,
             {"file_path": file_path, "task_id": task_id},

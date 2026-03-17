@@ -1,4 +1,3 @@
-from core.utilities.grbl.grblController import GrblController
 from core.utilities.grbl.grblUtils import JOG_DISTANCE_INCREMENTAL
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
@@ -10,9 +9,8 @@ from desktop.mixins.JogController import JogController
 
 
 class Joystick(QWidget, JogController):
-    def __init__(self, grbl_controller: GrblController, parent=None):
+    def __init__(self, parent=None):
         super(Joystick, self).__init__(parent)
-        self.set_controller(grbl_controller)
         self.setup_ui()
         self.init_widgets()
 

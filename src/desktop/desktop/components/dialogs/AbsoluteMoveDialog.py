@@ -1,4 +1,3 @@
-from core.utilities.grbl.grblController import GrblController
 from core.utilities.grbl.grblUtils import JOG_DISTANCE_ABSOLUTE
 from desktop.containers.WidgetsHList import WidgetsHList
 from desktop.mixins.JogController import JogController
@@ -7,9 +6,8 @@ from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout
 
 
 class AbsoluteMoveDialog(QDialog, JogController):
-    def __init__(self, grbl_controller: GrblController, parent=None):
+    def __init__(self, parent=None):
         super(AbsoluteMoveDialog, self).__init__(parent)
-        self.set_controller(grbl_controller)
 
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)

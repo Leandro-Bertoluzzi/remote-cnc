@@ -6,11 +6,12 @@ from PyQt5.QtWidgets import QDoubleSpinBox, QLabel
 class TestJoystick:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
-        # Mock GRBL controller object
-        self.grbl_controller = mocker.MagicMock()
+        # Mock jog callback
+        self.mock_jog_callback = mocker.MagicMock()
 
-        # Create an instance of Joystick
-        self.joystick = Joystick(self.grbl_controller)
+        # Create an instance of Joystick (no longer takes GrblController)
+        self.joystick = Joystick()
+        self.joystick.set_jog_callback(self.mock_jog_callback)
         qtbot.addWidget(self.joystick)
 
     def test_joystick_init(self, helpers):
@@ -101,10 +102,7 @@ class TestJoystick:
         # Trigger action under test
         self.joystick.send_jog_command(1.5, 1.3, 1.2, 500.0, "distance_incremental")
 
-        # Assertions
-        self.grbl_controller.jog.assert_called_once()
-
-        jog_params = {"x": 1.5, "y": 1.3, "z": 1.2, "feedrate": 500.0}
-        self.grbl_controller.jog.assert_called_with(
-            *jog_params.values(), units="milimeters", distance_mode="distance_incremental"
+        # Assertions — callback receives (x, y, z, feedrate, units, distance_mode)
+        self.mock_jog_callback.assert_called_once_with(
+            1.5, 1.3, 1.2, 500.0, "milimeters", "distance_incremental"
         )
