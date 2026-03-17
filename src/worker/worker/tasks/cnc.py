@@ -10,7 +10,7 @@ from core.database.repositories.taskRepository import TaskRepository
 from core.utilities.files import FileSystemHelper
 from core.utilities.gcode.gcodeFileSender import FinishedFile, GcodeFileSender
 from core.utilities.grbl.grblController import GrblController
-from core.utilities.loggerFactory import setup_stream_logger, setup_task_logger
+from core.utilities.loggerFactory import setup_task_logger
 from core.utilities.redisPubSubManager import RedisPubSubManagerSync
 from core.utilities.worker.workerStatusManager import WorkerStatusManager
 from worker.main import app
@@ -19,7 +19,6 @@ from worker.main import app
 SEND_INTERVAL = 0.10  # Seconds
 STATUS_POLL = 0.10  # Seconds
 STATUS_CHANNEL = "grbl_status"
-COMMANDS_CHANNEL = "worker_commands"
 
 
 @app.task(name="execute_task", bind=True, ignore_result=True)
@@ -181,93 +180,6 @@ def executeTask(self: Task, task_id: int, serial_port: str, serial_baudrate: int
         # SUCCESS
         worker_logger.info("Finalizada la ejecución del archivo: {}".format(file_path))
         repository.update_task_status(task.id, TaskStatus.FINISHED.value)
-
-    finally:
-        if cnc is not None:
-            cnc.disconnect()
-        if redis is not None:
-            redis.disconnect()
-        db_session.close()
-
-
-@app.task(name="cnc_server", bind=True, ignore_result=True)
-def cncServer(self: Task, serial_port: str, serial_baudrate: int) -> None:
-    db_session = SessionLocal()
-    redis: RedisPubSubManagerSync | None = None
-    cnc: GrblController | None = None
-
-    try:
-        repository = TaskRepository(db_session)
-        # 1. Check if there is a task currently in progress, in which case return an exception
-        if repository.are_there_tasks_in_progress():
-            raise Exception("Hay una tarea en progreso, por favor espere a que termine")
-
-        # 2. Instantiate a GrblController object and start communication with Arduino
-        worker_logger = get_task_logger(__name__)
-        task_logger = setup_stream_logger("cnc_server", worker_logger.level)
-        cnc = GrblController(logger=task_logger)
-        cnc_status = cnc.grbl_status
-        cnc.connect(serial_port, serial_baudrate)
-
-        # Initial CNC state
-        status = cnc_status.get_status_report()
-        parserstate = cnc_status.get_parser_state()
-        worker_status = WorkerStatusManager()
-
-        # 3. Start a PubSub manager to notify updates and listen to requests
-        redis = RedisPubSubManagerSync()
-        redis.connect()
-        redis.subscribe(COMMANDS_CHANNEL)
-
-        # 4. Send G-code lines in a loop until the user requests the disconnection
-        tp = time.time()  # last time a command was sent and info was queried
-        worker_logger.info("**Iniciado servidor de comandos CNC**")
-
-        while True:
-            t = time.time()
-
-            # Refresh machine position?
-            if t - tp > STATUS_POLL:
-                status = cnc_status.get_status_report()
-                parserstate = cnc_status.get_parser_state()
-                self.update_state(
-                    state="PROGRESS", meta={"status": status, "parserstate": parserstate}
-                )
-                message = json.dumps({"status": status, "parserstate": parserstate})
-                redis.publish(STATUS_CHANNEL, message)
-
-                if cnc_status.finished():
-                    worker_logger.info("Encontrado comando de fin de programa, desconectando...")
-                    break
-
-                # Check if PAUSE or RESUME was requested
-                pause, resume = worker_status.process_request()
-
-                if pause:
-                    cnc.set_paused(True)
-
-                if resume:
-                    cnc.set_paused(False)
-
-                if worker_status.is_paused():
-                    time.sleep(1)
-                    continue
-
-                # Check if a command was requested
-                received = redis.get_message()
-                if received is not None and "data" in received.keys():
-                    data: bytes = received["data"]
-                    cnc.send_command(data.decode())
-
-                tp = t
-
-        # 5. When the user requests the disconnection (or a finish command is found),
-        # disconnect from the GRBL device
-
-        message = json.dumps({"status": cnc_status.get_status_report()})
-        redis.publish(STATUS_CHANNEL, message)
-
-        worker_logger.info("**Finalizado servidor de comandos CNC**")
 
     finally:
         if cnc is not None:

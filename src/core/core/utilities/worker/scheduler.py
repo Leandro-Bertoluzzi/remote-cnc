@@ -11,9 +11,6 @@ from core.config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 
 app = Celery("worker", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
 
-# Constants
-COMMANDS_CHANNEL = "worker_commands"
-
 
 # ---------------------------------------------------------------------------
 # Task dispatchers – each returns an AsyncResult, same as .delay()
@@ -23,11 +20,6 @@ COMMANDS_CHANNEL = "worker_commands"
 def execute_task(task_id: int, serial_port: str, serial_baudrate: int) -> AsyncResult:
     """Send *execute_task* to the worker."""
     return app.send_task("execute_task", args=[task_id, serial_port, serial_baudrate])
-
-
-def cnc_server(serial_port: str, serial_baudrate: int) -> AsyncResult:
-    """Send *cnc_server* to the worker."""
-    return app.send_task("cnc_server", args=[serial_port, serial_baudrate])
 
 
 def create_thumbnail(file_id: int) -> AsyncResult:

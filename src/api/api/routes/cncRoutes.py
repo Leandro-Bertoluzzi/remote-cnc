@@ -1,18 +1,36 @@
+from typing import Annotated
+
 import core.utilities.grbl.grblUtils as grblUtils
-import core.utilities.worker.utils as worker
-from core.config import SERIAL_BAUDRATE, SERIAL_PORT
 from core.schemas.cnc import CncCommand, CncJogCommand, CncJogResponse
 from core.schemas.general import GenericResponse
-from core.schemas.worker import WorkerTaskResponse
+from core.schemas.session import (
+    GatewayStateResponse,
+    RealtimeRequest,
+    SessionAcquireRequest,
+    SessionRenewResponse,
+    SessionResponse,
+)
+from core.utilities.gateway.constants import (
+    ACTION_PAUSE,
+    ACTION_RESUME,
+    ACTION_SOFT_RESET,
+    ACTION_STOP,
+)
 from core.utilities.serial import SerialService
-from core.utilities.worker.scheduler import COMMANDS_CHANNEL, cnc_server
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 
 from api.middleware.authMiddleware import GetAdminDep
-from api.middleware.pubSubMiddleware import GetPubSub
+from api.middleware.gatewayMiddleware import GetGateway
 
 cncRoutes = APIRouter(prefix="/cnc", tags=["CNC"])
+
+# Header dependency for authenticated session commands
+GetSessionId = Annotated[str, Header(description="Active CNC session ID")]
+
+
+# ---------------------------------------------------------------------------
+# Ports
+# ---------------------------------------------------------------------------
 
 
 @cncRoutes.get("/ports")
@@ -21,57 +39,123 @@ def get_available_ports(admin: GetAdminDep):
     return {"ports": available_ports}
 
 
-@cncRoutes.post("/server", response_model=WorkerTaskResponse)
-def start_cnc_server(admin: GetAdminDep):
-    if not worker.is_worker_on():
-        raise HTTPException(400, detail="Worker desconectado")
-
-    if not WorkerStoreAdapter.is_device_enabled():
-        raise HTTPException(400, detail="Equipo deshabilitado")
-
-    if worker.is_worker_running():
-        raise HTTPException(400, detail="Equipo ocupado: Hay una tarea en progreso")
-
-    worker_task = cnc_server(SERIAL_PORT, SERIAL_BAUDRATE)
-
-    return {"worker_task_id": worker_task.task_id}
+# ---------------------------------------------------------------------------
+# Gateway state (read-only, no session required)
+# ---------------------------------------------------------------------------
 
 
-@cncRoutes.delete("/server", response_model=GenericResponse)
-async def stop_cnc_server(admin: GetAdminDep, redis: GetPubSub):
-    if not worker.is_worker_on():
-        raise HTTPException(400, detail="Worker desconectado")
+@cncRoutes.get("/gateway/state", response_model=GatewayStateResponse)
+def get_gateway_state(admin: GetAdminDep, gateway: GetGateway):
+    """Return the current CNC Gateway state."""
+    state = gateway.get_gateway_state()
+    return {"state": state, "running": state is not None}
 
-    # TODO: Improve this...
-    await redis.publish(COMMANDS_CHANNEL, "M2")
 
-    return {"success": "Se finalizó la conexión con el CNC"}
+# ---------------------------------------------------------------------------
+# Session management
+# ---------------------------------------------------------------------------
+
+
+@cncRoutes.post("/session", response_model=SessionResponse)
+def acquire_session(
+    admin: GetAdminDep,
+    gateway: GetGateway,
+    request: SessionAcquireRequest,
+):
+    """Acquire the exclusive CNC session (distributed lock)."""
+    if not gateway.is_gateway_running():
+        raise HTTPException(503, detail="CNC Gateway no está disponible")
+
+    session_id = gateway.acquire_session(
+        user_id=admin.id,
+        client_type=request.client_type,
+    )
+    if session_id is None:
+        raise HTTPException(409, detail="El CNC ya está en uso por otra sesión")
+
+    session_data = gateway.get_active_session()
+    return session_data
+
+
+@cncRoutes.get("/session", response_model=SessionResponse)
+def get_session(admin: GetAdminDep, gateway: GetGateway):
+    """Get the current active session, if any."""
+    session = gateway.get_active_session()
+    if session is None:
+        raise HTTPException(404, detail="No hay sesión activa")
+    return session
+
+
+@cncRoutes.put("/session/renew", response_model=SessionRenewResponse)
+def renew_session(
+    admin: GetAdminDep,
+    gateway: GetGateway,
+    x_cnc_session: GetSessionId,
+):
+    """Heartbeat — renew the session TTL."""
+    renewed = gateway.renew_session(x_cnc_session)
+    if not renewed:
+        raise HTTPException(404, detail="Sesión no encontrada o expirada")
+    return {"renewed": True}
+
+
+@cncRoutes.delete("/session", response_model=GenericResponse)
+def release_session(
+    admin: GetAdminDep,
+    gateway: GetGateway,
+    x_cnc_session: GetSessionId,
+):
+    """Release the CNC session."""
+    released = gateway.release_session(x_cnc_session)
+    if not released:
+        raise HTTPException(404, detail="Sesión no encontrada o no le pertenece")
+    return {"success": "Sesión liberada correctamente"}
+
+
+# ---------------------------------------------------------------------------
+# Commands (require active session via X-CNC-Session header)
+# ---------------------------------------------------------------------------
 
 
 @cncRoutes.post("/command", response_model=GenericResponse)
-async def send_code_to_execute(request: CncCommand, admin: GetAdminDep, redis: GetPubSub):
-    if not worker.is_worker_on():
-        raise HTTPException(400, detail="Worker desconectado")
+def send_command(
+    admin: GetAdminDep,
+    gateway: GetGateway,
+    request: CncCommand,
+    x_cnc_session: GetSessionId,
+):
+    """Send a G-code command to the CNC via the Gateway."""
+    if not gateway.is_gateway_running():
+        raise HTTPException(503, detail="CNC Gateway no está disponible")
 
-    if not worker.is_worker_running():
-        raise HTTPException(400, detail="Debe iniciar la conexión con el servidor CNC")
-
-    code = request.command
-    await redis.publish(COMMANDS_CHANNEL, code)
-
+    gateway.send_command(x_cnc_session, request.command)
     return {"success": "El comando fue enviado para su ejecución"}
 
 
 @cncRoutes.post("/jog", response_model=CncJogResponse)
-async def send_jog_command(
-    admin: GetAdminDep, redis: GetPubSub, request: CncJogCommand, machine: bool = False
+def send_jog_command(
+    admin: GetAdminDep,
+    gateway: GetGateway,
+    request: CncJogCommand,
+    x_cnc_session: GetSessionId,
+    machine: bool = False,
 ):
-    if not worker.is_worker_on():
-        raise HTTPException(400, detail="Worker desconectado")
+    """Send a jog command to the CNC via the Gateway."""
+    if not gateway.is_gateway_running():
+        raise HTTPException(503, detail="CNC Gateway no está disponible")
 
-    if not worker.is_worker_running():
-        raise HTTPException(400, detail="Debe iniciar la conexión con el servidor CNC")
+    gateway.send_jog(
+        x_cnc_session,
+        request.x,
+        request.y,
+        request.z,
+        request.feedrate,
+        units=request.units,
+        distance_mode=request.mode,
+        machine_coordinates=machine,
+    )
 
+    # Build locally just for the response
     code = grblUtils.build_jog_command(
         request.x,
         request.y,
@@ -81,6 +165,27 @@ async def send_jog_command(
         distance_mode=request.mode,
         machine_coordinates=machine,
     )
-    await redis.publish(COMMANDS_CHANNEL, code)
-
     return {"command": code}
+
+
+@cncRoutes.post("/realtime", response_model=GenericResponse)
+def send_realtime_command(
+    admin: GetAdminDep,
+    gateway: GetGateway,
+    request: RealtimeRequest,
+    x_cnc_session: GetSessionId,
+):
+    """Send a realtime action (pause / resume / stop / soft_reset) to the CNC."""
+    valid_actions = {ACTION_PAUSE, ACTION_RESUME, ACTION_STOP, ACTION_SOFT_RESET}
+    if request.action not in valid_actions:
+        raise HTTPException(
+            400,
+            detail=f"Acción inválida: {request.action}. "
+            f"Opciones: {', '.join(sorted(valid_actions))}",
+        )
+
+    if not gateway.is_gateway_running():
+        raise HTTPException(503, detail="CNC Gateway no está disponible")
+
+    gateway.send_realtime(x_cnc_session, request.action)
+    return {"success": f"Acción '{request.action}' enviada correctamente"}
