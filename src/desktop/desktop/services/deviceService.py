@@ -3,7 +3,6 @@
 import logging
 
 import core.utilities.worker.utils as worker
-from celery.result import AsyncResult
 from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
 from core.utilities.gateway.gatewayClient import GatewayClient
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
@@ -41,10 +40,6 @@ class DeviceService:
     @classmethod
     def is_device_enabled(cls) -> bool:
         return WorkerStoreAdapter.is_device_enabled()
-
-    @classmethod
-    def is_device_paused(cls) -> bool:
-        return WorkerStoreAdapter.is_device_paused()
 
     @classmethod
     def set_device_enabled(cls, enabled: bool) -> None:
@@ -97,14 +92,3 @@ class DeviceService:
             return "Ejecución cancelada: Ya hay una tarea en progreso"
 
         return None
-
-    # --- Celery task monitoring ---
-
-    @classmethod
-    def get_celery_task_status(cls, worker_task_id: str) -> dict:
-        """Query the Celery result backend for the status of a task.
-
-        Returns ``{"status": str, "info": Any}``.
-        """
-        task_state: AsyncResult = AsyncResult(worker_task_id)
-        return {"status": task_state.status, "info": task_state.info}

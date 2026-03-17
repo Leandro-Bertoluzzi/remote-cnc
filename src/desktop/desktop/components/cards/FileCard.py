@@ -113,12 +113,12 @@ class FileCard(Card):
         _, tool_id, material_id, name, note = task_config
 
         try:
-            worker_task_id = TaskService.create_and_execute_task(
+            TaskService.create_and_execute_task(
                 USER_ID, self.file.id, tool_id, material_id, name, note
             )
         except Exception as error:
             self.showError("Error", str(error))
             return
 
-        self.getWindow().startWorkerMonitor(worker_task_id)
+        self.getWindow().startWorkerMonitor()
         self.showInformation("Tarea enviada", "Se envió la tarea al equipo para su ejecución")

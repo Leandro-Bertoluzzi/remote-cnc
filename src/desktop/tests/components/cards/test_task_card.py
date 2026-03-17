@@ -54,9 +54,6 @@ class TestTaskCard:
         self.task.status = status
         self.task.id = 1
 
-        # Mock Redis methods
-        mocker.patch.object(DeviceService, "is_device_paused", return_value=False)
-
         # Mock card's auxiliary methods
         mock_set_task_description = mocker.patch.object(TaskCard, "check_task_status")
 
@@ -256,7 +253,6 @@ class TestTaskCard:
         mocker.patch.object(
             TaskService, "get_task_worker_status", return_value=worker_status_return
         )
-        mocker.patch.object(DeviceService, "is_device_paused", return_value=False)
 
         # Instantiate card
         card = TaskCard(self.task, False, [], [], [])

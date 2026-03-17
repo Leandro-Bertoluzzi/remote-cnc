@@ -259,7 +259,11 @@ class GatewayClient:
 
     def subscribe_events(self) -> redis.client.PubSub:
         """Return a PubSub object subscribed to the events channel."""
+        return self.subscribe_channels(EVENTS_CHANNEL)
+
+    def subscribe_channels(self, *channels: str) -> redis.client.PubSub:
+        """Return a PubSub object subscribed to one or more channels."""
         r = self._redis()
         ps = r.pubsub()
-        ps.subscribe(EVENTS_CHANNEL)
+        ps.subscribe(*channels)
         return ps

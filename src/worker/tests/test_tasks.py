@@ -2,7 +2,6 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-from celery.app.task import Task
 from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
 from core.utilities.gateway.constants import (
@@ -103,8 +102,6 @@ def test_execute_task_success(mocker: MockerFixture):
     ]
     mock_gw = _mock_gateway(mocker, pubsub_msgs)
 
-    mocked_update_state = mocker.patch.object(Task, "update_state")
-
     executeTask(task_id=2)
 
     # Assertions
@@ -112,7 +109,6 @@ def test_execute_task_success(mocker: MockerFixture):
     mock_gw.acquire_session.assert_called_once_with(user_id=1, client_type="worker")
     mock_gw.request_file_execution.assert_called_once()
     mock_gw.release_session.assert_called_once_with(SESSION_ID)
-    assert mocked_update_state.call_count == 2  # two progress events
     assert mock_update_status.call_count == 2  # IN_PROGRESS + FINISHED
 
 
@@ -226,12 +222,10 @@ def test_events_for_other_task_ignored(mocker: MockerFixture):
         _pubsub_finished(task_id=5, sent=10, total=10),  # ours
     ]
     _mock_gateway(mocker, pubsub_msgs)
-    mocked_update_state = mocker.patch.object(Task, "update_state")
 
     executeTask(task_id=5)
 
-    # Only the progress for task 99 was ignored — no update_state for it
-    assert mocked_update_state.call_count == 0
+    # Progress for task 99 was ignored, finished for task 5 was processed
     assert mock_update_status.call_count == 2  # IN_PROGRESS + FINISHED
 
 
