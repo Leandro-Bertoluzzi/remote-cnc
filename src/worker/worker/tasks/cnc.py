@@ -88,7 +88,7 @@ def executeTask(self, task_id: int) -> None:
         repository.update_task_status(task.id, TaskStatus.IN_PROGRESS.value)
         worker_logger.info("Comenzada la ejecución del archivo: %s", file_path)
 
-        gateway.request_file_execution(session_id, file_path, task.id)
+        gateway.request_file_execution(session_id, str(file_path), task.id)
 
         # 6. Wait for file_finished or file_failed
         _wait_for_completion(pubsub, task.id, worker_logger)

@@ -36,6 +36,7 @@ class SessionManager:
         port: int = REDIS_PORT,
         db: int = REDIS_DB_STORAGE,
     ):
+        self._redis: redis.Redis[bytes]
         if redis_conn is not None:
             self._redis = redis_conn
         else:

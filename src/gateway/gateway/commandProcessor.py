@@ -62,7 +62,7 @@ class CommandProcessor:
         self.controller = controller
         self.session_manager = session_manager
         self.file_executor = file_executor
-        self._redis = (
+        self._redis: redis.Redis[bytes] = (
             redis_conn if redis_conn is not None else redis.Redis(host=host, port=port, db=db)
         )
         self._disconnect_requested = False

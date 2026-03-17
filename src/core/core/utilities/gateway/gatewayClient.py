@@ -80,7 +80,7 @@ class GatewayClient:
     ):
         self._pool = redis.ConnectionPool(host=host, port=port, db=db)
 
-    def _redis(self) -> redis.Redis:
+    def _redis(self) -> redis.Redis[bytes]:
         return redis.Redis(connection_pool=self._pool)
 
     # ------------------------------------------------------------------
