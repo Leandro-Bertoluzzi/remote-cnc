@@ -1,12 +1,24 @@
-"""Service layer for Device/Worker operations (Celery + Redis)."""
+"""Service layer for Device/Worker operations (Celery + Redis + Gateway)."""
 
 import logging
 
 import core.utilities.worker.utils as worker
 from celery.result import AsyncResult
+from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
+from core.utilities.gateway.gatewayClient import GatewayClient
 from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 
 logger = logging.getLogger(__name__)
+
+# Module-level shared GatewayClient instance
+_gateway_client: GatewayClient | None = None
+
+
+def _get_gateway() -> GatewayClient:
+    global _gateway_client  # noqa: PLW0603
+    if _gateway_client is None:
+        _gateway_client = GatewayClient()
+    return _gateway_client
 
 
 class DeviceService:
@@ -38,13 +50,25 @@ class DeviceService:
     def set_device_enabled(cls, enabled: bool) -> None:
         WorkerStoreAdapter.set_device_enabled(enabled)
 
+    # --- Gateway pause/resume ---
+
     @classmethod
     def request_pause(cls) -> None:
-        WorkerStoreAdapter.request_pause()
+        """Send a pause realtime command to the Gateway using the active session."""
+        gw = _get_gateway()
+        session = gw.get_active_session()
+        if session is None:
+            raise RuntimeError("No hay sesión activa para pausar")
+        gw.send_realtime(session["session_id"], ACTION_PAUSE)
 
     @classmethod
     def request_resume(cls) -> None:
-        WorkerStoreAdapter.request_resume()
+        """Send a resume realtime command to the Gateway using the active session."""
+        gw = _get_gateway()
+        session = gw.get_active_session()
+        if session is None:
+            raise RuntimeError("No hay sesión activa para retomar")
+        gw.send_realtime(session["session_id"], ACTION_RESUME)
 
     # --- Combined checks ---
 

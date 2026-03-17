@@ -6,7 +6,6 @@ from core.schemas.worker import (
     TaskStatusResponse,
     WorkerAvailableResponse,
     WorkerOnResponse,
-    WorkerPausedResponse,
     WorkerTaskResponse,
 )
 from core.utilities.worker.scheduler import app
@@ -15,6 +14,7 @@ from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
 from fastapi import APIRouter, HTTPException
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
+from api.middleware.gatewayMiddleware import GetGateway
 
 workerRoutes = APIRouter(prefix="/worker", tags=["Worker"])
 
@@ -89,20 +89,10 @@ def get_worker_status(user: GetUserDep) -> worker.WorkerStatus:
     return worker.get_worker_status()
 
 
-@workerRoutes.put("/pause/{paused}", response_model=WorkerPausedResponse)
-def set_worker_paused(user: GetAdminDep, paused: int):
-    """Pauses or resume the device."""
-    if paused != 0:
-        WorkerStoreAdapter.request_pause()
-    else:
-        WorkerStoreAdapter.request_resume()
-    return {"paused": WorkerStoreAdapter.is_device_paused()}
-
-
-@workerRoutes.get("/pause", response_model=WorkerPausedResponse)
-def check_worker_paused(user: GetUserDep):
-    """Checks if the worker is paused"""
-    return {"paused": WorkerStoreAdapter.is_device_paused()}
+@workerRoutes.get("/gateway/running")
+def check_gateway_running(user: GetUserDep, gateway: GetGateway):
+    """Returns whether the CNC Gateway process is running."""
+    return {"running": gateway.is_gateway_running()}
 
 
 @workerRoutes.put("/device/{enabled}", response_model=DeviceEnabledResponse)

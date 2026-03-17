@@ -1,5 +1,18 @@
+"""Celery tasks for CNC file execution.
+
+The `execute_task` task orchestrates the execution of a G-code file through the CNC Gateway:
+
+1. Validates the task in the DB and marks it as IN_PROGRESS.
+2. Acquires a Gateway session and requests file execution.
+3. Waits for file_finished / file_failed events via Redis PubSub.
+4. Updates the task status in the DB accordingly.
+
+The heavy lifting (serial I/O, line-by-line sending, pause/resume) is handled
+entirely by the CNC Gateway process.
+"""
+
 import json
-import time
+import logging
 
 from celery import Task
 from celery.utils.log import get_task_logger
@@ -8,182 +21,177 @@ from core.database.base import SessionLocal
 from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
 from core.utilities.files import FileSystemHelper
-from core.utilities.gcode.gcodeFileSender import FinishedFile, GcodeFileSender
-from core.utilities.grbl.grblController import GrblController
-from core.utilities.loggerFactory import setup_task_logger
-from core.utilities.redisPubSubManager import RedisPubSubManagerSync
-from core.utilities.worker.workerStatusManager import WorkerStatusManager
+from core.utilities.gateway.constants import (
+    EVENT_FILE_FAILED,
+    EVENT_FILE_FINISHED,
+    EVENT_FILE_PROGRESS,
+)
+from core.utilities.gateway.gatewayClient import GatewayClient
 from worker.main import app
 
-# Constants
-SEND_INTERVAL = 0.10  # Seconds
-STATUS_POLL = 0.10  # Seconds
-STATUS_CHANNEL = "grbl_status"
+logger = logging.getLogger(__name__)
+
+# Timeout waiting for a file-execution event (seconds).
+# A very long G-code file could run for hours, so we set a generous limit.
+FILE_EVENT_TIMEOUT = 24 * 60 * 60  # 24 h
 
 
 @app.task(name="execute_task", bind=True, ignore_result=True)
-def executeTask(self: Task, task_id: int, serial_port: str, serial_baudrate: int) -> None:
+def executeTask(self: Task, task_id: int) -> None:
+    """Orchestrate a G-code file execution via the CNC Gateway.
+
+    This task is purely a DB-orchestration wrapper:
+    - it does NOT open a serial port
+    - it does NOT send G-code lines itself
+    - pause/resume/stop are handled by the Gateway's command queues
+
+    The task blocks on Redis PubSub until the Gateway publishes a
+    ``file_finished`` or ``file_failed`` event for the requested task.
+    """
     db_session = SessionLocal()
-    redis: RedisPubSubManagerSync | None = None
-    cnc: GrblController | None = None
+    worker_logger = get_task_logger(__name__)
+    gateway = GatewayClient()
+    session_id: str | None = None
+    pubsub = None
 
     try:
         repository = TaskRepository(db_session)
-        # 1. Check if there is a task currently in progress, in which case return an exception
+
+        # 1. Validate DB state
         if repository.are_there_tasks_in_progress():
             raise Exception("Ya hay una tarea en progreso, por favor espere a que termine")
 
-        # 2. Get the file for the requested task
         task = repository.get_task_by_id(task_id)
         if not task:
             raise Exception("No se encontró la tarea en la base de datos")
 
         if task.status != TaskStatus.APPROVED.value:
-            raise Exception("La tarea tiene un estado incorrecto: {}".format(task.status))
+            raise Exception(f"La tarea tiene un estado incorrecto: {task.status}")
 
+        # 2. Resolve the G-code file path
         files_helper = FileSystemHelper(FILES_FOLDER_PATH)
         file_path = files_helper.get_file_path(task.file.user_id, task.file.file_name)
 
-        # 3. Instantiate a GrblController object and start communication with Arduino
-        worker_logger = get_task_logger(__name__)
-        task_logger = setup_task_logger(task.file.file_name, worker_logger.level)
-        cnc = GrblController(logger=task_logger)
-        cnc_status = cnc.grbl_status
-        cnc.connect(serial_port, serial_baudrate)
+        # 3. Acquire a Gateway session for the worker
+        if not gateway.is_gateway_running():
+            raise Exception("CNC Gateway no está disponible")
 
-        # Task progress
-        sent_lines = 0
-        processed_lines = 0
-        total_lines = 0
-        finished_sending = False
-        worker_status = WorkerStatusManager()
-        # Initial CNC state
-        status = cnc_status.get_status_report()
-        parserstate = cnc_status.get_parser_state()
-        cnc_status.set_tool(task.tool_id)
+        session_id = gateway.acquire_session(
+            user_id=task.user_id,
+            client_type="worker",
+        )
+        if session_id is None:
+            raise Exception("No se pudo adquirir la sesión: el CNC está en uso")
 
-        # 4. Initiate the file sender
-        file_sender = GcodeFileSender(cnc, file_path)
-        try:
-            # Account for line added at the end (G4 P0)
-            total_lines = file_sender.start() + 1
-        except Exception as error:
-            cnc.disconnect()
-            cnc = None
-            worker_logger.critical("Error al abrir el archivo: {}".format(file_path))
-            worker_logger.critical(error)
-            raise error
+        # 4. Subscribe to events BEFORE requesting execution (no race)
+        pubsub = gateway.subscribe_events()
 
-        # Once sure the file exists, mark the task as 'in progress' in the DB
+        # 5. Mark the task as in-progress and request file execution
         repository.update_task_status(task.id, TaskStatus.IN_PROGRESS.value)
-        worker_logger.info("Comenzada la ejecución del archivo: {}".format(file_path))
+        worker_logger.info("Comenzada la ejecución del archivo: %s", file_path)
 
-        # 5. Start a PubSub manager to notify updates and listen to requests
-        redis = RedisPubSubManagerSync()
-        redis.connect()
+        gateway.request_file_execution(session_id, file_path, task.id)
 
-        # 6. Send G-code lines in a loop, until either the file is finished or there is an error
-        ts = tp = time.time()  # last time a command was sent and info was queried
+        # 6. Wait for file_finished or file_failed, relaying progress
+        _wait_for_completion(self, pubsub, task.id, worker_logger)
 
-        while True:
-            t = time.time()
-
-            # Refresh machine position?
-            if t - tp > STATUS_POLL:
-                status = cnc_status.get_status_report()
-                parserstate = cnc_status.get_parser_state()
-                processed_lines = cnc.get_commands_count()
-                self.update_state(
-                    state="PROGRESS",
-                    meta={
-                        "sent_lines": sent_lines,
-                        "processed_lines": processed_lines,
-                        "total_lines": total_lines,
-                        "status": status,
-                        "parserstate": parserstate,
-                    },
-                )
-                message = json.dumps(
-                    {
-                        "processed_lines": processed_lines,
-                        "total_lines": total_lines,
-                        "status": status,
-                        "parserstate": parserstate,
-                    }
-                )
-                redis.publish(STATUS_CHANNEL, message)
-
-                if cnc_status.finished():
-                    break
-
-                if cnc_status.failed():
-                    break
-
-                # GRBL finished executing file
-                if processed_lines >= total_lines and finished_sending:
-                    break
-
-                tp = t
-
-            # Send new command?
-            if t - ts > SEND_INTERVAL and not finished_sending:
-                # Check if PAUSE or RESUME was requested
-                pause, resume = worker_status.process_request()
-
-                if pause:
-                    cnc.set_paused(True)
-                    file_sender.pause()
-
-                if resume:
-                    cnc.set_paused(False)
-                    file_sender.resume()
-
-                if worker_status.is_paused():
-                    time.sleep(1)
-                    continue
-
-                try:
-                    sent_lines = file_sender.send_line()
-                except FinishedFile:
-                    cnc.send_command("G4 P0")  # Ask to wait for finish
-                    sent_lines += 1
-                    finished_sending = True
-                    file_sender.stop()
-
-                # update task progress
-                self.update_state(
-                    state="PROGRESS",
-                    meta={
-                        "sent_lines": sent_lines,
-                        "processed_lines": processed_lines,
-                        "total_lines": total_lines,
-                        "status": status,
-                        "parserstate": parserstate,
-                    },
-                )
-                message = json.dumps({"sent_lines": sent_lines, "total_lines": total_lines})
-                redis.publish(STATUS_CHANNEL, message)
-
-                ts = t
-
-        # 7. When the file finishes (or fails), disconnect from the GRBL device
-        # and update its status in the DB
-
-        if cnc_status.failed():
-            worker_logger.critical("Error durante la ejecución del archivo: {}".format(file_path))
-            repository.update_task_status(task.id, TaskStatus.FAILED.value)
-
-            error_message = cnc_status.get_error_message()
-            worker_logger.critical(error_message)
-            raise Exception(error_message)
-
-        # SUCCESS
-        worker_logger.info("Finalizada la ejecución del archivo: {}".format(file_path))
+        # 7. Determine final status
+        # If _wait_for_completion returned normally, the file finished successfully
+        worker_logger.info("Finalizada la ejecución del archivo: %s", file_path)
         repository.update_task_status(task.id, TaskStatus.FINISHED.value)
 
+    except _FileExecutionFailed as exc:
+        # The Gateway reported a file_failed event
+        worker_logger.critical("Error durante la ejecución: %s", exc.error)
+        try:
+            repository.update_task_status(task_id, TaskStatus.FAILED.value)
+        except Exception:
+            worker_logger.exception("No se pudo actualizar el estado de la tarea en la DB")
+        raise Exception(exc.error) from exc
+
     finally:
-        if cnc is not None:
-            cnc.disconnect()
-        if redis is not None:
-            redis.disconnect()
+        # Release session if we acquired one
+        if session_id is not None:
+            try:
+                gateway.release_session(session_id)
+            except Exception:
+                worker_logger.warning("Error al liberar la sesión", exc_info=True)
+
+        if pubsub is not None:
+            try:
+                pubsub.unsubscribe()
+                pubsub.close()
+            except Exception:
+                pass
+
         db_session.close()
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+class _FileExecutionFailed(Exception):
+    """Internal signal: the Gateway reported a file_failed event."""
+
+    def __init__(self, error: str):
+        self.error = error
+        super().__init__(error)
+
+
+def _wait_for_completion(
+    celery_task: Task,
+    pubsub,
+    task_id: int,
+    task_logger,
+) -> None:
+    """Block on PubSub waiting for file_finished or file_failed.
+
+    Relays progress events as Celery PROGRESS state updates so that
+    existing callers (``AsyncResult``, ``GET /worker/status/<id>``)
+    continue to work.
+    """
+    import time
+
+    deadline = time.time() + FILE_EVENT_TIMEOUT
+
+    for raw_message in pubsub.listen():
+        if time.time() > deadline:
+            raise _FileExecutionFailed("Timeout esperando la finalización del archivo")
+
+        if raw_message["type"] != "message":
+            continue
+
+        try:
+            event = json.loads(raw_message["data"])
+        except (json.JSONDecodeError, TypeError):
+            continue
+
+        event_type = event.get("type", "")
+        event_task_id = event.get("task_id")
+
+        # Only process events for *our* task
+        if event_task_id is not None and event_task_id != task_id:
+            continue
+
+        if event_type == EVENT_FILE_PROGRESS:
+            celery_task.update_state(
+                state="PROGRESS",
+                meta={
+                    "sent_lines": event.get("sent_lines", 0),
+                    "processed_lines": event.get("processed_lines", 0),
+                    "total_lines": event.get("total_lines", 0),
+                },
+            )
+
+        elif event_type == EVENT_FILE_FINISHED:
+            task_logger.info(
+                "Archivo finalizado: %d/%d líneas",
+                event.get("sent_lines", 0),
+                event.get("total_lines", 0),
+            )
+            return  # success
+
+        elif event_type == EVENT_FILE_FAILED:
+            raise _FileExecutionFailed(event.get("error", "Error desconocido"))

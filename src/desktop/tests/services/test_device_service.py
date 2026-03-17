@@ -63,16 +63,6 @@ class TestDeviceService:
 
     # --- Delegation methods ---
 
-    def test_request_pause(self, mocker: MockerFixture):
-        mock = mocker.patch.object(WorkerStoreAdapter, "request_pause")
-        DeviceService.request_pause()
-        mock.assert_called_once()
-
-    def test_request_resume(self, mocker: MockerFixture):
-        mock = mocker.patch.object(WorkerStoreAdapter, "request_resume")
-        DeviceService.request_resume()
-        mock.assert_called_once()
-
     def test_set_device_enabled(self, mocker: MockerFixture):
         mock = mocker.patch.object(WorkerStoreAdapter, "set_device_enabled")
         DeviceService.set_device_enabled(True)
