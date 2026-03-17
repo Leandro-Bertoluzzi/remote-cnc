@@ -3,7 +3,7 @@
 from typing import Callable
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from desktop.components.buttons.MenuButton import MenuButton
 
@@ -24,7 +24,6 @@ class ConnectionErrorWidget(QWidget):
         parent: QWidget | None = None,
     ):
         super().__init__(parent)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -47,9 +46,7 @@ class ConnectionErrorWidget(QWidget):
         # Message
         message_label = QLabel(error_message)
         message_label.setAlignment(Qt.AlignCenter)
-        message_label.setWordWrap(True)
         message_label.setStyleSheet("font-size: 14px; color: #cccccc; background: transparent;")
-        message_label.setMaximumWidth(500)
         layout.addWidget(message_label)
 
         # Spacer
