@@ -1,6 +1,6 @@
 from abc import abstractmethod
+from typing import Callable
 
-from core.utilities.grbl.grblController import GrblController
 from core.utilities.grbl.grblUtils import JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
 from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QHBoxLayout, QLabel, QRadioButton
 
@@ -14,9 +14,19 @@ class JogController:
     def __init__(self):
         # Attributes definition
         self.units = 0  # Default to millimeters
+        self._jog_callback: Callable[..., None] | None = None
 
-    def set_controller(self, grbl_controller: GrblController):
-        self.grbl_controller = grbl_controller
+    def set_jog_callback(self, callback: Callable[..., None]) -> None:
+        """Register the callable used to send jog commands.
+
+        The callback signature must be::
+
+            callback(x, y, z, feedrate, units, distance_mode)
+
+        :class:`ControlView` supplies a method that delegates to
+        ``GatewayClient.send_jog``.
+        """
+        self._jog_callback = callback
 
     def create_units_radio_buttons(self) -> tuple[QLabel, QHBoxLayout]:
         label_units = QLabel("Unidades:")
@@ -49,9 +59,8 @@ class JogController:
     def send_jog_command(self, x, y, z, feedrate, distance_mode):
         units_info = self.UNIT_MAPPING[self.units]
 
-        self.grbl_controller.jog(
-            x, y, z, feedrate, units=units_info["distance_unit"], distance_mode=distance_mode
-        )
+        if self._jog_callback is not None:
+            self._jog_callback(x, y, z, feedrate, units_info["distance_unit"], distance_mode)
 
     # Abstract methods
 

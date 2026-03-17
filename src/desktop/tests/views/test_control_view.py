@@ -1,23 +1,23 @@
-import logging
+"""Tests for :class:`ControlView` — Gateway-based CNC control."""
 
 import mocks.grbl as grbl_mocks
 import pytest
-from core.utilities.grbl.grblController import GrblController
+from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.CodeEditor import CodeEditor
 from desktop.components.ControllerStatus import ControllerStatus
-from desktop.components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from desktop.components.Terminal import Terminal
 from desktop.containers.ControllerActions import ControllerActions
-from desktop.helpers.fileStreamer import FileStreamer
-from desktop.helpers.grblSync import GrblSync
+from desktop.helpers.gatewaySync import GatewaySync
 from desktop.MainWindow import MainWindow
 from desktop.services.deviceService import DeviceService
 from desktop.views.ControlView import ControlView
 from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PyQt5.QtWidgets import QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
+
+_FAKE_SESSION_ID = "abc123"
 
 
 class TestControlView:
@@ -25,16 +25,19 @@ class TestControlView:
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock device service methods
         mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
-        # Mock logger factory to avoid file system access
-        mocker.patch(
-            "desktop.views.ControlView.setup_stream_logger",
-            return_value=logging.getLogger("test_control_view"),
-        )
+
+        # Prevent real Redis connections from GatewayClient / GatewaySync
+        self.mock_gateway = mocker.MagicMock()
+        self.mock_sync = mocker.MagicMock(spec=GatewaySync)
+        mocker.patch("desktop.views.ControlView.GatewayClient", return_value=self.mock_gateway)
+        mocker.patch("desktop.views.ControlView.GatewaySync", return_value=self.mock_sync)
 
         # Create an instance of ControlView
         self.parent = mock_window
         self.control_view = ControlView(self.parent)
         qtbot.addWidget(self.control_view)
+
+    # -- init ---------------------------------------------------------------
 
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_control_view_init(self, qtbot: QtBot, mocker: MockerFixture, helpers, device_busy):
@@ -58,336 +61,250 @@ class TestControlView:
 
         # More assertions
         assert self.parent.addToolBar.call_count == (1 if device_busy else 2)  # type: ignore[union-attr]
-        assert control_view.checkmode is False
+
+    # -- navigation ---------------------------------------------------------
 
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_control_view_goes_back_to_menu(self, device_busy):
-        # Mock attributes
         self.control_view.device_busy = device_busy
-
-        # Call method under test
         self.control_view.backToMenu()
 
-        # Assertions
         assert self.parent.removeToolBar.call_count == (1 if device_busy else 2)  # type: ignore[union-attr]
         self.parent.backToMenu.assert_called_once()  # type: ignore[attr-defined]
 
     def test_control_view_close_event(self, mocker: MockerFixture):
-        # Mock methods
         mock_disconnect = mocker.patch.object(ControlView, "disconnect_device")
-
-        # Call method under test
         self.control_view.closeEvent(QCloseEvent())
-
-        # Assertions
         assert mock_disconnect.call_count == 1
 
-    def test_control_view_set_selected_port(self):
-        # Mock attributes
-        self.control_view.port_selected = ""
+    # -- connect / disconnect -----------------------------------------------
 
-        # Call method under test
-        self.control_view.set_selected_port("PORTx")
+    def test_connect_device_acquires_session(self):
+        self.mock_gateway.acquire_session.return_value = _FAKE_SESSION_ID
 
-        # Assertions
-        assert self.control_view.port_selected == "PORTx"
-
-    @pytest.mark.parametrize(
-        "port,connected",
-        [
-            ("", False),
-            ("", True),
-            ("PORTx", False),
-            ("PORTx", True),
-        ],
-    )
-    def test_control_view_toggle_connected_device(self, mocker: MockerFixture, port, connected):
-        # Mock attributes
-        self.control_view.port_selected = port
-        self.control_view.connected = connected
-
-        # Mock methods
-        mock_grbl_connect = mocker.patch.object(
-            GrblController, "connect", return_value={"raw": grbl_mocks.grbl_init_message}
-        )
-        mock_grbl_disconnect = mocker.patch.object(GrblController, "disconnect")
-        mock_start_monitor = mocker.patch.object(GrblSync, "start_monitor")
-        mock_write_to_terminal = mocker.patch.object(ControlView, "write_to_terminal")
-        mock_stop_sending_file = mocker.patch.object(FileStreamer, "stop")
-        mock_stop_monitor = mocker.patch.object(GrblSync, "stop_monitor")
-
-        # Call method under test
-        self.control_view.toggle_connected()
-
-        # Assertions
-        should_connect = port and not connected
-        should_disconnect = connected
-        assert mock_grbl_connect.call_count == (1 if should_connect else 0)
-        assert mock_start_monitor.call_count == (1 if should_connect else 0)
-        assert mock_write_to_terminal.call_count == (1 if should_connect else 0)
-        assert mock_grbl_disconnect.call_count == (1 if should_disconnect else 0)
-        assert mock_stop_sending_file.call_count == (1 if should_disconnect else 0)
-        assert mock_stop_monitor.call_count == (1 if should_disconnect else 0)
-        connect_btn_text = self.control_view.connect_button.text()
-        assert connect_btn_text == ("Desconectar" if should_connect else "Conectar")
-        if should_connect:
-            mock_write_to_terminal.assert_called_with(grbl_mocks.grbl_init_message)
-
-    def test_control_view_connect_device_serial_error(self, mocker: MockerFixture):
-        # Mock attributes
-        self.control_view.port_selected = "PORTx"
-        self.control_view.connected = False
-
-        # Mock methods
-        mock_grbl_connect = mocker.patch.object(
-            GrblController, "connect", side_effect=Exception("mocked-error")
-        )
-        mock_start_monitor = mocker.patch.object(GrblSync, "start_monitor")
-        mock_write_to_terminal = mocker.patch.object(ControlView, "write_to_terminal")
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
-
-        # Call method under test
         self.control_view.connect_device()
 
-        # Assertions
-        assert mock_grbl_connect.call_count == 1
-        assert mock_start_monitor.call_count == 0
-        assert mock_write_to_terminal.call_count == 0
-        assert self.control_view.connect_button.text() == "Conectar"
-        mock_popup.assert_called_once()
+        assert self.control_view.connected is True
+        assert self.control_view.session_id == _FAKE_SESSION_ID
+        assert self.control_view.connect_button.text() == "Desconectar"
+        self.mock_gateway.acquire_session.assert_called_once()
+        self.mock_sync.start_monitor.assert_called_once()
 
-    def test_control_view_disconnect_device_serial_error(self, mocker: MockerFixture):
-        # Mock attributes
-        self.control_view.port_selected = "PORTx"
-        self.control_view.connected = True
-        self.control_view.connect_button.setText("Desconectar")
-
-        # Mock methods
-        mock_grbl_disconnect = mocker.patch.object(
-            GrblController, "disconnect", side_effect=Exception("mocked-error")
-        )
-        mock_stop_monitor = mocker.patch.object(GrblSync, "stop_monitor")
-
-        # Mock QMessageBox methods
+    def test_connect_device_session_busy(self, mocker: MockerFixture):
+        self.mock_gateway.acquire_session.return_value = None
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
 
-        # Call method under test
-        self.control_view.disconnect_device()
+        self.control_view.connect_device()
 
-        # Assertions
-        assert mock_grbl_disconnect.call_count == 1
-        assert mock_stop_monitor.call_count == 0
-        assert self.control_view.connect_button.text() == "Desconectar"
-        mock_popup.assert_called_once()
+        assert self.control_view.connected is False
+        assert mock_popup.call_count == 1
 
-    def test_control_view_disconnect_device_runtime_error(self, mocker: MockerFixture):
-        # Mock attributes
+    def test_connect_device_error(self, mocker: MockerFixture):
+        self.mock_gateway.acquire_session.side_effect = Exception("connection refused")
+        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
+
+        self.control_view.connect_device()
+
+        assert self.control_view.connected is False
+        assert mock_popup.call_count == 1
+
+    def test_disconnect_device_releases_session(self):
+        # Pre-condition: connected
         self.control_view.connected = True
+        self.control_view.session_id = _FAKE_SESSION_ID
+        self.mock_gateway.release_session.return_value = True
 
-        # Mock exception
-        self.control_view.connect_button.setText = mocker.Mock()
-        self.control_view.connect_button.setText.side_effect = RuntimeError(
-            "wrapped C/C++ object of type QToolButton has been deleted"
-        )
-
-        # Mock methods
-        mock_grbl_disconnect = mocker.patch.object(GrblController, "disconnect")
-        mock_stop_monitor = mocker.patch.object(GrblSync, "stop_monitor")
-        mock_enable_serial_widgets = mocker.patch.object(ControlView, "enable_serial_widgets")
-
-        # Call method under test
         self.control_view.disconnect_device()
 
-        # Assertions
-        assert mock_grbl_disconnect.call_count == 1
-        assert mock_stop_monitor.call_count == 1
-        assert mock_enable_serial_widgets.call_count == 0
+        assert self.control_view.connected is False
+        assert self.control_view.session_id is None
+        self.mock_gateway.release_session.assert_called_once_with(_FAKE_SESSION_ID)
+        self.mock_sync.stop_monitor.assert_called_once()
 
-    def test_control_view_query_settings(self, mocker: MockerFixture):
-        # Mock attributes
-        self.control_view.device_settings = {}
+    def test_disconnect_device_release_error(self, mocker: MockerFixture):
+        self.control_view.connected = True
+        self.control_view.session_id = _FAKE_SESSION_ID
+        self.mock_gateway.release_session.side_effect = Exception("redis error")
+        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
 
-        # Mock methods
-        mock_grbl_query_settings = mocker.patch.object(
-            GrblController, "get_grbl_settings", return_value=grbl_mocks.grbl_settings
+        self.control_view.disconnect_device()
+
+        # Still connected because release raised
+        assert self.control_view.connected is True
+        assert mock_popup.call_count == 1
+
+    def test_disconnect_device_runtime_error(self, mocker: MockerFixture):
+        """The C++ widget may already be deleted if the window is closing."""
+        self.control_view.connected = True
+        self.control_view.session_id = _FAKE_SESSION_ID
+        self.mock_gateway.release_session.return_value = True
+
+        # Simulate C++ deletion
+        self.control_view.connect_button.setText = mocker.Mock(
+            side_effect=RuntimeError("wrapped C/C++ object deleted")
         )
 
-        # Call method under test
-        self.control_view.query_device_settings()
+        self.control_view.disconnect_device()
 
-        # Assertions
-        assert mock_grbl_query_settings.call_count == 1
-        assert self.control_view.device_settings == grbl_mocks.grbl_settings
+        assert self.control_view.connected is False
+        self.mock_sync.stop_monitor.assert_called_once()
+
+    def test_toggle_connected(self, mocker: MockerFixture):
+        mock_connect = mocker.patch.object(ControlView, "connect_device")
+        mock_disconnect = mocker.patch.object(ControlView, "disconnect_device")
+
+        self.control_view.connected = False
+        self.control_view.toggle_connected()
+        assert mock_connect.call_count == 1
+
+        self.control_view.connected = True
+        self.control_view.toggle_connected()
+        assert mock_disconnect.call_count == 1
+
+    # -- heartbeat ----------------------------------------------------------
+
+    def test_renew_session_success(self):
+        self.control_view.session_id = _FAKE_SESSION_ID
+        self.mock_gateway.renew_session.return_value = True
+
+        self.control_view._renew_session()
+
+        self.mock_gateway.renew_session.assert_called_once_with(_FAKE_SESSION_ID)
+
+    def test_renew_session_failure_disconnects(self, mocker: MockerFixture):
+        self.control_view.session_id = _FAKE_SESSION_ID
+        self.control_view.connected = True
+        self.mock_gateway.renew_session.return_value = False
+        self.mock_gateway.release_session.return_value = True
+        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
+
+        self.control_view._renew_session()
+
+        assert self.control_view.connected is False
+        assert mock_popup.call_count == 1
+
+    # -- GRBL actions -------------------------------------------------------
 
     def test_run_homing_cycle(self, mocker: MockerFixture):
-        # Mock methods
-        mock_grbl_home_cyle = mocker.patch.object(GrblController, "handle_homing_cycle")
-
-        # Mock QMessageBox methods
+        self.control_view.session_id = _FAKE_SESSION_ID
         mock_popup = mocker.patch.object(QMessageBox, "warning", return_value=QMessageBox.Ok)
 
-        # Call method under test
         self.control_view.run_homing_cycle()
 
-        # Assertions
-        assert mock_grbl_home_cyle.call_count == 1
+        self.mock_gateway.send_command.assert_called_once_with(_FAKE_SESSION_ID, "$H")
         assert mock_popup.call_count == 1
 
-    def test_disable_alarm(self, mocker: MockerFixture):
-        # Mock methods
-        mock_grbl_disable_alarm = mocker.patch.object(GrblController, "disable_alarm")
+    def test_disable_alarm(self):
+        self.control_view.session_id = _FAKE_SESSION_ID
 
-        # Call method under test
         self.control_view.disable_alarm()
 
-        # Assertions
-        assert mock_grbl_disable_alarm.call_count == 1
+        self.mock_gateway.send_command.assert_called_once_with(_FAKE_SESSION_ID, "$X")
 
     def test_toggle_check_mode(self, mocker: MockerFixture):
-        # Mock methods
-        mock_grbl_toggle_checkmode = mocker.patch.object(GrblController, "toggle_check_mode")
-
-        # Mock QMessageBox methods
+        self.control_view.session_id = _FAKE_SESSION_ID
         mock_popup = mocker.patch.object(QMessageBox, "information", return_value=QMessageBox.Ok)
 
-        # Call method under test
         self.control_view.toggle_check_mode()
 
-        # Assertions
-        assert mock_grbl_toggle_checkmode.call_count == 1
-        assert self.control_view.checkmode
+        self.mock_gateway.send_command.assert_called_once_with(_FAKE_SESSION_ID, "$C")
         assert mock_popup.call_count == 1
+
+    def test_configure_grbl_shows_warning(self, mocker: MockerFixture):
+        mock_popup = mocker.patch.object(QMessageBox, "warning", return_value=QMessageBox.Ok)
+
+        self.control_view.configure_grbl()
+
+        assert mock_popup.call_count == 1
+
+    # -- file execution -----------------------------------------------------
 
     @pytest.mark.parametrize("file_path", ["", "/path/to/file.gcode"])
     @pytest.mark.parametrize("modified", [False, True])
-    def test_start_file_stream(self, mocker: MockerFixture, file_path, modified):
-        # Mock code editor methods
+    def test_start_file_execution(self, mocker: MockerFixture, file_path, modified):
+        self.control_view.session_id = _FAKE_SESSION_ID
+
         mock_get_file_path = mocker.patch.object(
             CodeEditor, "get_file_path", return_value=file_path
         )
-        mock_get_file_modified = mocker.patch.object(
-            CodeEditor, "get_modified", return_value=modified
-        )
-
-        # Mock file sender methods
-        mock_set_file_to_stream = mocker.patch.object(FileStreamer, "set_file")
-        mock_start_file_stream = mocker.patch.object(FileStreamer, "start")
-
-        # Mock QMessageBox methods
+        mock_get_modified = mocker.patch.object(CodeEditor, "get_modified", return_value=modified)
         mock_popup = mocker.patch.object(QMessageBox, "warning", return_value=QMessageBox.Ok)
 
-        # Call method under test
-        self.control_view.start_file_stream()
+        self.control_view.start_file_execution()
 
-        # Assertions
-        should_stream = not modified and file_path
+        should_execute = not modified and file_path
         assert mock_get_file_path.call_count == 1
-        assert mock_get_file_modified.call_count == (1 if file_path else 0)
-        assert mock_popup.call_count == (1 if not should_stream else 0)
-        assert mock_set_file_to_stream.call_count == (1 if should_stream else 0)
-        assert mock_start_file_stream.call_count == (1 if should_stream else 0)
-        assert self.control_view.code_editor.isReadOnly() is (True if should_stream else False)
+        assert mock_get_modified.call_count == (1 if file_path else 0)
+        assert mock_popup.call_count == (1 if not should_execute else 0)
+        assert self.mock_gateway.request_file_execution.call_count == (1 if should_execute else 0)
+        if should_execute:
+            self.mock_gateway.request_file_execution.assert_called_once_with(
+                _FAKE_SESSION_ID, file_path
+            )
 
-    def test_pause_file_stream(self, mocker: MockerFixture):
-        # Mock file sender methods
-        mock_toggle_paused = mocker.patch.object(FileStreamer, "toggle_paused")
+    def test_toggle_pause(self):
+        self.control_view.session_id = _FAKE_SESSION_ID
 
-        # Call method under test
-        self.control_view.pause_file_stream()
+        # First toggle -> pause
+        self.control_view.toggle_pause()
+        self.mock_gateway.send_realtime.assert_called_with(_FAKE_SESSION_ID, ACTION_PAUSE)
+        assert self.control_view._file_paused is True
+        assert self.control_view.pause_button.text() == "Retomar"
 
-        # Assertions
-        assert mock_toggle_paused.call_count == 1
+        # Second toggle -> resume
+        self.control_view.toggle_pause()
+        self.mock_gateway.send_realtime.assert_called_with(_FAKE_SESSION_ID, ACTION_RESUME)
+        assert self.control_view._file_paused is False
+        assert self.control_view.pause_button.text() == "Pausar"
 
-    def test_stop_file_stream(self, mocker: MockerFixture):
-        # Mock file sender methods
-        mock_stop = mocker.patch.object(FileStreamer, "stop")
+    def test_stop_file_execution(self):
+        self.control_view.session_id = _FAKE_SESSION_ID
 
-        # Call method under test
-        self.control_view.stop_file_stream()
+        self.control_view.stop_file_execution()
 
-        # Assertions
-        assert mock_stop.call_count == 1
+        self.mock_gateway.request_file_stop.assert_called_once_with(_FAKE_SESSION_ID)
         assert self.control_view.code_editor.isReadOnly() is False
 
-    def test_finished_file_stream(self, mocker: MockerFixture):
-        # Mock QMessageBox methods
+    def test_finished_file_execution(self, mocker: MockerFixture):
         mock_popup = mocker.patch.object(QMessageBox, "information", return_value=QMessageBox.Ok)
 
-        # Call method under test
-        self.control_view.finished_file_stream()
+        self.control_view.finished_file_execution()
 
-        # Assertions
         assert mock_popup.call_count == 1
         assert self.control_view.code_editor.isReadOnly() is False
 
-    @pytest.mark.parametrize(
-        "dialogResponse,expected_updated", [(QDialog.Accepted, True), (QDialog.Rejected, False)]
-    )
-    def test_configure_grbl(self, mocker: MockerFixture, dialogResponse, expected_updated):
-        # Mock methods
-        mock_query_settings = mocker.patch.object(ControlView, "query_device_settings")
-        mock_grbl_set_settings = mocker.patch.object(GrblController, "set_settings")
+    def test_failed_file_execution(self, mocker: MockerFixture):
+        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
 
-        # Mock GrblConfigurationDialog methods
-        mocker.patch.object(GrblConfigurationDialog, "exec", return_value=dialogResponse)
-        mocker.patch.object(GrblConfigurationDialog, "getModifiedInputs", return_value={"$1": "5"})
+        self.control_view.failed_file_execution("GRBL alarm 2")
 
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "information", return_value=QMessageBox.Ok)
+        assert mock_popup.call_count == 1
 
-        # Call method under test
-        self.control_view.configure_grbl()
+    # -- slots --------------------------------------------------------------
 
-        # Assertions
-        assert mock_query_settings.call_count == 1
-        assert mock_grbl_set_settings.call_count == (1 if expected_updated else 0)
-        assert mock_popup.call_count == (1 if expected_updated else 0)
+    def test_write_to_terminal(self, mocker: MockerFixture):
+        mock_display = mocker.patch.object(Terminal, "display_text")
 
-    def test_configure_grbl_no_changes(self, mocker: MockerFixture):
-        # Mock methods
-        mock_query_settings = mocker.patch.object(ControlView, "query_device_settings")
-        mock_grbl_set_settings = mocker.patch.object(GrblController, "set_settings")
-
-        # Mock GrblConfigurationDialog methods
-        mocker.patch.object(GrblConfigurationDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(GrblConfigurationDialog, "getModifiedInputs", return_value={})
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "information", return_value=QMessageBox.Ok)
-
-        # Call method under test
-        self.control_view.configure_grbl()
-
-        # Assertions
-        assert mock_query_settings.call_count == 1
-        assert mock_grbl_set_settings.call_count == 0
-        assert mock_popup.call_count == 0
-
-    def test_control_view_write_to_terminal(self, mocker: MockerFixture):
-        # Mock methods
-        mock_display_text = mocker.patch.object(Terminal, "display_text")
-
-        # Call method under test
         self.control_view.write_to_terminal("some text")
 
-        # Assertions
-        assert mock_display_text.call_count == 1
-        mock_display_text.assert_called_with("some text")
+        mock_display.assert_called_with("some text")
 
-    def test_control_view_update_device_status(self, mocker: MockerFixture):
-        # Mock methods
+    def test_update_device_status(self, mocker: MockerFixture):
         mock_set_status = mocker.patch.object(ControllerStatus, "set_status")
         mock_set_feedrate = mocker.patch.object(ControllerStatus, "set_feedrate")
         mock_set_spindle = mocker.patch.object(ControllerStatus, "set_spindle")
         mock_set_tool = mocker.patch.object(ControllerStatus, "set_tool")
 
-        # Call method under test
         self.control_view.update_device_status(grbl_mocks.grbl_status, grbl_mocks.grbl_parserstate)
 
-        # Assertions
         assert mock_set_status.call_count == 1
         assert mock_set_feedrate.call_count == 1
         assert mock_set_spindle.call_count == 1
         assert mock_set_tool.call_count == 1
+
+    def test_update_file_progress(self, mocker: MockerFixture):
+        mock_mark = mocker.patch.object(CodeEditor, "markProcessedLines")
+
+        self.control_view.update_file_progress(42, 40, 100)
+
+        mock_mark.assert_called_once_with(42)

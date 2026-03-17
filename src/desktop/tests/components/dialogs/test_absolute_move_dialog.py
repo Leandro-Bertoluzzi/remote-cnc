@@ -5,11 +5,12 @@ from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
 class TestAbsoluteMoveDialog:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot, mocker):
-        # Mock GRBL controller object
-        self.grbl_controller = mocker.MagicMock()
+        # Mock jog callback
+        self.jog_callback = mocker.MagicMock()
 
         # Create an instance of AbsoluteMoveDialog
-        self.dialog = AbsoluteMoveDialog(self.grbl_controller)
+        self.dialog = AbsoluteMoveDialog()
+        self.dialog.set_jog_callback(self.jog_callback)
         qtbot.addWidget(self.dialog)
 
     def test_material_data_dialog_get_inputs(self, qtbot):
@@ -79,9 +80,6 @@ class TestAbsoluteMoveDialog:
         self.dialog.send_jog_command(1.5, 1.3, 1.2, 500.0, "distance_absolute")
 
         # Assertions
-        self.grbl_controller.jog.assert_called_once()
-
-        jog_params = {"x": 1.5, "y": 1.3, "z": 1.2, "feedrate": 500.0}
-        self.grbl_controller.jog.assert_called_with(
-            *jog_params.values(), units="milimeters", distance_mode="distance_absolute"
+        self.jog_callback.assert_called_once_with(
+            1.5, 1.3, 1.2, 500.0, "milimeters", "distance_absolute"
         )

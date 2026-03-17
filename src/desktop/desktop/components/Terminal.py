@@ -1,14 +1,21 @@
-from core.utilities.grbl.grblController import GrblController
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
 
 from desktop.helpers.utils import applyStylesheet
 
 
 class Terminal(QWidget):
-    def __init__(self, grbl_controller: GrblController, parent=None):
+    """Terminal widget for sending G-code commands.
+
+    Emits :pyqt:`command_submitted(str)` when the user presses *Enter*.
+    The parent view connects this signal to the appropriate sender
+    (e.g. ``GatewayClient.send_command``).
+    """
+
+    command_submitted = pyqtSignal(str)
+
+    def __init__(self, parent=None):
         super(Terminal, self).__init__(parent)
-        self.grbl_controller = grbl_controller
         self.setup_ui()
 
     def setup_ui(self):
@@ -35,4 +42,5 @@ class Terminal(QWidget):
         line = self.input.text()
         self.input.clear()
 
-        self.grbl_controller.send_command(line)
+        self.command_submitted.emit(line)
+        self.display_text(f"> {line}")
