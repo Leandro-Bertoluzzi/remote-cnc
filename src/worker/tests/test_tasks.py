@@ -1,22 +1,28 @@
-import time
+import json
 from unittest.mock import MagicMock
 
 import pytest
 from celery.app.task import Task
 from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
-from core.utilities.gcode.gcodeFileSender import FinishedFile, GcodeFileSender
-from core.utilities.grbl.grblController import GrblController, GrblStatus
-from core.utilities.worker.workerStatusManager import WorkerStatusManager
+from core.utilities.gateway.constants import (
+    EVENT_FILE_FAILED,
+    EVENT_FILE_FINISHED,
+    EVENT_FILE_PROGRESS,
+)
+from core.utilities.gateway.gatewayClient import GatewayClient
 from pytest_mock.plugin import MockerFixture
 from worker.tasks.cnc import executeTask
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+SESSION_ID = "abc123"
+
 
 def _mock_infrastructure(mocker: MockerFixture) -> None:
-    """Mock Redis and logger to prevent external connections."""
-    mocker.patch("worker.tasks.cnc.RedisPubSubManagerSync")
-    mocker.patch("core.utilities.grbl.grblMonitor.RedisPubSubManagerSync")
-    mocker.patch("worker.tasks.cnc.setup_task_logger", return_value=MagicMock())
+    """Mock DB session and logger to prevent external connections."""
     mocker.patch("worker.tasks.cnc.get_task_logger", return_value=MagicMock())
     mocker.patch("worker.tasks.cnc.SessionLocal", return_value=MagicMock())
 
@@ -26,265 +32,223 @@ def _create_mock_task(task_id: int = 1) -> MagicMock:
     mock_task = MagicMock()
     mock_task.status = TaskStatus.APPROVED.value
     mock_task.id = task_id
+    mock_task.user_id = 1
     mock_task.tool_id = 1
     mock_task.file.user_id = 1
     mock_task.file.file_name = "test.gcode"
     return mock_task
 
 
-def test_execute_tasks(mocker: MockerFixture):
+def _make_pubsub_message(event: dict) -> dict:
+    """Build a fake PubSub message dict as returned by ``pubsub.listen()``."""
+    return {"type": "message", "data": json.dumps(event)}
+
+
+def _pubsub_finished(task_id: int, sent: int = 10, total: int = 10) -> dict:
+    return _make_pubsub_message(
+        {"type": EVENT_FILE_FINISHED, "task_id": task_id, "sent_lines": sent, "total_lines": total}
+    )
+
+
+def _pubsub_failed(task_id: int, error: str = "Error desconocido") -> dict:
+    return _make_pubsub_message({"type": EVENT_FILE_FAILED, "task_id": task_id, "error": error})
+
+
+def _pubsub_progress(task_id: int, sent: int = 5, processed: int = 4, total: int = 10) -> dict:
+    return _make_pubsub_message(
+        {
+            "type": EVENT_FILE_PROGRESS,
+            "task_id": task_id,
+            "sent_lines": sent,
+            "processed_lines": processed,
+            "total_lines": total,
+        }
+    )
+
+
+def _mock_gateway(mocker: MockerFixture, pubsub_messages: list[dict]) -> MagicMock:
+    """Create a mock GatewayClient wired into ``worker.tasks.cnc``."""
+    mock_pubsub = MagicMock()
+    mock_pubsub.listen.return_value = iter(pubsub_messages)
+
+    mock_gw = MagicMock(spec=GatewayClient)
+    mock_gw.is_gateway_running.return_value = True
+    mock_gw.acquire_session.return_value = SESSION_ID
+    mock_gw.subscribe_events.return_value = mock_pubsub
+    mock_gw.release_session.return_value = True
+
+    mocker.patch("worker.tasks.cnc.GatewayClient", return_value=mock_gw)
+    return mock_gw
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+
+def test_execute_task_success(mocker: MockerFixture):
+    """Happy path: file finishes successfully via Gateway events."""
     _mock_infrastructure(mocker)
 
-    # Manage internal state
-    commands_count = 0
-
-    def increment_commands_count():
-        nonlocal commands_count
-        commands_count += 1
-        if commands_count == 4:
-            raise FinishedFile
-        return commands_count
-
-    def get_commands_count():
-        nonlocal commands_count
-        return commands_count
-
-    # Mock WorkerStatusManager methods
-    mocker.patch.object(WorkerStatusManager, "process_request", return_value=(False, False))
-    mocker.patch.object(WorkerStatusManager, "is_paused", return_value=False)
-
-    # Mock DB methods
     mock_task = _create_mock_task(task_id=2)
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
-    mock_get_task_by_id = mocker.patch.object(
-        TaskRepository, "get_task_by_id", return_value=mock_task
-    )
-    mock_update_task_status = mocker.patch.object(TaskRepository, "update_task_status")
+    mock_get_task = mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
+    mock_update_status = mocker.patch.object(TaskRepository, "update_task_status")
+    mocker.patch("worker.tasks.cnc.FileSystemHelper")
 
-    # Mock GRBL methods
-    mock_start_connect = mocker.patch.object(GrblController, "connect")
-    mock_start_disconnect = mocker.patch.object(GrblController, "disconnect")
-    mocker.patch.object(GrblController, "send_command")
-    mocker.patch.object(GrblStatus, "get_status_report", return_value={})
-    mocker.patch.object(GrblStatus, "get_parser_state", return_value={})
-    mocker.patch.object(GrblController, "get_commands_count", side_effect=get_commands_count)
-    mocker.patch.object(GrblStatus, "failed", return_value=False)
-    mocker.patch.object(GrblStatus, "finished", return_value=False)
+    pubsub_msgs = [
+        _pubsub_progress(task_id=2, sent=3, processed=2, total=10),
+        _pubsub_progress(task_id=2, sent=7, processed=6, total=10),
+        _pubsub_finished(task_id=2, sent=10, total=10),
+    ]
+    mock_gw = _mock_gateway(mocker, pubsub_msgs)
 
-    # Mock file sender methods
-    mocker.patch.object(GcodeFileSender, "start", return_value=3)
-    mock_stream_line = mocker.patch.object(
-        GcodeFileSender, "send_line", side_effect=increment_commands_count
-    )
-    mocker.patch.object(GcodeFileSender, "stop")
-
-    # Mock Celery class methods
     mocked_update_state = mocker.patch.object(Task, "update_state")
 
-    # Call method under test
-    executeTask(task_id=2, serial_port="test-port", serial_baudrate=115200)
+    executeTask(task_id=2)
 
     # Assertions
-    assert mock_start_connect.call_count == 1
-    assert mock_get_task_by_id.call_count == 1
-    assert mock_stream_line.call_count == 4
-    mocked_update_state.assert_called()
-    assert mock_update_task_status.call_count == 2
-    assert mock_start_disconnect.call_count == 1
+    assert mock_get_task.call_count == 1
+    mock_gw.acquire_session.assert_called_once_with(user_id=1, client_type="worker")
+    mock_gw.request_file_execution.assert_called_once()
+    mock_gw.release_session.assert_called_once_with(SESSION_ID)
+    assert mocked_update_state.call_count == 2  # two progress events
+    assert mock_update_status.call_count == 2  # IN_PROGRESS + FINISHED
 
 
-def test_no_tasks_to_execute(mocker: MockerFixture):
+def test_no_task_in_db(mocker: MockerFixture):
+    """Task ID not found in the database."""
     _mock_infrastructure(mocker)
 
-    # Mock DB methods
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
-    mock_get_task_by_id = mocker.patch.object(TaskRepository, "get_task_by_id", return_value=None)
-    mock_update_task_status = mocker.patch.object(TaskRepository, "update_task_status")
+    mocker.patch.object(TaskRepository, "get_task_by_id", return_value=None)
+    mock_update_status = mocker.patch.object(TaskRepository, "update_task_status")
+    mock_gw = _mock_gateway(mocker, [])
 
-    # Mock GRBL methods
-    mock_start_connection = mocker.patch.object(GrblController, "connect")
-    # Mock file sender methods
-    mock_stream_line = mocker.patch.object(GcodeFileSender, "send_line")
-
-    # Call method under test
     with pytest.raises(Exception) as error:
-        executeTask(task_id=1, serial_port="test-port", serial_baudrate=115200)
+        executeTask(task_id=1)
 
-    # Assertions
     assert str(error.value) == "No se encontró la tarea en la base de datos"
-    assert mock_get_task_by_id.call_count == 1
-    assert mock_start_connection.call_count == 0
-    assert mock_stream_line.call_count == 0
-    assert mock_update_task_status.call_count == 0
+    assert mock_update_status.call_count == 0
+    mock_gw.acquire_session.assert_not_called()
 
 
 def test_task_in_progress_exception(mocker: MockerFixture):
+    """Another task is already running."""
     _mock_infrastructure(mocker)
 
-    # Mock DB methods
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=True)
+    mock_gw = _mock_gateway(mocker, [])
 
-    # Call the method under test and assert exception
     with pytest.raises(Exception) as error:
-        executeTask(task_id=1, serial_port="test-port", serial_baudrate=115200)
+        executeTask(task_id=1)
+
     assert str(error.value) == "Ya hay una tarea en progreso, por favor espere a que termine"
+    mock_gw.acquire_session.assert_not_called()
 
 
 def test_task_missing_arguments():
-    # Call the method under test and assert exception
+    """Calling without required task_id argument."""
     with pytest.raises(Exception) as error:
         executeTask()
-    assert str(error.value) == (
-        "executeTask() missing 3 required positional arguments: "
-        "'task_id', 'serial_port', and 'serial_baudrate'"
-    )
+    assert "task_id" in str(error.value)
 
 
-def test_execute_tasks_file_error(mocker: MockerFixture):
+def test_gateway_not_running(mocker: MockerFixture):
+    """Gateway is offline when the task tries to start."""
     _mock_infrastructure(mocker)
 
-    # Mock DB methods
-    mock_task = _create_mock_task(task_id=1)
-    mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
-    mock_get_task_by_id = mocker.patch.object(
-        TaskRepository, "get_task_by_id", return_value=mock_task
-    )
-    mock_update_task_status = mocker.patch.object(TaskRepository, "update_task_status")
-
-    # Mock GRBL methods
-    mock_start_connect = mocker.patch.object(GrblController, "connect")
-    mock_start_disconnect = mocker.patch.object(GrblController, "disconnect")
-    mocker.patch.object(GrblStatus, "get_status_report", return_value={})
-    mocker.patch.object(GrblStatus, "get_parser_state", return_value={})
-
-    # Mock file sender methods
-    mocker.patch.object(GcodeFileSender, "start", side_effect=Exception("mocked-error"))
-
-    # Call method under test
-    with pytest.raises(Exception, match="mocked-error"):
-        executeTask(task_id=1, serial_port="test-port", serial_baudrate=115200)
-
-    # Assertions
-    assert mock_start_connect.call_count == 1
-    assert mock_get_task_by_id.call_count == 1
-    # disconnect is called once in the except block, then cnc is set to None
-    # so the finally block does NOT call disconnect again
-    assert mock_start_disconnect.call_count == 1
-    # update_task_status is never called because start() fails before it
-    assert mock_update_task_status.call_count == 0
-
-
-def test_execute_tasks_grbl_error(mocker: MockerFixture):
-    _mock_infrastructure(mocker)
-
-    # Mock DB methods
     mock_task = _create_mock_task(task_id=1)
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
-    mocker.patch.object(TaskRepository, "update_task_status")
+    mocker.patch("worker.tasks.cnc.FileSystemHelper")
 
-    # Mock GRBL error methods
-    mocker.patch.object(GrblStatus, "failed", return_value=True)
-    mocker.patch.object(GrblStatus, "get_error_message", return_value="An error message")
+    mock_gw = _mock_gateway(mocker, [])
+    mock_gw.is_gateway_running.return_value = False
 
-    # Mock other GRBL methods
-    mocker.patch.object(GrblController, "connect")
-    mock_disconnect = mocker.patch.object(GrblController, "disconnect")
-    mocker.patch.object(GrblController, "send_command")
-    mocker.patch.object(GrblStatus, "get_status_report", return_value={})
-    mocker.patch.object(GrblStatus, "get_parser_state", return_value={})
-    mocker.patch.object(GrblController, "get_commands_count", return_value=0)
-
-    # Mock file sender methods
-    mocker.patch.object(GcodeFileSender, "start", return_value=3)
-    mocker.patch.object(GcodeFileSender, "send_line")
-
-    # Mock Celery class methods
-    mocker.patch.object(Task, "update_state")
-
-    # Call method under test
     with pytest.raises(Exception) as error:
-        executeTask(task_id=1, serial_port="test-port", serial_baudrate=115200)
+        executeTask(task_id=1)
 
-    # Assertions
-    assert mock_disconnect.call_count == 1
-    assert str(error.value) == "An error message"
+    assert "Gateway no está disponible" in str(error.value)
 
 
-def test_execute_tasks_pause(mocker: MockerFixture):
+def test_session_acquisition_fails(mocker: MockerFixture):
+    """Gateway is running but session is already held by another client."""
     _mock_infrastructure(mocker)
 
-    # Manage internal state
-    commands_count = 0
+    mock_task = _create_mock_task(task_id=1)
+    mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
+    mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
+    mocker.patch("worker.tasks.cnc.FileSystemHelper")
 
-    def increment_commands_count():
-        nonlocal commands_count
-        commands_count += 1
-        if commands_count == 4:
-            raise FinishedFile
-        return commands_count
+    mock_gw = _mock_gateway(mocker, [])
+    mock_gw.acquire_session.return_value = None
 
-    def get_commands_count():
-        nonlocal commands_count
-        return commands_count
+    with pytest.raises(Exception) as error:
+        executeTask(task_id=1)
 
-    # Mock WorkerStatusManager methods
-    mock_process_request = mocker.patch.object(
-        WorkerStatusManager,
-        "process_request",
-        side_effect=[
-            (True, False),
-            (False, False),
-            (False, False),
-            (False, False),
-            (False, True),
-            (False, False),
-            (False, False),
-            (False, False),
-            (False, False),
-        ],
-    )
-    mocker.patch.object(
-        WorkerStatusManager,
-        "is_paused",
-        side_effect=[True, True, True, True, False, False, False, False, False],
-    )
+    assert "No se pudo adquirir la sesión" in str(error.value)
 
-    # Mock DB methods
-    mock_task = _create_mock_task(task_id=2)
+
+def test_file_execution_failed_event(mocker: MockerFixture):
+    """Gateway reports file_failed → task marked FAILED."""
+    _mock_infrastructure(mocker)
+
+    mock_task = _create_mock_task(task_id=1)
+    mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
+    mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
+    mock_update_status = mocker.patch.object(TaskRepository, "update_task_status")
+    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+
+    pubsub_msgs = [_pubsub_failed(task_id=1, error="GRBL alarm")]
+    mock_gw = _mock_gateway(mocker, pubsub_msgs)
+
+    with pytest.raises(Exception, match="GRBL alarm"):
+        executeTask(task_id=1)
+
+    # IN_PROGRESS then FAILED
+    assert mock_update_status.call_count == 2
+    mock_gw.release_session.assert_called_once_with(SESSION_ID)
+
+
+def test_events_for_other_task_ignored(mocker: MockerFixture):
+    """Events for a different task_id are silently skipped."""
+    _mock_infrastructure(mocker)
+
+    mock_task = _create_mock_task(task_id=5)
+    mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
+    mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
+    mock_update_status = mocker.patch.object(TaskRepository, "update_task_status")
+    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+
+    pubsub_msgs = [
+        _pubsub_progress(task_id=99, sent=1, processed=1, total=10),  # ignored
+        _pubsub_finished(task_id=5, sent=10, total=10),  # ours
+    ]
+    _mock_gateway(mocker, pubsub_msgs)
+    mocked_update_state = mocker.patch.object(Task, "update_state")
+
+    executeTask(task_id=5)
+
+    # Only the progress for task 99 was ignored — no update_state for it
+    assert mocked_update_state.call_count == 0
+    assert mock_update_status.call_count == 2  # IN_PROGRESS + FINISHED
+
+
+def test_session_released_on_error(mocker: MockerFixture):
+    """Session is released even when an unexpected error occurs."""
+    _mock_infrastructure(mocker)
+
+    mock_task = _create_mock_task(task_id=1)
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
     mocker.patch.object(TaskRepository, "update_task_status")
+    mocker.patch("worker.tasks.cnc.FileSystemHelper")
 
-    # Mock GRBL methods
-    mocker.patch.object(GrblController, "connect")
-    mocker.patch.object(GrblController, "disconnect")
-    mocker.patch.object(GrblController, "send_command")
-    mocker.patch.object(GrblController, "set_paused")
-    mocker.patch.object(GrblStatus, "get_status_report", return_value={})
-    mocker.patch.object(GrblStatus, "get_parser_state", return_value={})
-    mocker.patch.object(GrblController, "get_commands_count", side_effect=get_commands_count)
-    mocker.patch.object(GrblStatus, "failed", return_value=False)
-    mocker.patch.object(GrblStatus, "finished", return_value=False)
+    mock_gw = _mock_gateway(mocker, [])
+    mock_gw.request_file_execution.side_effect = RuntimeError("unexpected")
 
-    # Mock file sender methods
-    mocker.patch.object(GcodeFileSender, "start", return_value=3)
-    mock_stream_line = mocker.patch.object(
-        GcodeFileSender, "send_line", side_effect=increment_commands_count
-    )
-    mocker.patch.object(GcodeFileSender, "pause")
-    mocker.patch.object(GcodeFileSender, "resume")
-    mocker.patch.object(GcodeFileSender, "stop")
+    with pytest.raises(RuntimeError, match="unexpected"):
+        executeTask(task_id=1)
 
-    # Mock Celery class methods
-    mocker.patch.object(Task, "update_state")
-
-    # Mock additional methods
-    mocker.patch.object(time, "sleep")
-
-    # Call method under test
-    executeTask(task_id=2, serial_port="test-port", serial_baudrate=115200)
-
-    # Assertions
-    assert mock_process_request.call_count == 8
-    assert mock_stream_line.call_count == 4
+    mock_gw.release_session.assert_called_once_with(SESSION_ID)

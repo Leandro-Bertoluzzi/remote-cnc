@@ -17,9 +17,9 @@ app = Celery("worker", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
 # ---------------------------------------------------------------------------
 
 
-def execute_task(task_id: int, serial_port: str, serial_baudrate: int) -> AsyncResult:
+def execute_task(task_id: int) -> AsyncResult:
     """Send *execute_task* to the worker."""
-    return app.send_task("execute_task", args=[task_id, serial_port, serial_baudrate])
+    return app.send_task("execute_task", args=[task_id])
 
 
 def create_thumbnail(file_id: int) -> AsyncResult:
