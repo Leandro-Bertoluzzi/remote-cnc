@@ -61,7 +61,13 @@ You can start containers for the required services via `docker compose`:
 - CNC worker.
 
 ```bash
-$ docker compose -f docker-compose.yml -f docker-compose.production.yml --profile=worker up -d
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+```
+
+To also start the CNC gateway for serial communication with the physical device, add the `device` profile:
+
+```bash
+$ docker compose -f docker-compose.yml -f docker-compose.production.yml --profile=device up -d
 ```
 
 # Configure the Qt app at startup
