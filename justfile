@@ -19,6 +19,15 @@ default:
     @just --list
 
 # ===========================================================================
+# Variables
+# ===========================================================================
+
+# Groups of docker profiles for convenience
+[private]
+DOCKER_PROFILES_DEV := "--profile=simulator"
+DOCKER_PROFILES_ALL := "--profile=simulator --profile=device --profile=ngrok"
+
+# ===========================================================================
 # Setup
 # ===========================================================================
 
@@ -196,20 +205,20 @@ db-execute-script script:
 # Docker
 # ===========================================================================
 
-# Start API + infra services (no worker)
+# Start API + worker + infra services
 [group('docker')]
 docker-up:
     docker compose up -d
 
-# Start everything including simulated worker (GRBL simulator)
+# Start everything including dev services (e.g. simulator)
 [group('docker')]
-docker-up-sim:
-    docker compose --profile simulator up -d
+docker-up-dev:
+    docker compose {{DOCKER_PROFILES_DEV}} up -d
 
 # Stop all containers
 [group('docker')]
 docker-down:
-    docker compose down
+    docker compose {{DOCKER_PROFILES_ALL}} down
 
 # Rebuild Docker images
 [group('docker')]
@@ -225,11 +234,6 @@ docker-logs:
 [group('docker')]
 docker-shell:
     docker compose exec api /bin/bash
-
-# Initiate the virtual serial port inside the simulator worker container
-[group('docker')]
-docker-simport:
-    docker exec -it remote-cnc-worker-sim /bin/bash simport.sh
 
 # ===========================================================================
 # Deploy
@@ -249,6 +253,11 @@ deploy-api user:
 [group('deploy')]
 deploy-worker user:
     docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{user}}/cnc-worker:latest --builder=raspberry --target production --file src/Dockerfile.worker --push src
+
+# Build and push multi-arch gateway image — usage: just deploy-gateway <dockerhub_user>
+[group('deploy')]
+deploy-gateway user:
+    docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{user}}/cnc-gateway:latest --builder=raspberry --target production --file src/Dockerfile.gateway --push src
 
 # ===========================================================================
 # Cleanup

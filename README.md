@@ -26,6 +26,7 @@
   <a href="#checkered_flag-installation">Installation</a> &#xa0; | &#xa0;
   <a href="#checkered_flag-development">Development</a> &#xa0; | &#xa0;
   <a href="#rocket-deploy-changes">Deploy changes</a> &#xa0; | &#xa0;
+  <a href="#gear-cnc-gateway">CNC gateway</a> &#xa0; | &#xa0;
   <a href="#gear-cnc-worker">CNC worker</a> &#xa0; | &#xa0;
   <a href="#memo-license">License</a> &#xa0; | &#xa0;
   <a href="https://github.com/Leandro-Bertoluzzi" target="_blank">Authors</a>
@@ -35,12 +36,12 @@
 
 ## :dart: About
 
-This repository comprises two related applications:
+This repository comprises the following components:
 
 - **Desktop**: A small desktop app to monitor and control an Arduino-based CNC machine, optimized for touchscreen.
 - **API**: REST API to integrate the app's functionalities in a remote client.
-
-You can see further information in their respective folders.
+- **Gateway**: Long-running process that manages serial communication with the CNC device.
+- **Worker**: Celery background worker for long-running tasks (e.g. file execution, thumbnail generation).
 
 ## :sparkles: Features
 
@@ -107,6 +108,9 @@ src/
 │   ├── main.py             # Entry point
 │   ├── tasks/
 │   └── tests/
+├── gateway/                # CNC gateway (serial communication)
+│   ├── pyproject.toml
+│   └── gateway/            # Python package
 ├── desktop/                # PyQt5 desktop application
 │   ├── pyproject.toml
 │   ├── main.py             # Entry point
@@ -153,16 +157,16 @@ The `justfile` at the root of the repository contains all common development and
 | `db-seed-docker` `*`                  | database | Seed the database in the API container        |
 | `db-backup` `*`                       | database | Backup DB from the PostgreSQL container       |
 | `db-execute-script <path>` `*`        | database | Run a SQL script against the DB container     |
-| `docker-up`                           | docker   | Start API + infra (no worker)                 |
-| `docker-up-sim`                       | docker   | Start everything + simulated worker           |
+| `docker-up`                           | docker   | Start API + worker + infra                    |
+| `docker-up-dev`                       | docker   | Start everything + simulated CNC gateway      |
 | `docker-down`                         | docker   | Stop all containers                           |
 | `docker-build`                        | docker   | Rebuild Docker images                         |
 | `docker-logs`                         | docker   | Tail logs of all containers                   |
 | `docker-shell` `*`                    | docker   | Open a shell in the API container             |
-| `docker-simport` `*`                  | docker   | Start virtual serial port (simulator)         |
 | `deploy-create-builder`               | deploy   | Create multi-arch buildx builder (once)       |
 | `deploy-api <user>`                   | deploy   | Build & push multi-arch API image             |
 | `deploy-worker <user>`                | deploy   | Build & push multi-arch worker image          |
+| `deploy-gateway <user>`               | deploy   | Build & push multi-arch gateway image         |
 | `clean`                               | cleanup  | Remove compiled files, caches, logs, coverage |
 
 ### First-time setup
@@ -181,7 +185,7 @@ $ just sync
 
 ### Running with Docker (recommended)
 
-The easiest way to run the needed services is with `Docker`. This will start the API and the following services:
+The easiest way to run the needed services is with `Docker`. This will start the API, the Celery worker, and the following services:
 
 - PostgreSQL DB.
 - Message broker (Redis).
@@ -191,10 +195,10 @@ The easiest way to run the needed services is with `Docker`. This will start the
 $ just docker-up
 ```
 
-if you want to also start the CNC worker (Celery) in a container (Linux only, see [this section](#gear-cnc-worker)):
+If you want to also start the CNC gateway to connect a physical CNC device (Linux only, see [this section](#gear-cnc-gateway)):
 
 ```bash
-$ docker compose --profile=worker up -d
+$ docker compose --profile=device up -d
 ```
 
 Open [http://localhost:8000](http://localhost:8000) with your browser to check if the API works.
@@ -219,23 +223,17 @@ You can find further information in each subproject's docs folder:
 
 ### Mock external services
 
-You can also run a worker with a mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
-**NOTE:** This version of the worker can run in Windows.
+You can also run a gateway with a mocked version of the GRBL device, which runs the [GRBL simulator](https://github.com/grbl/grbl-sim).
+**NOTE:** This also works on Windows, since the simulated gateway doesn't need USB device access.
 
 ```bash
 $ docker compose --profile=simulator up
 ```
 
-For the worker/app to use the mocked port, update your environment (or ini file) to use a virtual port:
+The simulated gateway automatically creates the virtual serial port on startup using the GRBL simulator. Make sure your environment has the following variable set:
 
 ```bash
 SERIAL_PORT=/dev/ttyUSBFAKE
-```
-
-Initiate the virtual port inside the worker's container:
-
-```bash
-docker exec -it remote-cnc-worker-sim /bin/bash simport.sh
 ```
 
 ### Manage database
@@ -286,7 +284,7 @@ There is a folder for each subproject in docs, which contain instructions to dep
 
 ### Update Docker containers
 
-If we modify the Docker image for the API or Worker, or we just need to update the version of one of the other services, we have to follow the next steps.
+If we modify the Docker image for the API, Worker, or Gateway, or we just need to update the version of one of the other services, we have to follow the next steps.
 
 1. If not logged, log in to your Docker account:
 
@@ -304,7 +302,7 @@ $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml pull
 $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d
 ```
 
-**NOTE:** Take into account that you may add `--profile=worker` to each command above if you are using the `worker` service. The same applies for other optional services (ngrok).
+**NOTE:** Take into account that you may add `--profile=device` to each command above if you are using the CNC `gateway` service. The same applies for other optional services (ngrok).
 
 ### Database migrations
 
@@ -313,7 +311,7 @@ $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d
 
 ### Update CNC worker Docker image
 
-If you are using the `worker` service and you have made changes to the code, you must generate a Docker image for the architecture of the Raspberry (ARM 32 v7), to pull it in production. The easiest method to achieve that is by [using buildx](https://docs.docker.com/build/building/multi-platform/#multiple-native-nodes).
+If you have made changes to the worker code, you must generate a Docker image for the architecture of the Raspberry (ARM 32 v7), to pull it in production. The easiest method to achieve that is by [using buildx](https://docs.docker.com/build/building/multi-platform/#multiple-native-nodes).
 
 **The first time** we generate the image, we must create a custom builder.
 
@@ -331,12 +329,24 @@ docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_u
 
 Then, follow the guide to [update Docker containers](#update-docker-containers) in the Raspberry.
 
-## :gear: CNC worker
+### Update CNC gateway Docker image
 
-The CNC worker should start automatically when running `docker compose --profile=worker up`, with certain conditions:
+Similarly, if you have made changes to the gateway code, generate a multi-arch image:
+
+```bash
+docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_user}}/cnc-gateway:latest --builder=raspberry --target production --file src/Dockerfile.gateway --push src
+```
+
+Then, follow the guide to [update Docker containers](#update-docker-containers) in the Raspberry.
+
+## :gear: CNC gateway
+
+The CNC gateway manages serial communication with the physical CNC device. It should start automatically when running `docker compose --profile=device up`, with certain conditions:
 
 - It only works with Docker CE without Docker Desktop, because the latter can't mount devices. You can view a discussion about it [here](https://forums.docker.com/t/usb-devices-mapping-not-works-with-docker-desktop/132148).
-- Therefore, and given that devices in Windows work in a completely different way (there is no `/dev` folder), you won't be able to run the `worker` service on Windows. For that reason, in Windows you'll have to follow the steps in [Start the Celery worker manually (Windows)](#start-the-celery-worker-manually-windows).
+- Therefore, and given that devices in Windows work in a completely different way (there is no `/dev` folder), you won't be able to run the `gateway` service on Windows. For that reason, in Windows you can use the [simulated gateway](#mock-external-services) instead.
+
+## :gear: CNC worker
 
 ### Start the Celery worker manually (Linux)
 

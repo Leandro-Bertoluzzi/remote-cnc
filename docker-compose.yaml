@@ -71,8 +71,6 @@ services:
         condition: service_started
       postgresql:
         condition: service_healthy
-    device_cgroup_rules:
-      - 'c 188:* rmw'
     env_file:
       - .env
     environment:
@@ -82,36 +80,7 @@ services:
       - ./gcode_files:/app/gcode_files
       - ./thumbnails:/app/thumbnails
       - ./logs:/app/logs
-      # Devices
-      - /dev:/dev
-      # Devices information
-      - /run/udev:/run/udev:ro
     container_name: remote-cnc-worker
-    profiles: ["worker"]
-
-  worker-sim:
-    build:
-      context: src
-      dockerfile: Dockerfile.worker
-      target: development
-    command: uv run --no-sync celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log
-    depends_on:
-      redis:
-        condition: service_started
-      postgresql:
-        condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      - REDIS_HOST=redis
-      - DB_HOST=postgresql
-      - GRBL_SIMULATION=TRUE
-    volumes:
-      - ./gcode_files:/app/gcode_files
-      - ./thumbnails:/app/thumbnails
-      - ./logs:/app/logs
-    container_name: remote-cnc-worker-sim
-    profiles: ["test", "simulator"]
 
   gateway:
     build:
@@ -138,7 +107,7 @@ services:
       # Devices information
       - /run/udev:/run/udev:ro
     container_name: remote-cnc-gateway
-    profiles: ["worker"]
+    profiles: ["device"]
 
   gateway-sim:
     build:

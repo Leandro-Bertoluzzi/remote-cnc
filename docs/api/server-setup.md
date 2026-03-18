@@ -27,6 +27,12 @@ You can run the API in a Docker container. This will also start the following se
 $ docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d
 ```
 
+To also start the CNC gateway for serial communication with the physical device, add the `device` profile:
+
+```bash
+$ docker compose -f docker-compose.yaml -f docker-compose.production.yaml --profile=device up -d
+```
+
 # (Optional) Set up reverse proxy
 
 Setting up a reverse proxy is certainly not mandatory, but it allows us to:

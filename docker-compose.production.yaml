@@ -18,6 +18,10 @@ services:
     image: leandrobertoluzzi/cnc-worker:latest
     #platform: linux/arm/v7
 
+  gateway:
+    image: leandrobertoluzzi/cnc-gateway:latest
+    #platform: linux/arm/v7
+
   flower:
     image: leandrobertoluzzi/flower
     command: celery --broker=redis://redis:6379/0 flower --port=5555 --url_prefix=/monitor

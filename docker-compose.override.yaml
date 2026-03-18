@@ -5,6 +5,11 @@ services:
     volumes:
       - ./src:/app
 
+  gateway:
+    volumes:
+      - ./core/core:/app/core/core
+      - ./gateway:/app/gateway
+
   postgresql:
     ports:
       - ${DB_PORT}:5432
