@@ -1,108 +1,57 @@
-from typing import Any
-
-import core.utilities.worker.utils as worker
 from core.schemas.worker import (
-    DeviceEnabledResponse,
-    TaskStatusResponse,
     WorkerAvailableResponse,
     WorkerOnResponse,
     WorkerTaskResponse,
 )
-from core.utilities.worker.scheduler import app
-from core.utilities.worker.utils import send_task_to_worker
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.utilities.worker.workerClient import WorkerStatus
 from fastapi import APIRouter, HTTPException
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.gatewayMiddleware import GetGateway
+from api.middleware.workerMiddleware import GetWorker
 
 workerRoutes = APIRouter(prefix="/worker", tags=["Worker"])
 
 
 @workerRoutes.post("/task/{db_task_id}", response_model=WorkerTaskResponse)
-def execute_task(user: GetAdminDep, db_task_id: int):
-    if not worker.is_worker_on():
+def execute_task(user: GetAdminDep, db_task_id: int, worker: GetWorker, gateway: GetGateway):
+    if not worker.is_on():
         raise HTTPException(400, detail="Worker desconectado")
 
-    if not WorkerStoreAdapter.is_device_enabled():
-        raise HTTPException(400, detail="Equipo deshabilitado")
+    if not gateway.is_gateway_running():
+        raise HTTPException(400, detail="Gateway CNC no disponible")
 
-    if worker.is_worker_running():
+    if gateway.get_active_session() is not None:
+        raise HTTPException(400, detail="El CNC está en uso por otra sesión")
+
+    if worker.is_running():
         raise HTTPException(400, detail="Equipo ocupado: Hay una tarea en progreso")
 
-    worker_task_id = send_task_to_worker(db_task_id)
-
+    worker_task_id = worker.send_task(db_task_id)
     return {"worker_task_id": worker_task_id}
 
 
-@workerRoutes.get("/status/{worker_task_id}", response_model=TaskStatusResponse)
-def get_worker_task_status(user: GetUserDep, worker_task_id: str):
-    if not worker.is_worker_on():
-        raise HTTPException(400, detail="Worker desconectado")
-
-    try:
-        task_state = app.AsyncResult(worker_task_id)
-        task_info = task_state.info
-        task_status = task_state.status
-    except Exception as error:
-        raise HTTPException(400, detail=str(error)) from error
-
-    response: dict[str, Any] = {"status": task_status}
-
-    if task_state.failed():
-        # If the task raised an exception, 'info' will be the exception instance
-        response["error"] = str(task_info)
-        return response
-
-    if task_status == "PROGRESS":
-        response["sent_lines"] = task_info.get("sent_lines")
-        response["processed_lines"] = task_info.get("processed_lines")
-        response["total_lines"] = task_info.get("total_lines")
-        response["cnc_status"] = task_info.get("status")
-        response["cnc_parserstate"] = task_info.get("parserstate")
-        return response
-
-    if task_state.result:
-        response["result"] = task_state.result
-    return response
-
-
 @workerRoutes.get("/check/on", response_model=WorkerOnResponse)
-def check_worker_on(user: GetUserDep):
+def check_worker_on(user: GetUserDep, worker: GetWorker):
     """Returns whether the worker process is running."""
-    return {"is_on": worker.is_worker_on()}
+    return {"is_on": worker.is_on()}
 
 
 @workerRoutes.get("/check/available", response_model=WorkerAvailableResponse)
-def check_worker_available(user: GetUserDep):
+def check_worker_available(user: GetUserDep, worker: GetWorker, gateway: GetGateway):
     """Returns whether the worker process is available to start working on a task."""
-    enabled = WorkerStoreAdapter.is_device_enabled()
-    running = worker.is_worker_running()
-    return {"enabled": enabled, "running": running, "available": enabled and not running}
+    gateway_ready = gateway.is_gateway_running() and gateway.get_active_session() is None
+    running = worker.is_running()
+    return {
+        "enabled": gateway_ready,
+        "running": running,
+        "available": gateway_ready and not running,
+    }
 
 
 @workerRoutes.get("/status")
-def get_worker_status(user: GetUserDep) -> worker.WorkerStatus:
+def get_worker_status(user: GetUserDep, worker: GetWorker) -> WorkerStatus:
     """Returns the worker status."""
-    if not worker.is_worker_on():
+    if not worker.is_on():
         raise HTTPException(400, detail="Worker desconectado")
-    return worker.get_worker_status()
-
-
-@workerRoutes.get("/gateway/running")
-def check_gateway_running(user: GetUserDep, gateway: GetGateway):
-    """Returns whether the CNC Gateway process is running."""
-    return {"running": gateway.is_gateway_running()}
-
-
-@workerRoutes.put("/device/{enabled}", response_model=DeviceEnabledResponse)
-def set_device_enabled(user: GetAdminDep, enabled: int):
-    """Enables or disables the device."""
-    WorkerStoreAdapter.set_device_enabled(enabled != 0)
-    return {"enabled": WorkerStoreAdapter.is_device_enabled()}
-
-
-@workerRoutes.get("/device/status", response_model=DeviceEnabledResponse)
-def get_device_status(user: GetUserDep):
-    """Returns the device status (enabled/disabled)."""
-    return {"enabled": WorkerStoreAdapter.is_device_enabled()}
+    return worker.get_status()

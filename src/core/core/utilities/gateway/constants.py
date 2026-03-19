@@ -21,6 +21,9 @@ SESSION_KEY = "cnc:session"
 # Gateway state key (published periodically)
 GATEWAY_STATE_KEY = "cnc:gateway_state"
 
+# Last published status (JSON snapshot for REST polling)
+LAST_STATUS_KEY = "cnc:last_status"
+
 # ---------------------------------------------------------------------------
 # PubSub channels
 # ---------------------------------------------------------------------------

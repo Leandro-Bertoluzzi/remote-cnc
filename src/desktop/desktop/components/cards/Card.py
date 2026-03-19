@@ -5,8 +5,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow  # pragma: no cover
-    from views.BaseListView import BaseListView  # pragma: no cover
+    from desktop.MainWindow import MainWindow  # pragma: no cover
+    from desktop.views.BaseListView import BaseListView  # pragma: no cover
 
 
 class Card(QWidget):

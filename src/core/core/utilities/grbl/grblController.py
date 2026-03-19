@@ -171,7 +171,13 @@ class GrblController:
                 return sline.pop(0)
             return ""
 
-        msgType, payload = GrblLineParser.parse(response)
+        try:
+            msgType, payload = GrblLineParser.parse(response)
+        except Exception as error:
+            self.grbl_monitor.error(
+                f"Error parsing response from GRBL.\nResponse: {response}\nError: {str(error)}"
+            )
+            return
         self.grbl_monitor.received(response, msgType, payload)
 
         # Process parsed response

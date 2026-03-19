@@ -25,6 +25,7 @@ from core.utilities.gateway.constants import (
     ALL_QUEUES,
     EVENTS_CHANNEL,
     GATEWAY_STATE_KEY,
+    LAST_STATUS_KEY,
     MSG_COMMAND,
     MSG_DISCONNECT,
     MSG_FILE_START,
@@ -243,6 +244,18 @@ class GatewayClient:
         if raw is None:
             return None
         return raw.decode() if isinstance(raw, bytes) else str(raw)
+
+    def get_last_status(self) -> Optional[dict[str, Any]]:
+        """Return the last published status snapshot, or ``None``.
+
+        The CNC Gateway persists the latest status payload in Redis
+        so that REST clients can poll without subscribing to PubSub.
+        """
+        r = self._redis()
+        raw = r.get(LAST_STATUS_KEY)
+        if raw is None:
+            return None
+        return json.loads(raw)
 
     def is_gateway_running(self) -> bool:
         """Check if the gateway is publishing state."""

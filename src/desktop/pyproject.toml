@@ -18,6 +18,9 @@ packages = ["desktop"]
 [tool.uv.sources]
 cnc-core = { workspace = true }
 
+[tool.ty.environment]
+extra-paths = ["../tests"]
+
 [dependency-groups]
 dev = [
     "pytest-qt>=4.4,<5",

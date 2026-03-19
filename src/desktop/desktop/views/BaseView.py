@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, cast
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow  # pragma: no cover
+    from desktop.MainWindow import MainWindow  # pragma: no cover
 
 
 class BaseView(QWidget):

@@ -1,5 +1,3 @@
-from typing import Union
-
 import pytest
 from core.database.models import Task, TaskStatus
 from desktop.components.cards.TaskCard import TaskCard
@@ -23,9 +21,6 @@ class TestTaskCard:
 
         # Patch the service methods
         mocker.patch.object(AssetService, "get_assets", return_value=([], [], []))
-
-        # Mock card's auxiliary methods
-        mocker.patch.object(TaskCard, "check_task_status")
 
         # Mock parent widget
         self.window = mock_window
@@ -54,9 +49,6 @@ class TestTaskCard:
         self.task.status = status
         self.task.id = 1
 
-        # Mock card's auxiliary methods
-        mock_set_task_description = mocker.patch.object(TaskCard, "check_task_status")
-
         # Instantiate card
         card = TaskCard(self.task, False, [], [], [])
         qtbot.addWidget(card)
@@ -65,15 +57,11 @@ class TestTaskCard:
         assert card.task == self.task
         assert card.layout() is not None
         assert helpers.count_widgets(card.layout_buttons, QPushButton) == expected_buttons
-        assert mock_set_task_description.call_count == 1
 
     def test_task_card_init_device_busy(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock task status
         self.task.status = TaskStatus.ON_HOLD.value
         self.task.id = 1
-
-        # Mock card's auxiliary methods
-        mocker.patch.object(TaskCard, "check_task_status")
 
         # Instantiate card
         card = TaskCard(self.task, True, [], [], [])
@@ -216,64 +204,6 @@ class TestTaskCard:
         # Validate service calls
         assert mock_update_task_status.call_count == 1
         assert mock_popup.call_count == 1
-
-    @pytest.mark.parametrize(
-        "status_db,worker_task_id,status_worker",
-        [
-            ("pending_approval", "", ""),
-            ("on_hold", "", ""),
-            ("in_progress", "abc", "PENDING"),
-            ("in_progress", "abc", "PROGRESS"),
-            ("failed", "abc", "FAILURE"),
-            ("finished", "def", "SUCCESS"),
-            ("cancelled", "", ""),
-            ("cancelled", "xyz", "FAILURE"),
-        ],
-    )
-    def test_task_card_set_task_progress(
-        self, qtbot: QtBot, mocker: MockerFixture, status_db, worker_task_id, status_worker
-    ):
-        # Mock task status
-        self.task.status = status_db
-
-        # Mock Celery task metadata
-        task_info: Union[str, dict[str, int]] = ""
-        if status_worker == "FAILURE":
-            task_info = "Mocked error message"
-        if status_worker == "PROGRESS":
-            task_info = {"sent_lines": 15, "processed_lines": 10, "total_lines": 20}
-
-        # Build the return value for TaskService.get_task_worker_status
-        if worker_task_id:
-            worker_status_return = {"status": status_worker, "info": task_info}
-        else:
-            worker_status_return = None
-
-        # Mock service methods
-        mocker.patch.object(
-            TaskService, "get_task_worker_status", return_value=worker_status_return
-        )
-
-        # Instantiate card
-        card = TaskCard(self.task, False, [], [], [])
-        qtbot.addWidget(card)
-
-        # Assertions
-        expected_text = f"Tarea 1: Example task\nEstado: {status_db}"
-
-        if status_worker == "FAILURE":
-            expected_text = (
-                f"Tarea 1: Example task\nEstado: {status_db}\nError: Mocked error message"
-            )
-
-        expected_sent = expected_processed = 0
-        if status_worker == "PROGRESS":
-            expected_sent = 15
-            expected_processed = 10
-
-        assert card.label_description.text() == expected_text
-        assert card.task_progress.sent_progress.value() == expected_sent
-        assert card.task_progress.process_progress.value() == expected_processed
 
     @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
     def test_task_card_cancel_task(self, setup_method, mocker: MockerFixture, dialogResponse):

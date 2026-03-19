@@ -1,15 +1,15 @@
-"""Real-time CNC status synchronisation via Gateway PubSub.
+"""Real-time CNC monitoring via Gateway PubSub.
 
-``GatewaySync`` subscribes to the ``grbl_status`` and ``cnc:events``
-Redis PubSub channels published by the CNC Gateway and emits
-Qt signals consumed by the :class:`ControlView`.
+``GatewayMonitor`` subscribes to the Redis PubSub channels published
+by the CNC Gateway and emits Qt signals consumed by the UI.
 
 Signal interface
 ----------------
-* ``new_status(status, parserstate)`` — periodic controller state
+* ``new_status(status, parserstate)``       — periodic controller state
+* ``new_message(text)``                     — GRBL serial messages (ok / error / alarm)
 * ``file_progress(sent, processed, total)`` — file-execution progress
-* ``file_finished()`` — G-code file completed successfully
-* ``file_failed(error_msg)`` — G-code file execution failed
+* ``file_finished()``                       — G-code file completed successfully
+* ``file_failed(error_msg)``                — G-code file execution failed
 
 See DR-0001 for the architecture rationale.
 """
@@ -24,6 +24,7 @@ from core.utilities.gateway.constants import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
     EVENTS_CHANNEL,
+    MESSAGES_CHANNEL,
     STATUS_CHANNEL,
 )
 from core.utilities.gateway.gatewayClient import GatewayClient
@@ -32,11 +33,12 @@ from PyQt5.QtCore import QObject, pyqtSignal
 logger = logging.getLogger(__name__)
 
 
-class GatewaySync(QObject):
+class GatewayMonitor(QObject):
     """Subscribe to Gateway PubSub channels and emit Qt signals."""
 
     # SIGNALS
     new_status = pyqtSignal(object, object)
+    new_message = pyqtSignal(str)
     file_progress = pyqtSignal(int, int, int)
     file_finished = pyqtSignal()
     file_failed = pyqtSignal(str)
@@ -54,7 +56,7 @@ class GatewaySync(QObject):
     def start_monitor(self) -> None:
         """Start listening for Gateway status updates in a background thread."""
         if self._running:
-            logger.warning("GatewaySync already running, ignoring duplicate start")
+            logger.warning("GatewayMonitor already running, ignoring duplicate start")
             return
 
         self._running = True
@@ -69,7 +71,11 @@ class GatewaySync(QObject):
 
     def _listen(self) -> None:
         """Background thread: subscribe to PubSub and dispatch messages."""
-        pubsub = self._gateway.subscribe_channels(STATUS_CHANNEL, EVENTS_CHANNEL)
+        pubsub = self._gateway.subscribe_channels(
+            STATUS_CHANNEL,
+            EVENTS_CHANNEL,
+            MESSAGES_CHANNEL,
+        )
         try:
             while self._running:
                 raw = pubsub.get_message(timeout=1.0)
@@ -89,8 +95,10 @@ class GatewaySync(QObject):
                     self._handle_status(data)
                 elif channel == EVENTS_CHANNEL:
                     self._handle_event(data)
+                elif channel == MESSAGES_CHANNEL:
+                    self._handle_message(data)
         except Exception:
-            logger.exception("Error in GatewaySync listener thread")
+            logger.exception("Error in GatewayMonitor listener thread")
         finally:
             try:
                 pubsub.unsubscribe()
@@ -120,3 +128,9 @@ class GatewaySync(QObject):
             self.file_finished.emit()
         elif event_type == EVENT_FILE_FAILED:
             self.file_failed.emit(data.get("error", "Error desconocido"))
+
+    def _handle_message(self, data: dict) -> None:
+        """Process a ``grbl_messages`` message — relay to Terminal."""
+        text = data.get("message", "")
+        if text:
+            self.new_message.emit(text)

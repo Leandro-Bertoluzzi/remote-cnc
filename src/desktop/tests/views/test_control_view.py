@@ -1,6 +1,5 @@
 """Tests for :class:`ControlView` — Gateway-based CNC control."""
 
-import mocks.grbl as grbl_mocks
 import pytest
 from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
 from desktop.components.buttons.MenuButton import MenuButton
@@ -8,7 +7,7 @@ from desktop.components.CodeEditor import CodeEditor
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.Terminal import Terminal
 from desktop.containers.ControllerActions import ControllerActions
-from desktop.helpers.gatewaySync import GatewaySync
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.services.deviceService import DeviceService
 from desktop.views.ControlView import ControlView
@@ -16,6 +15,8 @@ from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
+
+import tests.mocks.grbl as grbl_mocks
 
 _FAKE_SESSION_ID = "abc123"
 
@@ -26,11 +27,11 @@ class TestControlView:
         # Mock device service methods
         mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
 
-        # Prevent real Redis connections from GatewayClient / GatewaySync
+        # Prevent real Redis connections from GatewayClient / GatewayMonitor
         self.mock_gateway = mocker.MagicMock()
-        self.mock_sync = mocker.MagicMock(spec=GatewaySync)
+        self.mock_sync = mocker.MagicMock(spec=GatewayMonitor)
         mocker.patch("desktop.views.ControlView.GatewayClient", return_value=self.mock_gateway)
-        mocker.patch("desktop.views.ControlView.GatewaySync", return_value=self.mock_sync)
+        mocker.patch("desktop.views.ControlView.GatewayMonitor", return_value=self.mock_sync)
 
         # Create an instance of ControlView
         self.parent = mock_window

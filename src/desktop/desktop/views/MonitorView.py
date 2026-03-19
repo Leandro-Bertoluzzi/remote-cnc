@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from core.utilities.grbl.types import ParserState, Status
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 
 from desktop.components.buttons.MenuButton import MenuButton
@@ -12,7 +13,7 @@ from desktop.services.deviceService import DeviceService
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow  # pragma: no cover
+    from desktop.MainWindow import MainWindow  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
@@ -76,31 +77,37 @@ class MonitorView(BaseView):
     def connect_worker(self):
         """Synchronizes the status monitor with the CNC worker."""
         if self.device_busy:
-            self.getWindow().worker_monitor.task_new_status.connect(self.update_task_status)
+            monitor = self.getWindow().worker_monitor
+            monitor.file_progress.connect(self.update_task_progress)
+            monitor.new_status.connect(self.update_controller_status)
 
     # EVENTS
 
     def backToMenu(self):
         self.getWindow().backToMenu()
 
+    def closeEvent(self, a0: QCloseEvent):
+        """Disconnect signals before leaving the view."""
+        try:
+            monitor = self.getWindow().worker_monitor
+            monitor.file_progress.disconnect(self.update_task_progress)
+            monitor.new_status.disconnect(self.update_controller_status)
+        except (RuntimeError, TypeError):
+            pass
+        super().closeEvent(a0)
+
     # UI METHODS
 
-    def update_task_status(
-        self,
-        sent_lines: int,
-        processed_lines: int,
-        total_lines: int,
-        controller_status: Status,
-        grbl_parserstate: ParserState,
-    ):
+    def update_task_progress(self, sent_lines: int, processed_lines: int, total_lines: int):
         self.task_progress.set_total(total_lines)
         self.task_progress.set_progress(sent_lines, processed_lines)
 
+    def update_controller_status(self, controller_status: Status, grbl_parserstate: ParserState):
         self.update_device_status(
             controller_status,
-            grbl_parserstate["feedrate"],
-            grbl_parserstate["spindle"],
-            grbl_parserstate["tool"],
+            grbl_parserstate.get("feedrate", 0.0),
+            grbl_parserstate.get("spindle", 0.0),
+            grbl_parserstate.get("tool", 0),
         )
 
     def update_device_status(

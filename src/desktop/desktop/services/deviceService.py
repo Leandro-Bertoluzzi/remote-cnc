@@ -1,16 +1,16 @@
-"""Service layer for Device/Worker operations (Celery + Redis + Gateway)."""
+"""Service layer for Device/Worker operations (Celery + Gateway)."""
 
 import logging
 
-import core.utilities.worker.utils as worker
 from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
 from core.utilities.gateway.gatewayClient import GatewayClient
-from core.utilities.worker.workerStatusManager import WorkerStoreAdapter
+from core.utilities.worker.workerClient import WorkerClient
 
 logger = logging.getLogger(__name__)
 
-# Module-level shared GatewayClient instance
+# Module-level shared instances
 _gateway_client: GatewayClient | None = None
+_worker_client: WorkerClient | None = None
 
 
 def _get_gateway() -> GatewayClient:
@@ -20,30 +20,39 @@ def _get_gateway() -> GatewayClient:
     return _gateway_client
 
 
+def _get_worker() -> WorkerClient:
+    global _worker_client  # noqa: PLW0603
+    if _worker_client is None:
+        _worker_client = WorkerClient()
+    return _worker_client
+
+
 class DeviceService:
-    """Encapsulates all worker/device status operations (Celery inspect + Redis)."""
+    """Encapsulates all worker/device status operations (Celery inspect + Gateway)."""
 
     # --- Worker/Celery status ---
 
     @classmethod
     def is_worker_connected(cls) -> bool:
         """Whether the Celery worker process is reachable."""
-        return worker.is_worker_on()
+        return _get_worker().is_on()
 
     @classmethod
     def is_worker_busy(cls) -> bool:
         """Whether the Celery worker is currently executing a task."""
-        return worker.is_worker_running()
+        return _get_worker().is_running()
 
-    # --- Device status (Redis store) ---
-
-    @classmethod
-    def is_device_enabled(cls) -> bool:
-        return WorkerStoreAdapter.is_device_enabled()
+    # --- Gateway status ---
 
     @classmethod
-    def set_device_enabled(cls, enabled: bool) -> None:
-        WorkerStoreAdapter.set_device_enabled(enabled)
+    def is_gateway_running(cls) -> bool:
+        """Whether the CNC Gateway process is running."""
+        return _get_gateway().is_gateway_running()
+
+    @classmethod
+    def has_active_session(cls) -> bool:
+        """Whether there is an active CNC session."""
+        return _get_gateway().get_active_session() is not None
 
     # --- Gateway pause/resume ---
 
@@ -71,9 +80,14 @@ class DeviceService:
     def is_device_available(cls) -> bool:
         """Whether the device is ready to accept a new task.
 
-        This combines: worker connected + device enabled + not busy.
+        This combines: worker connected + gateway running + no active session.
         """
-        return cls.is_worker_connected() and cls.is_device_enabled() and not cls.is_worker_busy()
+        return (
+            cls.is_worker_connected()
+            and cls.is_gateway_running()
+            and not cls.has_active_session()
+            and not cls.is_worker_busy()
+        )
 
     @classmethod
     def check_device_availability(cls) -> str | None:
@@ -85,8 +99,11 @@ class DeviceService:
         if not cls.is_worker_connected():
             return "Ejecución cancelada: El worker no está conectado"
 
-        if not cls.is_device_enabled():
-            return "Ejecución cancelada: El equipo está deshabilitado"
+        if not cls.is_gateway_running():
+            return "Ejecución cancelada: El Gateway CNC no está disponible"
+
+        if cls.has_active_session():
+            return "Ejecución cancelada: El CNC está en uso por otra sesión"
 
         if cls.is_worker_busy():
             return "Ejecución cancelada: Ya hay una tarea en progreso"

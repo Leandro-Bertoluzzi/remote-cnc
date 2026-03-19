@@ -19,6 +19,7 @@ from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from core.utilities.gateway.constants import (
     GATEWAY_STATE_KEY,
     GW_STATE_IDLE,
+    LAST_STATUS_KEY,
     STATUS_CHANNEL,
 )
 
@@ -84,8 +85,9 @@ class StatusPublisher:
         self._last_publish = time.time()
 
     def cleanup(self) -> None:
-        """Remove the gateway state key from Redis on shutdown."""
+        """Remove the gateway state keys from Redis on shutdown."""
         self._redis.delete(GATEWAY_STATE_KEY)
+        self._redis.delete(LAST_STATUS_KEY)
 
     # ------------------------------------------------------------------
     # Internal
@@ -108,3 +110,5 @@ class StatusPublisher:
 
         message = json.dumps(payload, default=str)
         self._redis.publish(STATUS_CHANNEL, message)
+        # Persist snapshot for REST polling (GET /cnc/status)
+        self._redis.set(LAST_STATUS_KEY, message)

@@ -4,11 +4,11 @@ from core.database.types import FileReport
 from core.schemas.files import FileContentResponse, FileResponse, FileUpdate
 from core.schemas.general import GenericResponse
 from core.utilities.fileManager import FileManager
-from core.utilities.worker.scheduler import create_thumbnail, generate_file_report
 from fastapi import APIRouter, HTTPException, UploadFile
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetDbSession
+from api.middleware.workerMiddleware import GetWorker
 
 fileRoutes = APIRouter(prefix="/files", tags=["Files"])
 
@@ -52,13 +52,13 @@ def get_file_report(file_id: int, user: GetUserDep, db_session: GetDbSession) ->
 
 @fileRoutes.post("", response_model_by_alias=False, response_model=FileResponse)
 @fileRoutes.post("/", response_model_by_alias=False, response_model=FileResponse)
-def upload_file(file: UploadFile, user: GetUserDep, db_session: GetDbSession):
+def upload_file(file: UploadFile, user: GetUserDep, db_session: GetDbSession, worker: GetWorker):
     if not file.filename:
         raise HTTPException(400, detail="Filename is required")
     file_manager = FileManager(FILES_FOLDER_PATH, db_session)
     new_file = file_manager.upload_file(user.id, file.filename, file.file)
-    generate_file_report(new_file.id)
-    create_thumbnail(new_file.id)
+    worker.generate_file_report(new_file.id)
+    worker.create_thumbnail(new_file.id)
     return new_file
 
 
@@ -77,12 +77,12 @@ def remove_existing_file(file_id: int, user: GetUserDep, db_session: GetDbSessio
 
 
 @fileRoutes.post("/{file_id}/thumbnail", response_model=GenericResponse)
-def generate_thumbnail(file_id: int, admin: GetAdminDep):
-    create_thumbnail(file_id)
+def generate_thumbnail(file_id: int, admin: GetAdminDep, worker: GetWorker):
+    worker.create_thumbnail(file_id)
     return {"success": "La generación de la vista previa fue solicitada con éxito"}
 
 
 @fileRoutes.post("/{file_id}/report", response_model=GenericResponse)
-def generate_report(file_id: int, admin: GetAdminDep):
-    generate_file_report(file_id)
+def generate_report(file_id: int, admin: GetAdminDep, worker: GetWorker):
+    worker.generate_file_report(file_id)
     return {"success": "La generación del reporte fue solicitada con éxito"}

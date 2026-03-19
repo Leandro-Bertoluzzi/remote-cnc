@@ -16,14 +16,14 @@ class TestFileService:
         mock_fm_class = mocker.patch("desktop.services.fileService.FileManager")
         mock_fm_class.return_value.create_file.return_value = mock_file
 
-        mock_report = mocker.patch("desktop.services.fileService.generate_file_report")
-        mock_thumb = mocker.patch("desktop.services.fileService.create_thumbnail")
+        mock_client = mocker.patch("desktop.services.fileService.WorkerClient")
+        mock_client_instance = mock_client.return_value
 
         result = FileService.create_file(1, "test.gcode", "/tmp/test.gcode")
 
         assert result == mock_file
-        mock_report.assert_called_once_with(10)
-        mock_thumb.assert_called_once_with(10)
+        mock_client_instance.generate_file_report.assert_called_once_with(10)
+        mock_client_instance.create_thumbnail.assert_called_once_with(10)
 
     def test_create_file_broker_failure_still_creates_file(self, mocker: MockerFixture):
         """If the broker is unavailable, the file should still be created."""
@@ -34,12 +34,10 @@ class TestFileService:
         mock_fm_class = mocker.patch("desktop.services.fileService.FileManager")
         mock_fm_class.return_value.create_file.return_value = mock_file
 
-        # Simulate broker failure on report generation
-        mocker.patch(
-            "desktop.services.fileService.generate_file_report",
-            side_effect=Exception("broker unavailable"),
-        )
-        mock_thumb = mocker.patch("desktop.services.fileService.create_thumbnail")
+        # Simulate broker failure when constructing WorkerClient or calling methods
+        mock_client = mocker.patch("desktop.services.fileService.WorkerClient")
+        mock_client_instance = mock_client.return_value
+        mock_client_instance.generate_file_report.side_effect = Exception("broker unavailable")
 
         # Should NOT raise — the exception is caught internally
         result = FileService.create_file(1, "test.gcode", "/tmp/test.gcode")
@@ -47,4 +45,4 @@ class TestFileService:
         # File is still returned
         assert result == mock_file
         # Thumbnail is NOT called because both calls share a single try block
-        mock_thumb.assert_not_called()
+        mock_client_instance.create_thumbnail.assert_not_called()
