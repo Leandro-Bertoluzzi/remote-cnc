@@ -5,7 +5,7 @@ import logging
 from core.database.models import File
 from core.database.repositories.fileRepository import FileRepository
 from core.utilities.fileManager import FileManager
-from core.utilities.worker.scheduler import create_thumbnail, generate_file_report
+from core.utilities.worker.workerClient import WorkerClient
 
 from desktop.config import FILES_FOLDER_PATH
 from desktop.services import get_db_session
@@ -35,8 +35,9 @@ class FileService:
 
         # Schedule background tasks — broker failure should not prevent file creation
         try:
-            generate_file_report(file.id)
-            create_thumbnail(file.id)
+            client = WorkerClient()
+            client.generate_file_report(file.id)
+            client.create_thumbnail(file.id)
         except Exception:
             logger.warning(
                 "No se pudo programar la generación de reporte/thumbnail para archivo %s. "

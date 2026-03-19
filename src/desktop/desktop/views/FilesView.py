@@ -11,7 +11,7 @@ from desktop.services.fileService import FileService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow  # pragma: no cover
+    from desktop.MainWindow import MainWindow  # pragma: no cover
 
 
 class FilesView(BaseListView):

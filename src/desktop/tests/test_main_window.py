@@ -12,14 +12,14 @@ from pytestqt.qtbot import QtBot
 class TestMainWindow:
     @pytest.mark.parametrize("worker_on", [False, True])
     @pytest.mark.parametrize("worker_running", [False, True])
-    @pytest.mark.parametrize("device_enabled", [False, True])
+    @pytest.mark.parametrize("gateway_running", [False, True])
     def test_main_window_init(
-        self, qtbot: QtBot, mocker: MockerFixture, worker_on, worker_running, device_enabled
+        self, qtbot: QtBot, mocker: MockerFixture, worker_on, worker_running, gateway_running
     ):
         # Mock device service methods
         mocker.patch.object(DeviceService, "is_worker_connected", return_value=worker_on)
         mocker.patch.object(DeviceService, "is_worker_busy", return_value=worker_running)
-        mocker.patch.object(DeviceService, "is_device_enabled", return_value=device_enabled)
+        mocker.patch.object(DeviceService, "is_gateway_running", return_value=gateway_running)
 
         # Mock QMessageBox method
         mocker.patch.object(QMessageBox, "question", return_value=QMessageBox.Yes)
@@ -36,11 +36,12 @@ class TestMainWindow:
 
         expected_device_status = "Dispositivo : ---"
         if worker_on:
-            expected_device_status = "Dispositivo : HABILITADO"
-            if not device_enabled:
-                expected_device_status = "Dispositivo : DESHABILITADO"
+            if not gateway_running:
+                expected_device_status = "Dispositivo : GATEWAY OFFLINE"
             elif worker_running:
                 expected_device_status = "Dispositivo : TRABAJANDO..."
+            else:
+                expected_device_status = "Dispositivo : DISPONIBLE"
         assert window.status_bar.label_device.text() == expected_device_status
 
     def test_main_window_changes_view(self, qtbot: QtBot, mocker: MockerFixture):

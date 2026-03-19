@@ -12,7 +12,7 @@ from desktop.views.TasksView import TasksView
 from desktop.views.UsersView import UsersView
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow  # pragma: no cover
+    from desktop.MainWindow import MainWindow  # pragma: no cover
 
 
 class MainMenu(QWidget):

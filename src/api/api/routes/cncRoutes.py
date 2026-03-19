@@ -51,6 +51,25 @@ def get_gateway_state(admin: GetAdminDep, gateway: GetGateway):
     return {"state": state, "running": state is not None}
 
 
+@cncRoutes.get("/gateway/running")
+def check_gateway_running(admin: GetAdminDep, gateway: GetGateway):
+    """Returns whether the CNC Gateway process is running."""
+    return {"running": gateway.is_gateway_running()}
+
+
+@cncRoutes.get("/status")
+def get_cnc_status(admin: GetAdminDep, gateway: GetGateway):
+    """Return the last published CNC status snapshot.
+
+    This is a REST-friendly alternative to the PubSub stream, useful for
+    polling the current state of the device and file-execution progress.
+    """
+    status = gateway.get_last_status()
+    if status is None:
+        return {"running": False}
+    return status
+
+
 # ---------------------------------------------------------------------------
 # Session management
 # ---------------------------------------------------------------------------

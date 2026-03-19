@@ -19,7 +19,7 @@ El sistema usa Celery con Redis como broker y result backend para ejecutar tarea
 | `create_thumbnail` | Renderizado de miniatura de archivo  | Segundos        |
 | `generate_report`  | Análisis estático de archivo G-code  | Segundos        |
 
-Se evaluó la posibilidad de migrar a [Temporal.io](https://temporal.io/) como motor de workflows (ver [RC-299](https://github.com/...)), motivado por las siguientes limitaciones de Celery en el proyecto:
+Se evaluó la posibilidad de migrar a [Temporal.io](https://temporal.io/) como motor de workflows, motivado por las siguientes limitaciones de Celery en el proyecto:
 
 - **Pause/Resume**: Celery no tiene soporte nativo para pausar/retomar tareas. Actualmente se implementa con flags Redis y polling (`WorkerStatusManager`), lo cual es frágil y agrega latencia.
 - **Visibilidad de estado**: Depende de `AsyncResult` y Redis result backend, que no persiste historial y es frágil ante reinicios de Redis.

@@ -31,12 +31,12 @@ from desktop.components.Terminal import Terminal
 from desktop.components.ToolBar import ToolBar, ToolBarOptionInfo
 from desktop.containers.ButtonGrid import ButtonGrid
 from desktop.containers.ControllerActions import ControllerActions
-from desktop.helpers.gatewaySync import GatewaySync
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.services.deviceService import DeviceService
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow  # pragma: no cover
+    from desktop.MainWindow import MainWindow  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +76,9 @@ class ControlView(BaseView):
         self.setup_ui()
 
         # GATEWAY SYNC — status via PubSub
-        self.gateway_sync = GatewaySync()
+        self.gateway_sync = GatewayMonitor()
         self.gateway_sync.new_status.connect(self.update_device_status)
+        self.gateway_sync.new_message.connect(self.write_to_terminal)
         self.gateway_sync.file_progress.connect(self.update_file_progress)
         self.gateway_sync.file_finished.connect(self.finished_file_execution)
         self.gateway_sync.file_failed.connect(self.failed_file_execution)

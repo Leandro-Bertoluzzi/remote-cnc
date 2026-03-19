@@ -13,7 +13,7 @@ from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
-    from MainWindow import MainWindow  # pragma: no cover
+    from desktop.MainWindow import MainWindow  # pragma: no cover
 
 
 ViewList = TypedDict(

@@ -4,13 +4,12 @@ from core.database.models import TASK_DEFAULT_PRIORITY, File, Material, Task, Ta
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from desktop.components.TaskProgress import TaskProgress
 from desktop.config import USER_ID
 from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.utils import needs_confirmation
 from desktop.services.deviceService import DeviceService
 from desktop.services.taskService import TaskService
-from PyQt5.QtWidgets import QPushButton, QSizePolicy
+from PyQt5.QtWidgets import QPushButton
 
 logger = logging.getLogger(__name__)
 
@@ -49,47 +48,6 @@ class TaskCard(Card):
         task_name = self.task.name
         task_status_db = self.task.status
         self.setDescription(f"Tarea {task_id}: {task_name}\nEstado: {task_status_db}")
-
-        # Check task status and update if necessary
-        self.task_progress = TaskProgress()
-        self.check_task_status()
-
-    def check_task_status(self):
-        try:
-            result = TaskService.get_task_worker_status(self.task.id)
-        except Exception:
-            logger.warning("Could not query worker status for task %s", self.task.id)
-            return
-
-        if result is None:
-            return
-
-        task_info = result["info"]
-        task_status = result["status"]
-
-        if task_status == "PROGRESS" and self.task.status == TaskStatus.IN_PROGRESS.value:
-            self.show_task_progress(task_info)
-
-        if task_status == "FAILURE":
-            self.show_task_failure(task_info)
-
-    def show_task_progress(self, task_info):
-        sent_lines = task_info.get("sent_lines")
-        processed_lines = task_info.get("processed_lines")
-        total_lines = task_info.get("total_lines")
-
-        # Progress bar
-        self.task_progress.set_total(total_lines)
-        self.task_progress.set_progress(sent_lines, processed_lines)
-
-        # Update card layout
-        self.task_progress.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        self.layout().addWidget(self.task_progress)
-
-    def show_task_failure(self, task_info):
-        error_msg = task_info
-        description_error = f"{self.label_description.text()}\nError: {error_msg}"
-        self.setDescription(description_error)
 
     def setup_buttons(self, status: str):
         """Adds buttons according to task status:

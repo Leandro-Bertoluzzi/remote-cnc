@@ -1,6 +1,7 @@
 import pytest
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.services.deviceService import DeviceService
 from desktop.views.MonitorView import MonitorView
@@ -13,6 +14,10 @@ class TestMonitorView:
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock device service methods
         mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
+
+        # Provide a real GatewayMonitor on the mock window so signals work
+        mocker.patch.object(GatewayMonitor, "start_monitor")
+        mock_window.worker_monitor = GatewayMonitor()
 
         # Mock other methods
         mocker.patch.object(MonitorView, "connect_worker")

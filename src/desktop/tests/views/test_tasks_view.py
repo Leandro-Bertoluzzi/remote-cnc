@@ -1,10 +1,11 @@
 import pytest
-from core.database.models import Task
+from core.database.models import Task, TaskStatus
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.services.assetService import AssetService
 from desktop.services.deviceService import DeviceService
@@ -190,3 +191,80 @@ class TestTasksView:
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 3
+
+
+class TestTasksViewProgress:
+    """Tests for TaskProgress integration inside TasksView."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
+        # Create a real GatewayMonitor so its signals are available
+        mocker.patch.object(GatewayMonitor, "start_monitor")
+        self.monitor = GatewayMonitor()
+        mock_window.worker_monitor = self.monitor
+
+        # Prepare tasks – one in progress
+        self.task_running = Task(user_id=1, file_id=1, tool_id=1, material_id=1, name="Running")
+        self.task_running.status = TaskStatus.IN_PROGRESS.value
+
+        self.task_idle = Task(user_id=1, file_id=1, tool_id=1, material_id=1, name="Idle")
+
+        # Patch services
+        mocker.patch.object(AssetService, "get_assets", return_value=([], [], []))
+        mocker.patch.object(TaskCard, "setup_ui")
+        mocker.patch.object(DeviceService, "is_device_available", return_value=True)
+
+        self.parent = mock_window
+
+    def _create_view(self, qtbot, mocker, tasks):
+        mocker.patch.object(TaskService, "get_all_tasks", return_value=tasks)
+        view = TasksView(self.parent)
+        qtbot.addWidget(view)
+        return view
+
+    def test_progress_visible_when_task_in_progress(self, qtbot: QtBot, mocker: MockerFixture):
+        view = self._create_view(qtbot, mocker, [self.task_running, self.task_idle])
+        assert view.task_progress.isHidden() is False
+
+    def test_progress_hidden_when_no_task_in_progress(self, qtbot: QtBot, mocker: MockerFixture):
+        view = self._create_view(qtbot, mocker, [self.task_idle])
+        assert view.task_progress.isHidden() is True
+
+    def test_file_progress_signal_updates_bars(self, qtbot: QtBot, mocker: MockerFixture):
+        view = self._create_view(qtbot, mocker, [self.task_running])
+
+        # Emit signal
+        self.monitor.file_progress.emit(30, 20, 100)
+
+        assert view.task_progress.sent_progress.maximum() == 100
+        assert view.task_progress.sent_progress.value() == 30
+        assert view.task_progress.process_progress.value() == 20
+
+    def test_file_finished_hides_progress(self, qtbot: QtBot, mocker: MockerFixture):
+        view = self._create_view(qtbot, mocker, [self.task_running])
+        assert view.task_progress.isHidden() is False
+
+        # After finish, tasks no longer have one in progress
+        self.task_running.status = TaskStatus.FINISHED.value
+        self.monitor.file_finished.emit()
+
+        assert view.task_progress.isHidden() is True
+        assert view._progress_connected is False
+
+    def test_file_failed_hides_progress(self, qtbot: QtBot, mocker: MockerFixture):
+        view = self._create_view(qtbot, mocker, [self.task_running])
+        assert view.task_progress.isHidden() is False
+
+        self.task_running.status = TaskStatus.FAILED.value
+        self.monitor.file_failed.emit("Some error")
+
+        assert view.task_progress.isHidden() is True
+        assert view._progress_connected is False
+
+    def test_close_event_disconnects_signals(self, qtbot: QtBot, mocker: MockerFixture):
+        view = self._create_view(qtbot, mocker, [self.task_running])
+        assert view._progress_connected is True
+
+        view.close()
+
+        assert view._progress_connected is False

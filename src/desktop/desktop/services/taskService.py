@@ -3,11 +3,9 @@
 import logging
 from typing import Optional
 
-from celery.result import AsyncResult
 from core.database.models import TASK_DEFAULT_PRIORITY, Task, TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
-from core.utilities.storage import get_value_from_id
-from core.utilities.worker.utils import send_task_to_worker
+from core.utilities.worker.workerClient import WorkerClient
 
 from desktop.services import get_db_session
 
@@ -74,26 +72,12 @@ class TaskService:
             repository.remove_task(task_id)
 
     @classmethod
-    def get_task_worker_status(cls, task_db_id: int) -> dict | None:
-        """Query Redis + Celery for the current status of a running task.
-
-        Returns a dict ``{"status": str, "info": Any}`` or ``None``
-        if no worker task is associated.
-        """
-        task_worker_id = get_value_from_id("task", task_db_id)
-        if not task_worker_id:
-            return None
-
-        task_state: AsyncResult = AsyncResult(task_worker_id)
-        return {"status": task_state.status, "info": task_state.info}
-
-    @classmethod
     def send_task_to_worker(cls, task_db_id: int) -> str:
         """Dispatch a task to the Celery worker.
 
         Returns the worker task ID (string).
         """
-        return send_task_to_worker(task_db_id)
+        return WorkerClient().send_task(task_db_id)
 
     @classmethod
     def create_and_execute_task(
@@ -114,4 +98,4 @@ class TaskService:
             task = repository.create_task(user_id, file_id, tool_id, material_id, name, note)
             repository.update_task_status(task.id, TaskStatus.APPROVED.value, user_id)
 
-        return send_task_to_worker(task.id)
+        return WorkerClient().send_task(task.id)

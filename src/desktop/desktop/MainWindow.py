@@ -5,8 +5,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.StatusBar import StatusBar
-from desktop.helpers.cncWorkerMonitor import CncWorkerMonitor
 from desktop.helpers.connectionErrors import get_friendly_error_message
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.services.deviceService import DeviceService
 from desktop.views.MainMenu import MainMenu
 
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("background-color:#666666;")
 
         # CNC tasks monitor
-        self.worker_monitor = CncWorkerMonitor()
+        self.worker_monitor = GatewayMonitor()
 
         # UI components
         self.status_bar = StatusBar(self)
@@ -33,13 +33,13 @@ class MainWindow(QMainWindow):
         self._refresh_worker_status()
 
         # Signals and slots
-        self.worker_monitor.task_finished.connect(self.on_task_finished)
-        self.worker_monitor.task_failed.connect(self.on_task_failed)
+        self.worker_monitor.file_finished.connect(self.on_task_finished)
+        self.worker_monitor.file_failed.connect(self.on_task_failed)
 
     # Worker status
 
     def _refresh_worker_status(self) -> None:
-        """Query worker/Redis for current status, gracefully handling connection failures."""
+        """Query Gateway for current status, gracefully handling connection failures."""
         self.status_bar.updateWorkerStatus("DESCONECTADO")
         self.status_bar.updateDeviceStatus("---")
 
@@ -48,13 +48,13 @@ class MainWindow(QMainWindow):
                 return
 
             self.status_bar.updateWorkerStatus("CONECTADO")
-            self.status_bar.updateDeviceStatus("HABILITADO")
 
-            if not DeviceService.is_device_enabled():
-                self.status_bar.setEnableBtnVisible(True)
-                self.status_bar.updateDeviceStatus("DESHABILITADO")
+            if not DeviceService.is_gateway_running():
+                self.status_bar.updateDeviceStatus("GATEWAY OFFLINE")
             elif DeviceService.is_worker_busy():
                 self.status_bar.updateDeviceStatus("TRABAJANDO...")
+            else:
+                self.status_bar.updateDeviceStatus("DISPONIBLE")
         except Exception:
             logger.warning("Could not reach worker/Redis — starting in offline mode")
             self.status_bar.setTemporalStatusMessage(
@@ -136,20 +136,16 @@ class MainWindow(QMainWindow):
     # Slots
 
     def on_task_finished(self):
-        self.status_bar.updateDeviceStatus("DESHABILITADO")
-        self.status_bar.setEnableBtnVisible(True)
+        self.status_bar.updateDeviceStatus("DISPONIBLE")
         QMessageBox.information(
             self,
             "Tarea finalizada",
-            "¡La tarea programada fue finalizada con éxito!\n"
-            "Antes de poder ejecutar otra tarea, deberá preparar "
-            "el área de trabajo y habilitar el equipo",
+            "¡La tarea programada fue finalizada con éxito!",
             QMessageBox.Ok,
         )
 
     def on_task_failed(self, error_msg: str):
         self.status_bar.updateDeviceStatus("ERROR")
-        self.status_bar.setEnableBtnVisible(True)
         QMessageBox.critical(
             self,
             "Tarea interrumpida",
@@ -163,20 +159,5 @@ class MainWindow(QMainWindow):
 
     def startWorkerMonitor(self):
         self.status_bar.updateDeviceStatus("TRABAJANDO...")
-        self.worker_monitor.start_task_monitor()
+        self.worker_monitor.start_monitor()
         self.status_bar.setTemporalStatusMessage("Iniciado el monitor del worker")
-
-    def enable_device(self):
-        try:
-            DeviceService.set_device_enabled(True)
-        except Exception as error:
-            logger.warning("Could not enable device: %s", error)
-            QMessageBox.critical(
-                self,
-                "Error de conexión",
-                get_friendly_error_message(error),
-                QMessageBox.Ok,
-            )
-            return
-        self.status_bar.setEnableBtnVisible(False)
-        self.status_bar.updateDeviceStatus("HABILITADO")

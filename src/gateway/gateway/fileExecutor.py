@@ -154,7 +154,7 @@ class FileExecutor:
         logger.info("File execution stopped")
 
     def tick(self) -> None:
-        """Called from the main loop.  Sends one line if conditions are met."""
+        """Called from the main loop. Sends one line if conditions are met."""
         if not self._running or self._paused:
             return
 
