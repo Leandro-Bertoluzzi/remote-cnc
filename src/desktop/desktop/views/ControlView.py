@@ -324,14 +324,6 @@ class ControlView(BaseView):
             "Se envió el comando para alternar el modo de prueba",
         )
 
-    def configure_grbl(self):
-        # TODO: Implement once the Gateway supports query-response for settings.
-        self.showWarning(
-            "No disponible",
-            "La configuración de GRBL no está disponible en el modo remoto.\n"
-            "Esta funcionalidad será implementada en una futura versión.",
-        )
-
     # FILE EXECUTION (delegated to Gateway)
 
     def start_file_execution(self):
@@ -384,6 +376,30 @@ class ControlView(BaseView):
         self._file_paused = False
 
     # Interaction with other widgets
+
+    def configure_grbl(self):
+        # TODO: Implement once the Gateway supports query-response for settings.
+        self.showWarning(
+            "No disponible",
+            "La configuración de GRBL no está disponible en el modo remoto.\n"
+            "Esta funcionalidad será implementada en una futura versión.",
+        )
+
+    # def configure_grbl(self):
+    #     self.device_settings = self._gateway.get_settings(self.session_id)
+    #     configurationDialog = GrblConfigurationDialog(self.device_settings)
+
+    #     if not configurationDialog.exec():
+    #         return
+
+    #     settings = configurationDialog.getModifiedInputs()
+    #     if not settings:
+    #         return
+
+    #     self._gateway.set_settings(self.session_id, settings)
+    #     self.showInfo(
+    #         "Configuración de GRBL", "¡La configuración de GRBL fue actualizada correctamente!"
+    #     )
 
     def move_absolute(self):
         dialog = AbsoluteMoveDialog(parent=self)

@@ -16,8 +16,6 @@ from PyQt5.QtWidgets import QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 
-import tests.mocks.grbl as grbl_mocks
-
 _FAKE_SESSION_ID = "abc123"
 
 
@@ -296,7 +294,10 @@ class TestControlView:
         mock_set_spindle = mocker.patch.object(ControllerStatus, "set_spindle")
         mock_set_tool = mocker.patch.object(ControllerStatus, "set_tool")
 
-        self.control_view.update_device_status(grbl_mocks.grbl_status, grbl_mocks.grbl_parserstate)
+        self.control_view.update_device_status(
+            {},
+            { "feedrate": 50, "spindle": 1200, "tool": "T1" }
+        )
 
         assert mock_set_status.call_count == 1
         assert mock_set_feedrate.call_count == 1
