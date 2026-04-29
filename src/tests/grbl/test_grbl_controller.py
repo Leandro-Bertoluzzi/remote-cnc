@@ -1,6 +1,5 @@
 import logging
 import threading
-import time
 from queue import Empty, Queue
 
 import mocks.grbl as grbl_mocks
@@ -188,31 +187,17 @@ class TestGrblController:
         mock_command_send.assert_called_with("$X")
 
     def test_query_status_report(self, mocker: MockerFixture):
-        # Mock GRBL methods
-        mock_command_send = mocker.patch.object(SerialService, "sendBytes")
-
-        # Call the method under test
+        # queryStatusReport() should only set the pending flag — no direct serial write
         self.grbl_controller.queryStatusReport()
 
-        # Assertions
-        assert mock_command_send.call_count == 1
-        mock_command_send.assert_called_with(b"?")
+        assert self.grbl_controller._status_query_pending is True
 
-    def test_query_status_report_error(self, mocker: MockerFixture):
-        # Mock GRBL methods
-        mock_command_send = mocker.patch.object(
-            SerialService, "sendBytes", side_effect=SerialException("mocked-error")
-        )
-
-        # Mock monitor methods
-        mock_monitor_error = mocker.patch.object(GrblMonitor, "error")
-
-        # Call the method under test
+    def test_query_status_report_idempotent(self, mocker: MockerFixture):
+        # Calling it multiple times while the flag is still pending is safe
+        self.grbl_controller.queryStatusReport()
         self.grbl_controller.queryStatusReport()
 
-        # Assertions
-        assert mock_command_send.call_count == 1
-        assert mock_monitor_error.call_count == 1
+        assert self.grbl_controller._status_query_pending is True
 
     def test_query_parser_state(self, mocker: MockerFixture):
         # Mock GRBL methods
@@ -555,6 +540,7 @@ class TestGrblController:
         # Set test values
         cline = [1, 2, 3]
         sline = ["G54 G54", "G90", "G00 X0 Y0"]
+        self.grbl_controller._sumcline = 6  # sum([1, 2, 3])
 
         # Mock status methods
         mock_set_error = mocker.patch.object(GrblStatus, "set_error")
@@ -569,8 +555,10 @@ class TestGrblController:
         self.grbl_controller.parse_response("error:25", cline, sline)
 
         # Assertions
-        assert cline == [2, 3]
-        assert sline == ["G90", "G00 X0 Y0"]
+        # cline and sline are cleared because GRBL discards buffered commands on error
+        assert cline == []
+        assert sline == []
+        assert self.grbl_controller._sumcline == 0
         assert mock_set_error.call_count == 1
         mock_set_error.assert_called_with(
             "G54 G54",
@@ -591,6 +579,7 @@ class TestGrblController:
         # Set test values
         cline = [1, 2, 3]
         sline = ["$H", "G54", "G00 X0 Y0"]
+        self.grbl_controller._sumcline = 6  # sum([1, 2, 3])
 
         # Mock status methods
         mock_set_error = mocker.patch.object(GrblStatus, "set_error")
@@ -602,8 +591,10 @@ class TestGrblController:
         self.grbl_controller.parse_response("ALARM:6", cline, sline)
 
         # Assertions
-        assert cline == [2, 3]
-        assert sline == ["G54", "G00 X0 Y0"]
+        # cline and sline are cleared because GRBL abandons buffered commands on alarm
+        assert cline == []
+        assert sline == []
+        assert self.grbl_controller._sumcline == 0
         assert mock_set_error.call_count == 1
         mock_set_error.assert_called_with(
             "$H",
@@ -626,9 +617,9 @@ class TestGrblController:
     @pytest.mark.parametrize("paused", [True, False])
     def test_serial_io(self, mocker: MockerFixture, paused):
         # **Test case description (no pause)**
-        # Round 1: query status + get command to send + read line + parse line + send command
-        # Round 2: query status + get command to send + send command
-        # Round 3: query status + read line (no response)
+        # Round 1: get command to send + read line + parse line + send command
+        # Round 2: get command to send + send command
+        # Round 3: read line (no response) — then thread stops
 
         # Mock attributes
         self.grbl_controller.serial_thread = threading.Thread()
@@ -637,34 +628,26 @@ class TestGrblController:
         self.grbl_controller.queue.put("Command 1")
         self.grbl_controller.queue.put("Command 2")
 
-        # Mock time and thread life cycle
-        self.count = 0
-        self.current_time = 1703991600.0  # 2023-12-31 03:00:00.3 (UTC)
+        # Stop the thread after 3 iterations via the ``waiting`` side-effect.
+        self._iter = 0
+        waiting_values = [True, False, True]
 
-        def manage_time():
-            # Manage thread
-            if self.count == 3:
+        def waiting_and_stop():
+            val = waiting_values[self._iter]
+            self._iter += 1
+            if self._iter >= len(waiting_values):
                 self.grbl_controller.serial_thread = None
-            self.count = self.count + 1
-
-            # Fake time, adding 200 ms each time
-            new_time = self.current_time
-            self.current_time = self.current_time + 0.2
-            return new_time
-
-        # Mock timer method
-        mock_time = mocker.patch.object(time, "time", side_effect=manage_time)
+            return val
 
         # Mock status methods
         mocker.patch.object(GrblStatus, "paused", return_value=paused)
 
         # Mock controller methods
-        mock_query_status_report = mocker.patch.object(GrblController, "queryStatusReport")
         mock_parse_response = mocker.patch.object(GrblController, "parse_response")
 
         # Mock serial methods
         mock_serial_waiting = mocker.patch.object(
-            SerialService, "waiting", side_effect=[True, False, True]
+            SerialService, "waiting", side_effect=waiting_and_stop
         )
         mock_serial_read_line = mocker.patch.object(
             SerialService, "readLine", side_effect=["test message", "", ""]
@@ -682,15 +665,14 @@ class TestGrblController:
         self.grbl_controller.serial_io()
 
         # Assertions
-        # **Query GRBL status section**
-        assert mock_time.call_count == 4
-        assert mock_query_status_report.call_count == 3
         # **Read serial section**
         assert mock_serial_waiting.call_count == 3
         assert mock_serial_read_line.call_count == (3 if paused else 2)
         assert mock_parse_response.call_count == 1
         # **Write serial section**
-        assert spy_queue_size.call_count == (0 if paused else 3)
+        # qsize() is always called (peek happens before the paused check),
+        # so the count is 3 regardless of pause state.
+        assert spy_queue_size.call_count == 3
         assert spy_queue_get.call_count == (0 if paused else 2)
         assert mock_serial_send_line.call_count == (0 if paused else 2)
         assert mock_monitor_sent.call_count == (0 if paused else 2)
@@ -704,7 +686,6 @@ class TestGrblController:
         self.grbl_controller.queue.put("Command")
 
         # Mock controller methods
-        mocker.patch.object(GrblController, "queryStatusReport")
         mock_disconnect = mocker.patch.object(GrblController, "disconnect")
         mock_parse_response = mocker.patch.object(GrblController, "parse_response")
 
@@ -733,6 +714,7 @@ class TestGrblController:
         assert mock_parse_response.call_count == 0
         assert mock_monitor_error.call_count == 1
         assert mock_disconnect.call_count == 1
+        assert self.grbl_controller._serial_io_alive is False
 
     def test_serial_io_stop(self, mocker: MockerFixture):
         # Mock attributes
@@ -742,9 +724,6 @@ class TestGrblController:
         # Mock thread life cycle
         def stop_thread():
             self.grbl_controller.serial_thread = None
-
-        # Mock controller methods
-        mocker.patch.object(GrblController, "queryStatusReport")
 
         # Mock serial methods
         mocker.patch.object(SerialService, "waiting", return_value=False)
@@ -761,55 +740,9 @@ class TestGrblController:
         self.grbl_controller.serial_io()
 
         # Assertions
-        assert mock_monitor_info.call_count == 1
+        assert mock_monitor_info.call_count == 3  # started + STOP processed + exiting
         assert self.grbl_controller.grbl_status._flags["stop"] is False
-
-    def test_serial_io_query_parser_state(self, mocker: MockerFixture):
-        # Mock attributes
-        self.grbl_controller.serial_thread = threading.Thread()
-
-        # Mock queue contents
-        self.grbl_controller.queue.put("Command 1")
-
-        # Mock time
-        self.current_time = 1703991600.0  # 2023-12-31 03:00:00.3 (UTC)
-
-        def manage_time():
-            # Fake time, adding 15 s each time
-            new_time = self.current_time
-            self.current_time = self.current_time + 15.0
-            return new_time
-
-        # Mock timer method
-        mock_time = mocker.patch.object(time, "time", side_effect=manage_time)
-
-        # Mock thread life cycle
-        def stop_thread():
-            self.grbl_controller.serial_thread = None
-
-        # Mock controller methods
-        mocker.patch.object(GrblController, "queryStatusReport")
-        mock_query_parser_state = mocker.patch.object(
-            GrblController, "query_gcode_parser_state", side_effect=stop_thread
-        )
-
-        # Mock serial methods
-        mocker.patch.object(SerialService, "waiting", return_value=False)
-        mocker.patch.object(SerialService, "readLine", return_value="")
-        mocker.patch.object(SerialService, "sendLine")
-
-        # Mock status methods
-        mocker.patch.object(GrblStatus, "paused", return_value=False)
-
-        # Mock monitor methods
-        mocker.patch.object(GrblMonitor, "sent")
-
-        # Call method under test
-        self.grbl_controller.serial_io()
-
-        # Assertions
-        assert mock_time.call_count == 2
-        assert mock_query_parser_state.call_count == 1
+        assert self.grbl_controller._serial_io_alive is False
 
     def test_serial_io_query_buffer_full(self, mocker: MockerFixture):
         # Mock attributes
@@ -823,11 +756,8 @@ class TestGrblController:
             self.grbl_controller.serial_thread = None
             return False
 
-        # Mock builtin 'sum' fucntion
+        # Mock builtin 'sum' function
         mock_sum = mocker.patch("builtins.sum", return_value=500)
-
-        # Mock controller methods
-        mocker.patch.object(GrblController, "queryStatusReport")
 
         # Mock serial methods
         mocker.patch.object(SerialService, "waiting", side_effect=stop_thread)
@@ -844,7 +774,7 @@ class TestGrblController:
         self.grbl_controller.serial_io()
 
         # Assertions
-        assert mock_sum.call_count == 1
+        assert mock_sum.call_count == 3  # if-condition + elif-debug + finally
         assert mock_send_line.call_count == 0
         assert mock_monitor_sent.call_count == 0
 
@@ -855,9 +785,6 @@ class TestGrblController:
         # Mock queue contents
         self.grbl_controller.queue.put("Command 1")
         self.grbl_controller.queue.put("M30")
-
-        # Mock controller methods
-        mocker.patch.object(GrblController, "queryStatusReport")
 
         # Mock serial methods
         mocker.patch.object(SerialService, "waiting", return_value=False)
@@ -874,6 +801,338 @@ class TestGrblController:
 
         # Assertions
         assert mock_serial_send_line.call_count == 2
-        assert mock_monitor_info.call_count == 1
-        mock_monitor_info.assert_called_with("A program end command was found: M30")
+        assert mock_monitor_info.call_count == 3  # started + end cmd + exiting
+        mock_monitor_info.assert_any_call("A program end command was found: M30")
         assert self.grbl_controller.grbl_status._flags["finished"] is True
+        assert self.grbl_controller._serial_io_alive is False
+
+    # BUFFER MANAGEMENT
+
+    def test_cline_includes_newline_byte(self, mocker: MockerFixture):
+        """Verify that ``cline`` accounts for the '\\n' appended by ``sendLine``."""
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        # Use a command with a known length
+        command = "G1 X10 Y20"  # 10 chars → 11 bytes with '\n'
+        self.grbl_controller.queue.put(command)
+
+        # Stop the thread after the command is sent
+        def stop_thread():
+            self.grbl_controller.serial_thread = None
+            return False
+
+        # Mock serial methods
+        mocker.patch.object(SerialService, "waiting", side_effect=stop_thread)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mock_send_line = mocker.patch.object(SerialService, "sendLine")
+
+        # Mock status methods
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+
+        # Call method under test
+        self.grbl_controller.serial_io()
+
+        # Assertions
+        assert mock_send_line.call_count == 1
+        # _sumcline must equal len("G1 X10 Y20") + 1 (for '\n') = 11
+        assert self.grbl_controller._sumcline == len(command) + 1
+
+    def test_sumcline_updated_on_error(self, mocker: MockerFixture):
+        """After an error response, cline/sline are cleared and _sumcline resets to 0."""
+        cline = [10, 20, 30]
+        sline = ["bad cmd", "G90", "G00 X0 Y0"]
+        self.grbl_controller._sumcline = 60  # sum([10, 20, 30])
+
+        # Mock status methods
+        mocker.patch.object(GrblStatus, "set_error")
+
+        # Mock other methods
+        mocker.patch.object(self.grbl_controller, "grbl_pause")
+
+        # Simulate error response
+        self.grbl_controller.parse_response("error:25", cline, sline)
+
+        # GRBL discards buffered commands on error — buffer accounting must reset
+        assert cline == []
+        assert self.grbl_controller._sumcline == 0
+
+    def test_sumcline_updated_on_alarm(self, mocker: MockerFixture):
+        """After an alarm response, cline/sline are cleared and _sumcline resets to 0."""
+        cline = [10, 20, 30]
+        sline = ["$H", "G54", "G00 X0 Y0"]
+        self.grbl_controller._sumcline = 60  # sum([10, 20, 30])
+
+        # Mock status methods
+        mocker.patch.object(GrblStatus, "set_error")
+
+        # Simulate alarm response
+        self.grbl_controller.parse_response("ALARM:6", cline, sline)
+
+        # GRBL abandons buffered commands on alarm — buffer accounting must reset
+        assert cline == []
+        assert self.grbl_controller._sumcline == 0
+
+    def test_buffer_will_not_overflow_rx_buffer(self, mocker: MockerFixture):
+        """Verify that serial_io respects ``RX_BUFFER_SIZE`` including the '\\n' byte.
+
+        Queue several commands whose combined sizes (with '\\n') exceed 128 bytes.
+        Only the ones that fit should be sent.
+        """
+        from core.utilities.grbl.grblController import RX_BUFFER_SIZE
+
+        # Mock attributes
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        # Each command is 20 chars → 21 bytes with '\n'.
+        # 128 / 21 = 6.09 → only 6 commands fit (126 bytes).
+        command = "G1 X100.000 Y200.000"
+        assert len(command) == 20
+        for _ in range(8):
+            self.grbl_controller.queue.put(command)
+
+        # Track how many commands are actually sent
+        sent_commands: list[str] = []
+
+        def record_send(cmd):
+            sent_commands.append(cmd)
+
+        # Let the loop run until the queue is drained or buffer is full.
+        # We stop the thread when no more commands can be sent and the
+        # queue has been fully visited.
+        self._loop_count = 0
+
+        def waiting_side_effect():
+            self._loop_count += 1
+            # After enough iterations, stop the thread.  The loop will have
+            # had time to dequeue & send everything it can.
+            if self._loop_count > 20:
+                self.grbl_controller.serial_thread = None
+            return False
+
+        # Mock serial methods
+        mocker.patch.object(SerialService, "waiting", side_effect=waiting_side_effect)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mocker.patch.object(SerialService, "sendLine", side_effect=record_send)
+
+        # Mock status methods
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+
+        # Call method under test
+        self.grbl_controller.serial_io()
+
+        # Assertions
+        # Only 6 commands should fit: 6 * 21 = 126 ≤ 128, but 7 * 21 = 147 > 128
+        assert len(sent_commands) == 6
+        assert self.grbl_controller._sumcline <= RX_BUFFER_SIZE
+
+    def test_serial_io_alive_flag(self, mocker: MockerFixture):
+        """``_serial_io_alive`` is True during execution and False after exit."""
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        alive_during: list[bool] = []
+
+        def capture_alive():
+            alive_during.append(self.grbl_controller._serial_io_alive)
+            self.grbl_controller.serial_thread = None
+            return False
+
+        # Mock serial methods
+        mocker.patch.object(SerialService, "waiting", side_effect=capture_alive)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+
+        assert self.grbl_controller._serial_io_alive is False
+        self.grbl_controller.serial_io()
+
+        assert alive_during == [True]
+        assert self.grbl_controller._serial_io_alive is False
+
+    def test_serial_io_catches_unhandled_exception(self, mocker: MockerFixture):
+        """An unexpected exception in one iteration is caught and logged, but the
+        loop keeps running.  ``_serial_io_alive`` must be False only after the
+        thread finally exits."""
+        self.grbl_controller.serial_thread = threading.Thread()
+
+        call_count = 0
+
+        def raise_once_then_stop():
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise RuntimeError("boom")
+            # Second call: stop the loop cleanly
+            self.grbl_controller.serial_thread = None
+            return False
+
+        mocker.patch.object(SerialService, "waiting", side_effect=raise_once_then_stop)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+        mock_critical = mocker.patch.object(GrblMonitor, "critical")
+
+        self.grbl_controller.serial_io()
+
+        # Loop must have continued after the exception (waiting called twice)
+        assert call_count == 2
+        assert self.grbl_controller._serial_io_alive is False
+        mock_critical.assert_called_once()
+        assert "boom" in mock_critical.call_args[0][0]
+
+    def test_serial_io_flushes_status_query_flag(self, mocker: MockerFixture):
+        """When ``_status_query_pending`` is True, serial_io sends '?' via
+        sendBytes and clears the flag before processing other I/O."""
+        self.grbl_controller.serial_thread = threading.Thread()
+        self.grbl_controller._status_query_pending = True
+
+        sent_bytes: list[bytes] = []
+
+        def capture_and_stop(code: bytes):
+            sent_bytes.append(code)
+            # Stop the loop after the first sendBytes call
+            self.grbl_controller.serial_thread = None
+
+        mocker.patch.object(SerialService, "sendBytes", side_effect=capture_and_stop)
+        mocker.patch.object(SerialService, "waiting", return_value=False)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+
+        self.grbl_controller.serial_io()
+
+        assert b"?" in sent_bytes
+        assert self.grbl_controller._status_query_pending is False
+
+    def test_serial_io_status_query_serial_error_clears_flag(self, mocker: MockerFixture):
+        """If sendBytes raises SerialException while sending '?', the flag is
+        still cleared and serial_io does not crash."""
+        self.grbl_controller.serial_thread = threading.Thread()
+        self.grbl_controller._status_query_pending = True
+
+        call_count = 0
+
+        def raise_then_stop(code: bytes):
+            nonlocal call_count
+            call_count += 1
+            self.grbl_controller.serial_thread = None
+            raise SerialException("port error")
+
+        mocker.patch.object(SerialService, "sendBytes", side_effect=raise_then_stop)
+        mocker.patch.object(SerialService, "waiting", return_value=False)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+        mock_error = mocker.patch.object(GrblMonitor, "error")
+
+        self.grbl_controller.serial_io()
+
+        assert self.grbl_controller._status_query_pending is False
+        assert call_count == 1
+        mock_error.assert_called_once()
+
+    # QUERY COMMANDS BYPASS PAUSE
+
+    def test_serial_io_query_command_bypasses_pause(self, mocker: MockerFixture):
+        """A query command (e.g. '$G') is sent even when the controller is paused."""
+        from core.utilities.grbl.grblController import GRBL_QUERY_COMMANDS
+
+        self.grbl_controller.serial_thread = threading.Thread()
+        self.grbl_controller.queue.put("$G")
+
+        sent_commands: list[str] = []
+
+        def record_and_stop(cmd: str):
+            sent_commands.append(cmd)
+            self.grbl_controller.serial_thread = None
+
+        mocker.patch.object(GrblStatus, "paused", return_value=True)
+        mocker.patch.object(SerialService, "waiting", return_value=False)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mocker.patch.object(SerialService, "sendLine", side_effect=record_and_stop)
+
+        self.grbl_controller.serial_io()
+
+        assert sent_commands == ["$G"]
+        assert "$G" in GRBL_QUERY_COMMANDS  # sanity check
+
+    def test_serial_io_motion_command_blocked_when_paused(self, mocker: MockerFixture):
+        """A motion command is NOT sent when the controller is paused."""
+        self.grbl_controller.serial_thread = threading.Thread()
+        self.grbl_controller.queue.put("G0 X10")
+
+        self._iter = 0
+
+        def stop_after_three():
+            self._iter += 1
+            if self._iter >= 3:
+                self.grbl_controller.serial_thread = None
+            return False
+
+        mocker.patch.object(GrblStatus, "paused", return_value=True)
+        mocker.patch.object(SerialService, "waiting", side_effect=stop_after_three)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mock_send = mocker.patch.object(SerialService, "sendLine")
+
+        self.grbl_controller.serial_io()
+
+        assert mock_send.call_count == 0
+        # The motion command must still be in the queue (not consumed)
+        assert self.grbl_controller.queue.qsize() == 1
+
+    def test_serial_io_query_passes_motion_blocked_when_paused(self, mocker: MockerFixture):
+        """With paused=True, a motion command at the head of the queue blocks
+        subsequent queries — FIFO is preserved and the peek sees the motion command."""
+        self.grbl_controller.serial_thread = threading.Thread()
+        # Motion command is first; query is behind it
+        self.grbl_controller.queue.put("G0 X10")
+        self.grbl_controller.queue.put("$G")
+
+        self._iter = 0
+
+        def stop_after_three():
+            self._iter += 1
+            if self._iter >= 3:
+                self.grbl_controller.serial_thread = None
+            return False
+
+        mocker.patch.object(GrblStatus, "paused", return_value=True)
+        mocker.patch.object(SerialService, "waiting", side_effect=stop_after_three)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mock_send = mocker.patch.object(SerialService, "sendLine")
+
+        self.grbl_controller.serial_io()
+
+        # Neither command should have been sent: the motion command blocks the whole queue
+        assert mock_send.call_count == 0
+        assert self.grbl_controller.queue.qsize() == 2
+
+    # DRAIN MOTION COMMANDS
+
+    def test_parser_receive_error_empties_queue(self, mocker: MockerFixture):
+        """On error, the entire queue is emptied (stale queries will be
+        re-issued by the main loop on the next polling cycle)."""
+        cline = [5]
+        sline = ["G54 G54"]
+        self.grbl_controller._sumcline = 5
+
+        self.grbl_controller.queue.put("G0 X50")
+        self.grbl_controller.queue.put("$G")
+
+        mocker.patch.object(GrblStatus, "set_error")
+        mocker.patch.object(self.grbl_controller, "grbl_pause")
+
+        self.grbl_controller.parse_response("error:25", cline, sline)
+
+        assert self.grbl_controller.queue.empty()
+
+    def test_parser_receive_alarm_empties_queue(self, mocker: MockerFixture):
+        """On alarm, the entire queue is emptied."""
+        cline = [5]
+        sline = ["$H"]
+        self.grbl_controller._sumcline = 5
+
+        self.grbl_controller.queue.put("G1 Y100")
+        self.grbl_controller.queue.put("$$")
+
+        mocker.patch.object(GrblStatus, "set_error")
+
+        self.grbl_controller.parse_response("ALARM:6", cline, sline)
+
+        assert self.grbl_controller.queue.empty()

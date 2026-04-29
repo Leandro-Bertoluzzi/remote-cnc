@@ -1,3 +1,5 @@
+import threading
+
 import serial
 import serial.tools.list_ports as serial_ports
 
@@ -5,6 +7,7 @@ import serial.tools.list_ports as serial_ports
 class SerialService:
     def __init__(self):
         self.interface = serial.Serial()
+        self._write_lock = threading.Lock()
 
     @classmethod
     def get_ports(cls):
@@ -34,15 +37,25 @@ class SerialService:
         return self.interface.in_waiting
 
     def sendBytes(self, code: bytes):
-        """Sends byte(s) via serial port."""
-        self.interface.write(code)
+        """Sends byte(s) via serial port.
+
+        Thread-safe: acquires ``_write_lock`` so that concurrent writes
+        from this method and ``sendLine`` never interleave on the wire.
+        """
+        with self._write_lock:
+            self.interface.write(code)
 
     def sendLine(self, code: str):
-        """Sends a line via serial port."""
+        """Sends a line via serial port.
+
+        Thread-safe: acquires ``_write_lock`` so that concurrent writes
+        from this method and ``sendBytes`` never interleave on the wire.
+        """
         # Strip all EOL characters for consistency
         message = code.strip() + "\n"
         # Send line
-        self.interface.write(message.encode())
+        with self._write_lock:
+            self.interface.write(message.encode())
 
     def readLine(self) -> str:
         """Waits for response with carriage return."""
