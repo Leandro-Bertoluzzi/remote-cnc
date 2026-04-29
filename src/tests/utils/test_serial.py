@@ -136,3 +136,40 @@ def test_is_waiting(mocker: MockerFixture, in_waiting):
     # Assertions
     assert response is in_waiting
     mock_in_waiting.assert_called_once()
+
+
+# ------------------------------------------------------------------
+# SerialService write-lock tests
+# ------------------------------------------------------------------
+
+
+class TestSerialWriteLock:
+    def test_send_bytes_acquires_lock(self, mocker: MockerFixture):
+        """``sendBytes`` must acquire ``_write_lock`` before writing."""
+        serial_service = SerialService()
+        mock_write = mocker.patch.object(serial_service.interface, "write")
+
+        # Replace the lock with a mock that behaves like a context manager
+        mock_lock = mocker.MagicMock()
+        serial_service._write_lock = mock_lock
+
+        serial_service.sendBytes(b"?")
+
+        mock_lock.__enter__.assert_called_once()
+        mock_lock.__exit__.assert_called_once()
+        mock_write.assert_called_once_with(b"?")
+
+    def test_send_line_acquires_lock(self, mocker: MockerFixture):
+        """``sendLine`` must acquire ``_write_lock`` before writing."""
+        serial_service = SerialService()
+        mock_write = mocker.patch.object(serial_service.interface, "write")
+
+        # Replace the lock with a mock that behaves like a context manager
+        mock_lock = mocker.MagicMock()
+        serial_service._write_lock = mock_lock
+
+        serial_service.sendLine("G0 X1")
+
+        mock_lock.__enter__.assert_called_once()
+        mock_lock.__exit__.assert_called_once()
+        mock_write.assert_called_once_with(b"G0 X1\n")

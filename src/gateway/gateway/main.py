@@ -18,6 +18,7 @@ import argparse
 import logging
 import signal
 import sys
+import time
 
 import redis
 from core.config import (
@@ -43,6 +44,19 @@ from gateway.statusPublisher import StatusPublisher
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# Polling intervals
+# ---------------------------------------------------------------------------
+
+# How often to send a status report query (seconds)
+STATUS_POLL_INTERVAL = 0.125
+# How often to send a parser-state query (seconds)
+PARSER_STATE_POLL_INTERVAL = 10
+# BLPOP timeout when a file is being executed (seconds)
+FILE_EXEC_BLPOP_TIMEOUT = 0.1
+# How often to log a pipeline-health summary (seconds)
+PIPELINE_SUMMARY_INTERVAL = 5.0
+
+# ---------------------------------------------------------------------------
 # Graceful shutdown
 # ---------------------------------------------------------------------------
 
@@ -63,6 +77,7 @@ def _signal_handler(signum, frame):
 def create_gateway(
     serial_port: str,
     serial_baudrate: int,
+    logger: logging.Logger,
 ) -> tuple[GrblController, CommandProcessor, StatusPublisher, FileExecutor, SessionManager]:
     """Wire up all Gateway components and return them."""
     redis_conn = redis.Redis(
@@ -72,7 +87,7 @@ def create_gateway(
     )
 
     # GrblController — the serial owner
-    grbl_logger = setup_stream_logger("gateway", logging.INFO)
+    grbl_logger = setup_stream_logger("controller", logging.INFO)
     controller = GrblController(logger=grbl_logger)
 
     # Sub-systems
@@ -114,31 +129,58 @@ def run_gateway(
     status_publisher: StatusPublisher,
     file_executor: FileExecutor,
     session_manager: SessionManager,
+    logger: logging.Logger,
 ) -> None:
     """Main event-loop of the Gateway.
 
-    1. Process one command from the priority queues (blocks ≤1 s).
-    2. Tick the file executor (sends one G-code line if due).
-    3. Publish CNC status if the interval has elapsed.
-    4. Update the gateway state label.
+    1. Poll GRBL status (``?``) and parser state (``$G``) periodically.
+    2. Process one command from the priority queues.
+    3. Tick the file executor (sends one G-code line if due).
+    4. Publish CNC status if the interval has elapsed.
+    5. Update the gateway state label.
     """
     logger.info("CNC Gateway is running.  Waiting for commands…")
 
+    last_status_poll = time.time()
+    last_parser_state_poll = time.time()
+    last_pipeline_summary = time.time()
+
     while not _shutdown_requested:
-        # 1. Process commands
-        command_processor.process_one()
+        now = time.time()
+
+        # 0. Check serial thread health
+        if controller.serial_thread is not None and not controller.serial_thread.is_alive():
+            logger.critical(
+                "serial_io thread is dead! _serial_io_alive=%s. Aborting gateway loop.",
+                controller._serial_io_alive,
+            )
+            break
+
+        # 1. Periodic GRBL queries
+        if now - last_status_poll >= STATUS_POLL_INTERVAL:
+            controller.queryStatusReport()
+            last_status_poll = now
+
+        if now - last_parser_state_poll >= PARSER_STATE_POLL_INTERVAL:
+            controller.query_gcode_parser_state()
+            last_parser_state_poll = now
+
+        # 2. Process commands — use a short timeout during file execution
+        # so that tick() is called frequently enough.
+        blpop_timeout = FILE_EXEC_BLPOP_TIMEOUT if file_executor.is_running else None
+        command_processor.process_one(timeout=blpop_timeout)
 
         if command_processor.should_stop:
             logger.info("Disconnect requested, shutting down…")
             break
 
-        # 2. File execution tick
+        # 3. File execution tick
         file_executor.tick()
 
-        # 3. Publish status
+        # 4. Publish status
         status_publisher.publish_if_due()
 
-        # 4. Update gateway state
+        # 5. Update gateway state
         if file_executor.is_running:
             status_publisher.gateway_state = GW_STATE_FILE_EXECUTION
         elif session_manager.has_active_session():
@@ -146,10 +188,27 @@ def run_gateway(
         else:
             status_publisher.gateway_state = GW_STATE_IDLE
 
+        # 6. Periodic pipeline-health summary
+        if now - last_pipeline_summary >= PIPELINE_SUMMARY_INTERVAL:
+            serial_alive = (
+                controller.serial_thread is not None and controller.serial_thread.is_alive()
+            )
+            logger.info(
+                "[Gateway] queue=%d, buffer_fill=%.1f%%, "
+                "commands_count=%d, file_running=%s, serial_alive=%s",
+                controller.queue.qsize(),
+                controller.get_buffer_fill(),
+                controller.commands_count,
+                file_executor.is_running,
+                serial_alive,
+            )
+            last_pipeline_summary = now
+
 
 def shutdown(
     controller: GrblController,
     status_publisher: StatusPublisher,
+    logger: logging.Logger,
 ) -> None:
     """Clean up resources."""
     logger.info("Shutting down CNC Gateway…")
@@ -183,6 +242,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    gateway_logger = setup_stream_logger("gateway", logging.INFO)
+
     # Setup logging
     logging.basicConfig(
         level=logging.INFO,
@@ -202,17 +263,24 @@ def main() -> None:
 
     try:
         controller, command_processor, status_publisher, file_executor, session_manager = (
-            create_gateway(args.port, args.baudrate)
+            create_gateway(args.port, args.baudrate, gateway_logger)
         )
-        run_gateway(controller, command_processor, status_publisher, file_executor, session_manager)
+        run_gateway(
+            controller,
+            command_processor,
+            status_publisher,
+            file_executor,
+            session_manager,
+            gateway_logger,
+        )
     except KeyboardInterrupt:
-        logger.info("KeyboardInterrupt received")
+        gateway_logger.info("KeyboardInterrupt received")
     except Exception:
-        logger.critical("Fatal error in CNC Gateway", exc_info=True)
+        gateway_logger.critical("Fatal error in CNC Gateway", exc_info=True)
         sys.exit(1)
     finally:
         if controller is not None and status_publisher is not None:
-            shutdown(controller, status_publisher)
+            shutdown(controller, status_publisher, gateway_logger)
 
 
 if __name__ == "__main__":

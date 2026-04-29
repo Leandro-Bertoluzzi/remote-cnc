@@ -75,13 +75,19 @@ class CommandProcessor:
     # Main loop entry point
     # ------------------------------------------------------------------
 
-    def process_one(self) -> bool:
+    def process_one(self, timeout: int | float | None = None) -> bool:
         """Block until a command is available, then process it.
+
+        Parameters
+        ----------
+        timeout: Override the BLPOP timeout (seconds).
+        When *None* the default ``BLPOP_TIMEOUT`` is used.
 
         Returns ``True`` if a command was processed, ``False`` if the
         timeout elapsed with no command.
         """
-        result = self._redis.blpop(ALL_QUEUES, timeout=BLPOP_TIMEOUT)
+        effective_timeout = timeout if timeout is not None else BLPOP_TIMEOUT
+        result = self._redis.blpop(ALL_QUEUES, timeout=effective_timeout)
         if result is None:
             return False
 

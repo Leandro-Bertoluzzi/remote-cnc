@@ -12,8 +12,8 @@ from core.utilities.logsInterpreter import LogsInterpreter
 
 _LOG_FILE_FIXED_NAMES = {
     "celery.log": "Registros del worker",
-    "cnc_server.log": "Streaming de CNC server",
-    "control_view.log": "Streaming de Control view",
+    "controller.log": "Registros del controlador grbl",
+    "gateway.log": "Streaming de CNC gateway",
 }
 
 
