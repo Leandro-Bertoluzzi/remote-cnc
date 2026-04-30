@@ -27,6 +27,14 @@ default:
 DOCKER_PROFILES_DEV := "--profile=simulator"
 DOCKER_PROFILES_ALL := "--profile=simulator --profile=device --profile=ngrok"
 
+# Existing modules in the repo (regular expression)
+[private]
+MODULES := "|api|core|desktop|gateway|worker"
+
+# Available deployed modules in Docker hub
+[private]
+DEPLOYABLE_MODULES := "api|gateway|worker"
+
 # ===========================================================================
 # Setup
 # ===========================================================================
@@ -47,37 +55,12 @@ lock:
 # Quality
 # ===========================================================================
 
-# Run all tests
+# Run tests for all modules or a specific module — usage: just test <module>
 [group('quality')]
 [working-directory: 'src']
-test:
-    uv run pytest
-
-# Run core / shared tests only
-[group('quality')]
-[working-directory: 'src']
-test-core:
-    uv run pytest tests/
-
-# Run API tests only
-[group('quality')]
-[working-directory: 'src']
-test-api:
-    uv run pytest api/tests/
-
-# Run worker tests only
-[group('quality')]
-[working-directory: 'src']
-test-worker:
-    uv sync
-    uv run pytest worker/tests/
-
-# Run desktop tests only
-[group('quality')]
-[working-directory: 'src']
-test-desktop:
-    uv sync
-    uv run pytest desktop/tests/
+test module="":
+    @echo "{{ if module =~ MODULES { "Testing module: " + module } else { error("Invalid module name. Must be one of: " + MODULES) } }}"
+    uv run pytest {{ if module != "" { if module == "core" { "tests/" } else { module + "/tests/" } } else { "" } }}
 
 # Run linter
 [group('quality')]
@@ -205,7 +188,7 @@ db-execute-script script:
 # Docker
 # ===========================================================================
 
-# Start API + worker + infra services
+# Start essential services only
 [group('docker')]
 docker-up:
     docker compose up -d
@@ -225,15 +208,20 @@ docker-down:
 docker-build:
     docker compose build
 
+# Rebuild Docker images for development
+[group('docker')]
+docker-build-dev:
+    docker compose {{DOCKER_PROFILES_DEV}} build
+
 # Tail logs of all containers
 [group('docker')]
 docker-logs:
     docker compose logs -f
 
-# Open a shell inside the running API container
+# Open a shell inside the selected service container
 [group('docker')]
-docker-shell:
-    docker compose exec api /bin/bash
+docker-shell service:
+    docker compose exec {{service}} /bin/bash
 
 # ===========================================================================
 # Deploy
@@ -244,20 +232,11 @@ docker-shell:
 deploy-create-builder:
     docker buildx create --name raspberry --driver=docker-container
 
-# Build and push multi-arch API image — usage: just deploy-api <dockerhub_user>
+# Build and push multi-arch image for the chosen module — usage: just deploy-module <module> <dockerhub_user>
 [group('deploy')]
-deploy-api user:
-    docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{user}}/cnc-api:latest --builder=raspberry --target production --push .
-
-# Build and push multi-arch worker image — usage: just deploy-worker <dockerhub_user>
-[group('deploy')]
-deploy-worker user:
-    docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{user}}/cnc-worker:latest --builder=raspberry --target production --file src/Dockerfile.worker --push src
-
-# Build and push multi-arch gateway image — usage: just deploy-gateway <dockerhub_user>
-[group('deploy')]
-deploy-gateway user:
-    docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{user}}/cnc-gateway:latest --builder=raspberry --target production --file src/Dockerfile.gateway --push src
+deploy-image module user:
+    @echo "{{ if module =~ DEPLOYABLE_MODULES { "Deploying module: " + module } else { error("Invalid module name. Must be one of: " + DEPLOYABLE_MODULES) } }}"
+    docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{user}}/cnc-{{module}}:latest --builder=raspberry --target production --file src/Dockerfile.{{module}} --push src
 
 # ===========================================================================
 # Cleanup
