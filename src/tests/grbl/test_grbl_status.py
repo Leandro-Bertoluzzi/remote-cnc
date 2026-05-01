@@ -60,3 +60,75 @@ class TestGrblStatus:
         assert is_alarm == (active_state == GrblActiveState.ALARM.value)
         assert is_idle == (active_state == GrblActiveState.IDLE.value)
         assert is_checkmode == (active_state == GrblActiveState.CHECK.value)
+
+    # ------------------------------------------------------------------ #
+    # update_status: carry-forward & position derivation                 #
+    # ------------------------------------------------------------------ #
+
+    def test_update_status_carry_forward_wco(self):
+        """WCO is only emitted periodically; the previous value must be carried forward."""
+        # Establish a previous WCO.
+        self.grbl_status.update_status(
+            {"mpos": {"x": 0.0, "y": 0.0, "z": 0.0}, "wco": {"x": 1.0, "y": 2.0, "z": 3.0}}
+        )
+
+        # New report without WCO.
+        self.grbl_status.update_status({"mpos": {"x": 5.0, "y": 5.0, "z": 5.0}})
+
+        assert self.grbl_status._state["status"]["wco"] == {"x": 1.0, "y": 2.0, "z": 3.0}
+
+    def test_update_status_carry_forward_ov(self):
+        """Override values are only in *override* reports; must be carried forward."""
+        self.grbl_status.update_status(
+            {"mpos": {"x": 0.0, "y": 0.0, "z": 0.0}, "ov": [110, 100, 100]}
+        )
+
+        # New report without 'ov'.
+        self.grbl_status.update_status({"mpos": {"x": 1.0, "y": 0.0, "z": 0.0}})
+
+        assert self.grbl_status._state["status"]["ov"] == [110, 100, 100]
+
+    def test_update_status_carry_forward_accessory_state(self):
+        """accessoryState must be carried forward when absent from the new report."""
+        self.grbl_status.update_status(
+            {"mpos": {"x": 0.0, "y": 0.0, "z": 0.0}, "accessoryState": "S"}
+        )
+
+        self.grbl_status.update_status({"mpos": {"x": 1.0, "y": 0.0, "z": 0.0}})
+
+        assert self.grbl_status._state["status"]["accessoryState"] == "S"
+
+    def test_update_status_derives_wpos_from_mpos(self):
+        """When only mpos is present, wpos must be derived as mpos - wco."""
+        wco = {"x": 1.0, "y": 2.0, "z": 3.0}
+        mpos = {"x": 10.0, "y": 12.0, "z": 13.0}
+
+        self.grbl_status.update_status({"mpos": mpos, "wco": wco})
+
+        expected_wpos = {"x": 9.0, "y": 10.0, "z": 10.0}
+        assert self.grbl_status._state["status"]["wpos"] == expected_wpos
+
+    def test_update_status_derives_mpos_from_wpos(self):
+        """When only wpos is present, mpos must be derived as wpos + wco."""
+        wco = {"x": 1.0, "y": 2.0, "z": 3.0}
+        # First call to establish WCO.
+        self.grbl_status.update_status({"wpos": {"x": 0.0, "y": 0.0, "z": 0.0}, "wco": wco})
+
+        # Second call: only wpos, WCO carried forward.
+        wpos = {"x": 9.0, "y": 10.0, "z": 10.0}
+        self.grbl_status.update_status({"wpos": wpos})
+
+        expected_mpos = {"x": 10.0, "y": 12.0, "z": 13.0}
+        assert self.grbl_status._state["status"]["mpos"] == expected_mpos
+
+    def test_update_status_no_derivation_when_both_present(self):
+        """When both mpos and wpos are supplied, neither is overwritten."""
+        mpos = {"x": 5.0, "y": 5.0, "z": 5.0}
+        wpos = {"x": 4.0, "y": 4.0, "z": 4.0}
+        wco = {"x": 1.0, "y": 1.0, "z": 1.0}
+
+        self.grbl_status.update_status({"mpos": mpos, "wpos": wpos, "wco": wco})
+
+        # Both values must be exactly what was supplied — no derivation.
+        assert self.grbl_status._state["status"]["mpos"] == mpos
+        assert self.grbl_status._state["status"]["wpos"] == wpos
