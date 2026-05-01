@@ -294,10 +294,7 @@ class TestControlView:
         mock_set_spindle = mocker.patch.object(ControllerStatus, "set_spindle")
         mock_set_tool = mocker.patch.object(ControllerStatus, "set_tool")
 
-        self.control_view.update_device_status(
-            {},
-            { "feedrate": 50, "spindle": 1200, "tool": "T1" }
-        )
+        self.control_view.update_device_status({}, {"feedrate": 50, "spindle": 1200, "tool": "T1"})
 
         assert mock_set_status.call_count == 1
         assert mock_set_feedrate.call_count == 1

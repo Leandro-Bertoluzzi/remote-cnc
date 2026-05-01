@@ -22,6 +22,7 @@ import time
 
 import redis
 from core.config import (
+    GRBL_SIMULATION,
     REDIS_DB_STORAGE,
     REDIS_HOST,
     REDIS_PORT,
@@ -88,7 +89,7 @@ def create_gateway(
 
     # GrblController — the serial owner
     grbl_logger = setup_stream_logger("controller", logging.INFO)
-    controller = GrblController(logger=grbl_logger)
+    controller = GrblController(logger=grbl_logger, skip_startup_validation=GRBL_SIMULATION)
 
     # Sub-systems
     session_manager = SessionManager(redis_conn=redis_conn)
@@ -149,11 +150,8 @@ def run_gateway(
         now = time.time()
 
         # 0. Check serial thread health
-        if controller.serial_thread is not None and not controller.serial_thread.is_alive():
-            logger.critical(
-                "serial_io thread is dead! _serial_io_alive=%s. Aborting gateway loop.",
-                controller._serial_io_alive,
-            )
+        if not controller.is_io_alive():
+            logger.critical("serial_io thread is dead! Aborting gateway loop.")
             break
 
         # 1. Periodic GRBL queries
@@ -190,13 +188,10 @@ def run_gateway(
 
         # 6. Periodic pipeline-health summary
         if now - last_pipeline_summary >= PIPELINE_SUMMARY_INTERVAL:
-            serial_alive = (
-                controller.serial_thread is not None and controller.serial_thread.is_alive()
-            )
+            serial_alive = controller.is_io_alive()
             logger.info(
-                "[Gateway] queue=%d, buffer_fill=%.1f%%, "
+                "[Gateway] buffer_fill=%.1f%%, "
                 "commands_count=%d, file_running=%s, serial_alive=%s",
-                controller.queue.qsize(),
                 controller.get_buffer_fill(),
                 controller.commands_count,
                 file_executor.is_running,

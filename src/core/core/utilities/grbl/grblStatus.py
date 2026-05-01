@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from core.utilities.grbl.constants import GrblActiveState
 from core.utilities.grbl.types import Coordinates, GrblControllerState, GrblError, PositionType
@@ -69,7 +69,43 @@ class GrblStatus:
     def set_active_state(self, state: str):
         self._state["status"]["activeState"] = state
 
-    def update_status(self, status: dict[str, str]):
+    def update_status(self, status: dict[str, Any]):
+        """Merges a new status report into the current state.
+
+        Fields absent from ``status`` are carried forward from the previous state according
+        to the GRBL v1.1 reporting behaviour:
+
+        - ``wco``: only emitted periodically; reuse the last known value when absent so that \
+        ``wpos`` can always be derived from ``mpos``.
+        - ``ov`` / ``accessoryState``: only included in *override* reports; carry forward otherwise.
+        - Derived position: if only ``mpos`` or ``wpos`` is present, compute the other from ``wco``.
+        """
+        prev = self._state["status"]
+
+        # Carry-forward WCO
+        if "wco" not in status and prev.get("wco"):
+            status = dict(status)
+            status["wco"] = prev["wco"]
+
+        # Carry-forward overrides and accessory state (only in override reports)
+        if "ov" not in status and prev.get("ov"):
+            status = dict(status)
+            status["ov"] = prev["ov"]
+        if "accessoryState" not in status and prev.get("accessoryState"):
+            status = dict(status)
+            status["accessoryState"] = prev["accessoryState"]
+
+        # Derive missing position from the other + WCO
+        wco = status.get("wco") or prev.get("wco") or {"x": 0.0, "y": 0.0, "z": 0.0}
+        if "wpos" not in status and "mpos" in status:
+            mpos = status["mpos"]
+            status = dict(status)
+            status["wpos"] = {k: mpos[k] - wco[k] for k in ("x", "y", "z")}
+        elif "mpos" not in status and "wpos" in status:
+            wpos = status["wpos"]
+            status = dict(status)
+            status["mpos"] = {k: wpos[k] + wco[k] for k in ("x", "y", "z")}
+
         self._state["status"].update(status)
 
     def update_parser_state(self, parser_state: dict[str, str]):
