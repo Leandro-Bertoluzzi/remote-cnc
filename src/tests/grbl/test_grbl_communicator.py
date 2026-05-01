@@ -553,6 +553,82 @@ class TestGrblCommunicator:
         assert self.communicator.queue.queue[0] == "G0 X10"
         assert self.communicator._single_step is True
 
+    def test_eeprom_single_step_not_engaged_for_non_eeprom_command(self, mocker: MockerFixture):
+        """A non-EEPROM command (e.g. 'G0 X10') must NOT activate single-step mode.
+
+        Both queued commands are sent without any inter-command blocking and
+        _single_step remains False throughout.
+        """
+        self.communicator._thread = threading.Thread()
+
+        self.communicator.queue.put("G0 X10")
+        self.communicator.queue.put("G1 Y20")
+
+        sent_commands: list[str] = []
+
+        def record_and_stop(cmd: str):
+            sent_commands.append(cmd)
+            if len(sent_commands) >= 2:
+                self.communicator._thread = None
+
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+        mocker.patch.object(SerialService, "waiting", return_value=False)
+        mocker.patch.object(SerialService, "readLine", return_value="")
+        mocker.patch.object(SerialService, "sendLine", side_effect=record_and_stop)
+
+        self.communicator._serial_io()
+
+        assert sent_commands == ["G0 X10", "G1 Y20"]
+        assert self.communicator._single_step is False
+        assert self.communicator._temporary_single_step is False
+
+    def test_eeprom_single_step_exits_after_acknowledgment(self, mocker: MockerFixture):
+        """After GRBL acknowledges the EEPROM command with 'ok', the communicator
+        exits single-step mode and sends the next (non-EEPROM) command normally.
+
+        Scenario
+        --------
+        Queue: ["$$", "G0 X10"]
+
+        Round 1  — dequeue "$$", send it  → _single_step=True, cline=[3]
+        Round 2  — waiting()=True → readLine()="ok" → _handle_response drains cline
+        Round 3  — cline=[] → dequeue "G0 X10" → _enter_single_step_if_needed exits
+                   single-step → _single_step=False → send "G0 X10"
+
+        Expected: both commands sent, _single_step=False after exit.
+        """
+        self.communicator._thread = threading.Thread()
+
+        self.communicator.queue.put("$$")
+        self.communicator.queue.put("G0 X10")
+
+        sent_commands: list[str] = []
+
+        def record_send(cmd: str):
+            sent_commands.append(cmd)
+            if len(sent_commands) >= 2:
+                self.communicator._thread = None
+
+        # waiting() drives the read path: True only on the second iteration
+        # so that readLine() returns "ok" after "$$" has been sent.
+        self._waiting_calls = 0
+
+        def waiting_side_effect():
+            self._waiting_calls += 1
+            # Return True (trigger a read) on the 2nd call only.
+            return self._waiting_calls == 2
+
+        mocker.patch.object(GrblStatus, "paused", return_value=False)
+        mocker.patch.object(SerialService, "waiting", side_effect=waiting_side_effect)
+        mocker.patch.object(SerialService, "readLine", return_value="ok")
+        mocker.patch.object(SerialService, "sendLine", side_effect=record_send)
+
+        self.communicator._serial_io()
+
+        assert sent_commands == ["$$", "G0 X10"]
+        assert self.communicator._single_step is False
+        assert self.communicator._temporary_single_step is False
+
     # ------------------------------------------------------------------ #
     # _handle_response: semantic dispatch and buffer accounting          #
     # ------------------------------------------------------------------ #
