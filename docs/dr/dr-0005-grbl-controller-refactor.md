@@ -59,9 +59,68 @@ Arquitectura propuesta
       └── GetStatusCommand
 ```
 
+Adicionalmente se identificaron dos problemas de diseño interno que el refactor debe resolver:
+
+3. **Sincronización con escrituras EEPROM**: ciertos comandos GRBL escriben en la flash interna del microcontrolador
+   AVR (`G10`, `G28.1`, `G30.1`, coordenadas de trabajo `G54`–`G59`, escrituras de configuración `$k=v`, y consultas que
+   fuerzan lectura de EEPROM: `$$`, `$#`, `$I`, `$N`, `$RST=`).
+   Durante una escritura a EEPROM el firmware **no puede atender** el buffer RX: si llega un segundo comando antes del
+   `ok` de confirmación, el byte se descarta o corrompe la secuencia de parsing, dejando el controlador en un estado
+   inválido (buffer desincronizado, comandos perdidos).
+
+Referencia: [GRBL wiki - EEPROM issues](https://github.com/grbl/grbl/wiki/Interfacing-with-Grbl#eeprom-issues)
+
+4. **Acoplamiento en `parse_response`**: el método `parse_response` de `GrblController` recibe un `(msg_type, payload)`
+   genérico y contiene una cadena de `if msg_type == ...` que acopla tres aspectos distintos en un mismo lugar:
+    - El despacho por tipo de mensaje.
+    - La acumulación de respuestas multi-línea (p. ej. `$$` genera N líneas `$k=v` + `ok`; `$I` genera
+      `[VER:...]` + `[OPT:...]` + `ok`). Hoy las actualizaciones parciales se acumulan en `build_info: GrblBuildInfo`
+      directamente desde el controlador, sin un objeto que marque cuándo la secuencia está completa.
+    - La conversión del payload crudo a tipos de dominio (`int(payload["blockBufferSize"])`, etc.).
+
 ## Options Considered
 
-### Separación de I/O (GrblCommunicator)
+### Separación de I/O (GrblCommunicator) y modo single-step para comandos EEPROM
+
+**Propuesta de diseño en `GrblCommunicator`**
+
+Se mantienen dos flags booleanos:
+
+- `_single_step`: bloquea el desencolado mientras `cline` no esté vacío.
+- `_temporary_single_step`: indica que el modo fue activado automáticamente (no por el usuario)
+  y debe desactivarse en cuanto se procese un comando no-EEPROM.
+
+Flujo de una secuencia `["$$", "G0 X10"]`:
+
+```mermaid
+sequenceDiagram
+    participant Q as Cola de comandos
+    participant L as serial_io (loop)
+    participant E as _enter_single_step_if_needed
+    participant S as Puerto serial (GRBL)
+
+    Q->>L: dequeue → "$$"
+    L->>E: ("$$")
+    E-->>L: match EEPROM<br/>_single_step=True, _temporary=True
+    L->>S: send("$$")
+    Note over L: cline=[3], sline=["$$"]
+
+    Note over L: _single_step=True ∧ len(cline)>0<br/>→ dequeue bloqueado
+
+    S-->>L: "ok"
+    L->>L: _handle_response("ok")<br/>cline=[], _sumcline=0<br/>on_ok("$$")
+
+    Note over L: _single_step=True ∧ len(cline)=0<br/>→ dequeue permitido
+
+    Q->>L: dequeue → "G0 X10"
+    L->>E: ("G0 X10")
+    E-->>L: sin match EEPROM<br/>_single_step=False, _temporary=False
+    L->>S: send("G0 X10")
+    Note over L: cline=[7], sline=["G0 X10"]
+```
+
+Si el siguiente comando también fuera EEPROM, `_enter_single_step_if_needed` mantendría el
+modo activo sin interrupciones.
 
 1. **Extraer `GrblCommunicator`** con el thread `serial_io`, `cline`/`sline` y detección de comandos EEPROM.
     - Pros: alinea con UGS; `GrblController` queda como coordinador puro; facilita testing del I/O en forma
@@ -73,6 +132,18 @@ Arquitectura propuesta
     - Cons: mantiene el problema de clase monolítica; testing difícil.
 
 ### Clases de comandos
+
+La propuesta es que cada clase de comando encapsule:
+
+- El string del comando a enviar (e.g., `GrblCommand.BUILD.value`).
+- La lógica de acumulación de respuestas hasta el `ok` final.
+- La conversión del payload crudo al tipo de dominio correspondiente.
+- Un callback de completado que `GrblController` registra al encolar el comando.
+
+Esto permite que `GrblController` se limite a construir el comando, encolarlo vía
+`communicator.send()`, y reaccionar al resultado sin conocer el formato de la respuesta.
+
+**Opciones:**
 
 1. **Solo comandos de consulta estructurada** (4 clases: `GetBuildInfoCommand`,
    `GetSettingsCommand`, `GetParserStateCommand`, `GetStatusCommand`).
@@ -132,6 +203,31 @@ Se adoptan las opciones 1 de cada sección:
 - **[-]** La superficie de la API pública aumenta (3 nuevas clases + 4 comandos
     - 5 pasos de inicialización); la curva de aprendizaje para nuevos colaboradores es algo mayor.
 - **[-]** Los tests existentes de `serial_io` y `connect` deben migrarse a los nuevos archivos de test.
+
+## Responsibility Distribution
+
+La siguiente tabla delimita explícitamente las responsabilidades de cada clase:
+
+| Clase                  | Responsabilidades                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`GrblCommunicator`** | Ciclo de vida del thread I/O (`start`/`stop`). Contabilidad del buffer RX (`cline`/`sline`/`_sumcline`). Detección de comandos EEPROM y modo single-step. Parsing de cada línea recibida (`GrblLineParser`). Dispatch de callbacks semánticos (`on_ok`, `on_error`, `on_alarm`, `on_message`, `on_program_end`, `on_disconnect`). API de escritura (`send`, `send_realtime`, `empty_queue`). |
+| **`GrblInitializer`**  | Protocolo de startup en 3 pasos: (1) lectura y validación del mensaje de bienvenida (`read_startup`), (2) lectura del mensaje opcional de alarma post-startup (`handle_post_startup`), (3) encolado de consultas iniciales `$I`/`$G`/`$$` (`queue_initial_queries`).                                                                                                                         |
+| **`GrblStatus`**       | Estado observable del dispositivo: posición (`mpos`/`wpos`/`wco`), estado del parser modal, flags (`connected`, `paused`, `alarm`, `stop`, `finished`), error activo. Carry-forward de `wco`/`ov`/`accessoryState` entre polls. Derivación automática de `mpos`↔`wpos` a partir de `wco`.                                                                                                    |
+| **`GrblMonitor`**      | Adaptador de logging: formatea y emite eventos seriales (`sent`, `received`) y mensajes de nivel `debug`/`info`/`warning`/`error`/`critical`). Desacoplado de los detalles de la comunicación serial.                                                                                                                                                                                        |
+| **`GrblController`**   | Coordinador de ciclo de vida (`connect`/`disconnect`). Construcción y cableado de `GrblCommunicator`, `GrblInitializer` y `GrblStatus`. Recepción de callbacks semánticos del comunicador y actualización del estado observable. API pública de acciones: `send_command`, `jog`, `set_settings`, `queryStatusReport`, `disable_alarm`, etc.                                                  |
+
+**Regla de dependencias** (las flechas indican "depende de"):
+
+```
+GrblController
+  → GrblCommunicator  → GrblStatus, GrblMonitor, SerialService
+  → GrblInitializer   → GrblCommunicator, GrblMonitor, SerialService
+  → GrblStatus
+  → GrblMonitor
+```
+
+Ninguna clase de infraestructura (`GrblCommunicator`, `GrblInitializer`, `GrblStatus`, `GrblMonitor`) depende de
+`GrblController`, lo que permite instanciarlas y testearlas de forma completamente independiente.
 
 ## Next Steps
 
