@@ -22,10 +22,14 @@ default:
 # Variables
 # ===========================================================================
 
-# Groups of docker profiles for convenience
+# Check whether the user uses Podman or Docker and set the appropriate command
 [private]
-DOCKER_PROFILES_DEV := "--profile=simulator"
-DOCKER_PROFILES_ALL := "--profile=simulator --profile=device --profile=ngrok"
+CONTAINER_RUNTIME := if os_family() == "windows" { `powershell -NoProfile -Command "if (Get-Command podman -ErrorAction SilentlyContinue) { 'podman' } else { 'docker' }"` } else { `podman version >/dev/null 2>&1 && echo podman || echo docker` }
+
+# Groups of compose profiles for convenience
+[private]
+COMPOSE_PROFILES_DEV := "--profile=simulator"
+COMPOSE_PROFILES_ALL := "--profile=simulator --profile=device --profile=ngrok"
 
 # Existing modules in the repo (regular expression)
 [private]
@@ -164,68 +168,60 @@ db-generate-schema:
 db-generate-migration start end:
     uv run alembic upgrade {{start}}:{{end}} --sql > migration.sql
 
-# Apply pending migrations inside the running API container
-[group('database')]
-db-upgrade-docker:
-    docker exec remote-cnc-api bash -c "cd core && uv run alembic upgrade head"
-
-# Seed the database inside the running API container
-[group('database')]
-db-seed-docker:
-    docker exec remote-cnc-api bash -c "uv run python db_seeder.py"
-
 # Backup the database from the running PostgreSQL container (outputs to db_backup.sql)
 [group('database')]
 db-backup:
-    docker exec -i remote-cnc-postgresql pg_dump -U $DB_USER $DB_NAME > db_backup.sql
+    {{CONTAINER_RUNTIME}} exec -i remote-cnc-postgresql pg_dump -U $DB_USER $DB_NAME > db_backup.sql
 
 # Execute a SQL script against the running PostgreSQL container — usage: just db-execute-script path/to/script.sql
 [group('database')]
 db-execute-script script:
-    docker exec -i remote-cnc-postgresql psql -U $DB_USER --dbname=$DB_NAME < {{script}}
+    {{CONTAINER_RUNTIME}} exec -i remote-cnc-postgresql psql -U $DB_USER --dbname=$DB_NAME < {{script}}
 
 # ===========================================================================
-# Docker
+# Containers
 # ===========================================================================
 
 # Start essential services only
-[group('docker')]
-docker-up:
-    docker compose up -d
+[group('containers')]
+compose-up:
+    {{CONTAINER_RUNTIME}} compose up -d
 
 # Start everything including dev services (e.g. simulator)
-[group('docker')]
-docker-up-dev:
-    docker compose {{DOCKER_PROFILES_DEV}} up -d
+[group('containers')]
+compose-up-dev:
+    {{CONTAINER_RUNTIME}} compose {{COMPOSE_PROFILES_DEV}} up -d
 
-# Stop all containers
-[group('docker')]
-docker-down:
-    docker compose {{DOCKER_PROFILES_ALL}} down
+# Stop all running containers
+[group('containers')]
+compose-down:
+    {{CONTAINER_RUNTIME}} compose {{COMPOSE_PROFILES_ALL}} down
 
-# Rebuild Docker images
-[group('docker')]
-docker-build:
-    docker compose build
+# Rebuild container images
+[group('containers')]
+compose-build:
+    {{CONTAINER_RUNTIME}} compose build
 
-# Rebuild Docker images for development
-[group('docker')]
-docker-build-dev:
-    docker compose {{DOCKER_PROFILES_DEV}} build
+# Rebuild container images including dev profiles
+[group('containers')]
+compose-build-dev:
+    {{CONTAINER_RUNTIME}} compose {{COMPOSE_PROFILES_DEV}} build
 
-# Tail logs of all containers
-[group('docker')]
-docker-logs:
-    docker compose logs -f
+# Tail logs from all containers
+[group('containers')]
+compose-logs:
+    {{CONTAINER_RUNTIME}} compose logs -f
 
 # Open a shell inside the selected service container
-[group('docker')]
-docker-shell service:
-    docker compose exec {{service}} /bin/bash
+[group('containers')]
+compose-shell service:
+    {{CONTAINER_RUNTIME}} compose exec {{service}} /bin/bash
 
 # ===========================================================================
 # Deploy
 # ===========================================================================
+# Note: recipes in this section require Docker — they rely on `docker buildx`,
+# which is not available in Podman by default.
 
 # Create the multi-architecture buildx builder (run once)
 [group('deploy')]

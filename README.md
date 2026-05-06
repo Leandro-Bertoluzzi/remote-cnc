@@ -63,11 +63,11 @@ The following tools were used in this project:
 - DB migrations: [Alembic](https://alembic.sqlalchemy.org/en/latest/)
 - Tasks queue: [Celery](https://docs.celeryq.dev/en/stable/)
 - Message broker: [Redis](https://redis.io/)
-- Containerization: [Docker](https://www.docker.com/)
+- Containerization: [Docker](https://www.docker.com/) / [Podman](https://podman.io/)
 
 ## :white_check_mark: Requirements
 
-Before starting :checkered_flag:, you need to have [Python](https://www.python.org/), [uv](https://docs.astral.sh/uv/) and [Docker](https://www.docker.com/) installed.
+Before starting :checkered_flag:, you need to have [Python](https://www.python.org/), [uv](https://docs.astral.sh/uv/) and [Docker](https://www.docker.com/) or [Podman](https://podman.io/) installed.
 
 Optionally, install [just](https://just.systems/) to use the project's command runner (`justfile`). See the [available recipes](#available-recipes) for a full reference.
 
@@ -126,48 +126,47 @@ src/
 
 The `justfile` at the root of the repository contains all common development and operations commands, organised by group. Run `just` (no arguments) to see the full list at any time.
 
-> `*` Requires Docker containers to be running.
+> `*` Requires running containers (see [Running with containers](#running-with-containers-recommended)).
 
-| Recipe                                | Group    | Description                                   |
-| ------------------------------------- | -------- | --------------------------------------------- |
-| `sync`                                | setup    | Install / update deps from lockfile           |
-| `lock`                                | setup    | Re-resolve & update `uv.lock`                 |
-| `test`                                | quality  | Run all tests                                 |
-| `test-core`                           | quality  | Core / shared tests                           |
-| `test-api`                            | quality  | API tests                                     |
-| `test-worker`                         | quality  | Worker tests                                  |
-| `test-desktop`                        | quality  | Desktop tests                                 |
-| `lint`                                | quality  | Run linter                                    |
-| `lint-fix`                            | quality  | Run linter with auto-fix                      |
-| `format`                              | quality  | Run formatter                                 |
-| `typecheck`                           | quality  | Run type checker                              |
-| `check`                               | quality  | lint + typecheck + test                       |
-| `start-api`                           | run      | Start the API with uvicorn (dev)              |
-| `start-desktop`                       | run      | Start the desktop (PyQt5) app                 |
-| `start-desktop-watch`                 | run      | Desktop app with auto-reload                  |
-| `start-worker`                        | run      | Start the Celery worker                       |
-| `start-worker-watch`                  | run      | Celery worker with auto-reload                |
-| `db-upgrade`                          | database | Apply pending migrations (local)              |
-| `db-downgrade`                        | database | Revert last migration (local)                 |
-| `db-revision <msg>`                   | database | Auto-generate a new migration                 |
-| `db-seed`                             | database | Seed the database (local)                     |
-| `db-generate-schema`                  | database | Export full schema as SQL                     |
-| `db-generate-migration <start> <end>` | database | Export SQL for a migration range              |
-| `db-upgrade-docker` `*`               | database | Apply migrations in the API container         |
-| `db-seed-docker` `*`                  | database | Seed the database in the API container        |
-| `db-backup` `*`                       | database | Backup DB from the PostgreSQL container       |
-| `db-execute-script <path>` `*`        | database | Run a SQL script against the DB container     |
-| `docker-up`                           | docker   | Start API + worker + infra                    |
-| `docker-up-dev`                       | docker   | Start everything + simulated CNC gateway      |
-| `docker-down`                         | docker   | Stop all containers                           |
-| `docker-build`                        | docker   | Rebuild Docker images                         |
-| `docker-logs`                         | docker   | Tail logs of all containers                   |
-| `docker-shell` `*`                    | docker   | Open a shell in the API container             |
-| `deploy-create-builder`               | deploy   | Create multi-arch buildx builder (once)       |
-| `deploy-api <user>`                   | deploy   | Build & push multi-arch API image             |
-| `deploy-worker <user>`                | deploy   | Build & push multi-arch worker image          |
-| `deploy-gateway <user>`               | deploy   | Build & push multi-arch gateway image         |
-| `clean`                               | cleanup  | Remove compiled files, caches, logs, coverage |
+| Recipe                                | Group      | Description                                   |
+| ------------------------------------- | ---------- | --------------------------------------------- |
+| `sync`                                | setup      | Install / update deps from lockfile           |
+| `lock`                                | setup      | Re-resolve & update `uv.lock`                 |
+| `test`                                | quality    | Run all tests                                 |
+| `test-core`                           | quality    | Core / shared tests                           |
+| `test-api`                            | quality    | API tests                                     |
+| `test-worker`                         | quality    | Worker tests                                  |
+| `test-desktop`                        | quality    | Desktop tests                                 |
+| `lint`                                | quality    | Run linter                                    |
+| `lint-fix`                            | quality    | Run linter with auto-fix                      |
+| `format`                              | quality    | Run formatter                                 |
+| `typecheck`                           | quality    | Run type checker                              |
+| `check`                               | quality    | lint + typecheck + test                       |
+| `start-api`                           | run        | Start the API with uvicorn (dev)              |
+| `start-desktop`                       | run        | Start the desktop (PyQt5) app                 |
+| `start-desktop-watch`                 | run        | Desktop app with auto-reload                  |
+| `start-worker`                        | run        | Start the Celery worker                       |
+| `start-worker-watch`                  | run        | Celery worker with auto-reload                |
+| `db-upgrade`                          | database   | Apply pending migrations (local)              |
+| `db-downgrade`                        | database   | Revert last migration (local)                 |
+| `db-revision <msg>`                   | database   | Auto-generate a new migration                 |
+| `db-seed`                             | database   | Seed the database (local)                     |
+| `db-generate-schema`                  | database   | Export full schema as SQL                     |
+| `db-generate-migration <start> <end>` | database   | Export SQL for a migration range              |
+| `db-backup` `*`                       | database   | Backup DB from the PostgreSQL container       |
+| `db-execute-script <path>` `*`        | database   | Run a SQL script against the DB container     |
+| `compose-up`                          | containers | Start API + worker + infra                    |
+| `compose-up-dev`                      | containers | Start everything + simulated CNC gateway      |
+| `compose-down`                        | containers | Stop all containers                           |
+| `compose-build`                       | containers | Rebuild container images                      |
+| `compose-build-dev`                   | containers | Rebuild images including dev profiles         |
+| `compose-logs`                        | containers | Tail logs of all containers                   |
+| `compose-shell <service>` `*`         | containers | Open a shell in a service container           |
+| `deploy-create-builder`               | deploy     | Create multi-arch buildx builder (once)       |
+| `deploy-api <user>`                   | deploy     | Build & push multi-arch API image             |
+| `deploy-worker <user>`                | deploy     | Build & push multi-arch worker image          |
+| `deploy-gateway <user>`               | deploy     | Build & push multi-arch gateway image         |
+| `clean`                               | cleanup    | Remove compiled files, caches, logs, coverage |
 
 ### First-time setup
 
@@ -183,27 +182,29 @@ $ cp .env.example .env
 $ just sync
 ```
 
-### Running with Docker (recommended)
+### Running with containers (recommended)
 
-The easiest way to run the needed services is with `Docker`. This will start the API, the Celery worker, and the following services:
+The easiest way to run the needed services is with your container runtime (Docker or Podman). This will start the API, the Celery worker, and the following services:
 
 - PostgreSQL DB.
 - Message broker (Redis).
 - Flower, to monitor the Celery worker.
 
 ```bash
-$ just docker-up
+$ just compose-up
 ```
 
 If you want to also start the CNC gateway to connect a physical CNC device (Linux only, see [this section](#gear-cnc-gateway)):
 
 ```bash
 $ docker compose --profile=device up -d
+# Or, if you prefer Podman:
+$ podman compose --profile=device up -d
 ```
 
 Open [http://localhost:8000](http://localhost:8000) with your browser to check if the API works.
 
-### Running locally (without Docker)
+### Running locally (without containers)
 
 ```bash
 # Start the API
@@ -227,7 +228,7 @@ You can also run a gateway with a mocked version of the GRBL device, which runs 
 **NOTE:** This also works on Windows, since the simulated gateway doesn't need USB device access.
 
 ```bash
-$ docker compose --profile=simulator up
+$ just compose-up-dev
 ```
 
 The simulated gateway automatically creates the virtual serial port on startup using the GRBL simulator. Make sure your environment has the following variable set:
@@ -268,13 +269,6 @@ $ just db-seed
 
 More info about Alembic usage [here](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
 
-If you are using `docker compose`, you can apply migrations and seed the database without entering the container:
-
-```bash
-$ just db-upgrade-docker
-$ just db-seed-docker
-```
-
 ## :rocket: Deploy changes
 
 There is a folder for each subproject in docs, which contain instructions to deploy changes to production:
@@ -282,11 +276,13 @@ There is a folder for each subproject in docs, which contain instructions to dep
 - Desktop: See deployment docs for desktop app [here](docs/desktop/deployment.md).
 - API: See deployment docs for API [here](docs/api/deployment.md).
 
-### Update Docker containers
+### Update containers
 
-If we modify the Docker image for the API, Worker, or Gateway, or we just need to update the version of one of the other services, we have to follow the next steps.
+If we modify the image for the API, Worker, or Gateway, or we just need to update the version of one of the other services, we have to follow the next steps.
 
-1. If not logged, log in to your Docker account:
+> In all commands below, replace `docker` with `podman` if you use Podman.
+
+1. If not logged, log in to your registry:
 
 ```bash
 $ docker login
@@ -350,7 +346,7 @@ The CNC gateway manages serial communication with the physical CNC device. It sh
 
 ### Start the Celery worker manually (Linux)
 
-In case you don't use Docker or just want to run it manually, you can follow the next steps.
+In case you prefer to run it without containers, you can follow the next steps.
 
 ```bash
 # Start Celery's worker server
