@@ -55,12 +55,12 @@ class TestGrblInitializer:
         )
 
     # ------------------------------------------------------------------ #
-    # read_startup                                                         #
+    # open_connection                                                      #
     # ------------------------------------------------------------------ #
 
-    def test_read_startup_ok(self, mocker: MockerFixture):
-        """A valid GRBL_MSG_STARTUP response returns the payload dict."""
-        mocker.patch.object(SerialService, "readLine", return_value="Grbl 1.1h")
+    def test_open_connection_ok(self, mocker: MockerFixture):
+        """A valid GRBL_MSG_STARTUP banner returns the parsed payload."""
+        mocker.patch.object(SerialService, "startConnection", return_value="Grbl 1.1h")
         mocker.patch.object(
             GrblLineParser,
             "parse",
@@ -70,42 +70,42 @@ class TestGrblInitializer:
             ),
         )
 
-        payload = self.initializer.read_startup()
+        payload = self.initializer.open_connection("/dev/ttyUSB0", 115200, 0.1)
 
         assert payload["firmware"] == "Grbl"
         assert payload["version"] == "1.1h"
 
-    def test_read_startup_wrong_msg_type_raises(self, mocker: MockerFixture):
-        """A non-startup message type raises an exception with a clear message."""
-        mocker.patch.object(SerialService, "readLine", return_value="ok")
+    def test_open_connection_wrong_msg_type_raises(self, mocker: MockerFixture):
+        """A non-startup banner raises an exception with a clear message."""
+        mocker.patch.object(SerialService, "startConnection", return_value="ok")
         mocker.patch.object(GrblLineParser, "parse", return_value=(GRBL_RESULT_OK, {}))
 
         with pytest.raises(Exception) as exc_info:
-            self.initializer.read_startup()
+            self.initializer.open_connection("/dev/ttyUSB0", 115200, 0.1)
 
         assert "Failed starting connection with GRBL" in str(exc_info.value)
 
-    def test_read_startup_serial_error_raises(self, mocker: MockerFixture):
-        """A SerialException during readLine is re-raised as a plain Exception."""
-        mocker.patch.object(SerialService, "readLine", side_effect=SerialException("port closed"))
+    def test_open_connection_serial_error_propagates(self, mocker: MockerFixture):
+        """A SerialException from startConnection propagates."""
+        mocker.patch.object(
+            SerialService, "startConnection", side_effect=SerialException("port closed")
+        )
 
-        with pytest.raises(Exception) as exc_info:
-            self.initializer.read_startup()
+        with pytest.raises(SerialException):
+            self.initializer.open_connection("/dev/ttyUSB0", 115200, 0.1)
 
-        assert "Error reading startup response from GRBL" in str(exc_info.value)
-
-    def test_read_startup_skip_validation(self, mocker: MockerFixture):
-        """With skip_startup_validation=True, any message type is accepted."""
+    def test_open_connection_skip_validation(self, mocker: MockerFixture):
+        """With skip_startup_validation=True, any banner message type is accepted."""
         initializer = GrblInitializer(
             serial=self.serial,
             monitor=self.grbl_monitor,
             skip_startup_validation=True,
         )
-        mocker.patch.object(SerialService, "readLine", return_value="simulator ready")
+        mocker.patch.object(SerialService, "startConnection", return_value="simulator ready")
         mocker.patch.object(GrblLineParser, "parse", return_value=("UNKNOWN_TYPE", {"foo": "bar"}))
 
         # Should not raise
-        payload = initializer.read_startup()
+        payload = initializer.open_connection("/dev/ttyUSB0", 115200, 0.1)
         assert payload == {"foo": "bar"}
 
     # ------------------------------------------------------------------ #

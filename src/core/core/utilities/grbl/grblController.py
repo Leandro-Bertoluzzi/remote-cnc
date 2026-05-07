@@ -80,6 +80,7 @@ class GrblController:
 
         # State variables
         self.commands_count = 0  # Amount of already processed commands
+        self._parser_state_query_in_flight: bool = False  # True while a $G ok is pending
 
     # ------------------------------------------------------------------
     # Public API
@@ -91,20 +92,6 @@ class GrblController:
 
     def connect(self, port: str, baudrate: int) -> dict[str, str] | None:
         """Starts the GRBL device connected to the given port."""
-        try:
-            self.serial.startConnection(port, baudrate, SERIAL_TIMEOUT)
-        except SerialException as error:
-            self.grbl_monitor.critical(
-                f"Failed opening serial port {port} with a baudrate of {baudrate}", exc_info=True
-            )
-            raise Exception(
-                f"Failed opening serial port {port}, "
-                "verify and close any other connection you may have"
-            ) from error
-        self.grbl_monitor.info(
-            f"Started USB connection at port {port} with a baudrate of {baudrate}"
-        )
-
         # Build communicator (created fresh on every connect)
         self._communicator = GrblCommunicator(
             serial=self.serial,
@@ -125,7 +112,19 @@ class GrblController:
             skip_startup_validation=self._skip_startup_validation,
             on_homing_required=self.handle_homing_cycle,
         )
-        startup_payload = initializer.read_startup()
+        try:
+            startup_payload = initializer.open_connection(port, baudrate, SERIAL_TIMEOUT)
+        except SerialException as error:
+            self.grbl_monitor.critical(
+                f"Failed opening serial port {port} with a baudrate of {baudrate}", exc_info=True
+            )
+            raise Exception(
+                f"Failed opening serial port {port}, "
+                "verify and close any other connection you may have"
+            ) from error
+        self.grbl_monitor.info(
+            f"Started USB connection at port {port} with a baudrate of {baudrate}"
+        )
 
         # Store version from startup message when available
         if "version" in startup_payload:
@@ -138,6 +137,7 @@ class GrblController:
         self.grbl_status.set_flag(GrblStatusFlag.CONNECTED.value, True)
         self.grbl_status.set_flag(GrblStatusFlag.FINISHED.value, False)
         self.commands_count = 0
+        self._parser_state_query_in_flight = False
 
         # Start I/O thread
         self._communicator.start()
@@ -169,6 +169,8 @@ class GrblController:
     def _on_ok(self, done_cmd: str) -> None:
         """Called by the communicator when GRBL sends ``ok``."""
         self.commands_count += 1
+        if done_cmd == GrblCommand.PARSER_STATE.value:
+            self._parser_state_query_in_flight = False
         self.grbl_monitor.debug(
             f"[Buffer] ok — drained '{done_cmd}', commands_count={self.commands_count}"
         )
@@ -402,7 +404,17 @@ class GrblController:
     # QUERIES
 
     def query_gcode_parser_state(self):
-        """Queries the GRBL device's current parser state."""
+        """Queries the GRBL device's current parser state.
+
+        Skips the query if a previous ``$G`` has not yet been acknowledged by
+        GRBL.  This prevents ``cline`` from accumulating unbounded ``$G`` bytes
+        when the GRBL planner is full and ``ok`` responses are delayed, which
+        would otherwise fill the local RX-buffer accounting and deadlock the
+        file execution loop.
+        """
+        if self._parser_state_query_in_flight:
+            return
+        self._parser_state_query_in_flight = True
         self.send_command(GrblCommand.PARSER_STATE.value)
 
     def query_grbl_help(self):

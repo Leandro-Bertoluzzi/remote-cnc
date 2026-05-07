@@ -36,33 +36,30 @@ class GrblMonitor:
 
     # LOGGER
 
-    def _log(self, level: str, log: str, queue: bool = False, exc_info: bool | None = None):
-        if level not in LOG_LEVELS:
-            return
-
-        log_method = getattr(self.logger, level)
-        if exc_info is not None:
-            log_method(log, exc_info=exc_info)
-        else:
-            log_method(log)
-
+    def debug(self, log: str, queue: bool = False):
+        self.logger.debug(log)
         if queue:
             self.queue_log(log)
 
-    def debug(self, log: str, queue: bool = False):
-        self._log("debug", log, queue=queue)
-
     def info(self, log: str, queue: bool = False):
-        self._log("info", log, queue=queue)
+        self.logger.info(log)
+        if queue:
+            self.queue_log(log)
 
     def warning(self, log: str, queue: bool = False):
-        self._log("warning", log, queue=queue)
+        self.logger.warning(log)
+        if queue:
+            self.queue_log(log)
 
     def error(self, log: str, queue: bool = False):
-        self._log("error", log, queue=queue)
+        self.logger.error(log)
+        if queue:
+            self.queue_log(log)
 
     def critical(self, log: str, exc_info: bool = True, queue: bool = False):
-        self._log("critical", log, queue=queue, exc_info=exc_info)
+        self.logger.critical(log, exc_info=exc_info)
+        if queue:
+            self.queue_log(log)
 
     def sent(self, command: str, debug: bool = False):
         command = command.strip()  # Strip all EOL characters for consistency
