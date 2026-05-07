@@ -197,6 +197,11 @@ compose-up-dev:
 compose-down:
     {{CONTAINER_RUNTIME}} compose {{COMPOSE_PROFILES_ALL}} down
 
+# Stop and remove all containers, networks, volumes and images created by compose
+[group('containers')]
+compose-clean:
+    {{CONTAINER_RUNTIME}} compose {{COMPOSE_PROFILES_ALL}} down --volumes --remove-orphans
+
 # Rebuild container images
 [group('containers')]
 compose-build:
