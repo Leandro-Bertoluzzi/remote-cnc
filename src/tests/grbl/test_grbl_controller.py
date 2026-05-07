@@ -57,10 +57,10 @@ class TestGrblController:
         return mock_comm
 
     def test_connect_fails_serial(self, mocker: MockerFixture):
-        # Mock serial methods
-        mocker.patch.object(
-            SerialService, "startConnection", side_effect=SerialException("mocked error")
-        )
+        # Mock GrblInitializer.open_connection to raise SerialException
+        mock_init_cls = mocker.patch("core.utilities.grbl.grblController.GrblInitializer")
+        mock_init_cls.return_value.open_connection.side_effect = SerialException("mocked error")
+        mocker.patch("core.utilities.grbl.grblController.GrblCommunicator")
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
@@ -74,13 +74,10 @@ class TestGrblController:
         assert str(error.value) == expected_error_msg
 
     def test_connect(self, mocker: MockerFixture):
-        # Mock serial connection
-        mock_serial_connect = mocker.patch.object(SerialService, "startConnection")
-
         # Mock GrblInitializer
         mock_init_cls = mocker.patch("core.utilities.grbl.grblController.GrblInitializer")
         mock_initializer = mock_init_cls.return_value
-        mock_initializer.read_startup.return_value = {
+        mock_initializer.open_connection.return_value = {
             "firmware": "Grbl",
             "version": "1.1",
             "message": None,
@@ -93,7 +90,7 @@ class TestGrblController:
         # Call method under test
         response = self.grbl_controller.connect("port", 9600)
 
-        # Assertions — controller orchestrates the 3 steps and starts the thread
+        # Assertions — controller orchestrates the initialization steps and starts the thread
         assert response == {
             "firmware": "Grbl",
             "version": "1.1",
@@ -101,9 +98,8 @@ class TestGrblController:
             "raw": "Grbl 1.1",
         }
         assert self.grbl_controller.build_info["version"] == "1.1"
-        mock_serial_connect.assert_called_once()
         mock_init_cls.assert_called_once()
-        mock_initializer.read_startup.assert_called_once()
+        mock_initializer.open_connection.assert_called_once_with("port", 9600, 0.10)
         mock_initializer.handle_post_startup.assert_called_once_with(mock_comm_cls.return_value)
         mock_initializer.queue_initial_queries.assert_called_once_with(mock_comm_cls.return_value)
         mock_comm_cls.return_value.start.assert_called_once()
@@ -175,15 +171,26 @@ class TestGrblController:
         comm.request_status_query.assert_called_once()
 
     def test_query_parser_state(self, mocker: MockerFixture):
-        # Mock GRBL methods
+        # Flag starts clear
+        self.grbl_controller._parser_state_query_in_flight = False
         mock_command_send = mocker.patch.object(GrblController, "send_command")
 
-        # Call the method under test
         self.grbl_controller.query_gcode_parser_state()
 
-        # Assertions
-        assert mock_command_send.call_count == 1
-        mock_command_send.assert_called_with("$G")
+        # Command is sent and flag is now set
+        mock_command_send.assert_called_once_with("$G")
+        assert self.grbl_controller._parser_state_query_in_flight is True
+
+    def test_query_parser_state_skips_when_in_flight(self, mocker: MockerFixture):
+        # Simulate a previous $G still waiting for its ok
+        self.grbl_controller._parser_state_query_in_flight = True
+        mock_command_send = mocker.patch.object(GrblController, "send_command")
+
+        self.grbl_controller.query_gcode_parser_state()
+
+        # No new command should be enqueued
+        mock_command_send.assert_not_called()
+        assert self.grbl_controller._parser_state_query_in_flight is True
 
     def test_query_help(self, mocker: MockerFixture):
         # Mock GRBL methods
@@ -461,6 +468,24 @@ class TestGrblController:
         initial = self.grbl_controller.commands_count
         self.grbl_controller._on_ok("G0 X10")
         assert self.grbl_controller.commands_count == initial + 1
+
+    def test_on_ok_clears_parser_state_flag(self):
+        # Flag is set because a $G was sent
+        self.grbl_controller._parser_state_query_in_flight = True
+        initial = self.grbl_controller.commands_count
+
+        self.grbl_controller._on_ok("$G")
+
+        assert self.grbl_controller._parser_state_query_in_flight is False
+        assert self.grbl_controller.commands_count == initial + 1
+
+    def test_on_ok_does_not_clear_flag_for_other_commands(self):
+        # Flag is set; a non-$G ok must not touch it
+        self.grbl_controller._parser_state_query_in_flight = True
+
+        self.grbl_controller._on_ok("G1 X10")
+
+        assert self.grbl_controller._parser_state_query_in_flight is True
 
     def test_on_error_pauses_and_sets_error(self, mocker: MockerFixture):
         mock_set_error = mocker.patch.object(GrblStatus, "set_error")

@@ -1,4 +1,3 @@
-import sys
 from typing import Callable
 
 from serial import SerialException
@@ -28,14 +27,14 @@ class GrblInitializer:
     Usage::
 
         initializer = GrblInitializer(serial, monitor, skip_startup_validation=False)
-        startup_payload = initializer.read_startup()          # step 1: sync read
-        initializer.handle_post_startup(communicator)         # step 2: alarm check
-        initializer.queue_initial_queries(communicator)       # step 3: async queries
+        startup_payload = initializer.open_connection(port, baudrate, timeout)  # step 1
+        initializer.handle_post_startup(communicator)                           # step 2
+        initializer.queue_initial_queries(communicator)                         # step 3
 
     Parameters
     ----------
     serial:
-        The open ``SerialService`` instance.
+        The ``SerialService`` instance (port not yet open).
     monitor:
         A ``GrblMonitor`` for logging.
     skip_startup_validation:
@@ -64,20 +63,23 @@ class GrblInitializer:
     # Public protocol steps
     # ------------------------------------------------------------------
 
-    def read_startup(self) -> dict:
-        """Step 1: reads and validates the GRBL welcome message.
+    def open_connection(self, port: str, baudrate: int, timeout: float) -> dict:
+        """Step 1: opens the serial port and validates the GRBL welcome message.
+
+        Calls ``SerialService.startConnection()``, which opens the port *and* reads
+        the first non-empty line (the GRBL banner).  The banner is then parsed and
+        validated before being returned.
 
         Returns the parsed startup payload (e.g. ``{'firmware': 'Grbl', 'version': '1.1h', ...}``).
 
-        Raises ``Exception`` on serial error or unexpected message type \
+        Raises ``SerialException`` if the port cannot be opened (propagated from \
+        ``startConnection`` so the caller can provide a user-facing error message).
+        Raises ``Exception`` if the banner message type is unexpected \
         (unless ``skip_startup_validation`` is set).
         """
-        try:
-            response = self._serial.readLine()
-        except SerialException:
-            msg = f"Error reading startup response from GRBL: {str(sys.exc_info()[1])}"
-            self._monitor.critical(msg, exc_info=True)
-            raise Exception(msg) from sys.exc_info()[1]
+        # May raise SerialException — intentionally not caught here so the
+        # caller can present a meaningful port-level error.
+        response = self._serial.startConnection(port, baudrate, timeout)
 
         msg_type, payload = GrblLineParser.parse(response)
         self._monitor.received(response, msg_type, payload)
@@ -104,9 +106,9 @@ class GrblInitializer:
         """
         try:
             response = self._serial.readLine()
-        except SerialException:
+        except SerialException as exc:
             self._monitor.critical(
-                f"Error reading post-startup response from GRBL: {str(sys.exc_info()[1])}"
+                f"Error reading post-startup response from GRBL: {exc}"
             )
             return
 

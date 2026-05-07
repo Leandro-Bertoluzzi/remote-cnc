@@ -162,9 +162,11 @@ class GrblCommunicator:
             if not self._single_step:
                 self._temporary_single_step = True
                 self._single_step = True
+                self._monitor.warning(f"[SingleStep] ACTIVATED by EEPROM command: '{command}'")
         elif self._temporary_single_step:
             self._temporary_single_step = False
             self._single_step = False
+            self._monitor.info(f"[SingleStep] deactivated by non-EEPROM command: '{command}'")
 
     # ------------------------------------------------------------------
     # Response handling
