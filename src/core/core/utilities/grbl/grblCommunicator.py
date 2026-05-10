@@ -13,6 +13,7 @@ from core.utilities.grbl.grblLineParser import GrblLineParser
 from core.utilities.grbl.grblStatus import GrblStatus, GrblStatusFlag
 from core.utilities.grbl.parsers.grblMsgTypes import (
     GRBL_MSG_ALARM,
+    GRBL_MSG_STATUS,
     GRBL_RESULT_ERROR,
     GRBL_RESULT_OK,
 )
@@ -31,6 +32,7 @@ OnDisconnectCallback = Callable[[], None]
 
 # Constants
 RX_BUFFER_SIZE = 128
+STALL_TIMEOUT_SECONDS = 60  # disconnect if no 'ok' received with cline non-empty for this long
 
 # Commands that write to GRBL's EEPROM.  Sending a subsequent command before
 # the EEPROM write completes can corrupt the internal state, so
@@ -95,6 +97,8 @@ class GrblCommunicator:
         # Buffer tracking
         self._sumcline: int = 0  # current byte-count in GRBL RX buffer
         self._status_query_pending: bool = False
+        self._awaiting_status_response: bool = False
+        self._last_ok_time: float = time.time()  # timestamp of last received 'ok'
 
         # Command queue
         self.queue: Queue[str] = Queue()
@@ -112,6 +116,8 @@ class GrblCommunicator:
 
     def start(self) -> None:
         """Starts the I/O thread."""
+        self._last_ok_time = time.time()
+        self._awaiting_status_response = False
         self._thread = threading.Thread(target=self._serial_io, daemon=True)
         self._thread.start()
 
@@ -198,6 +204,7 @@ class GrblCommunicator:
             if cline:
                 del cline[0]
             self._sumcline = sum(cline)
+            self._last_ok_time = time.time()
             self._on_ok(done_cmd)
             return
 
@@ -224,6 +231,8 @@ class GrblCommunicator:
             return
 
         # All other message types — strip internal field and forward.
+        if msg_type == GRBL_MSG_STATUS:
+            self._awaiting_status_response = False
         payload.pop("raw", None)
         self._on_message(msg_type, payload)
 
@@ -247,16 +256,34 @@ class GrblCommunicator:
 
         while self._thread:
             try:
+                # ── Stall watchdog ───────────────────────────────────────────
+                if cline and (time.time() - self._last_ok_time) > STALL_TIMEOUT_SECONDS:
+                    self._monitor.error(
+                        f"[Watchdog] No 'ok' received in {STALL_TIMEOUT_SECONDS}s with "
+                        f"{len(cline)} command(s) pending — assuming device stall, disconnecting"
+                    )
+                    self.empty_queue()
+                    self._on_disconnect()
+                    exit_reason = f"watchdog: no ok in {STALL_TIMEOUT_SECONDS}s"
+                    break
+
                 # ── Status query ─────────────────────────────────────────────
-                if self._status_query_pending:
+                # Guard: skip sending a new '?' while the previous one is still in-flight
+                # This prevents saturating a single-threaded simulator and prevents
+                # it from advancing the stepper.
+                if self._status_query_pending and not self._awaiting_status_response:
                     try:
                         self._serial.sendBytes(GrblRealtimeCommand.STATUS_REPORT.value)
                         self._monitor.sent("?", debug=True)
+                        self._awaiting_status_response = True
                     except SerialException as e:
                         self._monitor.error(f"Error sending STATUS: {e}")
                     finally:
                         self._status_query_pending = False
                     continue
+                elif self._status_query_pending and self._awaiting_status_response:
+                    # Previous '?' still in-flight; discard this request.
+                    self._status_query_pending = False
 
                 # ── Dequeue next command ──────────────────────────────────────
                 # Skip dequeue when in single-step mode and the previous EEPROM command
@@ -287,11 +314,9 @@ class GrblCommunicator:
                         self._monitor.error(
                             f"Error reading response from GRBL: {str(sys.exc_info()[1])}"
                         )
-                        self.empty_queue()
-                        self.alive = False
                         self._on_disconnect()
                         exit_reason = "SerialException on read"
-                        return
+                        break
 
                     if response:
                         self._handle_response(response, cline, sline)
@@ -318,11 +343,9 @@ class GrblCommunicator:
                             "description": str(sys.exc_info()[1]),
                         }
                         self._grbl_status.set_error(tosend, error_data)
-                        self.empty_queue()
-                        self.alive = False
                         self._on_disconnect()
                         exit_reason = "SerialException on write"
-                        return
+                        break
 
                     self._monitor.sent(tosend)
                     self._monitor.debug(
@@ -333,7 +356,6 @@ class GrblCommunicator:
                     if tosend.strip() in GCODE_PROGRAM_END_CODES:
                         self._monitor.info(f"A program end command was found: {tosend}")
                         self._grbl_status.set_flag(GrblStatusFlag.FINISHED.value, True)
-                        self.empty_queue()
                         self._on_program_end()
                         exit_reason = "program end command"
                         break

@@ -180,6 +180,8 @@ class GrblController:
 
         Buffer accounting and queue draining are already done by the communicator.
         """
+        if error_line == GrblCommand.PARSER_STATE.value:
+            self._parser_state_query_in_flight = False
         self.set_paused(True)
         self.grbl_status.set_error(error_line, payload)
         self.grbl_monitor.error(

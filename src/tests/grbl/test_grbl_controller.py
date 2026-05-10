@@ -520,3 +520,40 @@ class TestGrblController:
             "Alarm activated: Homing fail. Description: Homing fail. "
             "The active homing cycle was reset."
         )
+
+    def test_on_error_clears_parser_state_flag_when_error_was_for_parser_state_query(
+        self, mocker: MockerFixture
+    ):
+        """If GRBL returns error:N for a $G query, ``_parser_state_query_in_flight``
+        must be reset so that future calls to ``query_gcode_parser_state()`` are
+        not permanently blocked."""
+        mocker.patch.object(GrblStatus, "set_error")
+        mocker.patch.object(self.grbl_controller, "grbl_pause")
+        payload = {
+            "code": 2,
+            "message": "G-code word value error",
+            "description": "G-code word has invalid value.",
+        }
+        self.grbl_controller._parser_state_query_in_flight = True
+
+        self.grbl_controller._on_error("$G", payload)
+
+        assert self.grbl_controller._parser_state_query_in_flight is False
+
+    def test_on_error_does_not_clear_parser_state_flag_for_other_commands(
+        self, mocker: MockerFixture
+    ):
+        """An error for any command other than $G must not touch
+        ``_parser_state_query_in_flight``."""
+        mocker.patch.object(GrblStatus, "set_error")
+        mocker.patch.object(self.grbl_controller, "grbl_pause")
+        payload = {
+            "code": 2,
+            "message": "G-code word value error",
+            "description": "G-code word has invalid value.",
+        }
+        self.grbl_controller._parser_state_query_in_flight = True
+
+        self.grbl_controller._on_error("G1 X10", payload)
+
+        assert self.grbl_controller._parser_state_query_in_flight is True
