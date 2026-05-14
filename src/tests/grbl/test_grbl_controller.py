@@ -464,20 +464,25 @@ class TestGrblController:
 
     # ACK callbacks (_on_ok, _on_error, _on_alarm)
 
-    def test_on_ok_increments_commands_count(self):
-        initial = self.grbl_controller.commands_count
+    def test_on_ok_calls_ok_hook(self):
+        mock_hook = MagicMock()
+        self.grbl_controller.register_ok_hook(mock_hook)
+
         self.grbl_controller._on_ok("G0 X10")
-        assert self.grbl_controller.commands_count == initial + 1
+
+        mock_hook.assert_called_once_with("G0 X10")
+
+    def test_on_ok_no_hook_registered(self):
+        """_on_ok must not raise when no ok hook is registered."""
+        self.grbl_controller._on_ok("G0 X10")  # should not raise
 
     def test_on_ok_clears_parser_state_flag(self):
         # Flag is set because a $G was sent
         self.grbl_controller._parser_state_query_in_flight = True
-        initial = self.grbl_controller.commands_count
 
         self.grbl_controller._on_ok("$G")
 
         assert self.grbl_controller._parser_state_query_in_flight is False
-        assert self.grbl_controller.commands_count == initial + 1
 
     def test_on_ok_does_not_clear_flag_for_other_commands(self):
         # Flag is set; a non-$G ok must not touch it

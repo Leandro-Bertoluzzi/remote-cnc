@@ -10,7 +10,6 @@ from core.utilities.grbl.types import Coordinates, GrblControllerState, GrblErro
 class GrblStatusFlag(Enum):
     CONNECTED = "connected"  # Machine is connected
     STOP = "stop"  # Request to stop current run
-    FINISHED = "finished"  # Notification of program end (M2/M30)
     PAUSED = "paused"  # Machine is on Hold
     ALARM = "alarm"  # Display alarm message
 
@@ -211,10 +210,6 @@ class GrblStatus:
 
     def paused(self) -> bool:
         return self.get_flag(GrblStatusFlag.PAUSED.value)
-
-    def finished(self) -> bool:
-        """Checks if the program has finished (M2/M30)."""
-        return self.get_flag(GrblStatusFlag.FINISHED.value)
 
     def failed(self) -> bool:
         """Checks if the controller has encountered an error."""

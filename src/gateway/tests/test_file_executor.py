@@ -1,0 +1,570 @@
+"""Tests for gateway.FileExecutor."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Callable, Optional
+from unittest.mock import MagicMock
+
+import pytest
+from core.utilities.gateway.constants import (
+    EVENT_FILE_FAILED,
+    EVENT_FILE_FINISHED,
+    EVENT_FILE_STARTED,
+    EVENTS_CHANNEL,
+)
+from gateway.fileExecutor import FileExecutor
+
+# ---------------------------------------------------------------------------
+# Helpers / fixtures
+# ---------------------------------------------------------------------------
+
+
+class FakeGrblStatus:
+    """Minimal GrblStatus substitute for tests."""
+
+    def __init__(self, *, failed: bool = False, error_message: str = ""):
+        self._failed = failed
+        self._error_message = error_message
+
+    def failed(self) -> bool:
+        return self._failed
+
+    def get_error_message(self) -> Optional[str]:
+        return self._error_message or None
+
+
+class FakeController:
+    """Minimal GrblController substitute that captures registered hooks."""
+
+    def __init__(self, *, buffer_fill: float = 0.0, status_failed: bool = False):
+        self.grbl_status = FakeGrblStatus(failed=status_failed)
+        self._buffer_fill = buffer_fill
+        self._ok_hook: Optional[Callable[[str], None]] = None
+        self.send_command = MagicMock()
+
+    def get_buffer_fill(self) -> float:
+        return self._buffer_fill
+
+    def register_ok_hook(self, hook: Optional[Callable[[str], None]]) -> None:
+        self._ok_hook = hook
+
+    # Convenience helpers used in tests
+    def fire_ok(self, done_cmd: str = "G0 X10") -> None:
+        if self._ok_hook:
+            self._ok_hook(done_cmd)
+
+
+def make_executor(
+    controller: Optional[FakeController] = None,
+    redis_conn: Optional[MagicMock] = None,
+) -> tuple[FileExecutor, FakeController, MagicMock]:
+    ctrl = controller or FakeController()
+    redis_mock = redis_conn or MagicMock()
+    executor = FileExecutor(ctrl, redis_conn=redis_mock)
+    return executor, ctrl, redis_mock
+
+
+def _published_events(redis_mock: MagicMock) -> list[dict]:
+    """Extract all events published to the EVENTS_CHANNEL."""
+    return [
+        json.loads(call.args[1])
+        for call in redis_mock.publish.call_args_list
+        if call.args[0] == EVENTS_CHANNEL
+    ]
+
+
+def _event_types(redis_mock: MagicMock) -> list[str]:
+    return [e["type"] for e in _published_events(redis_mock)]
+
+
+# ---------------------------------------------------------------------------
+# start()
+# ---------------------------------------------------------------------------
+
+
+class TestStart:
+    def test_start_file_not_found_publishes_failed(self, tmp_path: Path):
+        executor, ctrl, redis_mock = make_executor()
+
+        executor.start(str(tmp_path / "nonexistent.gcode"), task_id=1)
+
+        types = _event_types(redis_mock)
+        assert EVENT_FILE_FAILED in types
+        assert EVENT_FILE_STARTED not in types
+        assert not executor.is_running
+
+    def test_start_publishes_started_event(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\nG1 Y20\n")
+        executor, ctrl, redis_mock = make_executor()
+
+        executor.start(str(gcode), task_id=5)
+
+        types = _event_types(redis_mock)
+        assert EVENT_FILE_STARTED in types
+        ev = next(e for e in _published_events(redis_mock) if e["type"] == EVENT_FILE_STARTED)
+        assert ev["task_id"] == 5
+        assert ev["total_lines"] == 2
+        assert executor.is_running
+
+    def test_start_registers_hooks(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+
+        executor.start(str(gcode), task_id=1)
+
+        assert ctrl._ok_hook is not None
+
+    def test_start_twice_is_idempotent(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+
+        executor.start(str(gcode), task_id=1)
+        executor.start(str(gcode), task_id=2)  # ignored
+
+        # Only one FILE_STARTED event
+        assert _event_types(redis_mock).count(EVENT_FILE_STARTED) == 1
+
+
+# ---------------------------------------------------------------------------
+# tick() — normal line send
+# ---------------------------------------------------------------------------
+
+
+class TestTickNormal:
+    def test_tick_sends_gcode_line(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0  # bypass rate limiter
+
+        executor.tick()
+
+        ctrl.send_command.assert_called_once_with("G0 X10\n")
+        assert executor._sent_lines == 1
+
+    def test_tick_skipped_when_paused(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor.pause()
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        ctrl.send_command.assert_not_called()
+
+    def test_tick_skipped_when_buffer_full(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        ctrl = FakeController(buffer_fill=100.0)
+        executor, ctrl, redis_mock = make_executor(controller=ctrl)
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        ctrl.send_command.assert_not_called()
+
+    def test_tick_rate_limited(self, tmp_path: Path):
+        """Second tick within SEND_INTERVAL must not send another line."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\nG1 Y20\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends line 1
+        # Don't reset _last_send — rate-limiter should block line 2
+        executor.tick()
+
+        assert ctrl.send_command.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# tick() — processed_lines via on_ok hook
+# ---------------------------------------------------------------------------
+
+
+class TestProcessedLines:
+    def test_ok_hook_increments_processed_lines(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+
+        assert executor._processed_lines == 0
+        ctrl.fire_ok("G0 X10")
+        assert executor._processed_lines == 1
+
+    def test_ok_hook_ignored_when_not_running(self, tmp_path: Path):
+        executor, ctrl, redis_mock = make_executor()
+        # Not started; manually set a stale hook by calling _on_ok directly
+        executor._on_ok("G0 X10")
+        assert executor._processed_lines == 0
+
+    def test_get_progress_uses_processed_lines(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=7)
+
+        ctrl.fire_ok("G0 X10")
+
+        progress = executor.get_progress()
+        assert progress["processed_lines"] == 1
+        assert progress["task_id"] == 7
+
+
+# ---------------------------------------------------------------------------
+# tick() — empty / comment lines
+# ---------------------------------------------------------------------------
+
+
+class TestEmptyCommentLines:
+    @pytest.mark.parametrize("line", ["", "  ", "; this is a comment", "(a comment)"])
+    def test_empty_or_comment_increments_processed_without_send(
+        self, tmp_path: Path, line: str
+    ):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text(line + "\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        ctrl.send_command.assert_not_called()
+        assert executor._processed_lines == 1
+        assert executor._sent_lines == 1
+
+
+# ---------------------------------------------------------------------------
+# tick() — program end detection (M2/M30)
+# ---------------------------------------------------------------------------
+
+
+class TestProgramEndDetection:
+    @pytest.mark.parametrize("end_cmd", ["M2", "M02", "M30", "m30", "m2"])
+    def test_tick_detects_program_end_publishes_finished(
+        self, tmp_path: Path, end_cmd: str
+    ):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text(f"G0 X10\n{end_cmd}\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=3)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X10
+
+        redis_mock.reset_mock()
+        executor._last_send = 0.0
+        executor.tick()  # sends M30 → detects end
+
+        types = _event_types(redis_mock)
+        assert EVENT_FILE_FINISHED in types
+        assert not executor.is_running
+
+    def test_tick_program_end_deregisters_hooks(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("M30\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        assert ctrl._ok_hook is None
+
+    def test_tick_program_end_file_is_closed(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("M30\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        assert executor._gcode is None
+
+
+# ---------------------------------------------------------------------------
+# tick() — EOF without program end
+# ---------------------------------------------------------------------------
+
+
+class TestEof:
+    def test_eof_publishes_finished(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X5\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=2)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X5
+        redis_mock.reset_mock()
+
+        executor._last_send = 0.0
+        executor.tick()  # EOF
+
+        types = _event_types(redis_mock)
+        assert EVENT_FILE_FINISHED in types
+        assert not executor.is_running
+
+    def test_eof_deregisters_hooks(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X5\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X5
+        executor._last_send = 0.0
+        executor.tick()  # EOF
+
+        assert ctrl._ok_hook is None
+
+
+# ---------------------------------------------------------------------------
+# tick() — CNC error
+# ---------------------------------------------------------------------------
+
+
+class TestCncError:
+    def test_tick_grbl_error_publishes_failed(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        ctrl = FakeController()
+        ctrl.grbl_status = FakeGrblStatus(failed=True, error_message="Error:25")
+        executor, ctrl, redis_mock = make_executor(controller=ctrl)
+        executor.start(str(gcode), task_id=4)
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        types = _event_types(redis_mock)
+        # FILE_STARTED + FILE_FAILED
+        assert EVENT_FILE_FAILED in types
+        assert not executor.is_running
+
+    def test_tick_grbl_error_deregisters_hooks(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        ctrl = FakeController()
+        ctrl.grbl_status = FakeGrblStatus(failed=True, error_message="Error:25")
+        executor, ctrl, redis_mock = make_executor(controller=ctrl)
+        executor.start(str(gcode), task_id=4)
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        assert ctrl._ok_hook is None
+
+
+# ---------------------------------------------------------------------------
+# _on_stall()
+# ---------------------------------------------------------------------------
+
+
+class TestOnStall:
+    def test_stall_publishes_failed_with_stall_message(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=6)
+
+        executor._on_stall()
+
+        events = _published_events(redis_mock)
+        failed_events = [e for e in events if e["type"] == EVENT_FILE_FAILED]
+        assert len(failed_events) == 1
+        assert "stall" in failed_events[0]["error"].lower()
+
+    def test_stall_resets_state(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=6)
+
+        executor._on_stall()
+
+        assert not executor.is_running
+        assert ctrl._ok_hook is None
+
+    def test_stall_ignored_when_not_running(self):
+        executor, ctrl, redis_mock = make_executor()
+
+        executor._on_stall()  # should not raise or publish
+
+        redis_mock.publish.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# stop()
+# ---------------------------------------------------------------------------
+
+
+class TestStop:
+    def test_stop_publishes_failed_stopped_by_user(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=9)
+
+        executor.stop()
+
+        events = _published_events(redis_mock)
+        failed = [e for e in events if e["type"] == EVENT_FILE_FAILED]
+        assert len(failed) == 1
+        assert failed[0]["error"] == "Stopped by user"
+
+    def test_stop_deregisters_hooks(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=9)
+
+        executor.stop()
+
+        assert ctrl._ok_hook is None
+
+    def test_stop_when_not_running_is_noop(self):
+        executor, ctrl, redis_mock = make_executor()
+
+        executor.stop()  # should not raise
+
+        redis_mock.publish.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# get_progress()
+# ---------------------------------------------------------------------------
+
+
+class TestGetProgress:
+    def test_get_progress_returns_zero_processed_when_not_running(self):
+        executor, ctrl, redis_mock = make_executor()
+
+        progress = executor.get_progress()
+
+        assert progress["processed_lines"] == 0
+
+    def test_get_progress_when_running(self, tmp_path: Path):
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\nG1 Y20\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=11)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X10
+        ctrl.fire_ok("G0 X10")
+
+        progress = executor.get_progress()
+        assert progress["sent_lines"] == 1
+        assert progress["processed_lines"] == 1
+        assert progress["total_lines"] == 2
+        assert progress["task_id"] == 11
+
+
+# ---------------------------------------------------------------------------
+# tick() — stall watchdog
+# ---------------------------------------------------------------------------
+
+
+class TestWatchdog:
+    def test_tick_stall_triggers_failed_event(self, tmp_path: Path):
+        """When sent_lines > processed_lines and STALL_TIMEOUT has elapsed,
+        tick() must publish EVENT_FILE_FAILED and stop execution."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\nG1 Y20\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=12)
+
+        # Simulate: one line sent, no ok received, and timeout elapsed
+        executor._sent_lines = 1
+        executor._processed_lines = 0
+        executor._last_ok_time = 0.0  # stale — well past STALL_TIMEOUT
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        types = _event_types(redis_mock)
+        assert EVENT_FILE_FAILED in types
+        failed = next(e for e in _published_events(redis_mock) if e["type"] == EVENT_FILE_FAILED)
+        assert "stall" in failed["error"].lower()
+        assert not executor.is_running
+
+    def test_tick_stall_deregisters_ok_hook(self, tmp_path: Path):
+        """After a stall, the ok hook must be cleared."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=12)
+
+        executor._sent_lines = 1
+        executor._processed_lines = 0
+        executor._last_ok_time = 0.0
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        assert ctrl._ok_hook is None
+
+    def test_tick_no_stall_when_no_pending_commands(self, tmp_path: Path):
+        """When sent_lines == processed_lines, watchdog must not fire."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=12)
+
+        # All sent commands have been acknowledged
+        executor._sent_lines = 1
+        executor._processed_lines = 1
+        executor._last_ok_time = 0.0  # stale, but no pending commands
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        # Must NOT publish a failed event — should send the next line instead
+        assert EVENT_FILE_FAILED not in _event_types(redis_mock)
+        assert executor.is_running
+
+    def test_tick_no_stall_when_timeout_not_elapsed(self, tmp_path: Path):
+        """When timeout has NOT elapsed, watchdog must not fire."""
+        import time
+
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=12)
+
+        executor._sent_lines = 1
+        executor._processed_lines = 0
+        executor._last_ok_time = time.time()  # fresh
+        executor._last_send = 0.0
+
+        executor.tick()
+
+        assert EVENT_FILE_FAILED not in _event_types(redis_mock)
+        assert executor.is_running
+
+    def test_ok_hook_resets_last_ok_time(self, tmp_path: Path):
+        """Receiving an ok must update _last_ok_time, preventing stall false-positives."""
+        import time
+
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=12)
+
+        executor._last_ok_time = 0.0  # stale
+        before = time.time()
+        ctrl.fire_ok("G0 X10")
+
+        assert executor._last_ok_time >= before

@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Callable, Optional
 
 from serial import SerialException
 
-from core.utilities.gcode.constants import GCODE_PROGRAM_END_CODES
 from core.utilities.grbl.constants import GrblRealtimeCommand
 from core.utilities.grbl.grblLineParser import GrblLineParser
 from core.utilities.grbl.grblStatus import GrblStatus, GrblStatusFlag
@@ -27,12 +26,10 @@ OnOkCallback = Callable[[str], None]
 OnErrorCallback = Callable[[str, dict], None]
 OnAlarmCallback = Callable[[str, dict], None]
 OnMessageCallback = Callable[[str | None, dict], None]
-OnProgramEndCallback = Callable[[], None]
 OnDisconnectCallback = Callable[[], None]
 
 # Constants
 RX_BUFFER_SIZE = 128
-STALL_TIMEOUT_SECONDS = 60  # disconnect if no 'ok' received with cline non-empty for this long
 
 # Commands that write to GRBL's EEPROM.  Sending a subsequent command before
 # the EEPROM write completes can corrupt the internal state, so
@@ -62,7 +59,6 @@ class GrblCommunicator:
     - ``on_error(line, payload)`` — called on ``error:N``; buffer has already been cleared.
     - ``on_alarm(line, payload)`` — called on ``ALARM:N``; buffer has already been cleared.
     - ``on_message(msg_type, payload)`` — called for all other message types.
-    - ``on_program_end()``       — called when a program-end G-code (M2/M30) is sent.
     - ``on_disconnect()``        — called when the I/O thread exits due to a serial error.
     """
 
@@ -76,7 +72,6 @@ class GrblCommunicator:
         on_error: OnErrorCallback,
         on_alarm: OnAlarmCallback,
         on_message: OnMessageCallback,
-        on_program_end: OnProgramEndCallback,
         on_disconnect: OnDisconnectCallback,
     ):
         self._serial = serial
@@ -88,7 +83,6 @@ class GrblCommunicator:
         self._on_error = on_error
         self._on_alarm = on_alarm
         self._on_message = on_message
-        self._on_program_end = on_program_end
         self._on_disconnect = on_disconnect
 
         # Threading
@@ -98,7 +92,6 @@ class GrblCommunicator:
         self._sumcline: int = 0  # current byte-count in GRBL RX buffer
         self._status_query_pending: bool = False
         self._awaiting_status_response: bool = False
-        self._last_ok_time: float = time.time()  # timestamp of last received 'ok'
 
         # Command queue
         self.queue: Queue[str] = Queue()
@@ -116,7 +109,6 @@ class GrblCommunicator:
 
     def start(self) -> None:
         """Starts the I/O thread."""
-        self._last_ok_time = time.time()
         self._awaiting_status_response = False
         self._thread = threading.Thread(target=self._serial_io, daemon=True)
         self._thread.start()
@@ -204,7 +196,6 @@ class GrblCommunicator:
             if cline:
                 del cline[0]
             self._sumcline = sum(cline)
-            self._last_ok_time = time.time()
             self._on_ok(done_cmd)
             return
 
@@ -256,17 +247,6 @@ class GrblCommunicator:
 
         while self._thread:
             try:
-                # ── Stall watchdog ───────────────────────────────────────────
-                if cline and (time.time() - self._last_ok_time) > STALL_TIMEOUT_SECONDS:
-                    self._monitor.error(
-                        f"[Watchdog] No 'ok' received in {STALL_TIMEOUT_SECONDS}s with "
-                        f"{len(cline)} command(s) pending — assuming device stall, disconnecting"
-                    )
-                    self.empty_queue()
-                    self._on_disconnect()
-                    exit_reason = f"watchdog: no ok in {STALL_TIMEOUT_SECONDS}s"
-                    break
-
                 # ── Status query ─────────────────────────────────────────────
                 # Guard: skip sending a new '?' while the previous one is still in-flight
                 # This prevents saturating a single-threaded simulator and prevents
@@ -352,13 +332,6 @@ class GrblCommunicator:
                         f"[Buffer] Sent '{tosend}', "
                         f"cline_sum={self._sumcline}/{RX_BUFFER_SIZE}, pending={len(cline)}"
                     )
-
-                    if tosend.strip() in GCODE_PROGRAM_END_CODES:
-                        self._monitor.info(f"A program end command was found: {tosend}")
-                        self._grbl_status.set_flag(GrblStatusFlag.FINISHED.value, True)
-                        self._on_program_end()
-                        exit_reason = "program end command"
-                        break
 
                     tosend = None
 

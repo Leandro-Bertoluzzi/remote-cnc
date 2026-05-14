@@ -190,10 +190,8 @@ def run_gateway(
         if now - last_pipeline_summary >= PIPELINE_SUMMARY_INTERVAL:
             serial_alive = controller.is_io_alive()
             logger.info(
-                "[Gateway] buffer_fill=%.1f%%, "
-                "commands_count=%d, file_running=%s, serial_alive=%s",
+                "[Gateway] buffer_fill=%.1f%%, file_running=%s, serial_alive=%s",
                 controller.get_buffer_fill(),
-                controller.commands_count,
                 file_executor.is_running,
                 serial_alive,
             )
