@@ -16,6 +16,7 @@ import json
 import logging
 import re
 import time
+from collections import deque
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -119,6 +120,7 @@ class FileExecutor:
         self._task_id = task_id
         self._sent_lines = 0
         self._processed_lines = 0
+        self._pending_file_cmds: deque[str] = deque()
         self._paused = False
         self._running = True
         self._last_send = 0.0
@@ -170,7 +172,7 @@ class FileExecutor:
             return
 
         # Stall watchdog: fail the execution if GRBL stops acknowledging commands
-        pending = self._sent_lines - self._processed_lines
+        pending = len(self._pending_file_cmds)
         if pending > 0 and (now - self._last_ok_time) > STALL_TIMEOUT:
             self._on_stall()
             return
@@ -230,6 +232,7 @@ class FileExecutor:
             # Detect program-end G-code before enqueueing
             is_program_end = stripped.upper() in GCODE_PROGRAM_END_CODES
 
+            self._pending_file_cmds.append(stripped)
             self.controller.send_command(line)
             self._sent_lines += 1
             self._last_send = now
@@ -263,8 +266,14 @@ class FileExecutor:
     # ------------------------------------------------------------------
 
     def _on_ok(self, done_cmd: str) -> None:
-        """Called by the controller for every GRBL ``ok`` while a file is running."""
-        if self._running:
+        """Called by the controller for every GRBL ``ok`` while a file is running.
+
+        Only updates ``_processed_lines`` when the ``ok`` corresponds to the head
+        of the file-command queue.  Out-of-band oks (e.g. ``$G``, ``$J``) are
+        silently ignored.
+        """
+        if self._running and self._pending_file_cmds and done_cmd == self._pending_file_cmds[0]:
+            self._pending_file_cmds.popleft()
             self._processed_lines += 1
             self._last_ok_time = time.time()
 
@@ -296,6 +305,7 @@ class FileExecutor:
         self._task_id: Optional[int] = None
         self._sent_lines = 0
         self._processed_lines = 0
+        self._pending_file_cmds: deque[str] = deque()
         self._total_lines = 0
         self._last_send = 0.0
         self._last_ok_time = 0.0

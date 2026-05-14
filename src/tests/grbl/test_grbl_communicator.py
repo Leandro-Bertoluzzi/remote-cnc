@@ -2,7 +2,6 @@
 
 import logging
 import threading
-import time
 from queue import Queue
 
 import pytest
@@ -764,9 +763,7 @@ class TestGrblCommunicator:
         """Receiving a status report must reset ``_awaiting_status_response`` to False."""
         self.communicator._awaiting_status_response = True
 
-        self.communicator._handle_response(
-            "<Idle|MPos:0.000,0.000,0.000|FS:0,0>", [], []
-        )
+        self.communicator._handle_response("<Idle|MPos:0.000,0.000,0.000|FS:0,0>", [], [])
 
         assert self.communicator._awaiting_status_response is False
 
