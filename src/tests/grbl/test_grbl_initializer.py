@@ -50,7 +50,6 @@ class TestGrblInitializer:
             on_error=mocker.MagicMock(),
             on_alarm=mocker.MagicMock(),
             on_message=mocker.MagicMock(),
-            on_program_end=mocker.MagicMock(),
             on_disconnect=mocker.MagicMock(),
         )
 

@@ -42,7 +42,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "api/tests", "worker/tests", "desktop/tests"]
+testpaths = ["tests", "api/tests", "worker/tests", "desktop/tests", "gateway/tests"]
 pythonpath = ["tests", "api/tests"]
 addopts = "--import-mode=importlib --cov=. --cov-report=html"
 env = [

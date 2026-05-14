@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Optional
+from typing import Callable, Optional
 
 from serial import SerialException
 
@@ -78,8 +78,10 @@ class GrblController:
         # Communicator (created on connect)
         self._communicator: Optional[GrblCommunicator] = None
 
+        # External hooks (registered by consumer)
+        self._ok_hook: Optional[Callable[[str], None]] = None
+
         # State variables
-        self.commands_count = 0  # Amount of already processed commands
         self._parser_state_query_in_flight: bool = False  # True while a $G ok is pending
 
     # ------------------------------------------------------------------
@@ -101,7 +103,6 @@ class GrblController:
             on_error=self._on_error,
             on_alarm=self._on_alarm,
             on_message=self._on_message,
-            on_program_end=lambda: None,
             on_disconnect=self.disconnect,
         )
 
@@ -135,8 +136,6 @@ class GrblController:
 
         # State variables
         self.grbl_status.set_flag(GrblStatusFlag.CONNECTED.value, True)
-        self.grbl_status.set_flag(GrblStatusFlag.FINISHED.value, False)
-        self.commands_count = 0
         self._parser_state_query_in_flight = False
 
         # Start I/O thread
@@ -163,17 +162,26 @@ class GrblController:
         self.grbl_status.set_active_state(DISCONNECTED)
 
     # ------------------------------------------------------------------
+    # Hook registration
+    # ------------------------------------------------------------------
+
+    def register_ok_hook(self, hook: Optional[Callable[[str], None]]) -> None:
+        """Register (or clear) a callback invoked on every GRBL ``ok`` response.
+        Pass ``None`` to deregister.
+        """
+        self._ok_hook = hook
+
+    # ------------------------------------------------------------------
     # Callbacks from GrblCommunicator
     # ------------------------------------------------------------------
 
     def _on_ok(self, done_cmd: str) -> None:
         """Called by the communicator when GRBL sends ``ok``."""
-        self.commands_count += 1
         if done_cmd == GrblCommand.PARSER_STATE.value:
             self._parser_state_query_in_flight = False
-        self.grbl_monitor.debug(
-            f"[Buffer] ok — drained '{done_cmd}', commands_count={self.commands_count}"
-        )
+        if self._ok_hook is not None:
+            self._ok_hook(done_cmd)
+        self.grbl_monitor.debug(f"[Buffer] ok — drained '{done_cmd}'")
 
     def _on_error(self, error_line: str, payload: dict) -> None:
         """Called by the communicator on ``error:N``.
@@ -271,16 +279,6 @@ class GrblController:
 
         self.grbl_monitor.info(f"Unprocessed message from GRBL: {msg_type} — {payload}")
 
-    # INTERNAL STATE MANAGEMENT
-
-    def restart_commands_count(self):
-        """Restart the count of already processed commands."""
-        self.commands_count = 0
-
-    def get_commands_count(self):
-        """Get the count of already processed commands."""
-        return self.commands_count
-
     # ACTIONS
 
     def set_paused(self, paused: bool):
@@ -297,12 +295,10 @@ class GrblController:
         tosend = command.strip()
 
         if not tosend:
-            self.commands_count += 1
             return
 
         comment_pattern = re.compile(r"(^\(.*\)$)|(^;.*)")
         if comment_pattern.match(tosend):
-            self.commands_count += 1
             return
 
         if self._communicator is not None:

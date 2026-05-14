@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
@@ -27,6 +28,7 @@ from core.utilities.gateway.constants import (
     EVENT_FILE_STARTED,
     EVENTS_CHANNEL,
 )
+from core.utilities.gcode.constants import GCODE_PROGRAM_END_CODES
 
 if TYPE_CHECKING:
     from core.utilities.grbl.grblController import GrblController
@@ -37,6 +39,7 @@ logger = logging.getLogger(__name__)
 SEND_INTERVAL = 0.10  # seconds between line sends
 MAX_BUFFER_FILL = 75  # percentage — don't exceed this
 PROGRESS_PUBLISH_INTERVAL = 1.0  # seconds between progress events
+STALL_TIMEOUT = 60.0  # seconds without an 'ok' (with pending commands) before declaring stall
 
 
 class FileExecutor:
@@ -69,7 +72,7 @@ class FileExecutor:
             "task_id": self._task_id,
             "file_path": self._file_path,
             "sent_lines": self._sent_lines,
-            "processed_lines": self.controller.get_commands_count() if self._running else 0,
+            "processed_lines": self._processed_lines if self._running else 0,
             "total_lines": self._total_lines,
         }
 
@@ -115,12 +118,14 @@ class FileExecutor:
         self._file_path = file_path
         self._task_id = task_id
         self._sent_lines = 0
+        self._processed_lines = 0
         self._paused = False
         self._running = True
         self._last_send = 0.0
+        self._last_ok_time = time.time()
         self._last_progress_publish = 0.0
 
-        self.controller.restart_commands_count()
+        self.controller.register_ok_hook(self._on_ok)
 
         self._publish_event(
             EVENT_FILE_STARTED,
@@ -164,6 +169,12 @@ class FileExecutor:
         if now - self._last_send < SEND_INTERVAL:
             return
 
+        # Stall watchdog: fail the execution if GRBL stops acknowledging commands
+        pending = self._sent_lines - self._processed_lines
+        if pending > 0 and (now - self._last_ok_time) > STALL_TIMEOUT:
+            self._on_stall()
+            return
+
         # Don't over-fill the GRBL buffer
         if self.controller.get_buffer_fill() > MAX_BUFFER_FILL:
             return
@@ -183,33 +194,12 @@ class FileExecutor:
             self._reset_state()
             return
 
-        # Check if GRBL finished processing (program end code detected)
-        if self.controller.grbl_status.finished():
-            self._close_file()
-            self._publish_event(
-                EVENT_FILE_FINISHED,
-                {
-                    "task_id": self._task_id,
-                    "sent_lines": self._sent_lines,
-                    "total_lines": self._total_lines,
-                },
-            )
-            logger.info(
-                "File execution finished: %d/%d lines",
-                self._sent_lines,
-                self._total_lines,
-            )
-            self._reset_state()
-            return
-
         # Read and send next line
         if self._gcode is None:
             return
         line = self._gcode.readline()
         if not line:
-            # EOF — wait for GRBL to finish processing remaining commands
-            # The finished() flag will be set when the program end code is consumed
-            # If no program end code, we still mark as finished after sending all lines
+            # EOF — all lines sent, publish finished
             self._close_file()
             self._publish_event(
                 EVENT_FILE_FINISHED,
@@ -227,9 +217,41 @@ class FileExecutor:
             self._reset_state()
             return
 
-        self.controller.send_command(line)
-        self._sent_lines += 1
-        self._last_send = now
+        stripped = line.strip()
+        is_empty = not stripped
+        is_comment = bool(re.match(r"(^\(.*\)$)|(^;.*)", stripped))
+
+        # Lines discarded without sending GRBL still count as processed
+        if is_empty or is_comment:
+            self._processed_lines += 1
+            self._sent_lines += 1
+            self._last_send = now
+        else:
+            # Detect program-end G-code before enqueueing
+            is_program_end = stripped.upper() in GCODE_PROGRAM_END_CODES
+
+            self.controller.send_command(line)
+            self._sent_lines += 1
+            self._last_send = now
+
+            if is_program_end:
+                self._close_file()
+                self._publish_event(
+                    EVENT_FILE_FINISHED,
+                    {
+                        "task_id": self._task_id,
+                        "sent_lines": self._sent_lines,
+                        "total_lines": self._total_lines,
+                    },
+                )
+                logger.info(
+                    "Program end command detected (%s): finishing execution at line %d/%d",
+                    stripped,
+                    self._sent_lines,
+                    self._total_lines,
+                )
+                self._reset_state()
+                return
 
         # Periodic progress event
         if now - self._last_progress_publish > PROGRESS_PUBLISH_INTERVAL:
@@ -240,15 +262,43 @@ class FileExecutor:
     # Internal
     # ------------------------------------------------------------------
 
+    def _on_ok(self, done_cmd: str) -> None:
+        """Called by the controller for every GRBL ``ok`` while a file is running."""
+        if self._running:
+            self._processed_lines += 1
+            self._last_ok_time = time.time()
+
+    def _on_stall(self) -> None:
+        """Called when the watchdog detects a stall.
+
+        Fails the current file execution without touching the serial thread.
+        """
+        if not self._running:
+            return
+        task_id = self._task_id
+        self._close_file()
+        self._publish_event(
+            EVENT_FILE_FAILED,
+            {
+                "task_id": task_id,
+                "error": "Device stall detected",
+            },
+        )
+        logger.error("File execution failed: device stall detected")
+        self._reset_state()
+
     def _reset_state(self) -> None:
+        self.controller.register_ok_hook(None)
         self._running = False
         self._paused = False
         self._gcode = None
         self._file_path = ""
         self._task_id: Optional[int] = None
         self._sent_lines = 0
+        self._processed_lines = 0
         self._total_lines = 0
         self._last_send = 0.0
+        self._last_ok_time = 0.0
         self._last_progress_publish = 0.0
 
     def _close_file(self) -> None:

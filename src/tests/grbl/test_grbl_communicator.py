@@ -26,7 +26,6 @@ class TestGrblCommunicator:
         self.mock_on_error = mocker.MagicMock()
         self.mock_on_alarm = mocker.MagicMock()
         self.mock_on_message = mocker.MagicMock()
-        self.mock_on_program_end = mocker.MagicMock()
         self.mock_on_disconnect = mocker.MagicMock()
 
         self.communicator = GrblCommunicator(
@@ -37,7 +36,6 @@ class TestGrblCommunicator:
             on_error=self.mock_on_error,
             on_alarm=self.mock_on_alarm,
             on_message=self.mock_on_message,
-            on_program_end=self.mock_on_program_end,
             on_disconnect=self.mock_on_disconnect,
         )
 
@@ -218,33 +216,6 @@ class TestGrblCommunicator:
         # Assertions
         assert mock_sum.call_count == 3  # if-condition + elif-debug + finally
         assert mock_send_line.call_count == 0
-
-    def test_serial_io_end_command(self, mocker: MockerFixture):
-        self.communicator._thread = threading.Thread()
-
-        # Mock queue contents
-        self.communicator.queue.put("Command 1")
-        self.communicator.queue.put("M30")
-
-        # Mock serial methods
-        mocker.patch.object(SerialService, "waiting", return_value=False)
-        mock_serial_send_line = mocker.patch.object(SerialService, "sendLine")
-
-        # Mock status methods
-        mocker.patch.object(GrblStatus, "paused", return_value=False)
-
-        # Mock monitor methods
-        mock_monitor_info = mocker.patch.object(GrblMonitor, "info")
-
-        # Call method under test
-        self.communicator._serial_io()
-
-        # Assertions
-        assert mock_serial_send_line.call_count == 2
-        assert mock_monitor_info.call_count == 3  # started + end cmd + exiting
-        mock_monitor_info.assert_any_call("A program end command was found: M30")
-        assert self.grbl_status._flags["finished"] is True
-        assert self.communicator.alive is False
 
     # ------------------------------------------------------------------ #
     # Buffer management                                                  #
@@ -734,116 +705,6 @@ class TestGrblCommunicator:
         mock_error.assert_called_once()
         self.mock_on_ok.assert_not_called()
         self.mock_on_message.assert_not_called()
-
-    # ------------------------------------------------------------------ #
-    # Stall watchdog                                                       #
-    # ------------------------------------------------------------------ #
-
-    def test_stall_watchdog_triggers_after_timeout(self, mocker: MockerFixture):
-        """When cline is non-empty and no 'ok' arrives within STALL_TIMEOUT_SECONDS,
-        the watchdog disconnects: empties the queue, sets alive=False, calls
-        on_disconnect, and exits the I/O thread."""
-        from core.utilities.grbl.grblCommunicator import STALL_TIMEOUT_SECONDS
-
-        self.communicator._thread = threading.Thread()
-        self.communicator.queue.put("G1 X10")
-
-        # Freeze time so that _last_ok_time=0 and time.time() returns a value past
-        # the deadline, causing the watchdog to fire as soon as cline is non-empty.
-        self.communicator._last_ok_time = 0.0
-        mock_time = mocker.patch("core.utilities.grbl.grblCommunicator.time")
-        mock_time.time.return_value = STALL_TIMEOUT_SECONDS + 1
-        mock_time.sleep = time.sleep  # keep sleep working for the exception handler
-
-        mocker.patch.object(GrblStatus, "paused", return_value=False)
-        mocker.patch.object(SerialService, "waiting", return_value=False)
-        mocker.patch.object(SerialService, "readLine", return_value="")
-        mocker.patch.object(SerialService, "sendLine")
-        mock_error = mocker.patch.object(GrblMonitor, "error")
-
-        self.communicator._serial_io()
-
-        mock_error.assert_called_once()
-        assert "[Watchdog]" in mock_error.call_args[0][0]
-        assert self.communicator.alive is False
-        self.mock_on_disconnect.assert_called_once()
-        assert self.communicator.queue.empty()
-
-    def test_stall_watchdog_does_not_trigger_when_cline_empty(self, mocker: MockerFixture):
-        """When cline is empty no watchdog disconnect should happen, even if more
-        than STALL_TIMEOUT_SECONDS have passed since the last 'ok'."""
-        from core.utilities.grbl.grblCommunicator import STALL_TIMEOUT_SECONDS
-
-        self.communicator._thread = threading.Thread()
-        # Artificially stale—no 'ok' ever received
-        self.communicator._last_ok_time = time.time() - STALL_TIMEOUT_SECONDS - 1
-
-        call_count = 0
-
-        def stop_after_one():
-            nonlocal call_count
-            call_count += 1
-            self.communicator._thread = None
-            return False
-
-        mocker.patch.object(GrblStatus, "paused", return_value=False)
-        mocker.patch.object(SerialService, "waiting", side_effect=stop_after_one)
-        mocker.patch.object(SerialService, "readLine", return_value="")
-        mock_error = mocker.patch.object(GrblMonitor, "error")
-
-        # No commands in queue → cline stays empty → watchdog must not fire.
-        self.communicator._serial_io()
-
-        self.mock_on_disconnect.assert_not_called()
-        mock_error.assert_not_called()
-        assert self.communicator.alive is False  # exited normally
-
-    def test_stall_watchdog_does_not_trigger_when_ok_recent(self, mocker: MockerFixture):
-        """When _last_ok_time is recent (within STALL_TIMEOUT_SECONDS), the watchdog
-        must not disconnect even though cline is non-empty."""
-        self.communicator._thread = threading.Thread()
-        # _last_ok_time is fresh (set in __init__); add a command so cline fills.
-        self.communicator.queue.put("G1 X10")
-
-        call_count = 0
-
-        def stop_after_few():
-            nonlocal call_count
-            call_count += 1
-            if call_count >= 4:
-                self.communicator._thread = None
-            return False
-
-        mocker.patch.object(GrblStatus, "paused", return_value=False)
-        mocker.patch.object(SerialService, "waiting", side_effect=stop_after_few)
-        mocker.patch.object(SerialService, "readLine", return_value="")
-        mocker.patch.object(SerialService, "sendLine")
-        mock_error = mocker.patch.object(GrblMonitor, "error")
-
-        self.communicator._serial_io()
-
-        self.mock_on_disconnect.assert_not_called()
-        mock_error.assert_not_called()
-
-    def test_handle_response_ok_updates_last_ok_time(self):
-        """Receiving 'ok' must update ``_last_ok_time`` to approximately now."""
-        before = time.time()
-        self.communicator._last_ok_time = 0.0  # artificially stale
-
-        self.communicator._handle_response("ok", [5], ["G0 X10"])
-
-        assert self.communicator._last_ok_time >= before
-
-    def test_start_resets_last_ok_time(self, mocker: MockerFixture):
-        """``start()`` resets ``_last_ok_time`` so that a long pause between
-        object creation and thread start does not cause an immediate watchdog trip."""
-        self.communicator._last_ok_time = 0.0  # stale value from a previous session
-
-        mocker.patch.object(threading.Thread, "start")  # prevent actual thread start
-        before = time.time()
-        self.communicator.start()
-
-        assert self.communicator._last_ok_time >= before
 
     # ------------------------------------------------------------------
     # _awaiting_status_response flag (? storm prevention)
