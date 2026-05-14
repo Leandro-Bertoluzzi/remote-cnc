@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Callable, Optional
 from unittest.mock import MagicMock
@@ -200,6 +201,7 @@ class TestProcessedLines:
         executor.start(str(gcode), task_id=1)
 
         assert executor._processed_lines == 0
+        executor._pending_file_cmds.append("G0 X10")
         ctrl.fire_ok("G0 X10")
         assert executor._processed_lines == 1
 
@@ -215,6 +217,7 @@ class TestProcessedLines:
         executor, ctrl, redis_mock = make_executor()
         executor.start(str(gcode), task_id=7)
 
+        executor._pending_file_cmds.append("G0 X10")
         ctrl.fire_ok("G0 X10")
 
         progress = executor.get_progress()
@@ -229,9 +232,7 @@ class TestProcessedLines:
 
 class TestEmptyCommentLines:
     @pytest.mark.parametrize("line", ["", "  ", "; this is a comment", "(a comment)"])
-    def test_empty_or_comment_increments_processed_without_send(
-        self, tmp_path: Path, line: str
-    ):
+    def test_empty_or_comment_increments_processed_without_send(self, tmp_path: Path, line: str):
         gcode = tmp_path / "test.gcode"
         gcode.write_text(line + "\n")
         executor, ctrl, redis_mock = make_executor()
@@ -252,9 +253,7 @@ class TestEmptyCommentLines:
 
 class TestProgramEndDetection:
     @pytest.mark.parametrize("end_cmd", ["M2", "M02", "M30", "m30", "m2"])
-    def test_tick_detects_program_end_publishes_finished(
-        self, tmp_path: Path, end_cmd: str
-    ):
+    def test_tick_detects_program_end_publishes_finished(self, tmp_path: Path, end_cmd: str):
         gcode = tmp_path / "test.gcode"
         gcode.write_text(f"G0 X10\n{end_cmd}\n")
         executor, ctrl, redis_mock = make_executor()
@@ -479,16 +478,15 @@ class TestGetProgress:
 
 class TestWatchdog:
     def test_tick_stall_triggers_failed_event(self, tmp_path: Path):
-        """When sent_lines > processed_lines and STALL_TIMEOUT has elapsed,
+        """When pending file commands exist and STALL_TIMEOUT has elapsed,
         tick() must publish EVENT_FILE_FAILED and stop execution."""
         gcode = tmp_path / "test.gcode"
         gcode.write_text("G0 X10\nG1 Y20\n")
         executor, ctrl, redis_mock = make_executor()
         executor.start(str(gcode), task_id=12)
 
-        # Simulate: one line sent, no ok received, and timeout elapsed
-        executor._sent_lines = 1
-        executor._processed_lines = 0
+        # Simulate: one file command sent, no ok received, timeout elapsed
+        executor._pending_file_cmds.append("G0 X10")
         executor._last_ok_time = 0.0  # stale — well past STALL_TIMEOUT
         executor._last_send = 0.0
 
@@ -507,8 +505,7 @@ class TestWatchdog:
         executor, ctrl, redis_mock = make_executor()
         executor.start(str(gcode), task_id=12)
 
-        executor._sent_lines = 1
-        executor._processed_lines = 0
+        executor._pending_file_cmds.append("G0 X10")
         executor._last_ok_time = 0.0
         executor._last_send = 0.0
 
@@ -517,16 +514,15 @@ class TestWatchdog:
         assert ctrl._ok_hook is None
 
     def test_tick_no_stall_when_no_pending_commands(self, tmp_path: Path):
-        """When sent_lines == processed_lines, watchdog must not fire."""
+        """When the pending-file-cmds queue is empty, watchdog must not fire."""
         gcode = tmp_path / "test.gcode"
         gcode.write_text("G0 X10\n")
         executor, ctrl, redis_mock = make_executor()
         executor.start(str(gcode), task_id=12)
 
-        # All sent commands have been acknowledged
-        executor._sent_lines = 1
-        executor._processed_lines = 1
-        executor._last_ok_time = 0.0  # stale, but no pending commands
+        # Queue is empty — all file commands acknowledged (or none sent yet)
+        # _last_ok_time is stale, but without pending commands watchdog stays quiet
+        executor._last_ok_time = 0.0
         executor._last_send = 0.0
 
         executor.tick()
@@ -537,15 +533,12 @@ class TestWatchdog:
 
     def test_tick_no_stall_when_timeout_not_elapsed(self, tmp_path: Path):
         """When timeout has NOT elapsed, watchdog must not fire."""
-        import time
-
         gcode = tmp_path / "test.gcode"
         gcode.write_text("G0 X10\n")
         executor, ctrl, redis_mock = make_executor()
         executor.start(str(gcode), task_id=12)
 
-        executor._sent_lines = 1
-        executor._processed_lines = 0
+        executor._pending_file_cmds.append("G0 X10")
         executor._last_ok_time = time.time()  # fresh
         executor._last_send = 0.0
 
@@ -556,15 +549,29 @@ class TestWatchdog:
 
     def test_ok_hook_resets_last_ok_time(self, tmp_path: Path):
         """Receiving an ok must update _last_ok_time, preventing stall false-positives."""
-        import time
-
         gcode = tmp_path / "test.gcode"
         gcode.write_text("G0 X10\n")
         executor, ctrl, redis_mock = make_executor()
         executor.start(str(gcode), task_id=12)
 
+        executor._pending_file_cmds.append("G0 X10")
         executor._last_ok_time = 0.0  # stale
         before = time.time()
         ctrl.fire_ok("G0 X10")
 
         assert executor._last_ok_time >= before
+
+    def test_ok_ignored_when_not_file_command(self, tmp_path: Path):
+        """An ok for an out-of-band command ($G, $J, etc.) must not increment
+        _processed_lines or update _last_ok_time."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=12)
+
+        # No file command enqueued — simulates an out-of-band $G ok
+        old_ok_time = executor._last_ok_time
+        ctrl.fire_ok("$G")
+
+        assert executor._processed_lines == 0
+        assert executor._last_ok_time == old_ok_time

@@ -107,9 +107,7 @@ class GrblInitializer:
         try:
             response = self._serial.readLine()
         except SerialException as exc:
-            self._monitor.critical(
-                f"Error reading post-startup response from GRBL: {exc}"
-            )
+            self._monitor.critical(f"Error reading post-startup response from GRBL: {exc}")
             return
 
         msg_type, payload = GrblLineParser.parse(response)
