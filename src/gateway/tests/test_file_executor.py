@@ -261,10 +261,16 @@ class TestProgramEndDetection:
         executor._last_send = 0.0
 
         executor.tick()  # sends G0 X10
-
-        redis_mock.reset_mock()
         executor._last_send = 0.0
-        executor.tick()  # sends M30 → detects end
+        executor.tick()  # sends program-end → enters draining mode
+
+        assert executor._draining is True
+        assert executor.is_running
+
+        ctrl.fire_ok("G0 X10")  # ack first command
+        ctrl.fire_ok(end_cmd)    # ack program-end → queue empty
+        redis_mock.reset_mock()
+        executor.tick()           # draining + empty → publish FINISHED
 
         types = _event_types(redis_mock)
         assert EVENT_FILE_FINISHED in types
@@ -277,7 +283,9 @@ class TestProgramEndDetection:
         executor.start(str(gcode), task_id=1)
         executor._last_send = 0.0
 
-        executor.tick()
+        executor.tick()      # sends M30 → enters draining
+        ctrl.fire_ok("M30")  # ack → queue empty
+        executor.tick()      # draining + empty → reset → hook cleared
 
         assert ctrl._ok_hook is None
 
@@ -288,7 +296,7 @@ class TestProgramEndDetection:
         executor.start(str(gcode), task_id=1)
         executor._last_send = 0.0
 
-        executor.tick()
+        executor.tick()  # _close_file() is called immediately on program-end
 
         assert executor._gcode is None
 
@@ -307,10 +315,15 @@ class TestEof:
         executor._last_send = 0.0
 
         executor.tick()  # sends G0 X5
-        redis_mock.reset_mock()
-
         executor._last_send = 0.0
-        executor.tick()  # EOF
+        executor.tick()  # EOF → enters draining mode
+
+        assert executor._draining is True
+        assert executor.is_running  # still running while draining
+
+        ctrl.fire_ok("G0 X5")  # ack → queue empty
+        redis_mock.reset_mock()
+        executor.tick()         # draining + empty → publish FINISHED
 
         types = _event_types(redis_mock)
         assert EVENT_FILE_FINISHED in types
@@ -325,7 +338,10 @@ class TestEof:
 
         executor.tick()  # sends G0 X5
         executor._last_send = 0.0
-        executor.tick()  # EOF
+        executor.tick()  # EOF → draining
+
+        ctrl.fire_ok("G0 X5")  # ack
+        executor.tick()         # draining + empty → reset → hook cleared
 
         assert ctrl._ok_hook is None
 
@@ -575,3 +591,120 @@ class TestWatchdog:
 
         assert executor._processed_lines == 0
         assert executor._last_ok_time == old_ok_time
+
+
+# ---------------------------------------------------------------------------
+# tick() — draining mode
+# ---------------------------------------------------------------------------
+
+
+class TestDrainingMode:
+    def test_eof_enters_draining_not_finished(self, tmp_path: Path):
+        """After the EOF tick, executor must be in draining mode (running but not sending);
+        EVENT_FILE_FINISHED must NOT be published until the pending ok arrives."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X10
+        executor._last_send = 0.0
+        executor.tick()  # EOF → draining
+
+        assert executor._draining is True
+        assert executor.is_running
+        assert EVENT_FILE_FINISHED not in _event_types(redis_mock)
+
+    def test_program_end_enters_draining_not_finished(self, tmp_path: Path):
+        """After the M30 tick, executor is in draining mode; FINISHED only after ack."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("M30\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends M30 → draining
+
+        assert executor._draining is True
+        assert executor.is_running
+        assert EVENT_FILE_FINISHED not in _event_types(redis_mock)
+
+    def test_file_with_only_comments_finishes_on_eof_tick(self, tmp_path: Path):
+        """A file containing only comments sends nothing to GRBL; the EOF tick
+        must publish FINISHED immediately (no pending acks to wait for)."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("; comment\n; another\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # reads '; comment'
+        executor._last_send = 0.0
+        executor.tick()  # reads '; another'
+        executor._last_send = 0.0
+        executor.tick()  # EOF → no pending cmds → FINISHED immediately
+
+        assert EVENT_FILE_FINISHED in _event_types(redis_mock)
+        assert not executor.is_running
+
+    def test_draining_not_blocked_by_pause(self, tmp_path: Path):
+        """Pausing must not prevent tick() from completing the drain once all
+        acks have arrived."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X10
+        executor._last_send = 0.0
+        executor.tick()  # EOF → draining
+        executor.pause()  # paused while draining
+
+        ctrl.fire_ok("G0 X10")  # ack arrives from I/O thread
+        redis_mock.reset_mock()
+        executor.tick()          # paused but draining → drain block fires before pause guard
+
+        assert EVENT_FILE_FINISHED in _event_types(redis_mock)
+        assert not executor.is_running
+
+    def test_stall_fires_during_draining(self, tmp_path: Path):
+        """If GRBL stops sending acks while in draining mode, the stall watchdog
+        must still trigger EVENT_FILE_FAILED."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, redis_mock = make_executor()
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X10
+        executor._last_send = 0.0
+        executor.tick()  # EOF → draining
+
+        # Simulate stall: ack never arrives and timeout has elapsed
+        executor._last_ok_time = 0.0
+        executor.tick()
+
+        assert EVENT_FILE_FAILED in _event_types(redis_mock)
+        assert not executor.is_running
+
+    def test_grbl_error_during_draining_publishes_failed(self, tmp_path: Path):
+        """A GRBL error that arrives while draining must publish EVENT_FILE_FAILED."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        ctrl = FakeController()
+        executor, ctrl, redis_mock = make_executor(controller=ctrl)
+        executor.start(str(gcode), task_id=1)
+        executor._last_send = 0.0
+
+        executor.tick()  # sends G0 X10
+        executor._last_send = 0.0
+        executor.tick()  # EOF → draining
+
+        # Inject error while in draining mode
+        ctrl.grbl_status = FakeGrblStatus(failed=True, error_message="Error:2")
+        executor.tick()
+
+        assert EVENT_FILE_FAILED in _event_types(redis_mock)
+        assert not executor.is_running

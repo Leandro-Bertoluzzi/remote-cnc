@@ -125,6 +125,11 @@ class GatewayMonitor(QObject):
         """Process a ``cnc:events`` message."""
         event_type = data.get("type")
         if event_type == EVENT_FILE_FINISHED:
+            self.file_progress.emit(
+                data.get("sent_lines", 0),
+                data.get("processed_lines", 0),
+                data.get("total_lines", 0),
+            )
             self.file_finished.emit()
         elif event_type == EVENT_FILE_FAILED:
             self.file_failed.emit(data.get("error", "Error desconocido"))

@@ -25,7 +25,6 @@ from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from core.utilities.gateway.constants import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
-    EVENT_FILE_PROGRESS,
     EVENT_FILE_STARTED,
     EVENTS_CHANNEL,
 )
@@ -123,9 +122,9 @@ class FileExecutor:
         self._pending_file_cmds: deque[str] = deque()
         self._paused = False
         self._running = True
+        self._draining = False
         self._last_send = 0.0
         self._last_ok_time = time.time()
-        self._last_progress_publish = 0.0
 
         self.controller.register_ok_hook(self._on_ok)
 
@@ -162,26 +161,12 @@ class FileExecutor:
 
     def tick(self) -> None:
         """Called from the main loop. Sends one line if conditions are met."""
-        if not self._running or self._paused:
+        if not self._running:
             return
 
         now = time.time()
 
-        # Rate-limit sends
-        if now - self._last_send < SEND_INTERVAL:
-            return
-
-        # Stall watchdog: fail the execution if GRBL stops acknowledging commands
-        pending = len(self._pending_file_cmds)
-        if pending > 0 and (now - self._last_ok_time) > STALL_TIMEOUT:
-            self._on_stall()
-            return
-
-        # Don't over-fill the GRBL buffer
-        if self.controller.get_buffer_fill() > MAX_BUFFER_FILL:
-            return
-
-        # Check for CNC errors
+        # Check for CNC errors — applies in all active states, including draining
         if self.controller.grbl_status.failed():
             error_msg = self.controller.grbl_status.get_error_message() or "Unknown error"
             self._close_file()
@@ -196,27 +181,38 @@ class FileExecutor:
             self._reset_state()
             return
 
+        # Stall watchdog — also fires during draining: all pending acks must eventually arrive
+        pending = len(self._pending_file_cmds)
+        if pending > 0 and (now - self._last_ok_time) > STALL_TIMEOUT:
+            self._on_stall()
+            return
+
+        # Draining mode: all lines have been sent; wait until every pending ok arrives
+        if self._draining:
+            self._try_finish_drain()
+            return
+
+        if self._paused:
+            return
+
+        # Rate-limit sends
+        if now - self._last_send < SEND_INTERVAL:
+            return
+
+        # Don't over-fill the GRBL buffer
+        if self.controller.get_buffer_fill() > MAX_BUFFER_FILL:
+            return
+
         # Read and send next line
         if self._gcode is None:
             return
+
         line = self._gcode.readline()
         if not line:
-            # EOF — all lines sent, publish finished
+            # EOF — all lines sent; enter draining mode to wait for pending acks
             self._close_file()
-            self._publish_event(
-                EVENT_FILE_FINISHED,
-                {
-                    "task_id": self._task_id,
-                    "sent_lines": self._sent_lines,
-                    "total_lines": self._total_lines,
-                },
-            )
-            logger.info(
-                "All lines sent: %d/%d",
-                self._sent_lines,
-                self._total_lines,
-            )
-            self._reset_state()
+            self._draining = True
+            self._try_finish_drain()
             return
 
         stripped = line.strip()
@@ -238,32 +234,35 @@ class FileExecutor:
             self._last_send = now
 
             if is_program_end:
+                # Enter draining mode; the FINISHED event is deferred until the
+                # M2/M30 ok is received and _pending_file_cmds becomes empty.
                 self._close_file()
-                self._publish_event(
-                    EVENT_FILE_FINISHED,
-                    {
-                        "task_id": self._task_id,
-                        "sent_lines": self._sent_lines,
-                        "total_lines": self._total_lines,
-                    },
-                )
-                logger.info(
-                    "Program end command detected (%s): finishing execution at line %d/%d",
-                    stripped,
-                    self._sent_lines,
-                    self._total_lines,
-                )
-                self._reset_state()
+                self._draining = True
                 return
-
-        # Periodic progress event
-        if now - self._last_progress_publish > PROGRESS_PUBLISH_INTERVAL:
-            self._publish_event(EVENT_FILE_PROGRESS, self.get_progress())
-            self._last_progress_publish = now
 
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------
+
+    def _try_finish_drain(self) -> None:
+        """If no pending acks remain, publish the finished event and reset state."""
+        if self._pending_file_cmds:
+            return
+
+        self._publish_event(
+            EVENT_FILE_FINISHED,
+            {
+                "task_id": self._task_id,
+                "sent_lines": self._sent_lines,
+                "processed_lines": self._processed_lines,
+                "total_lines": self._total_lines,
+            },
+        )
+        logger.info(
+            "File execution finished: %d lines processed",
+            self._total_lines,
+        )
+        self._reset_state()
 
     def _on_ok(self, done_cmd: str) -> None:
         """Called by the controller for every GRBL ``ok`` while a file is running.
@@ -299,6 +298,7 @@ class FileExecutor:
     def _reset_state(self) -> None:
         self.controller.register_ok_hook(None)
         self._running = False
+        self._draining = False
         self._paused = False
         self._gcode = None
         self._file_path = ""
@@ -309,7 +309,6 @@ class FileExecutor:
         self._total_lines = 0
         self._last_send = 0.0
         self._last_ok_time = 0.0
-        self._last_progress_publish = 0.0
 
     def _close_file(self) -> None:
         if self._gcode is not None:
