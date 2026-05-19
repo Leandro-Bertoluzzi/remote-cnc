@@ -2,15 +2,21 @@ import logging
 import re
 from typing import Callable, Optional
 
+from core.utilities.grbl.constants import GrblCommand, GrblRealtimeCommand
+from core.utilities.grbl.grblUtils import build_jog_command, get_grbl_setting
+from core.utilities.grbl.types import (
+    GrblBuildInfo,
+    GrblControllerParameters,
+    GrblSetting,
+    GrblSettings,
+)
+from core.utilities.serial import SerialService
 from serial import SerialException
 
-from core.utilities.grbl.constants import GrblCommand, GrblRealtimeCommand
-from core.utilities.grbl.grblCommunicator import GrblCommunicator
-from core.utilities.grbl.grblInitializer import GrblInitializer
-from core.utilities.grbl.grblMonitor import GrblMonitor
-from core.utilities.grbl.grblStatus import GrblStatus, GrblStatusFlag
-from core.utilities.grbl.grblUtils import build_jog_command, get_grbl_setting
-from core.utilities.grbl.parsers.grblMsgTypes import (
+from gateway.cnc.communicator import GrblCommunicator
+from gateway.cnc.initializer import GrblInitializer
+from gateway.cnc.monitor import GrblMonitor
+from gateway.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_FEEDBACK,
     GRBL_MSG_HELP,
     GRBL_MSG_OPTIONS,
@@ -20,13 +26,7 @@ from core.utilities.grbl.parsers.grblMsgTypes import (
     GRBL_MSG_STATUS,
     GRBL_MSG_VERSION,
 )
-from core.utilities.grbl.types import (
-    GrblBuildInfo,
-    GrblControllerParameters,
-    GrblSetting,
-    GrblSettings,
-)
-from core.utilities.serial import SerialService
+from gateway.cnc.status import GrblStatus, GrblStatusFlag
 
 # Constants
 DISCONNECTED = "DISCONNECTED"
@@ -70,7 +70,7 @@ class GrblController:
         self.grbl_monitor = GrblMonitor(logger)
 
         # Configure status manager
-        self.grbl_status = GrblStatus()
+        self._status = GrblStatus()
 
         # Configuration
         self._skip_startup_validation = skip_startup_validation
@@ -97,7 +97,7 @@ class GrblController:
         # Build communicator (created fresh on every connect)
         self._communicator = GrblCommunicator(
             serial=self.serial,
-            grbl_status=self.grbl_status,
+            grbl_status=self._status,
             monitor=self.grbl_monitor,
             on_ok=self._on_ok,
             on_error=self._on_error,
@@ -135,7 +135,7 @@ class GrblController:
         initializer.handle_post_startup(self._communicator)
 
         # State variables
-        self.grbl_status.set_flag(GrblStatusFlag.CONNECTED.value, True)
+        self._status.set_flag(GrblStatusFlag.CONNECTED.value, True)
         self._parser_state_query_in_flight = False
 
         # Start I/O thread
@@ -148,7 +148,7 @@ class GrblController:
 
     def disconnect(self):
         """Ends the communication with the GRBL device."""
-        if not self.grbl_status.connected():
+        if not self._status.connected():
             return
 
         # Stop the I/O thread and close serial
@@ -158,8 +158,8 @@ class GrblController:
         self.grbl_monitor.info("**Disconnected from device**")
 
         # State variables
-        self.grbl_status.set_flag(GrblStatusFlag.CONNECTED.value, False)
-        self.grbl_status.set_active_state(DISCONNECTED)
+        self._status.set_flag(GrblStatusFlag.CONNECTED.value, False)
+        self._status.set_active_state(DISCONNECTED)
 
     # ------------------------------------------------------------------
     # Hook registration
@@ -191,7 +191,7 @@ class GrblController:
         if error_line == GrblCommand.PARSER_STATE.value:
             self._parser_state_query_in_flight = False
         self.set_paused(True)
-        self.grbl_status.set_error(error_line, payload)
+        self._status.set_error(error_line, payload)
         self.grbl_monitor.error(
             f"Error: {payload['message']}. Description: {payload['description']}"
         )
@@ -201,9 +201,9 @@ class GrblController:
 
         Buffer accounting and queue draining are already done by the communicator.
         """
-        self.grbl_status.set_flag(GrblStatusFlag.ALARM.value, True)
-        self.grbl_status.set_flag(GrblStatusFlag.PAUSED.value, True)
-        self.grbl_status.set_error(alarm_line, payload)
+        self._status.set_flag(GrblStatusFlag.ALARM.value, True)
+        self._status.set_flag(GrblStatusFlag.PAUSED.value, True)
+        self._status.set_error(alarm_line, payload)
         self.grbl_monitor.critical(
             f"Alarm activated: {payload['message']}. Description: {payload['description']}"
         )
@@ -236,16 +236,16 @@ class GrblController:
         if msg_type == GRBL_MSG_PARSER_STATE:
             # The [GC:...] message is the data payload for a $G query.
             # GRBL still sends a trailing 'ok' for $G (handled by the communicator).
-            self.grbl_status.update_parser_state(payload)
+            self._status.update_parser_state(payload)
             self.grbl_monitor.debug(
-                f"Parser state was successfully updated to {self.grbl_status.get_parser_state()}"
+                f"Parser state was successfully updated to {self._status.get_parser_state()}"
             )
             return
 
         if msg_type == GRBL_MSG_STATUS:
-            self.grbl_status.update_status(payload)
+            self._status.update_status(payload)
             self.grbl_monitor.debug(
-                f"Device status was successfully updated to {self.grbl_status.get_status_report()}"
+                f"Device status was successfully updated to {self._status.get_status_report()}"
             )
             return
 
@@ -264,8 +264,8 @@ class GrblController:
 
         # Response to alarm disable
         if msg_type == GRBL_MSG_FEEDBACK and "Caution: Unlocked" in payload["message"]:
-            self.grbl_status.set_flag(GrblStatusFlag.ALARM.value, False)
-            self.grbl_status.clear_error()
+            self._status.set_flag(GrblStatusFlag.ALARM.value, False)
+            self._status.clear_error()
             self.grbl_monitor.info("Alarm was successfully disabled")
             return
 
@@ -282,13 +282,13 @@ class GrblController:
     # ACTIONS
 
     def set_paused(self, paused: bool):
-        self.grbl_status.set_flag(GrblStatusFlag.PAUSED.value, paused)
+        self._status.set_flag(GrblStatusFlag.PAUSED.value, paused)
 
         if paused:
-            self.grbl_pause()
+            self.request_pause()
             return
 
-        self.grbl_resume()
+        self.request_resume()
 
     def send_command(self, command: str):
         """Adds a GCODE line or a GRBL command to the serial queue."""
@@ -362,21 +362,21 @@ class GrblController:
         if self._communicator is not None:
             self._communicator.send_realtime(cmd, label)
 
-    def grbl_pause(self):
+    def request_pause(self):
         """
         Feed Hold: Places Grbl into a suspend or HOLD state.
         If in motion, the machine will decelerate to a stop and then be suspended.
         """
         self._send_realtime(GrblRealtimeCommand.FEED_HOLD.value, "PAUSE")
 
-    def grbl_resume(self):
+    def request_resume(self):
         """
         Cycle Start / Resume: Resumes a feed hold, a safety door/parking state
         when the door is closed, and the M0 program pause states.
         """
         self._send_realtime(GrblRealtimeCommand.CYCLE_START.value, "RESUME")
 
-    def grbl_soft_reset(self):
+    def request_soft_reset(self):
         """
         Soft-Reset: Halts and safely resets Grbl without a power-cycle.
         - If reset while in motion, Grbl will throw an alarm to indicate position may be
@@ -386,9 +386,9 @@ class GrblController:
         self._send_realtime(GrblRealtimeCommand.SOFT_RESET.value, "STOP")
 
         # Tell the serial_io thread to stop streaming
-        self.grbl_status.set_flag(GrblStatusFlag.STOP.value, True)
+        self._status.set_flag(GrblStatusFlag.STOP.value, True)
 
-    def queryStatusReport(self):
+    def query_status_report(self):
         """Queries the GRBL device's current status.
 
         Instead of writing directly from the calling thread, this method sets a
@@ -456,3 +456,44 @@ class GrblController:
         if self._communicator is not None:
             return self._communicator.get_buffer_fill()
         return 0.0
+
+    # ------------------------------------------------------------------
+    # Status delegation
+    # ------------------------------------------------------------------
+
+    @property
+    def grbl_status(self) -> GrblStatus:
+        """Read-only access to the internal status object.
+
+        Exposed for white-box tests and debugging only.
+        Application code must use the delegation methods below.
+        """
+        return self._status
+
+    def failed(self) -> bool:
+        """Return ``True`` if the controller has encountered an error or alarm."""
+        return self._status.failed()
+
+    def get_error_message(self) -> str | None:
+        """Return the current error message, or ``None`` if there is no error."""
+        return self._status.get_error_message()
+
+    def get_status_report(self) -> dict:
+        """Return the latest real-time status report as a plain dict."""
+        return self._status.get_status_report()
+
+    def get_parser_state(self) -> dict:
+        """Return the latest G-code parser state as a plain dict."""
+        return self._status.get_parser_state()
+
+    def is_connected(self) -> bool:
+        """Return ``True`` if the device is currently connected."""
+        return self._status.connected()
+
+    def is_paused(self) -> bool:
+        """Return ``True`` if the device is in a paused / feed-hold state."""
+        return self._status.paused()
+
+    def is_alarm(self) -> bool:
+        """Return ``True`` if the device is in ALARM state."""
+        return self._status.is_alarm()

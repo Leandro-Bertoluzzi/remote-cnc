@@ -14,8 +14,8 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
-import redis
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
+from core.ports.redis_client import RedisClient
 from core.utilities.gateway.constants import (
     GATEWAY_STATE_KEY,
     GW_STATE_IDLE,
@@ -23,9 +23,9 @@ from core.utilities.gateway.constants import (
     STATUS_CHANNEL,
 )
 
-if TYPE_CHECKING:
-    from core.utilities.grbl.grblController import GrblController
+from gateway.ports.cnc_controller import CncController
 
+if TYPE_CHECKING:
     from gateway.fileExecutor import FileExecutor
     from gateway.sessionManager import SessionManager
 
@@ -40,10 +40,10 @@ class StatusPublisher:
 
     def __init__(
         self,
-        controller: GrblController,
+        controller: CncController,
         session_manager: SessionManager,
         file_executor: FileExecutor,
-        redis_conn: redis.Redis | None = None,
+        redis_conn: RedisClient,
         host: str = REDIS_HOST,
         port: int = REDIS_PORT,
         db: int = REDIS_DB_STORAGE,
@@ -51,9 +51,7 @@ class StatusPublisher:
         self.controller = controller
         self.session_manager = session_manager
         self.file_executor = file_executor
-        self._redis = (
-            redis_conn if redis_conn is not None else redis.Redis(host=host, port=port, db=db)
-        )
+        self._redis = redis_conn
         self._last_publish = 0.0
         self._gateway_state = GW_STATE_IDLE
 
@@ -94,12 +92,11 @@ class StatusPublisher:
     # ------------------------------------------------------------------
 
     def _publish_status(self) -> None:
-        status = self.controller.grbl_status
         session = self.session_manager.get_active_session()
 
         payload: dict[str, Any] = {
-            "status": status.get_status_report(),
-            "parserstate": status.get_parser_state(),
+            "status": self.controller.get_status_report(),
+            "parserstate": self.controller.get_parser_state(),
             "gateway_state": self._gateway_state,
             "session": session,
             "file_progress": None,

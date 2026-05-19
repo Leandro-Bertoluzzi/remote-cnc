@@ -5,21 +5,21 @@ import time
 from queue import Empty, Queue
 from typing import TYPE_CHECKING, Callable, Optional
 
+from core.utilities.grbl.constants import GrblRealtimeCommand
+from core.utilities.serial import SerialService
 from serial import SerialException
 
-from core.utilities.grbl.constants import GrblRealtimeCommand
-from core.utilities.grbl.grblLineParser import GrblLineParser
-from core.utilities.grbl.grblStatus import GrblStatus, GrblStatusFlag
-from core.utilities.grbl.parsers.grblMsgTypes import (
+from gateway.cnc.line_parser import GrblLineParser
+from gateway.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_ALARM,
     GRBL_MSG_STATUS,
     GRBL_RESULT_ERROR,
     GRBL_RESULT_OK,
 )
-from core.utilities.serial import SerialService
+from gateway.cnc.status import GrblStatus, GrblStatusFlag
 
 if TYPE_CHECKING:
-    from core.utilities.grbl.grblMonitor import GrblMonitor
+    from gateway.cnc.monitor import GrblMonitor
 
 # Type aliases
 OnOkCallback = Callable[[str], None]

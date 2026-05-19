@@ -14,8 +14,8 @@ import json
 import logging
 from typing import Any, Optional
 
-import redis
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
+from core.ports.redis_client import RedisClient
 from core.utilities.gateway.constants import (
     EVENT_SESSION_ACQUIRED,
     EVENT_SESSION_RELEASED,
@@ -31,16 +31,12 @@ class SessionManager:
 
     def __init__(
         self,
-        redis_conn: redis.Redis | None = None,
+        redis_conn: RedisClient,
         host: str = REDIS_HOST,
         port: int = REDIS_PORT,
         db: int = REDIS_DB_STORAGE,
     ):
-        self._redis: redis.Redis[bytes]
-        if redis_conn is not None:
-            self._redis = redis_conn
-        else:
-            self._redis = redis.Redis(host=host, port=port, db=db)
+        self._redis = redis_conn
 
     # ------------------------------------------------------------------
     # Validation

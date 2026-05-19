@@ -1,16 +1,16 @@
 from typing import Callable
 
+from core.utilities.grbl.constants import GrblCommand
+from core.utilities.serial import SerialService
 from serial import SerialException
 
-from core.utilities.grbl.constants import GrblCommand
-from core.utilities.grbl.grblCommunicator import GrblCommunicator
-from core.utilities.grbl.grblLineParser import GrblLineParser
-from core.utilities.grbl.grblMonitor import GrblMonitor
-from core.utilities.grbl.parsers.grblMsgTypes import (
+from gateway.cnc.communicator import GrblCommunicator
+from gateway.cnc.line_parser import GrblLineParser
+from gateway.cnc.monitor import GrblMonitor
+from gateway.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_FEEDBACK,
     GRBL_MSG_STARTUP,
 )
-from core.utilities.serial import SerialService
 
 # Type aliases
 HomingCallback = Callable[[], None]

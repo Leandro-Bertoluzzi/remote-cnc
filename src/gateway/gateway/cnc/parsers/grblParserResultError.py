@@ -1,9 +1,10 @@
 import re
 
 from core.utilities.grbl.constants import GRBL_ERRORS
-from core.utilities.grbl.parsers.grblMsgTypes import GRBL_RESULT_ERROR
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
 from core.utilities.grbl.types import GrblError
+
+from gateway.cnc.parsers.grblMsgTypes import GRBL_RESULT_ERROR
+from gateway.cnc.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserResultError(GrblParserGeneric):

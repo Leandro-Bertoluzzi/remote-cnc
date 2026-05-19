@@ -10,8 +10,8 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any
 
-import redis
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
+from core.ports.redis_client import RedisClient
 from core.utilities.gateway.constants import (
     ACTION_PAUSE,
     ACTION_RESUME,
@@ -28,9 +28,9 @@ from core.utilities.gateway.constants import (
 )
 from core.utilities.grbl.grblUtils import build_jog_command
 
-if TYPE_CHECKING:
-    from core.utilities.grbl.grblController import GrblController
+from gateway.ports.cnc_controller import CncController
 
+if TYPE_CHECKING:
     from gateway.fileExecutor import FileExecutor
     from gateway.sessionManager import SessionManager
 
@@ -51,10 +51,10 @@ class CommandProcessor:
 
     def __init__(
         self,
-        controller: GrblController,
+        controller: CncController,
         session_manager: SessionManager,
         file_executor: FileExecutor,
-        redis_conn: redis.Redis | None = None,
+        redis_conn: RedisClient,
         host: str = REDIS_HOST,
         port: int = REDIS_PORT,
         db: int = REDIS_DB_STORAGE,
@@ -62,9 +62,7 @@ class CommandProcessor:
         self.controller = controller
         self.session_manager = session_manager
         self.file_executor = file_executor
-        self._redis: redis.Redis[bytes] = (
-            redis_conn if redis_conn is not None else redis.Redis(host=host, port=port, db=db)
-        )
+        self._redis = redis_conn
         self._disconnect_requested = False
 
     @property
@@ -159,12 +157,12 @@ class CommandProcessor:
                 self.file_executor.resume()
             logger.info("Resume requested")
         elif action == ACTION_STOP:
-            self.controller.grbl_soft_reset()
+            self.controller.request_soft_reset()
             if self.file_executor.is_running:
                 self.file_executor.stop()
             logger.info("Stop requested")
         elif action == ACTION_SOFT_RESET:
-            self.controller.grbl_soft_reset()
+            self.controller.request_soft_reset()
             logger.info("Soft reset requested")
         else:
             logger.warning("Unknown realtime action: %s", action)
@@ -205,7 +203,7 @@ class CommandProcessor:
     def _handle_query(self, payload: dict[str, Any]) -> None:
         query_type = payload.get("query", "")
         queries = {
-            "status": self.controller.queryStatusReport,
+            "status": self.controller.query_status_report,
             "parserstate": self.controller.query_gcode_parser_state,
             "settings": self.controller.query_grbl_settings,
             "params": self.controller.query_grbl_params,

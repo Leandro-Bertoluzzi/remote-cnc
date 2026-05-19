@@ -1,7 +1,7 @@
 import re
 
-from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_HELP
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+from gateway.cnc.parsers.grblMsgTypes import GRBL_MSG_HELP
+from gateway.cnc.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgHelp(GrblParserGeneric):
