@@ -5,10 +5,10 @@ import threading
 from queue import Queue
 
 import pytest
-from core.utilities.grbl.grblCommunicator import GRBL_QUERY_COMMANDS, GrblCommunicator
-from core.utilities.grbl.grblMonitor import GrblMonitor
-from core.utilities.grbl.grblStatus import GrblStatus
 from core.utilities.serial import SerialService
+from gateway.cnc.communicator import GRBL_QUERY_COMMANDS, GrblCommunicator
+from gateway.cnc.monitor import GrblMonitor
+from gateway.cnc.status import GrblStatus
 from pytest_mock.plugin import MockerFixture
 from serial import SerialException
 
@@ -254,7 +254,7 @@ class TestGrblCommunicator:
         Queue several commands whose combined sizes (with '\\n') exceed 128 bytes.
         Only the ones that fit should be sent.
         """
-        from core.utilities.grbl.grblCommunicator import RX_BUFFER_SIZE
+        from gateway.cnc.communicator import RX_BUFFER_SIZE
 
         self.communicator._thread = threading.Thread()
 
@@ -694,7 +694,7 @@ class TestGrblCommunicator:
     def test_handle_response_parse_error_does_not_raise(self, mocker: MockerFixture):
         """If GrblLineParser raises, _handle_response logs and returns without calling
         any callback."""
-        from core.utilities.grbl.grblLineParser import GrblLineParser
+        from gateway.cnc.line_parser import GrblLineParser
 
         mocker.patch.object(GrblLineParser, "parse", side_effect=ValueError("bad line"))
         mock_error = mocker.patch.object(GrblMonitor, "error")

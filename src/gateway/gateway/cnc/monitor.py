@@ -3,8 +3,9 @@ import logging
 from queue import Empty, Queue
 from typing import Optional
 
-from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_STATUS
 from core.utilities.redisPubSubManager import RedisPubSubManagerSync
+
+from gateway.cnc.parsers.grblMsgTypes import GRBL_MSG_STATUS
 
 # Constants
 PUBSUB_CHANNEL = "grbl_messages"

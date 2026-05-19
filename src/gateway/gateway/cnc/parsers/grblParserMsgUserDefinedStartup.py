@@ -1,7 +1,7 @@
 import re
 
-from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_USER_DEFINED_STARTUP
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
+from gateway.cnc.parsers.grblMsgTypes import GRBL_MSG_USER_DEFINED_STARTUP
+from gateway.cnc.parsers.grblParserGeneric import GrblParserGeneric
 
 
 class GrblParserMsgUserDefinedStartup(GrblParserGeneric):

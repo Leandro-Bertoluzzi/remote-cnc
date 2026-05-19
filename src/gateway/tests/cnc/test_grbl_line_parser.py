@@ -1,5 +1,5 @@
 import pytest
-from core.utilities.grbl.grblLineParser import GrblLineParser
+from gateway.cnc.line_parser import GrblLineParser
 
 
 @pytest.mark.parametrize(

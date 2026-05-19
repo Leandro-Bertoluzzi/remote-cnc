@@ -3,11 +3,11 @@ from unittest.mock import MagicMock
 
 import mocks.grbl as grbl_mocks
 import pytest
-from core.utilities.grbl.grblCommunicator import GrblCommunicator
-from core.utilities.grbl.grblController import GrblController
-from core.utilities.grbl.grblMonitor import GrblMonitor
-from core.utilities.grbl.grblStatus import GrblStatus
-from core.utilities.grbl.parsers.grblMsgTypes import (
+from core.utilities.serial import SerialService
+from gateway.cnc.communicator import GrblCommunicator
+from gateway.cnc.controller import GrblController
+from gateway.cnc.monitor import GrblMonitor
+from gateway.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_FEEDBACK,
     GRBL_MSG_HELP,
     GRBL_MSG_OPTIONS,
@@ -17,7 +17,7 @@ from core.utilities.grbl.parsers.grblMsgTypes import (
     GRBL_MSG_STATUS,
     GRBL_MSG_VERSION,
 )
-from core.utilities.serial import SerialService
+from gateway.cnc.status import GrblStatus
 from pytest_mock.plugin import MockerFixture
 from serial import SerialException
 
@@ -58,9 +58,9 @@ class TestGrblController:
 
     def test_connect_fails_serial(self, mocker: MockerFixture):
         # Mock GrblInitializer.open_connection to raise SerialException
-        mock_init_cls = mocker.patch("core.utilities.grbl.grblController.GrblInitializer")
+        mock_init_cls = mocker.patch("gateway.cnc.controller.GrblInitializer")
         mock_init_cls.return_value.open_connection.side_effect = SerialException("mocked error")
-        mocker.patch("core.utilities.grbl.grblController.GrblCommunicator")
+        mocker.patch("gateway.cnc.controller.GrblCommunicator")
 
         # Call the method under test and assert exception
         with pytest.raises(Exception) as error:
@@ -75,7 +75,7 @@ class TestGrblController:
 
     def test_connect(self, mocker: MockerFixture):
         # Mock GrblInitializer
-        mock_init_cls = mocker.patch("core.utilities.grbl.grblController.GrblInitializer")
+        mock_init_cls = mocker.patch("gateway.cnc.controller.GrblInitializer")
         mock_initializer = mock_init_cls.return_value
         mock_initializer.open_connection.return_value = {
             "firmware": "Grbl",
@@ -85,7 +85,7 @@ class TestGrblController:
         }
 
         # Mock GrblCommunicator — I/O thread is not started for real
-        mock_comm_cls = mocker.patch("core.utilities.grbl.grblController.GrblCommunicator")
+        mock_comm_cls = mocker.patch("gateway.cnc.controller.GrblCommunicator")
 
         # Call method under test
         response = self.grbl_controller.connect("port", 9600)
@@ -124,8 +124,8 @@ class TestGrblController:
     @pytest.mark.parametrize("paused", [False, True])
     def test_set_paused(self, mocker: MockerFixture, paused):
         # Mock other methods from controller
-        mock_pause = mocker.patch.object(self.grbl_controller, "grbl_pause")
-        mock_resume = mocker.patch.object(self.grbl_controller, "grbl_resume")
+        mock_pause = mocker.patch.object(self.grbl_controller, "request_pause")
+        mock_resume = mocker.patch.object(self.grbl_controller, "request_resume")
 
         # Call method under test
         self.grbl_controller.set_paused(paused)
@@ -166,7 +166,7 @@ class TestGrblController:
     def test_query_status_report(self, mocker: MockerFixture):
         comm = self._inject_mock_communicator(mocker)
 
-        self.grbl_controller.queryStatusReport()
+        self.grbl_controller.query_status_report()
 
         comm.request_status_query.assert_called_once()
 
@@ -494,7 +494,7 @@ class TestGrblController:
 
     def test_on_error_pauses_and_sets_error(self, mocker: MockerFixture):
         mock_set_error = mocker.patch.object(GrblStatus, "set_error")
-        mock_pause = mocker.patch.object(self.grbl_controller, "grbl_pause")
+        mock_pause = mocker.patch.object(self.grbl_controller, "request_pause")
         payload = {
             "code": 25,
             "message": "Invalid gcode ID:25",
@@ -533,7 +533,7 @@ class TestGrblController:
         must be reset so that future calls to ``query_gcode_parser_state()`` are
         not permanently blocked."""
         mocker.patch.object(GrblStatus, "set_error")
-        mocker.patch.object(self.grbl_controller, "grbl_pause")
+        mocker.patch.object(self.grbl_controller, "request_pause")
         payload = {
             "code": 2,
             "message": "G-code word value error",
@@ -551,7 +551,7 @@ class TestGrblController:
         """An error for any command other than $G must not touch
         ``_parser_state_query_in_flight``."""
         mocker.patch.object(GrblStatus, "set_error")
-        mocker.patch.object(self.grbl_controller, "grbl_pause")
+        mocker.patch.object(self.grbl_controller, "request_pause")
         payload = {
             "code": 2,
             "message": "G-code word value error",

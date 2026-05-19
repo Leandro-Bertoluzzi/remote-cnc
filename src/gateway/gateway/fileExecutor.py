@@ -18,10 +18,10 @@ import re
 import time
 from collections import deque
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
-import redis
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
+from core.ports.redis_client import RedisClient
 from core.utilities.gateway.constants import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
@@ -30,8 +30,7 @@ from core.utilities.gateway.constants import (
 )
 from core.utilities.gcode.constants import GCODE_PROGRAM_END_CODES
 
-if TYPE_CHECKING:
-    from core.utilities.grbl.grblController import GrblController
+from gateway.ports.cnc_controller import CncController
 
 logger = logging.getLogger(__name__)
 
@@ -47,16 +46,14 @@ class FileExecutor:
 
     def __init__(
         self,
-        controller: GrblController,
-        redis_conn: redis.Redis | None = None,
+        controller: CncController,
+        redis_conn: RedisClient,
         host: str = REDIS_HOST,
         port: int = REDIS_PORT,
         db: int = REDIS_DB_STORAGE,
     ):
         self.controller = controller
-        self._redis = (
-            redis_conn if redis_conn is not None else redis.Redis(host=host, port=port, db=db)
-        )
+        self._redis = redis_conn
         self._reset_state()
 
     # ------------------------------------------------------------------
@@ -167,8 +164,8 @@ class FileExecutor:
         now = time.time()
 
         # Check for CNC errors — applies in all active states, including draining
-        if self.controller.grbl_status.failed():
-            error_msg = self.controller.grbl_status.get_error_message() or "Unknown error"
+        if self.controller.failed():
+            error_msg = self.controller.get_error_message() or "Unknown error"
             self._close_file()
             self._publish_event(
                 EVENT_FILE_FAILED,

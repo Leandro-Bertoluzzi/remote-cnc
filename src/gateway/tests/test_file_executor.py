@@ -22,36 +22,84 @@ from gateway.fileExecutor import FileExecutor
 # ---------------------------------------------------------------------------
 
 
-class FakeGrblStatus:
-    """Minimal GrblStatus substitute for tests."""
+class FakeController:
+    """Minimal GrblController substitute that satisfies the CncController Protocol."""
 
-    def __init__(self, *, failed: bool = False, error_message: str = ""):
-        self._failed = failed
-        self._error_message = error_message
+    def __init__(self, *, buffer_fill: float = 0.0, status_failed: bool = False):
+        self._failed = status_failed
+        self._error_message: Optional[str] = None
+        self._buffer_fill = buffer_fill
+        self._ok_hook: Optional[Callable[[str], None]] = None
+        self._send_command_mock = MagicMock()
+
+    # --- CncController Protocol (connection / command / query stubs) ---
+
+    def connect(self, port: str, baudrate: int) -> dict[str, str] | None:
+        return None
+
+    def disconnect(self) -> None:
+        pass
+
+    def is_io_alive(self) -> bool:
+        return True
+
+    def set_paused(self, paused: bool) -> None:
+        pass
+
+    def request_soft_reset(self) -> None:
+        pass
+
+    def send_command(self, command: str) -> None:
+        self._send_command_mock(command)
+
+    def query_status_report(self) -> None:
+        pass
+
+    def query_gcode_parser_state(self) -> None:
+        pass
+
+    def query_grbl_settings(self) -> None:
+        pass
+
+    def query_grbl_params(self) -> None:
+        pass
+
+    def query_build_info(self) -> None:
+        pass
+
+    def query_grbl_help(self) -> None:
+        pass
+
+    # --- State getters ---
+
+    def register_ok_hook(self, hook: Optional[Callable[[str], None]]) -> None:
+        self._ok_hook = hook
+
+    def get_buffer_fill(self) -> float:
+        return self._buffer_fill
 
     def failed(self) -> bool:
         return self._failed
 
     def get_error_message(self) -> Optional[str]:
-        return self._error_message or None
+        return self._error_message
 
+    def get_status_report(self) -> dict:
+        return {}
 
-class FakeController:
-    """Minimal GrblController substitute that captures registered hooks."""
+    def get_parser_state(self) -> dict:
+        return {}
 
-    def __init__(self, *, buffer_fill: float = 0.0, status_failed: bool = False):
-        self.grbl_status = FakeGrblStatus(failed=status_failed)
-        self._buffer_fill = buffer_fill
-        self._ok_hook: Optional[Callable[[str], None]] = None
-        self.send_command = MagicMock()
+    def is_connected(self) -> bool:
+        return True
 
-    def get_buffer_fill(self) -> float:
-        return self._buffer_fill
+    def is_paused(self) -> bool:
+        return False
 
-    def register_ok_hook(self, hook: Optional[Callable[[str], None]]) -> None:
-        self._ok_hook = hook
+    def is_alarm(self) -> bool:
+        return False
 
-    # Convenience helpers used in tests
+    # Convenience helper used in tests
     def fire_ok(self, done_cmd: str = "G0 X10") -> None:
         if self._ok_hook:
             self._ok_hook(done_cmd)
@@ -146,7 +194,7 @@ class TestTickNormal:
 
         executor.tick()
 
-        ctrl.send_command.assert_called_once_with("G0 X10\n")
+        ctrl._send_command_mock.assert_called_once_with("G0 X10\n")
         assert executor._sent_lines == 1
 
     def test_tick_skipped_when_paused(self, tmp_path: Path):
@@ -159,7 +207,7 @@ class TestTickNormal:
 
         executor.tick()
 
-        ctrl.send_command.assert_not_called()
+        ctrl._send_command_mock.assert_not_called()
 
     def test_tick_skipped_when_buffer_full(self, tmp_path: Path):
         gcode = tmp_path / "test.gcode"
@@ -171,7 +219,7 @@ class TestTickNormal:
 
         executor.tick()
 
-        ctrl.send_command.assert_not_called()
+        ctrl._send_command_mock.assert_not_called()
 
     def test_tick_rate_limited(self, tmp_path: Path):
         """Second tick within SEND_INTERVAL must not send another line."""
@@ -185,7 +233,7 @@ class TestTickNormal:
         # Don't reset _last_send — rate-limiter should block line 2
         executor.tick()
 
-        assert ctrl.send_command.call_count == 1
+        assert ctrl._send_command_mock.call_count == 1
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +289,7 @@ class TestEmptyCommentLines:
 
         executor.tick()
 
-        ctrl.send_command.assert_not_called()
+        ctrl._send_command_mock.assert_not_called()
         assert executor._processed_lines == 1
         assert executor._sent_lines == 1
 
@@ -268,9 +316,9 @@ class TestProgramEndDetection:
         assert executor.is_running
 
         ctrl.fire_ok("G0 X10")  # ack first command
-        ctrl.fire_ok(end_cmd)    # ack program-end → queue empty
+        ctrl.fire_ok(end_cmd)  # ack program-end → queue empty
         redis_mock.reset_mock()
-        executor.tick()           # draining + empty → publish FINISHED
+        executor.tick()  # draining + empty → publish FINISHED
 
         types = _event_types(redis_mock)
         assert EVENT_FILE_FINISHED in types
@@ -283,9 +331,9 @@ class TestProgramEndDetection:
         executor.start(str(gcode), task_id=1)
         executor._last_send = 0.0
 
-        executor.tick()      # sends M30 → enters draining
+        executor.tick()  # sends M30 → enters draining
         ctrl.fire_ok("M30")  # ack → queue empty
-        executor.tick()      # draining + empty → reset → hook cleared
+        executor.tick()  # draining + empty → reset → hook cleared
 
         assert ctrl._ok_hook is None
 
@@ -323,7 +371,7 @@ class TestEof:
 
         ctrl.fire_ok("G0 X5")  # ack → queue empty
         redis_mock.reset_mock()
-        executor.tick()         # draining + empty → publish FINISHED
+        executor.tick()  # draining + empty → publish FINISHED
 
         types = _event_types(redis_mock)
         assert EVENT_FILE_FINISHED in types
@@ -341,7 +389,7 @@ class TestEof:
         executor.tick()  # EOF → draining
 
         ctrl.fire_ok("G0 X5")  # ack
-        executor.tick()         # draining + empty → reset → hook cleared
+        executor.tick()  # draining + empty → reset → hook cleared
 
         assert ctrl._ok_hook is None
 
@@ -356,7 +404,8 @@ class TestCncError:
         gcode = tmp_path / "test.gcode"
         gcode.write_text("G0 X10\n")
         ctrl = FakeController()
-        ctrl.grbl_status = FakeGrblStatus(failed=True, error_message="Error:25")
+        ctrl._failed = True
+        ctrl._error_message = "Error:25"
         executor, ctrl, redis_mock = make_executor(controller=ctrl)
         executor.start(str(gcode), task_id=4)
         executor._last_send = 0.0
@@ -372,7 +421,8 @@ class TestCncError:
         gcode = tmp_path / "test.gcode"
         gcode.write_text("G0 X10\n")
         ctrl = FakeController()
-        ctrl.grbl_status = FakeGrblStatus(failed=True, error_message="Error:25")
+        ctrl._failed = True
+        ctrl._error_message = "Error:25"
         executor, ctrl, redis_mock = make_executor(controller=ctrl)
         executor.start(str(gcode), task_id=4)
         executor._last_send = 0.0
@@ -664,7 +714,7 @@ class TestDrainingMode:
 
         ctrl.fire_ok("G0 X10")  # ack arrives from I/O thread
         redis_mock.reset_mock()
-        executor.tick()          # paused but draining → drain block fires before pause guard
+        executor.tick()  # paused but draining → drain block fires before pause guard
 
         assert EVENT_FILE_FINISHED in _event_types(redis_mock)
         assert not executor.is_running
@@ -703,7 +753,8 @@ class TestDrainingMode:
         executor.tick()  # EOF → draining
 
         # Inject error while in draining mode
-        ctrl.grbl_status = FakeGrblStatus(failed=True, error_message="Error:2")
+        ctrl._failed = True
+        ctrl._error_message = "Error:2"
         executor.tick()
 
         assert EVENT_FILE_FAILED in _event_types(redis_mock)

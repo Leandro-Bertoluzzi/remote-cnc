@@ -3,17 +3,17 @@
 import logging
 
 import pytest
-from core.utilities.grbl.grblCommunicator import GrblCommunicator
-from core.utilities.grbl.grblInitializer import GrblInitializer
-from core.utilities.grbl.grblLineParser import GrblLineParser
-from core.utilities.grbl.grblMonitor import GrblMonitor
-from core.utilities.grbl.grblStatus import GrblStatus
-from core.utilities.grbl.parsers.grblMsgTypes import (
+from core.utilities.serial import SerialService
+from gateway.cnc.communicator import GrblCommunicator
+from gateway.cnc.initializer import GrblInitializer
+from gateway.cnc.line_parser import GrblLineParser
+from gateway.cnc.monitor import GrblMonitor
+from gateway.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_FEEDBACK,
     GRBL_MSG_STARTUP,
     GRBL_RESULT_OK,
 )
-from core.utilities.serial import SerialService
+from gateway.cnc.status import GrblStatus
 from pytest_mock.plugin import MockerFixture
 from serial import SerialException
 

@@ -29,14 +29,15 @@ from core.config import (
     SERIAL_BAUDRATE,
     SERIAL_PORT,
 )
+from core.ports.redis_client import RedisClient
 from core.utilities.gateway.constants import (
     GW_STATE_FILE_EXECUTION,
     GW_STATE_IDLE,
     GW_STATE_STREAMING,
 )
-from core.utilities.grbl.grblController import GrblController
 from core.utilities.loggerFactory import setup_stream_logger
 
+from gateway.cnc.controller import GrblController
 from gateway.commandProcessor import CommandProcessor
 from gateway.fileExecutor import FileExecutor
 from gateway.sessionManager import SessionManager
@@ -81,7 +82,7 @@ def create_gateway(
     logger: logging.Logger,
 ) -> tuple[GrblController, CommandProcessor, StatusPublisher, FileExecutor, SessionManager]:
     """Wire up all Gateway components and return them."""
-    redis_conn = redis.Redis(
+    redis_conn: RedisClient = redis.Redis(  # type: ignore[assignment]
         host=REDIS_HOST,
         port=REDIS_PORT,
         db=REDIS_DB_STORAGE,
@@ -156,7 +157,7 @@ def run_gateway(
 
         # 1. Periodic GRBL queries
         if now - last_status_poll >= STATUS_POLL_INTERVAL:
-            controller.queryStatusReport()
+            controller.query_status_report()
             last_status_poll = now
 
         if now - last_parser_state_poll >= PARSER_STATE_POLL_INTERVAL:

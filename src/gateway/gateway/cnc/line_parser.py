@@ -1,21 +1,22 @@
-from core.utilities.grbl.parsers.grblParserGeneric import GrblParserGeneric
-from core.utilities.grbl.parsers.grblParserMsgAlarm import GrblParserMsgAlarm
-from core.utilities.grbl.parsers.grblParserMsgEcho import GrblParserMsgEcho
-from core.utilities.grbl.parsers.grblParserMsgFeedback import GrblParserMsgFeedback
-from core.utilities.grbl.parsers.grblParserMsgHelp import GrblParserMsgHelp
-from core.utilities.grbl.parsers.grblParserMsgOptions import GrblParserMsgOptions
-from core.utilities.grbl.parsers.grblParserMsgParameters import GrblParserMsgParameters
-from core.utilities.grbl.parsers.grblParserMsgParserState import GrblParserMsgParserState
-from core.utilities.grbl.parsers.grblParserMsgSettings import GrblParserMsgSettings
-from core.utilities.grbl.parsers.grblParserMsgStartup import GrblParserMsgStartup
-from core.utilities.grbl.parsers.grblParserMsgStatus import GrblParserMsgStatus
-from core.utilities.grbl.parsers.grblParserMsgUserDefinedStartup import (
+from core.utilities.grbl.types import GrblResponse
+
+from gateway.cnc.parsers.grblParserGeneric import GrblParserGeneric
+from gateway.cnc.parsers.grblParserMsgAlarm import GrblParserMsgAlarm
+from gateway.cnc.parsers.grblParserMsgEcho import GrblParserMsgEcho
+from gateway.cnc.parsers.grblParserMsgFeedback import GrblParserMsgFeedback
+from gateway.cnc.parsers.grblParserMsgHelp import GrblParserMsgHelp
+from gateway.cnc.parsers.grblParserMsgOptions import GrblParserMsgOptions
+from gateway.cnc.parsers.grblParserMsgParameters import GrblParserMsgParameters
+from gateway.cnc.parsers.grblParserMsgParserState import GrblParserMsgParserState
+from gateway.cnc.parsers.grblParserMsgSettings import GrblParserMsgSettings
+from gateway.cnc.parsers.grblParserMsgStartup import GrblParserMsgStartup
+from gateway.cnc.parsers.grblParserMsgStatus import GrblParserMsgStatus
+from gateway.cnc.parsers.grblParserMsgUserDefinedStartup import (
     GrblParserMsgUserDefinedStartup,
 )
-from core.utilities.grbl.parsers.grblParserMsgVersion import GrblParserMsgVersion
-from core.utilities.grbl.parsers.grblParserResultError import GrblParserResultError
-from core.utilities.grbl.parsers.grblParserResultOk import GrblParserResultOk
-from core.utilities.grbl.types import GrblResponse
+from gateway.cnc.parsers.grblParserMsgVersion import GrblParserMsgVersion
+from gateway.cnc.parsers.grblParserResultError import GrblParserResultError
+from gateway.cnc.parsers.grblParserResultOk import GrblParserResultOk
 
 
 class GrblLineParser:

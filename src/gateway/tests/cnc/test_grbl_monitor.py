@@ -2,8 +2,8 @@ import logging
 from queue import Empty, Queue
 
 import pytest
-from core.utilities.grbl.grblMonitor import GrblMonitor
-from core.utilities.grbl.parsers.grblMsgTypes import GRBL_MSG_STATUS
+from gateway.cnc.monitor import GrblMonitor
+from gateway.cnc.parsers.grblMsgTypes import GRBL_MSG_STATUS
 
 
 class TestGrblMonitor:
@@ -15,7 +15,7 @@ class TestGrblMonitor:
         mocker.patch.object(self.grbl_logger, "addHandler")
 
         # Mock Redis so no real connection is attempted
-        mocker.patch("core.utilities.grbl.grblMonitor.RedisPubSubManagerSync")
+        mocker.patch("gateway.cnc.monitor.RedisPubSubManagerSync")
 
         # Instantiate controller
         self.grbl_monitor = GrblMonitor(self.grbl_logger)
