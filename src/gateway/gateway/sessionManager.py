@@ -15,13 +15,13 @@ import logging
 from typing import Any, Optional
 
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
-from core.ports.redis_client import RedisClient
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_SESSION_ACQUIRED,
     EVENT_SESSION_RELEASED,
     EVENTS_CHANNEL,
     SESSION_KEY,
 )
+from core.ports.redis_client import RedisClient
 
 logger = logging.getLogger(__name__)
 

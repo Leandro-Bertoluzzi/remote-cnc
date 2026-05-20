@@ -50,3 +50,26 @@ class RedisClient(Protocol):
         one is available or *timeout* elapses.  Returns ``None`` on timeout.
         """
         ...
+
+    def rpush(self, name: str, *values: Union[bytes, str, int, float]) -> int:
+        """Append one or more *values* to the tail of the list at *name*.
+        Returns the new length of the list.
+        """
+        ...
+
+    def expire(self, name: str, time: int) -> bool:
+        """Set an expiry of *time* seconds on *name*. Returns ``True`` if set."""
+        ...
+
+    def llen(self, name: str) -> int:
+        """Return the length of the list at *name*."""
+        ...
+
+    def eval(
+        self,
+        script: str,
+        numkeys: int,
+        *keys_and_args: Union[bytes, str, int, float],
+    ) -> Any:
+        """Evaluate a Lua *script* server-side with *numkeys* key arguments."""
+        ...

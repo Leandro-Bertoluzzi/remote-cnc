@@ -16,12 +16,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from core.domain.cnc import ParserState, Status
-from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
-from core.utilities.gateway.gatewayClient import GatewayClient
+from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QGridLayout
 
+from desktop.app_context import AppContext
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.CodeEditor import CodeEditor
 from desktop.components.ControllerStatus import ControllerStatus
@@ -57,13 +57,16 @@ GRBL_STATUS_DISCONNECTED: Status = {
 
 
 class ControlView(BaseView):
-    def __init__(self, parent: "MainWindow"):
-        super(ControlView, self).__init__(parent)
+    def __init__(self, parent: "MainWindow", context: AppContext | None = None):
+        super(ControlView, self).__init__(parent, context)
+
+        if context is None:
+            raise ValueError("ControlView requires an AppContext")
 
         # STATE MANAGEMENT
         self.connected = False
         self.session_id: str | None = None
-        self._gateway = GatewayClient()
+        self._gateway = context.gateway
         self._file_running = False
         self._file_paused = False
 
@@ -76,7 +79,7 @@ class ControlView(BaseView):
         self.setup_ui()
 
         # GATEWAY SYNC — status via PubSub
-        self.gateway_sync = GatewayMonitor()
+        self.gateway_sync = GatewayMonitor(context.gateway)
         self.gateway_sync.new_status.connect(self.update_device_status)
         self.gateway_sync.new_message.connect(self.write_to_terminal)
         self.gateway_sync.file_progress.connect(self.update_file_progress)

@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 
 class UsersView(BaseListView):
-    def __init__(self, parent: "MainWindow"):
-        super(UsersView, self).__init__(parent)
+    def __init__(self, parent: "MainWindow", **kwargs):
+        super(UsersView, self).__init__(parent, **kwargs)
         self.setItemListFromValues(
             "USUARIOS", "", self.createUserCard, "Crear usuario", self.createUser
         )

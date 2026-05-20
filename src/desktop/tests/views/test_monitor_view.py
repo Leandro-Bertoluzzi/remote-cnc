@@ -15,11 +15,8 @@ class TestMonitorView:
         # Mock device service methods
         mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
 
-        # Provide a real GatewayMonitor on the mock window so signals work
-        mocker.patch.object(GatewayMonitor, "start_monitor")
-        mock_window.worker_monitor = GatewayMonitor()
-
         # Mock other methods
+        mocker.patch.object(GatewayMonitor, "start_monitor")
         mocker.patch.object(MonitorView, "connect_worker")
 
         # Create an instance of MonitorView

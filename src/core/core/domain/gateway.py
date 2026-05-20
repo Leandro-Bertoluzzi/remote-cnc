@@ -1,36 +1,12 @@
-"""Shared constants for CNC Gateway communication.
+"""Gateway domain constants.
 
-Used by both the Gateway process and the GatewayClient (API, Worker, Desktop).
-See DR-0003 for the priority queue design.
+These are pure domain concepts — message types, action names, event types,
+and gateway states. They do NOT reference any infrastructure.
+
+Used by any module that needs to understand *what* a gateway message means, not *where* it lives.
 """
 
-# ---------------------------------------------------------------------------
-# Redis key prefixes
-# ---------------------------------------------------------------------------
-
-# Priority command queues (consumed via BLPOP in this order)
-QUEUE_CRITICAL = "cnc:queue:critical"
-QUEUE_HIGH = "cnc:queue:high"
-QUEUE_NORMAL = "cnc:queue:normal"
-
-ALL_QUEUES = [QUEUE_CRITICAL, QUEUE_HIGH, QUEUE_NORMAL]
-
-# Session lock key
-SESSION_KEY = "cnc:session"
-
-# Gateway state key (published periodically)
-GATEWAY_STATE_KEY = "cnc:gateway_state"
-
-# Last published status (JSON snapshot for REST polling)
-LAST_STATUS_KEY = "cnc:last_status"
-
-# ---------------------------------------------------------------------------
-# PubSub channels
-# ---------------------------------------------------------------------------
-
-STATUS_CHANNEL = "grbl_status"
-MESSAGES_CHANNEL = "grbl_messages"
-EVENTS_CHANNEL = "cnc:events"
+from __future__ import annotations
 
 # ---------------------------------------------------------------------------
 # Message types (in the command queues)
@@ -54,7 +30,7 @@ ACTION_STOP = "stop"
 ACTION_SOFT_RESET = "soft_reset"
 
 # ---------------------------------------------------------------------------
-# Event types (published on EVENTS_CHANNEL)
+# Event types (published on the events channel)
 # ---------------------------------------------------------------------------
 
 EVENT_FILE_STARTED = "file_started"
@@ -73,7 +49,27 @@ GW_STATE_STREAMING = "streaming"
 GW_STATE_FILE_EXECUTION = "file_execution"
 
 # ---------------------------------------------------------------------------
-# Session defaults
+# Redis PubSub channels
 # ---------------------------------------------------------------------------
 
-SESSION_TTL_SECONDS = 300  # 5 minutes
+STATUS_CHANNEL = "grbl_status"
+MESSAGES_CHANNEL = "grbl_messages"
+EVENTS_CHANNEL = "cnc:events"
+
+# ---------------------------------------------------------------------------
+# Redis command queue names
+# ---------------------------------------------------------------------------
+
+QUEUE_CRITICAL = "cnc:queue:critical"
+QUEUE_HIGH = "cnc:queue:high"
+QUEUE_NORMAL = "cnc:queue:normal"
+
+ALL_QUEUES = [QUEUE_CRITICAL, QUEUE_HIGH, QUEUE_NORMAL]
+
+# ---------------------------------------------------------------------------
+# Redis key names
+# ---------------------------------------------------------------------------
+
+SESSION_KEY = "cnc:session"
+GATEWAY_STATE_KEY = "cnc:gateway_state"
+LAST_STATUS_KEY = "cnc:last_status"

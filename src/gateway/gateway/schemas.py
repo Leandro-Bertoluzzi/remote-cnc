@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from core.domain.cnc import JogDistanceMode, JogUnit
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     ACTION_PAUSE,
     ACTION_RESUME,
     ACTION_SOFT_RESET,

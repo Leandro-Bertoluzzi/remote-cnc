@@ -47,7 +47,6 @@ class FakeController:
 
         # Spy mocks — tests assert on these
         self.send_command_mock = MagicMock()
-        self._send_command_mock = self.send_command_mock  # backward-compat alias for test_file_executor
         self.jog_mock = MagicMock()
         self.set_paused_mock = MagicMock()
         self.request_soft_reset_mock = MagicMock()
@@ -99,7 +98,10 @@ class FakeController:
         machine_coordinates: bool = False,
     ) -> None:
         self.jog_mock(
-            x, y, z, feedrate,
+            x,
+            y,
+            z,
+            feedrate,
             units=units,
             distance_mode=distance_mode,
             machine_coordinates=machine_coordinates,

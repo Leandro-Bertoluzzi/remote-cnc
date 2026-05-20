@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock
 
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_SESSION_ACQUIRED,
     EVENT_SESSION_RELEASED,
     EVENTS_CHANNEL,

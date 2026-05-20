@@ -29,12 +29,12 @@ from core.config import (
     SERIAL_BAUDRATE,
     SERIAL_PORT,
 )
-from core.ports.redis_client import RedisClient
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     GW_STATE_FILE_EXECUTION,
     GW_STATE_IDLE,
     GW_STATE_STREAMING,
 )
+from core.ports.redis_client import RedisClient
 from core.utilities.loggerFactory import setup_stream_logger
 
 from gateway.adapters.cnc.controller import GrblController

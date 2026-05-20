@@ -1,0 +1,1 @@
+"""Redis-backed Gateway adapter."""

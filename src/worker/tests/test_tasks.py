@@ -4,12 +4,12 @@ from unittest.mock import MagicMock
 import pytest
 from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
     EVENT_FILE_PROGRESS,
 )
-from core.utilities.gateway.gatewayClient import GatewayClient
+from core.ports.gateway_client import IGatewayClient
 from pytest_mock.plugin import MockerFixture
 from worker.tasks.cnc import executeTask
 
@@ -70,13 +70,13 @@ def _mock_gateway(mocker: MockerFixture, pubsub_messages: list[dict]) -> MagicMo
     mock_pubsub = MagicMock()
     mock_pubsub.listen.return_value = iter(pubsub_messages)
 
-    mock_gw = MagicMock(spec=GatewayClient)
+    mock_gw = MagicMock(spec=IGatewayClient)
     mock_gw.is_gateway_running.return_value = True
     mock_gw.acquire_session.return_value = SESSION_ID
     mock_gw.subscribe_events.return_value = mock_pubsub
     mock_gw.release_session.return_value = True
 
-    mocker.patch("worker.tasks.cnc.GatewayClient", return_value=mock_gw)
+    mocker.patch("worker.tasks.cnc.GatewayClient.from_config", return_value=mock_gw)
     return mock_gw
 
 

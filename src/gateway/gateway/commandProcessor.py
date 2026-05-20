@@ -11,8 +11,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
-from core.ports.redis_client import RedisClient
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     ACTION_PAUSE,
     ACTION_RESUME,
     ACTION_SOFT_RESET,
@@ -26,6 +25,7 @@ from core.utilities.gateway.constants import (
     MSG_QUERY,
     MSG_REALTIME,
 )
+from core.ports.redis_client import RedisClient
 
 from gateway.ports.cnc_controller import CncController
 from gateway.schemas import (

@@ -15,13 +15,8 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
+from core.domain.gateway import GATEWAY_STATE_KEY, GW_STATE_IDLE, LAST_STATUS_KEY, STATUS_CHANNEL
 from core.ports.redis_client import RedisClient
-from core.utilities.gateway.constants import (
-    GATEWAY_STATE_KEY,
-    GW_STATE_IDLE,
-    LAST_STATUS_KEY,
-    STATUS_CHANNEL,
-)
 
 from gateway.ports.cnc_controller import CncController
 

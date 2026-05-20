@@ -1,10 +1,17 @@
-"""Client for communicating with the CNC Gateway via Redis queues.
+"""GatewayClient — Redis-backed adapter for the CNC Gateway.
 
-This module is used by the API, Worker, and Desktop to send commands
-to the Gateway and manage sessions. It does NOT depend on any Gateway
-internals — only on the shared constants and Redis.
-
+Implements ``IGatewayClient`` using Redis queues and keys.
 See DR-0001, DR-0002, DR-0003 for design rationale.
+
+Usage
+-----
+Production (default config from environment)::
+
+    client = GatewayClient.from_config()
+
+Custom / testing (inject a factory)::
+
+    client = GatewayClient(redis_factory=lambda: fakeredis.FakeRedis())
 """
 
 from __future__ import annotations
@@ -12,12 +19,13 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import redis
 
+from core.adapters.gateway.constants import SESSION_TTL_SECONDS
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     ALL_QUEUES,
     EVENTS_CHANNEL,
     GATEWAY_STATE_KEY,
@@ -32,53 +40,54 @@ from core.utilities.gateway.constants import (
     QUEUE_CRITICAL,
     QUEUE_HIGH,
     SESSION_KEY,
-    SESSION_TTL_SECONDS,
 )
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_message(
-    msg_type: str,
-    payload: dict[str, Any],
-    session_id: str,
-) -> str:
-    """Build a JSON message for the command queue."""
-    return json.dumps(
-        {
-            "type": msg_type,
-            "payload": payload,
-            "session_id": session_id,
-            "timestamp": time.time(),
-        }
-    )
-
-
-# ---------------------------------------------------------------------------
-# GatewayClient
-# ---------------------------------------------------------------------------
+from core.ports.redis_client import RedisClient
 
 
 class GatewayClient:
     """Thin client that pushes commands to the Gateway's Redis queues
     and manages the distributed session lock.
 
-    Thread-safe: each method creates or reuses a Redis connection from
-    a connection pool.
+    All methods obtain a fresh connection from the factory on each call,
+    which preserves thread-safety without exposing the pool.
     """
 
-    def __init__(
-        self,
+    def __init__(self, redis_factory: Callable[[], RedisClient]) -> None:
+        self._redis_factory = redis_factory
+
+    @classmethod
+    def from_config(
+        cls,
         host: str = REDIS_HOST,
         port: int = REDIS_PORT,
         db: int = REDIS_DB_STORAGE,
-    ):
-        self._pool = redis.ConnectionPool(host=host, port=port, db=db)
+    ) -> "GatewayClient":
+        """Build a ``GatewayClient`` backed by a real Redis connection pool."""
+        pool = redis.ConnectionPool(host=host, port=port, db=db)
+        return cls(redis_factory=lambda: redis.Redis(connection_pool=pool))
 
-    def _redis(self) -> redis.Redis[bytes]:
-        return redis.Redis(connection_pool=self._pool)
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _redis(self) -> RedisClient:
+        return self._redis_factory()
+
+    def _make_message(
+        self,
+        msg_type: str,
+        payload: dict[str, Any],
+        session_id: str,
+    ) -> str:
+        """Serialise a command message for the priority queues."""
+        return json.dumps(
+            {
+                "type": msg_type,
+                "payload": payload,
+                "session_id": session_id,
+                "timestamp": time.time(),
+            }
+        )
 
     # ------------------------------------------------------------------
     # Session management
@@ -159,7 +168,7 @@ class GatewayClient:
 
     def send_command(self, session_id: str, command: str) -> None:
         """Send a G-code command with *high* priority."""
-        msg = _make_message(MSG_COMMAND, {"command": command}, session_id)
+        msg = self._make_message(MSG_COMMAND, {"command": command}, session_id)
         self._redis().rpush(QUEUE_HIGH, msg)
 
     def send_jog(
@@ -175,7 +184,7 @@ class GatewayClient:
         machine_coordinates: bool = False,
     ) -> None:
         """Send a jog command with *high* priority."""
-        msg = _make_message(
+        msg = self._make_message(
             MSG_JOG,
             {
                 "x": x,
@@ -192,12 +201,12 @@ class GatewayClient:
 
     def send_realtime(self, session_id: str, action: str) -> None:
         """Send a realtime action (pause/resume/stop) with *critical* priority."""
-        msg = _make_message(MSG_REALTIME, {"action": action}, session_id)
+        msg = self._make_message(MSG_REALTIME, {"action": action}, session_id)
         self._redis().rpush(QUEUE_CRITICAL, msg)
 
     def send_query(self, session_id: str, query_type: str) -> None:
-        """Send a read-only query (e.g. settings, params) with *critical* priority."""
-        msg = _make_message(MSG_QUERY, {"query": query_type}, session_id)
+        """Send a read-only query with *critical* priority."""
+        msg = self._make_message(MSG_QUERY, {"query": query_type}, session_id)
         self._redis().rpush(QUEUE_CRITICAL, msg)
 
     def request_file_execution(
@@ -208,10 +217,9 @@ class GatewayClient:
     ) -> None:
         """Request the Gateway to start executing a G-code file.
 
-        *task_id* may be ``None`` for ad-hoc executions initiated from the
-        Desktop's ControlView (no DB task involved).
+        *task_id* may be ``None`` for ad-hoc executions (e.g. from the Desktop).
         """
-        msg = _make_message(
+        msg = self._make_message(
             MSG_FILE_START,
             {"file_path": file_path, "task_id": task_id},
             session_id,
@@ -220,12 +228,12 @@ class GatewayClient:
 
     def request_file_stop(self, session_id: str) -> None:
         """Request the Gateway to stop the current file execution."""
-        msg = _make_message(MSG_FILE_STOP, {}, session_id)
+        msg = self._make_message(MSG_FILE_STOP, {}, session_id)
         self._redis().rpush(QUEUE_CRITICAL, msg)
 
     def request_disconnect(self, session_id: str) -> None:
         """Request the Gateway to release the session (graceful)."""
-        msg = _make_message(MSG_DISCONNECT, {}, session_id)
+        msg = self._make_message(MSG_DISCONNECT, {}, session_id)
         self._redis().rpush(QUEUE_CRITICAL, msg)
 
     # ------------------------------------------------------------------
@@ -275,7 +283,7 @@ class GatewayClient:
 
     def subscribe_channels(self, *channels: str) -> redis.client.PubSub:
         """Return a PubSub object subscribed to one or more channels."""
-        r = self._redis()
+        r: Any = self._redis_factory()
         ps = r.pubsub()
         ps.subscribe(*channels)
         return ps

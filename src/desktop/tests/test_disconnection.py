@@ -5,6 +5,10 @@ These tests validate the core resilience requirement: when external services
 with retry and back-to-menu buttons instead of crashing or showing empty views.
 """
 
+from unittest.mock import MagicMock
+
+from core.ports.gateway_client import IGatewayClient
+from desktop.app_context import AppContext
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
@@ -166,7 +170,7 @@ class TestDisconnectionMainWindow:
         # Mock closeEvent to prevent actual window closing during tests
         mocker.patch.object(MainWindow, "closeEvent", lambda self, event: event.accept())
 
-        window = MainWindow()
+        window = MainWindow(AppContext(gateway=MagicMock(spec=IGatewayClient)))
         qtbot.addWidget(window)
 
         # Simulate a view constructor that raises

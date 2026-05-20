@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, patch
 
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     GATEWAY_STATE_KEY,
     GW_STATE_IDLE,
     GW_STATE_STREAMING,

@@ -1,4 +1,8 @@
+from unittest.mock import MagicMock
+
 import pytest
+from core.ports.gateway_client import IGatewayClient
+from desktop.app_context import AppContext
 from desktop.MainWindow import MainWindow
 from desktop.services.deviceService import DeviceService
 from desktop.views.MainMenu import MainMenu
@@ -7,6 +11,10 @@ from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
+
+
+def _make_context() -> AppContext:
+    return AppContext(gateway=MagicMock(spec=IGatewayClient))
 
 
 class TestMainWindow:
@@ -25,7 +33,7 @@ class TestMainWindow:
         mocker.patch.object(QMessageBox, "question", return_value=QMessageBox.Yes)
 
         # Instantiate window
-        window = MainWindow()
+        window = MainWindow(_make_context())
         qtbot.addWidget(window)
 
         # Assertions
@@ -49,7 +57,7 @@ class TestMainWindow:
         mocker.patch.object(DeviceService, "is_worker_connected", return_value=False)
 
         # Instantiate window
-        window = MainWindow()
+        window = MainWindow(_make_context())
         qtbot.addWidget(window)
 
         # Mock QMessageBox method
@@ -74,7 +82,7 @@ class TestMainWindow:
         mocker.patch.object(DeviceService, "is_worker_connected", return_value=False)
 
         # Instantiate window
-        window = MainWindow()
+        window = MainWindow(_make_context())
         qtbot.addWidget(window)
 
         # Mock QMessageBox method

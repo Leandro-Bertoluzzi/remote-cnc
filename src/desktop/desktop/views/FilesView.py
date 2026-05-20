@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 
 class FilesView(BaseListView):
-    def __init__(self, parent: "MainWindow"):
-        super(FilesView, self).__init__(parent)
+    def __init__(self, parent: "MainWindow", **kwargs):
+        super(FilesView, self).__init__(parent, **kwargs)
         self.setItemListFromValues(
             "ARCHIVOS",
             "Aún no hay archivos almacenados",

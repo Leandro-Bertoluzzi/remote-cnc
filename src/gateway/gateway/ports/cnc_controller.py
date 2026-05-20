@@ -1,7 +1,4 @@
-"""CncController port — the minimal CNC controller interface.
-
-Any object that implements these methods and attributes is a valid ``CncController``.
-"""
+"""CncController port — the minimal CNC controller interface."""
 
 from __future__ import annotations
 

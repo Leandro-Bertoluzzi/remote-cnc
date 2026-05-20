@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 
 class InventoryView(BaseListView):
-    def __init__(self, parent: "MainWindow"):
-        super(InventoryView, self).__init__(parent)
+    def __init__(self, parent: "MainWindow", **kwargs):
+        super(InventoryView, self).__init__(parent, **kwargs)
 
         self.setItemListFromValues(
             "HERRAMIENTAS",

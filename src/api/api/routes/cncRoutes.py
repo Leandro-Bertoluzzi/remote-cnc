@@ -1,5 +1,11 @@
 from typing import Annotated
 
+from core.domain.gateway import (
+    ACTION_PAUSE,
+    ACTION_RESUME,
+    ACTION_SOFT_RESET,
+    ACTION_STOP,
+)
 from core.schemas.cnc import CncCommand, CncJogCommand
 from core.schemas.general import GenericResponse
 from core.schemas.session import (
@@ -8,12 +14,6 @@ from core.schemas.session import (
     SessionAcquireRequest,
     SessionRenewResponse,
     SessionResponse,
-)
-from core.utilities.gateway.constants import (
-    ACTION_PAUSE,
-    ACTION_RESUME,
-    ACTION_SOFT_RESET,
-    ACTION_STOP,
 )
 from fastapi import APIRouter, Header, HTTPException
 

@@ -22,9 +22,6 @@ class JogController:
         The callback signature must be::
 
             callback(x, y, z, feedrate, units, distance_mode)
-
-        :class:`ControlView` supplies a method that delegates to
-        ``GatewayClient.send_jog``.
         """
         self._jog_callback = callback
 
