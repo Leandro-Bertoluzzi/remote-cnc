@@ -1,4 +1,4 @@
-from core.utilities.grbl.grblUtils import JOG_DISTANCE_INCREMENTAL
+from core.domain.cnc import JogDistanceMode
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -147,6 +147,6 @@ class Joystick(QWidget, JogController):
             if move_x == 0 and move_y == 0 and move_z == 0:
                 return
 
-            self.send_jog_command(move_x, move_y, move_z, feedrate, JOG_DISTANCE_INCREMENTAL)
+            self.send_jog_command(move_x, move_y, move_z, feedrate, JogDistanceMode.INCREMENTAL)
 
         return send_jog_incremental_move

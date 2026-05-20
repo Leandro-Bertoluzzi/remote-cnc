@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from core.utilities.grbl.types import ParserState, Status
+from core.domain.cnc import ParserState, Status
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem

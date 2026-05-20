@@ -1,5 +1,3 @@
-from core.utilities.grbl.types import GrblResponse
-
 from gateway.cnc.parsers.grblParserGeneric import GrblParserGeneric
 from gateway.cnc.parsers.grblParserMsgAlarm import GrblParserMsgAlarm
 from gateway.cnc.parsers.grblParserMsgEcho import GrblParserMsgEcho
@@ -17,6 +15,7 @@ from gateway.cnc.parsers.grblParserMsgUserDefinedStartup import (
 from gateway.cnc.parsers.grblParserMsgVersion import GrblParserMsgVersion
 from gateway.cnc.parsers.grblParserResultError import GrblParserResultError
 from gateway.cnc.parsers.grblParserResultOk import GrblParserResultOk
+from gateway.cnc.types import GrblResponse
 
 
 class GrblLineParser:

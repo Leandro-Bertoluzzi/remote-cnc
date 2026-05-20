@@ -1,14 +1,14 @@
 from abc import abstractmethod
 from typing import Callable
 
-from core.utilities.grbl.grblUtils import JOG_UNIT_INCHES, JOG_UNIT_MILIMETERS
+from core.domain.cnc import JogUnit
 from PyQt5.QtWidgets import QButtonGroup, QDoubleSpinBox, QHBoxLayout, QLabel, QRadioButton
 
 
 class JogController:
     UNIT_MAPPING = {
-        0: {"suffix": " mm", "distance_unit": JOG_UNIT_MILIMETERS},
-        1: {"suffix": " in", "distance_unit": JOG_UNIT_INCHES},
+        0: {"suffix": " mm", "distance_unit": JogUnit.MILIMETERS},
+        1: {"suffix": " in", "distance_unit": JogUnit.INCHES},
     }
 
     def __init__(self):

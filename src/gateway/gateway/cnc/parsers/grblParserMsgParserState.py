@@ -1,8 +1,7 @@
 import re
 from typing import Any
 
-from core.utilities.grbl.constants import GRBL_MODAL_GROUPS
-
+from gateway.cnc.constants import GRBL_MODAL_GROUPS
 from gateway.cnc.parsers.grblMsgTypes import GRBL_MSG_PARSER_STATE
 from gateway.cnc.parsers.grblParserGeneric import GrblParserGeneric
 

@@ -5,10 +5,10 @@ import time
 from queue import Empty, Queue
 from typing import TYPE_CHECKING, Callable, Optional
 
-from core.utilities.grbl.constants import GrblRealtimeCommand
 from core.utilities.serial import SerialService
 from serial import SerialException
 
+from gateway.cnc.constants import GrblRealtimeCommand
 from gateway.cnc.line_parser import GrblLineParser
 from gateway.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_ALARM,

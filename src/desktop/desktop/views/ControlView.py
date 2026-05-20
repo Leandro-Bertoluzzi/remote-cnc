@@ -15,9 +15,9 @@ No direct serial access.  See DR-0001 for technical rationale.
 import logging
 from typing import TYPE_CHECKING
 
+from core.domain.cnc import ParserState, Status
 from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
 from core.utilities.gateway.gatewayClient import GatewayClient
-from core.utilities.grbl.types import ParserState, Status
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QGridLayout
