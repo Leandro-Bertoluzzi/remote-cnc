@@ -2,6 +2,7 @@ import logging
 import re
 from typing import Callable, Optional
 
+from core.domain.cnc import JogDistanceMode, JogUnit
 from serial import SerialException
 
 from gateway.adapters.cnc.communicator import GrblCommunicator
@@ -333,9 +334,9 @@ class GrblController:
         z: float,
         feedrate: float,
         *,
-        units=None,
-        distance_mode=None,
-        machine_coordinates=False,
+        units: JogUnit | None = None,
+        distance_mode: JogDistanceMode | None = None,
+        machine_coordinates: bool = False,
     ):
         """Executes a 'jog' action.
 
