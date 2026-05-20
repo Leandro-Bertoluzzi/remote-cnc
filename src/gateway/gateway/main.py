@@ -37,7 +37,8 @@ from core.utilities.gateway.constants import (
 )
 from core.utilities.loggerFactory import setup_stream_logger
 
-from gateway.cnc.controller import GrblController
+from gateway.adapters.cnc.controller import GrblController
+from gateway.adapters.serial import SerialService
 from gateway.commandProcessor import CommandProcessor
 from gateway.fileExecutor import FileExecutor
 from gateway.sessionManager import SessionManager
@@ -90,7 +91,12 @@ def create_gateway(
 
     # GrblController — the serial owner
     grbl_logger = setup_stream_logger("controller", logging.INFO)
-    controller = GrblController(logger=grbl_logger, skip_startup_validation=GRBL_SIMULATION)
+    serial_adapter = SerialService()
+    controller = GrblController(
+        serial=serial_adapter,
+        logger=grbl_logger,
+        skip_startup_validation=GRBL_SIMULATION,
+    )
 
     # Sub-systems
     session_manager = SessionManager(redis_conn=redis_conn)
