@@ -43,7 +43,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "api/tests", "worker/tests", "desktop/tests", "gateway/tests"]
-pythonpath = ["tests", "api/tests"]
+pythonpath = ["tests", "api/tests", "gateway/tests"]
 addopts = "--import-mode=importlib --cov=. --cov-report=html"
 env = [
     "SERIAL_PORT=COMx",

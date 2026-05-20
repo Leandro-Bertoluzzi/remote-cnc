@@ -15,7 +15,6 @@ from core.utilities.gateway.constants import (
     ACTION_SOFT_RESET,
     ACTION_STOP,
 )
-from core.utilities.serial import SerialService
 from fastapi import APIRouter, Header, HTTPException
 
 from api.middleware.authMiddleware import GetAdminDep
@@ -25,17 +24,6 @@ cncRoutes = APIRouter(prefix="/cnc", tags=["CNC"])
 
 # Header dependency for authenticated session commands
 GetSessionId = Annotated[str, Header(description="Active CNC session ID")]
-
-
-# ---------------------------------------------------------------------------
-# Ports
-# ---------------------------------------------------------------------------
-
-
-@cncRoutes.get("/ports")
-def get_available_ports(admin: GetAdminDep):
-    available_ports = SerialService.get_ports()
-    return {"ports": available_ports}
 
 
 # ---------------------------------------------------------------------------

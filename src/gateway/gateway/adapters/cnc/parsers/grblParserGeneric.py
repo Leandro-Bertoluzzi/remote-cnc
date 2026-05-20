@@ -1,0 +1,22 @@
+from abc import ABC, abstractmethod
+from typing import Optional
+
+from gateway.adapters.cnc.types import GrblResponse
+
+
+class GrblParserGeneric(ABC):
+    """Base class to define GRBL message parsers"""
+
+    @staticmethod
+    @abstractmethod
+    def parse(line: str) -> Optional[GrblResponse]:
+        """Parses a message from GRBL.
+
+        Args:
+            line: A string representing a GRBL message.
+
+        Returns:
+            A tuple containing the message type and payload,
+            or None if the line is not a valid GRBL message.
+        """
+        raise NotImplementedError  # pragma: no cover
