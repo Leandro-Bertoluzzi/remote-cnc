@@ -18,10 +18,6 @@ import redis
 
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from core.utilities.gateway.constants import (
-    ACTION_PAUSE,
-    ACTION_RESUME,
-    ACTION_SOFT_RESET,
-    ACTION_STOP,
     ALL_QUEUES,
     EVENTS_CHANNEL,
     GATEWAY_STATE_KEY,

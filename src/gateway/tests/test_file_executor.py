@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,94 +15,8 @@ from core.utilities.gateway.constants import (
     EVENT_FILE_STARTED,
     EVENTS_CHANNEL,
 )
+from fakes import FakeController
 from gateway.fileExecutor import FileExecutor
-
-# ---------------------------------------------------------------------------
-# Helpers / fixtures
-# ---------------------------------------------------------------------------
-
-
-class FakeController:
-    """Minimal GrblController substitute that satisfies the CncController Protocol."""
-
-    def __init__(self, *, buffer_fill: float = 0.0, status_failed: bool = False):
-        self._failed = status_failed
-        self._error_message: Optional[str] = None
-        self._buffer_fill = buffer_fill
-        self._ok_hook: Optional[Callable[[str], None]] = None
-        self._send_command_mock = MagicMock()
-
-    # --- CncController Protocol (connection / command / query stubs) ---
-
-    def connect(self, port: str, baudrate: int) -> dict[str, str] | None:
-        return None
-
-    def disconnect(self) -> None:
-        pass
-
-    def is_io_alive(self) -> bool:
-        return True
-
-    def set_paused(self, paused: bool) -> None:
-        pass
-
-    def request_soft_reset(self) -> None:
-        pass
-
-    def send_command(self, command: str) -> None:
-        self._send_command_mock(command)
-
-    def query_status_report(self) -> None:
-        pass
-
-    def query_gcode_parser_state(self) -> None:
-        pass
-
-    def query_grbl_settings(self) -> None:
-        pass
-
-    def query_grbl_params(self) -> None:
-        pass
-
-    def query_build_info(self) -> None:
-        pass
-
-    def query_grbl_help(self) -> None:
-        pass
-
-    # --- State getters ---
-
-    def register_ok_hook(self, hook: Optional[Callable[[str], None]]) -> None:
-        self._ok_hook = hook
-
-    def get_buffer_fill(self) -> float:
-        return self._buffer_fill
-
-    def failed(self) -> bool:
-        return self._failed
-
-    def get_error_message(self) -> Optional[str]:
-        return self._error_message
-
-    def get_status_report(self) -> dict:
-        return {}
-
-    def get_parser_state(self) -> dict:
-        return {}
-
-    def is_connected(self) -> bool:
-        return True
-
-    def is_paused(self) -> bool:
-        return False
-
-    def is_alarm(self) -> bool:
-        return False
-
-    # Convenience helper used in tests
-    def fire_ok(self, done_cmd: str = "G0 X10") -> None:
-        if self._ok_hook:
-            self._ok_hook(done_cmd)
 
 
 def make_executor(
