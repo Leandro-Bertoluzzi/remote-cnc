@@ -20,14 +20,14 @@ import json
 import logging
 import threading
 
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
     EVENTS_CHANNEL,
     MESSAGES_CHANNEL,
     STATUS_CHANNEL,
 )
-from core.utilities.gateway.gatewayClient import GatewayClient
+from core.ports.gateway_client import IGatewayClient
 from PyQt5.QtCore import QObject, pyqtSignal
 
 logger = logging.getLogger(__name__)
@@ -45,9 +45,9 @@ class GatewayMonitor(QObject):
 
     # CONSTRUCTOR
 
-    def __init__(self) -> None:
+    def __init__(self, gateway: IGatewayClient) -> None:
         super().__init__()
-        self._gateway = GatewayClient()
+        self._gateway = gateway
         self._thread: threading.Thread | None = None
         self._running = False
 

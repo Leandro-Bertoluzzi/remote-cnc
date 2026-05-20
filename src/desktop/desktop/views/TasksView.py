@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 class TasksView(BaseListView):
-    def __init__(self, parent: "MainWindow"):
-        super(TasksView, self).__init__(parent)
+    def __init__(self, parent: "MainWindow", **kwargs):
+        super(TasksView, self).__init__(parent, **kwargs)
 
         self._progress_connected = False
 

@@ -6,7 +6,7 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     ACTION_PAUSE,
     ACTION_RESUME,
     ACTION_SOFT_RESET,

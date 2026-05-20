@@ -1,6 +1,10 @@
 from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
+from core.ports.gateway_client import IGatewayClient
+from desktop.app_context import AppContext
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.views.BaseListView import BaseListView
 from PyQt5.QtWidgets import QGridLayout, QLayout, QWidget
@@ -48,6 +52,10 @@ def mock_window(mocker: MockerFixture):
     parent.backToMenu = mocker.Mock()
     parent.changeView = mocker.Mock()
     parent.startWorkerMonitor = mocker.Mock()
+    mock_gateway = MagicMock(spec=IGatewayClient)
+    mock_context = AppContext(gateway=mock_gateway)
+    parent._context = mock_context
+    parent.worker_monitor = GatewayMonitor(mock_gateway)
     return cast(MainWindow, parent)
 
 

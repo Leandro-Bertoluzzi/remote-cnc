@@ -9,7 +9,7 @@ from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
     EVENT_FILE_STARTED,
@@ -108,7 +108,7 @@ class TestTickNormal:
 
         executor.tick()
 
-        ctrl._send_command_mock.assert_called_once_with("G0 X10\n")
+        ctrl.send_command_mock.assert_called_once_with("G0 X10\n")
         assert executor._sent_lines == 1
 
     def test_tick_skipped_when_paused(self, tmp_path: Path):
@@ -121,7 +121,7 @@ class TestTickNormal:
 
         executor.tick()
 
-        ctrl._send_command_mock.assert_not_called()
+        ctrl.send_command_mock.assert_not_called()
 
     def test_tick_skipped_when_buffer_full(self, tmp_path: Path):
         gcode = tmp_path / "test.gcode"
@@ -133,7 +133,7 @@ class TestTickNormal:
 
         executor.tick()
 
-        ctrl._send_command_mock.assert_not_called()
+        ctrl.send_command_mock.assert_not_called()
 
     def test_tick_rate_limited(self, tmp_path: Path):
         """Second tick within SEND_INTERVAL must not send another line."""
@@ -147,7 +147,7 @@ class TestTickNormal:
         # Don't reset _last_send — rate-limiter should block line 2
         executor.tick()
 
-        assert ctrl._send_command_mock.call_count == 1
+        assert ctrl.send_command_mock.call_count == 1
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +203,7 @@ class TestEmptyCommentLines:
 
         executor.tick()
 
-        ctrl._send_command_mock.assert_not_called()
+        ctrl.send_command_mock.assert_not_called()
         assert executor._processed_lines == 1
         assert executor._sent_lines == 1
 

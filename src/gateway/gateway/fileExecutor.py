@@ -21,13 +21,13 @@ from pathlib import Path
 from typing import Any, Optional
 
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
-from core.ports.redis_client import RedisClient
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
     EVENT_FILE_STARTED,
     EVENTS_CHANNEL,
 )
+from core.ports.redis_client import RedisClient
 from core.utilities.gcode.constants import GCODE_PROGRAM_END_CODES
 
 from gateway.ports.cnc_controller import CncController

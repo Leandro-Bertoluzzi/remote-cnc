@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, cast
 
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
 if TYPE_CHECKING:
+    from desktop.app_context import AppContext  # pragma: no cover
     from desktop.MainWindow import MainWindow  # pragma: no cover
 
 
 class BaseView(QWidget):
-    def __init__(self, parent: "MainWindow"):
+    def __init__(self, parent: "MainWindow", context: "AppContext | None" = None):
         super(BaseView, self).__init__(parent)
+        self._context = context
 
     # Notifications
 

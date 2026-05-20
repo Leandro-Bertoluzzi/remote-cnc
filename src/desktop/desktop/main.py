@@ -5,6 +5,7 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
+from desktop.app_context import create_app_context
 from desktop.MainWindow import MainWindow
 
 
@@ -19,6 +20,7 @@ def suppressQtWarnings():
 if __name__ == "__main__":
     suppressQtWarnings()
     app = QApplication(sys.argv)
-    mainWindow = MainWindow()
+    context = create_app_context()
+    mainWindow = MainWindow(context)
     mainWindow.show()
     sys.exit(app.exec())

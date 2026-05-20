@@ -198,10 +198,8 @@ class TestTasksViewProgress:
 
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
-        # Create a real GatewayMonitor so its signals are available
         mocker.patch.object(GatewayMonitor, "start_monitor")
-        self.monitor = GatewayMonitor()
-        mock_window.worker_monitor = self.monitor
+        self.monitor = mock_window.worker_monitor
 
         # Prepare tasks – one in progress
         self.task_running = Task(user_id=1, file_id=1, tool_id=1, material_id=1, name="Running")

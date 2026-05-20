@@ -13,6 +13,7 @@ from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
+    from desktop.app_context import AppContext  # pragma: no cover
     from desktop.MainWindow import MainWindow  # pragma: no cover
 
 
@@ -30,8 +31,8 @@ ViewList = TypedDict(
 
 
 class BaseListView(BaseView):
-    def __init__(self, parent: "MainWindow"):
-        super(BaseListView, self).__init__(parent)
+    def __init__(self, parent: "MainWindow", context: "AppContext | None" = None):
+        super(BaseListView, self).__init__(parent, context)
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)

@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class MonitorView(BaseView):
-    def __init__(self, parent: "MainWindow"):
-        super(MonitorView, self).__init__(parent)
+    def __init__(self, parent: "MainWindow", **kwargs):
+        super(MonitorView, self).__init__(parent, **kwargs)
 
         # STATE MANAGEMENT
         try:

@@ -15,16 +15,16 @@ import json
 import logging
 
 from celery.utils.log import get_task_logger
+from core.adapters.gateway.gateway_client import GatewayClient
 from core.config import FILES_FOLDER_PATH
 from core.database.base import SessionLocal
 from core.database.models import TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
-from core.utilities.files import FileSystemHelper
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
 )
-from core.utilities.gateway.gatewayClient import GatewayClient
+from core.utilities.files import FileSystemHelper
 from worker.main import app
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ def executeTask(self, task_id: int) -> None:
     """
     db_session = SessionLocal()
     worker_logger = get_task_logger(__name__)
-    gateway = GatewayClient()
+    gateway = GatewayClient.from_config()
     session_id: str | None = None
     pubsub = None
 

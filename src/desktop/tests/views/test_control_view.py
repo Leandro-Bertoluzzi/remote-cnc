@@ -1,7 +1,8 @@
 """Tests for :class:`ControlView` — Gateway-based CNC control."""
 
 import pytest
-from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
+from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
+from desktop.app_context import AppContext
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.CodeEditor import CodeEditor
 from desktop.components.ControllerStatus import ControllerStatus
@@ -25,15 +26,15 @@ class TestControlView:
         # Mock device service methods
         mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
 
-        # Prevent real Redis connections from GatewayClient / GatewayMonitor
+        # Build an AppContext with a mock gateway — no real Redis connections
         self.mock_gateway = mocker.MagicMock()
         self.mock_sync = mocker.MagicMock(spec=GatewayMonitor)
-        mocker.patch("desktop.views.ControlView.GatewayClient", return_value=self.mock_gateway)
         mocker.patch("desktop.views.ControlView.GatewayMonitor", return_value=self.mock_sync)
+        self.mock_context = AppContext(gateway=self.mock_gateway)
 
         # Create an instance of ControlView
         self.parent = mock_window
-        self.control_view = ControlView(self.parent)
+        self.control_view = ControlView(self.parent, self.mock_context)
         qtbot.addWidget(self.control_view)
 
     # -- init ---------------------------------------------------------------
@@ -47,7 +48,7 @@ class TestControlView:
         mocker.patch.object(DeviceService, "is_worker_busy", return_value=device_busy)
 
         # Create an instance of ControlView
-        control_view = ControlView(self.parent)
+        control_view = ControlView(self.parent, self.mock_context)
         qtbot.addWidget(control_view)
 
         # Validate amount of each type of widget

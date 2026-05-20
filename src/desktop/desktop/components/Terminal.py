@@ -7,9 +7,8 @@ from desktop.helpers.utils import applyStylesheet
 class Terminal(QWidget):
     """Terminal widget for sending G-code commands.
 
-    Emits :pyqt:`command_submitted(str)` when the user presses *Enter*.
-    The parent view connects this signal to the appropriate sender
-    (e.g. ``GatewayClient.send_command``).
+    Emits `command_submitted(str)` when the user presses *Enter*.
+    The parent view connects this signal to the appropriate sender.
     """
 
     command_submitted = pyqtSignal(str)

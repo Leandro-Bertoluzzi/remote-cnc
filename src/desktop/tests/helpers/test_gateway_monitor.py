@@ -2,7 +2,7 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-from core.utilities.gateway.constants import (
+from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
     EVENTS_CHANNEL,
@@ -56,13 +56,11 @@ def _subscribe_message() -> dict:
 class TestGatewayMonitor:
     @pytest.fixture(autouse=True)
     def setup_method(self, mocker: MockerFixture):
-        # Prevent real Redis connections
+        # Inject a mock gateway directly — no Redis connections
         self.mock_pubsub = MagicMock()
-        mocker.patch(
-            "desktop.helpers.gatewayMonitor.GatewayClient",
-            return_value=MagicMock(subscribe_channels=MagicMock(return_value=self.mock_pubsub)),
-        )
-        self.monitor = GatewayMonitor()
+        self.mock_gateway = MagicMock()
+        self.mock_gateway.subscribe_channels.return_value = self.mock_pubsub
+        self.monitor = GatewayMonitor(self.mock_gateway)
 
     def test_start_and_stop_monitor(self):
         """start_monitor creates a daemon thread, stop sets _running=False."""

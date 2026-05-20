@@ -2,21 +2,22 @@
 
 import logging
 
-from core.utilities.gateway.constants import ACTION_PAUSE, ACTION_RESUME
-from core.utilities.gateway.gatewayClient import GatewayClient
+from core.adapters.gateway.gateway_client import GatewayClient
+from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
+from core.ports.gateway_client import IGatewayClient
 from core.utilities.worker.workerClient import WorkerClient
 
 logger = logging.getLogger(__name__)
 
 # Module-level shared instances
-_gateway_client: GatewayClient | None = None
+_gateway_client: IGatewayClient | None = None
 _worker_client: WorkerClient | None = None
 
 
-def _get_gateway() -> GatewayClient:
+def _get_gateway() -> IGatewayClient:
     global _gateway_client  # noqa: PLW0603
     if _gateway_client is None:
-        _gateway_client = GatewayClient()
+        _gateway_client = GatewayClient.from_config()
     return _gateway_client
 
 

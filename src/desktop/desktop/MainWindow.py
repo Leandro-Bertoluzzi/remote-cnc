@@ -3,6 +3,7 @@ import logging
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
+from desktop.app_context import AppContext
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.StatusBar import StatusBar
 from desktop.helpers.connectionErrors import get_friendly_error_message
@@ -14,15 +15,18 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, context: AppContext, parent=None):
         super(MainWindow, self).__init__(parent)
 
+        self._context = context
+
+        # Initial view and window setup
         self.setCentralWidget(MainMenu(self))
         self.setWindowTitle("CNC admin")
         self.setStyleSheet("background-color:#666666;")
 
         # CNC tasks monitor
-        self.worker_monitor = GatewayMonitor()
+        self.worker_monitor = GatewayMonitor(self._context.gateway)
 
         # UI components
         self.status_bar = StatusBar(self)
@@ -86,7 +90,7 @@ class MainWindow(QMainWindow):
     def changeView(self, widget):
         old_widget = self.centralWidget()
         try:
-            new_widget = widget(self)
+            new_widget = widget(self, context=self._context)
         except Exception as error:
             logger.warning("Error creating view %s: %s", widget.__name__, error)
             error_msg = get_friendly_error_message(error)
