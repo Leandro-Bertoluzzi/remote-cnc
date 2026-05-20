@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from core.utilities.grbl.types import GrblResponse
+from gateway.cnc.types import GrblResponse
 
 
 class GrblParserGeneric(ABC):

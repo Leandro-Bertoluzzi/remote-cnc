@@ -1,10 +1,9 @@
 import re
 
-from core.utilities.grbl.constants import GRBL_ALARMS
-from core.utilities.grbl.types import GrblError
-
+from gateway.cnc.constants import GRBL_ALARMS
 from gateway.cnc.parsers.grblMsgTypes import GRBL_MSG_ALARM
 from gateway.cnc.parsers.grblParserGeneric import GrblParserGeneric
+from gateway.cnc.types import GrblError
 
 
 class GrblParserMsgAlarm(GrblParserGeneric):

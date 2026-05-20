@@ -1,5 +1,5 @@
 import pytest
-from core.utilities.grbl.grblUtils import (
+from gateway.cnc.utils import (
     JOG_DISTANCE_ABSOLUTE,
     JOG_DISTANCE_INCREMENTAL,
     JOG_UNIT_INCHES,
@@ -184,7 +184,6 @@ from core.utilities.grbl.grblUtils import (
     ],
 )
 def test_build_jog_command(parameters, expected):
-    # Call the method under test
     response = build_jog_command(
         parameters["x"],
         parameters["y"],
@@ -194,8 +193,6 @@ def test_build_jog_command(parameters, expected):
         distance_mode=parameters["distance_mode"],
         machine_coordinates=parameters["machine_coordinates"],
     )
-
-    # Assertions
     assert response == expected
 
 
@@ -213,10 +210,7 @@ def test_build_jog_command(parameters, expected):
     ],
 )
 def test_is_setting_update_command(command, expected):
-    # Call the method under test
     response = is_setting_update_command(command)
-
-    # Assertions
     assert response == expected
 
 
@@ -246,8 +240,5 @@ def test_is_setting_update_command(command, expected):
     ],
 )
 def test_get_grbl_setting(key, expected):
-    # Call the method under test
     response = get_grbl_setting(key)
-
-    # Assertions
     assert response == expected

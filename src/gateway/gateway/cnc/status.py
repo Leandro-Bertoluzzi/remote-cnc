@@ -1,8 +1,10 @@
 from enum import Enum
 from typing import Any, Optional
 
-from core.utilities.grbl.constants import GrblActiveState
-from core.utilities.grbl.types import Coordinates, GrblControllerState, GrblError, PositionType
+from core.domain.cnc import Coordinates, PositionType
+
+from gateway.cnc.constants import GrblActiveState
+from gateway.cnc.types import GrblControllerState, GrblError
 
 # Flags
 

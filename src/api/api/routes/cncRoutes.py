@@ -1,7 +1,6 @@
 from typing import Annotated
 
-import core.utilities.grbl.grblUtils as grblUtils
-from core.schemas.cnc import CncCommand, CncJogCommand, CncJogResponse
+from core.schemas.cnc import CncCommand, CncJogCommand
 from core.schemas.general import GenericResponse
 from core.schemas.session import (
     GatewayStateResponse,
@@ -151,7 +150,7 @@ def send_command(
     return {"success": "El comando fue enviado para su ejecución"}
 
 
-@cncRoutes.post("/jog", response_model=CncJogResponse)
+@cncRoutes.post("/jog", response_model=GenericResponse)
 def send_jog_command(
     admin: GetAdminDep,
     gateway: GetGateway,
@@ -173,18 +172,7 @@ def send_jog_command(
         distance_mode=request.mode,
         machine_coordinates=machine,
     )
-
-    # Build locally just for the response
-    code = grblUtils.build_jog_command(
-        request.x,
-        request.y,
-        request.z,
-        request.feedrate,
-        units=request.units,
-        distance_mode=request.mode,
-        machine_coordinates=machine,
-    )
-    return {"command": code}
+    return {"success": "Comando de jog enviado correctamente"}
 
 
 @cncRoutes.post("/realtime", response_model=GenericResponse)

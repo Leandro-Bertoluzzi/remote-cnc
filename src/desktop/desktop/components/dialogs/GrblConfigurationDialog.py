@@ -1,4 +1,4 @@
-from core.utilities.grbl.types import GrblSettings
+from core.domain.cnc import DeviceSettings
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
 
 
 class GrblConfigurationDialog(QDialog):
-    def __init__(self, device_settings: GrblSettings, parent=None):
+    def __init__(self, device_settings: DeviceSettings, parent=None):
         super(GrblConfigurationDialog, self).__init__(parent)
 
         # Variables

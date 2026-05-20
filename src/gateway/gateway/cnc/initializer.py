@@ -1,10 +1,10 @@
 from typing import Callable
 
-from core.utilities.grbl.constants import GrblCommand
 from core.utilities.serial import SerialService
 from serial import SerialException
 
 from gateway.cnc.communicator import GrblCommunicator
+from gateway.cnc.constants import GrblCommand
 from gateway.cnc.line_parser import GrblLineParser
 from gateway.cnc.monitor import GrblMonitor
 from gateway.cnc.parsers.grblMsgTypes import (

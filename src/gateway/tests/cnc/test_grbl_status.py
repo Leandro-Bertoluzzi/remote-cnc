@@ -1,6 +1,6 @@
 import mocks.grbl as grbl_mocks
 import pytest
-from core.utilities.grbl.constants import GrblActiveState
+from gateway.cnc.constants import GrblActiveState
 from gateway.cnc.status import GrblStatus
 
 

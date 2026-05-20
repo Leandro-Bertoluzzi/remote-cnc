@@ -2,18 +2,11 @@ import logging
 import re
 from typing import Callable, Optional
 
-from core.utilities.grbl.constants import GrblCommand, GrblRealtimeCommand
-from core.utilities.grbl.grblUtils import build_jog_command, get_grbl_setting
-from core.utilities.grbl.types import (
-    GrblBuildInfo,
-    GrblControllerParameters,
-    GrblSetting,
-    GrblSettings,
-)
 from core.utilities.serial import SerialService
 from serial import SerialException
 
 from gateway.cnc.communicator import GrblCommunicator
+from gateway.cnc.constants import GrblCommand, GrblRealtimeCommand
 from gateway.cnc.initializer import GrblInitializer
 from gateway.cnc.monitor import GrblMonitor
 from gateway.cnc.parsers.grblMsgTypes import (
@@ -27,6 +20,13 @@ from gateway.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_VERSION,
 )
 from gateway.cnc.status import GrblStatus, GrblStatusFlag
+from gateway.cnc.types import (
+    GrblBuildInfo,
+    GrblControllerParameters,
+    GrblSetting,
+    GrblSettings,
+)
+from gateway.cnc.utils import build_jog_command, get_grbl_setting
 
 # Constants
 DISCONNECTED = "DISCONNECTED"

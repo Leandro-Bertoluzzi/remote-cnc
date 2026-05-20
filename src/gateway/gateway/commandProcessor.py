@@ -26,8 +26,8 @@ from core.utilities.gateway.constants import (
     MSG_QUERY,
     MSG_REALTIME,
 )
-from core.utilities.grbl.grblUtils import build_jog_command
 
+from gateway.cnc.utils import build_jog_command
 from gateway.ports.cnc_controller import CncController
 
 if TYPE_CHECKING:

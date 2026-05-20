@@ -1,4 +1,4 @@
-from core.utilities.grbl.types import Status
+from core.domain.cnc import Status
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 

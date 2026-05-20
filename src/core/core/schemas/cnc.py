@@ -14,7 +14,3 @@ class CncJogCommand(BaseModel):
     feedrate: float
     units: Literal["milimeters", "inches"]
     mode: Literal["distance_absolute", "distance_incremental"]
-
-
-class CncJogResponse(BaseModel):
-    command: str

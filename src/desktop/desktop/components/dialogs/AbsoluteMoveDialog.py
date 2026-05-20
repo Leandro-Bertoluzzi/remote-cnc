@@ -1,4 +1,4 @@
-from core.utilities.grbl.grblUtils import JOG_DISTANCE_ABSOLUTE
+from core.domain.cnc import JogDistanceMode
 from desktop.containers.WidgetsHList import WidgetsHList
 from desktop.mixins.JogController import JogController
 from PyQt5.QtCore import Qt
@@ -87,4 +87,4 @@ class AbsoluteMoveDialog(QDialog, JogController):
         z = round(self.input_z.value(), 2)
         feedrate = round(self.input_feedrate.value(), 2)
 
-        self.send_jog_command(x, y, z, feedrate, JOG_DISTANCE_ABSOLUTE)
+        self.send_jog_command(x, y, z, feedrate, JogDistanceMode.ABSOLUTE)
