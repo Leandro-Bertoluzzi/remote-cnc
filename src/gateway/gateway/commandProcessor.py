@@ -27,8 +27,14 @@ from core.utilities.gateway.constants import (
     MSG_REALTIME,
 )
 
-from gateway.adapters.cnc.utils import build_jog_command
 from gateway.ports.cnc_controller import CncController
+from gateway.schemas import (
+    CommandPayload,
+    FileStartPayload,
+    JogPayload,
+    QueryPayload,
+    RealtimePayload,
+)
 
 if TYPE_CHECKING:
     from gateway.fileExecutor import FileExecutor
@@ -145,7 +151,12 @@ class CommandProcessor:
     # ------------------------------------------------------------------
 
     def _handle_realtime(self, payload: dict[str, Any]) -> None:
-        action = payload.get("action", "")
+        try:
+            msg = RealtimePayload.model_validate(payload)
+        except Exception as exc:
+            logger.warning("Invalid realtime payload: %s — %s", payload, exc)
+            return
+        action = msg.action
         if action == ACTION_PAUSE:
             self.controller.set_paused(True)
             if self.file_executor.is_running:
@@ -164,36 +175,41 @@ class CommandProcessor:
         elif action == ACTION_SOFT_RESET:
             self.controller.request_soft_reset()
             logger.info("Soft reset requested")
-        else:
-            logger.warning("Unknown realtime action: %s", action)
 
     def _handle_command(self, payload: dict[str, Any]) -> None:
-        command = payload.get("command", "")
-        if command:
-            self.controller.send_command(command)
-            logger.debug("Command queued: %s", command.strip())
+        try:
+            msg = CommandPayload.model_validate(payload)
+        except Exception as exc:
+            logger.warning("Invalid command payload: %s — %s", payload, exc)
+            return
+        self.controller.send_command(msg.command)
+        logger.debug("Command queued: %s", msg.command.strip())
 
     def _handle_jog(self, payload: dict[str, Any]) -> None:
-        jog_cmd = build_jog_command(
-            payload.get("x", 0),
-            payload.get("y", 0),
-            payload.get("z", 0),
-            payload.get("feedrate", 0),
-            units=payload.get("units"),
-            distance_mode=payload.get("distance_mode"),
-            machine_coordinates=payload.get("machine_coordinates", False),
+        try:
+            jog = JogPayload.model_validate(payload)
+        except Exception as exc:
+            logger.warning("Invalid jog payload: %s — %s", payload, exc)
+            return
+        self.controller.jog(
+            jog.x,
+            jog.y,
+            jog.z,
+            jog.feedrate,
+            units=jog.units,
+            distance_mode=jog.distance_mode,
+            machine_coordinates=jog.machine_coordinates,
         )
-        self.controller.send_command(jog_cmd)
-        logger.debug("Jog command queued: %s", jog_cmd)
+        logger.debug("Jog dispatched: x=%s y=%s z=%s f=%s", jog.x, jog.y, jog.z, jog.feedrate)
 
     def _handle_file_start(self, payload: dict[str, Any]) -> None:
-        file_path = payload.get("file_path", "")
-        task_id = payload.get("task_id")
-        if not file_path:
-            logger.error("file_start without file_path")
+        try:
+            msg = FileStartPayload.model_validate(payload)
+        except Exception as exc:
+            logger.warning("Invalid file_start payload: %s — %s", payload, exc)
             return
-        self.file_executor.start(file_path, task_id)
-        logger.info("File execution started: %s (task %s)", file_path, task_id)
+        self.file_executor.start(msg.file_path, msg.task_id)
+        logger.info("File execution started: %s (task %s)", msg.file_path, msg.task_id)
 
     def _handle_file_stop(self) -> None:
         if self.file_executor.is_running:
@@ -201,7 +217,11 @@ class CommandProcessor:
             logger.info("File execution stopped by user")
 
     def _handle_query(self, payload: dict[str, Any]) -> None:
-        query_type = payload.get("query", "")
+        try:
+            msg = QueryPayload.model_validate(payload)
+        except Exception as exc:
+            logger.warning("Invalid query payload: %s — %s", payload, exc)
+            return
         queries = {
             "status": self.controller.query_status_report,
             "parserstate": self.controller.query_gcode_parser_state,
@@ -210,12 +230,8 @@ class CommandProcessor:
             "build_info": self.controller.query_build_info,
             "help": self.controller.query_grbl_help,
         }
-        handler = queries.get(query_type)
-        if handler:
-            handler()
-            logger.debug("Query executed: %s", query_type)
-        else:
-            logger.warning("Unknown query type: %s", query_type)
+        queries[msg.query]()
+        logger.debug("Query executed: %s", msg.query)
 
     def _handle_disconnect(self, session_id: str) -> None:
         logger.info("Disconnect requested by session %s", session_id[:8])

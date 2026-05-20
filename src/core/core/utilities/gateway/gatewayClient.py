@@ -196,7 +196,6 @@ class GatewayClient:
 
     def send_realtime(self, session_id: str, action: str) -> None:
         """Send a realtime action (pause/resume/stop) with *critical* priority."""
-        assert action in (ACTION_PAUSE, ACTION_RESUME, ACTION_STOP, ACTION_SOFT_RESET)
         msg = _make_message(MSG_REALTIME, {"action": action}, session_id)
         self._redis().rpush(QUEUE_CRITICAL, msg)
 

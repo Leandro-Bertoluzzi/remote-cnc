@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
+from core.domain.cnc import JogDistanceMode, JogUnit
+
 
 @runtime_checkable
 class CncController(Protocol):
@@ -46,6 +48,20 @@ class CncController(Protocol):
 
     def request_soft_reset(self) -> None:
         """Send the soft-reset realtime command."""
+        ...
+
+    def jog(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        feedrate: float,
+        *,
+        units: JogUnit | None = None,
+        distance_mode: JogDistanceMode | None = None,
+        machine_coordinates: bool = False,
+    ) -> None:
+        """Execute a jog movement."""
         ...
 
     # ------------------------------------------------------------------
