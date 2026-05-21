@@ -95,6 +95,7 @@ def create_gateway(
     controller = GrblController(
         serial=serial_adapter,
         logger=grbl_logger,
+        redis_conn=redis_conn,
         skip_startup_validation=GRBL_SIMULATION,
     )
 

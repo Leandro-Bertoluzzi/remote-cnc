@@ -3,7 +3,7 @@ import logging
 from queue import Empty, Queue
 from typing import Optional
 
-from core.utilities.redisPubSubManager import RedisPubSubManagerSync
+from core.ports.redis_client import RedisClient
 
 from gateway.adapters.cnc.parsers.grblMsgTypes import GRBL_MSG_STATUS
 
@@ -13,27 +13,21 @@ LOG_LEVELS = ["critical", "error", "warning", "info", "debug"]
 
 
 class GrblMonitor:
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, redis_conn: RedisClient):
         # Configure logs queue for external monitor
         self.logs_queue: Queue[str] = Queue()
 
         # Configure logger
         self.logger = logger
 
-        # Start a PubSub manager to notify updates to external apps
-        self.redis = RedisPubSubManagerSync()
-        self.redis.connect()
+        # Redis connection for publishing updates to external apps
+        self.redis = redis_conn
 
     def __del__(self):
         # Removes the file handler from the logger
         for h in self.logger.handlers:
             if isinstance(h, logging.FileHandler):
                 self.logger.removeHandler(h)
-        # Unsubscribes from PubSub (best-effort; Redis may be unavailable)
-        try:
-            self.redis.disconnect()
-        except Exception:
-            pass
 
     # LOGGER
 
