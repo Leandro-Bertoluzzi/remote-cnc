@@ -27,7 +27,10 @@ class TestGrblController:
     def setup_method(self, mocker: MockerFixture):
         grbl_logger = logging.getLogger("test_logger")
         self.fake_serial = FakeSerial()
-        self.grbl_controller = GrblController(serial=self.fake_serial, logger=grbl_logger)
+        self.mock_redis = MagicMock()
+        self.grbl_controller = GrblController(
+            serial=self.fake_serial, logger=grbl_logger, redis_conn=self.mock_redis
+        )
         self.grbl_status = self.grbl_controller.grbl_status
 
         # Mock logger methods

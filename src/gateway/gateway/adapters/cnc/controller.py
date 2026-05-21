@@ -3,6 +3,7 @@ import re
 from typing import Callable, Optional
 
 from core.domain.cnc import JogDistanceMode, JogUnit
+from core.ports.redis_client import RedisClient
 from serial import SerialException
 
 from gateway.adapters.cnc.communicator import GrblCommunicator
@@ -64,13 +65,18 @@ class GrblController:
     help_text = GRBL_HELP_MESSAGE
 
     def __init__(
-        self, serial: SerialPort, logger: logging.Logger, *, skip_startup_validation: bool = False
+        self,
+        serial: SerialPort,
+        logger: logging.Logger,
+        redis_conn: RedisClient,
+        *,
+        skip_startup_validation: bool = False,
     ):
         # Configure serial interface
         self.serial = serial
 
         # Configure logger
-        self.grbl_monitor = GrblMonitor(logger)
+        self.grbl_monitor = GrblMonitor(logger, redis_conn)
 
         # Configure status manager
         self._status = GrblStatus()

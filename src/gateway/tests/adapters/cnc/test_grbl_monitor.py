@@ -1,5 +1,6 @@
 import logging
 from queue import Empty, Queue
+from unittest.mock import MagicMock
 
 import pytest
 from gateway.adapters.cnc.monitor import GrblMonitor
@@ -14,11 +15,11 @@ class TestGrblMonitor:
         # Mock logger methods
         mocker.patch.object(self.grbl_logger, "addHandler")
 
-        # Mock Redis so no real connection is attempted
-        mocker.patch("gateway.adapters.cnc.monitor.RedisPubSubManagerSync")
+        # Inject a mock Redis client — no real connection attempted
+        self.mock_redis = MagicMock()
 
-        # Instantiate controller
-        self.grbl_monitor = GrblMonitor(self.grbl_logger)
+        # Instantiate monitor
+        self.grbl_monitor = GrblMonitor(self.grbl_logger, redis_conn=self.mock_redis)
 
     @pytest.mark.parametrize("queue", [False, True])
     def test_debug(self, mocker, queue):
