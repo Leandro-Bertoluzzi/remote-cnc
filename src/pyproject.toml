@@ -46,6 +46,9 @@ dev = [
 testpaths = ["tests", "api/tests", "worker/tests", "desktop/tests", "gateway/tests"]
 pythonpath = ["tests", "api/tests", "gateway/tests"]
 addopts = "--import-mode=importlib --cov=. --cov-report=html"
+filterwarnings = [
+    "ignore:unclosed database:ResourceWarning",
+]
 env = [
     "SERIAL_PORT=COMx",
     "SERIAL_BAUDRATE=115200",

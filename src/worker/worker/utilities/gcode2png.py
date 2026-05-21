@@ -1,8 +1,8 @@
 from typing import TypedDict
 
-from mayavi import mlab  # ty:ignore[unresolved-import]
+from mayavi import mlab  # type: ignore
 from PIL import Image
-from pyvirtualdisplay import Display  # ty:ignore[unresolved-import]
+from pyvirtualdisplay import Display  # type: ignore
 
 import worker.utilities.gcodeParser as gcode
 

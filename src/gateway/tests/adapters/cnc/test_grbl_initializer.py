@@ -4,6 +4,7 @@ import logging
 from unittest.mock import MagicMock
 
 import pytest
+from adapters.cnc.fakes import FakeSerial
 from gateway.adapters.cnc.communicator import GrblCommunicator
 from gateway.adapters.cnc.initializer import GrblInitializer
 from gateway.adapters.cnc.line_parser import GrblLineParser
@@ -16,8 +17,6 @@ from gateway.adapters.cnc.parsers.grblMsgTypes import (
 from gateway.adapters.cnc.status import GrblStatus
 from pytest_mock.plugin import MockerFixture
 from serial import SerialException
-
-from tests.adapters.cnc.fakes import FakeSerial
 
 
 class TestGrblInitializer:
