@@ -2,19 +2,29 @@
 
 import logging
 
+from core.adapters.worker.worker_client import WorkerClient
 from core.database.models import File
 from core.database.repositories.fileRepository import FileRepository
+from core.ports.worker_client import IWorkerClient
 from core.utilities.fileManager import FileManager
-from core.utilities.worker.workerClient import WorkerClient
 
 from desktop.config import FILES_FOLDER_PATH
 from desktop.services import get_db_session
 
 logger = logging.getLogger(__name__)
 
+_worker_client: IWorkerClient | None = None
+
+
+def _get_worker_client() -> IWorkerClient:
+    global _worker_client  # noqa: PLW0603
+    if _worker_client is None:
+        _worker_client = WorkerClient.from_config()
+    return _worker_client
+
 
 class FileService:
-    """Encapsulates all file-related operations (DB + filesystem + Celery)."""
+    """Encapsulates all file-related operations (DB + filesystem + worker)."""
 
     @classmethod
     def get_all_files(cls) -> list[File]:
@@ -35,7 +45,7 @@ class FileService:
 
         # Schedule background tasks — broker failure should not prevent file creation
         try:
-            client = WorkerClient()
+            client = _get_worker_client()
             client.generate_file_report(file.id)
             client.create_thumbnail(file.id)
         except Exception:

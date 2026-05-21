@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+from typing import cast
 
 from core.domain.gateway import (
     EVENT_FILE_FAILED,
@@ -87,7 +88,7 @@ class GatewayMonitor(QObject):
                     channel = channel.decode()
 
                 try:
-                    data = json.loads(raw["data"])
+                    data = json.loads(cast(bytes, raw["data"]))
                 except (json.JSONDecodeError, TypeError):
                     continue
 

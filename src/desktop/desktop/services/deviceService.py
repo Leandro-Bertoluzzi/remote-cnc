@@ -1,17 +1,18 @@
-"""Service layer for Device/Worker operations (Celery + Gateway)."""
+"""Service layer for Worker and Gateway operations."""
 
 import logging
 
 from core.adapters.gateway.gateway_client import GatewayClient
+from core.adapters.worker.worker_client import WorkerClient
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
 from core.ports.gateway_client import IGatewayClient
-from core.utilities.worker.workerClient import WorkerClient
+from core.ports.worker_client import IWorkerClient
 
 logger = logging.getLogger(__name__)
 
 # Module-level shared instances
 _gateway_client: IGatewayClient | None = None
-_worker_client: WorkerClient | None = None
+_worker_client: IWorkerClient | None = None
 
 
 def _get_gateway() -> IGatewayClient:
@@ -21,26 +22,26 @@ def _get_gateway() -> IGatewayClient:
     return _gateway_client
 
 
-def _get_worker() -> WorkerClient:
+def _get_worker() -> IWorkerClient:
     global _worker_client  # noqa: PLW0603
     if _worker_client is None:
-        _worker_client = WorkerClient()
+        _worker_client = WorkerClient.from_config()
     return _worker_client
 
 
 class DeviceService:
-    """Encapsulates all worker/device status operations (Celery inspect + Gateway)."""
+    """Encapsulates all worker and gateway status operations."""
 
-    # --- Worker/Celery status ---
+    # --- Worker status ---
 
     @classmethod
     def is_worker_connected(cls) -> bool:
-        """Whether the Celery worker process is reachable."""
+        """Whether the worker process is reachable."""
         return _get_worker().is_on()
 
     @classmethod
     def is_worker_busy(cls) -> bool:
-        """Whether the Celery worker is currently executing a task."""
+        """Whether the worker is currently executing a task."""
         return _get_worker().is_running()
 
     # --- Gateway status ---
