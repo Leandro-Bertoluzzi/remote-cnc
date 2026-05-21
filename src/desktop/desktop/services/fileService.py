@@ -2,11 +2,12 @@
 
 import logging
 
+from core.adapters.file_manager import FileManager
+from core.adapters.file_storage import FileSystemStorage
 from core.adapters.worker.worker_client import WorkerClient
 from core.database.models import File
 from core.database.repositories.fileRepository import FileRepository
 from core.ports.worker_client import IWorkerClient
-from core.utilities.fileManager import FileManager
 
 from desktop.config import FILES_FOLDER_PATH
 from desktop.services import get_db_session
@@ -40,7 +41,7 @@ class FileService:
         report and thumbnail will not be generated. A warning is logged.
         """
         with get_db_session() as session:
-            file_manager = FileManager(FILES_FOLDER_PATH, session)
+            file_manager = FileManager(session, FileSystemStorage(FILES_FOLDER_PATH))
             file = file_manager.create_file(user_id, name, origin_path)
 
         # Schedule background tasks — broker failure should not prevent file creation
@@ -60,11 +61,11 @@ class FileService:
     @classmethod
     def rename_file(cls, user_id: int, file: File, new_name: str) -> None:
         with get_db_session() as session:
-            file_manager = FileManager(FILES_FOLDER_PATH, session)
+            file_manager = FileManager(session, FileSystemStorage(FILES_FOLDER_PATH))
             file_manager.rename_file(user_id, file, new_name)
 
     @classmethod
     def remove_file(cls, file: File) -> None:
         with get_db_session() as session:
-            file_manager = FileManager(FILES_FOLDER_PATH, session)
+            file_manager = FileManager(session, FileSystemStorage(FILES_FOLDER_PATH))
             file_manager.remove_file(file)

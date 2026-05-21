@@ -1,7 +1,8 @@
-import mocks.grbl as grbl_mocks
 import pytest
 from gateway.adapters.cnc.constants import GrblActiveState
 from gateway.adapters.cnc.status import GrblStatus
+
+import tests.mocks.grbl as grbl_mocks
 
 
 class TestGrblStatus:

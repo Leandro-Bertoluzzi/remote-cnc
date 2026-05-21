@@ -15,6 +15,7 @@ import json
 import logging
 
 from celery.utils.log import get_task_logger
+from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
 from core.config import FILES_FOLDER_PATH
 from core.database.base import SessionLocal
@@ -24,7 +25,6 @@ from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
 )
-from core.utilities.files import FileSystemHelper
 from worker.main import app
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ def executeTask(self, task_id: int) -> None:
             raise Exception(f"La tarea tiene un estado incorrecto: {task.status}")
 
         # 2. Resolve the G-code file path
-        files_helper = FileSystemHelper(FILES_FOLDER_PATH)
+        files_helper = FileSystemStorage(FILES_FOLDER_PATH)
         file_path = files_helper.get_file_path(task.file.user_id, task.file.file_name)
 
         # 3. Acquire a Gateway session for the worker

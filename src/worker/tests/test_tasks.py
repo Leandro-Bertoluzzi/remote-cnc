@@ -93,7 +93,7 @@ def test_execute_task_success(mocker: MockerFixture):
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mock_get_task = mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
     mock_update_status = mocker.patch.object(TaskRepository, "update_task_status")
-    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+    mocker.patch("worker.tasks.cnc.FileSystemStorage")
 
     pubsub_msgs = [
         _pubsub_progress(task_id=2, sent=3, processed=2, total=10),
@@ -157,7 +157,7 @@ def test_gateway_not_running(mocker: MockerFixture):
     mock_task = _create_mock_task(task_id=1)
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
-    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+    mocker.patch("worker.tasks.cnc.FileSystemStorage")
 
     mock_gw = _mock_gateway(mocker, [])
     mock_gw.is_gateway_running.return_value = False
@@ -175,7 +175,7 @@ def test_session_acquisition_fails(mocker: MockerFixture):
     mock_task = _create_mock_task(task_id=1)
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
-    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+    mocker.patch("worker.tasks.cnc.FileSystemStorage")
 
     mock_gw = _mock_gateway(mocker, [])
     mock_gw.acquire_session.return_value = None
@@ -194,7 +194,7 @@ def test_file_execution_failed_event(mocker: MockerFixture):
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
     mock_update_status = mocker.patch.object(TaskRepository, "update_task_status")
-    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+    mocker.patch("worker.tasks.cnc.FileSystemStorage")
 
     pubsub_msgs = [_pubsub_failed(task_id=1, error="GRBL alarm")]
     mock_gw = _mock_gateway(mocker, pubsub_msgs)
@@ -215,7 +215,7 @@ def test_events_for_other_task_ignored(mocker: MockerFixture):
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
     mock_update_status = mocker.patch.object(TaskRepository, "update_task_status")
-    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+    mocker.patch("worker.tasks.cnc.FileSystemStorage")
 
     pubsub_msgs = [
         _pubsub_progress(task_id=99, sent=1, processed=1, total=10),  # ignored
@@ -237,7 +237,7 @@ def test_session_released_on_error(mocker: MockerFixture):
     mocker.patch.object(TaskRepository, "are_there_tasks_in_progress", return_value=False)
     mocker.patch.object(TaskRepository, "get_task_by_id", return_value=mock_task)
     mocker.patch.object(TaskRepository, "update_task_status")
-    mocker.patch("worker.tasks.cnc.FileSystemHelper")
+    mocker.patch("worker.tasks.cnc.FileSystemStorage")
 
     mock_gw = _mock_gateway(mocker, [])
     mock_gw.request_file_execution.side_effect = RuntimeError("unexpected")

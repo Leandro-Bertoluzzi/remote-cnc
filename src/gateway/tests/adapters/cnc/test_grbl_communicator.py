@@ -3,6 +3,7 @@
 import logging
 import threading
 from queue import Queue
+from unittest.mock import MagicMock
 
 import pytest
 from gateway.adapters.cnc.communicator import GRBL_QUERY_COMMANDS, GrblCommunicator
@@ -18,7 +19,7 @@ class TestGrblCommunicator:
     def setup_method(self, mocker: MockerFixture):
         grbl_logger = logging.getLogger("test_logger")
         self.grbl_status = GrblStatus()
-        self.grbl_monitor = GrblMonitor(grbl_logger)
+        self.grbl_monitor = GrblMonitor(grbl_logger, redis_conn=MagicMock())
 
         # Callbacks
         self.mock_on_ok = mocker.MagicMock()
