@@ -1,7 +1,7 @@
+from core.adapters.file_storage import FileSystemStorage
 from core.config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
 from core.database.base import SessionLocal
 from core.database.repositories.fileRepository import FileRepository
-from core.utilities.files import FileSystemHelper
 from core.utilities.gcode.gcodeAnalyser import GcodeAnalyser
 from worker.main import app
 from worker.utils.gcode2png import GcodeRenderer
@@ -18,7 +18,7 @@ def createThumbnail(file_id: int) -> None:
         if not file:
             raise Exception("No se encontró el archivo en la base de datos")
 
-        files_helper = FileSystemHelper(FILES_FOLDER_PATH)
+        files_helper = FileSystemStorage(FILES_FOLDER_PATH)
         file_path = files_helper.get_file_path(file.user_id, file.file_name)
 
         # 2. Instantiate the G-code renderer
@@ -42,7 +42,7 @@ def generateFileReport(file_id: int) -> None:
         if not file:
             raise Exception("No se encontró el archivo en la base de datos")
 
-        files_helper = FileSystemHelper(FILES_FOLDER_PATH)
+        files_helper = FileSystemStorage(FILES_FOLDER_PATH)
         file_path = files_helper.get_file_path(file.user_id, file.file_name)
 
         # 2. Instantiate the G-code analyser

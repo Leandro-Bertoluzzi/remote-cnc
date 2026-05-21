@@ -3,9 +3,9 @@ import hashlib
 
 import pytest  # noqa: F401
 from api_db import TestingSession, engine, test_admin, test_user
+from core.adapters.file_manager import FileManager
 from core.database.base import Base
 from core.database.models import File, Material, Task, Tool
-from core.utilities.fileManager import FileManager
 
 # Seed data
 creation_time = datetime.datetime(2000, 1, 1, 0, 0, 0)

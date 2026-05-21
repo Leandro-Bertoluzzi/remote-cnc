@@ -1,9 +1,9 @@
 """Tests for GrblInitializer."""
 
 import logging
+from unittest.mock import MagicMock
 
 import pytest
-from adapters.cnc.fakes import FakeSerial
 from gateway.adapters.cnc.communicator import GrblCommunicator
 from gateway.adapters.cnc.initializer import GrblInitializer
 from gateway.adapters.cnc.line_parser import GrblLineParser
@@ -17,6 +17,8 @@ from gateway.adapters.cnc.status import GrblStatus
 from pytest_mock.plugin import MockerFixture
 from serial import SerialException
 
+from tests.adapters.cnc.fakes import FakeSerial
+
 
 class TestGrblInitializer:
     @pytest.fixture(autouse=True)
@@ -24,7 +26,7 @@ class TestGrblInitializer:
         grbl_logger = logging.getLogger("test_logger")
         self.serial = FakeSerial()
         self.grbl_status = GrblStatus()
-        self.grbl_monitor = GrblMonitor(grbl_logger)
+        self.grbl_monitor = GrblMonitor(grbl_logger, redis_conn=MagicMock())
 
         # Silence all monitor output
         mocker.patch.object(GrblMonitor, "debug")
