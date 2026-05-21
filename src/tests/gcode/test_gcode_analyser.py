@@ -1,6 +1,7 @@
 import pytest
-from core.utilities.gcode.gcodeAnalyser import GcodeAnalyser
 from pytest_mock.plugin import MockerFixture
+from worker.utilities.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
+from worker.utilities.gcode.gcodeAnalyser import GcodeAnalyser
 
 
 class TestGcodeAnalyser:
@@ -56,7 +57,7 @@ N90 G66
         ],
     )
     def test_file_sender_start(self, mocker: MockerFixture, content, expected):
-        analyser = GcodeAnalyser("/path/to/file")
+        analyser = GcodeAnalyser("/path/to/file", GRBL_VALID_GCODES, GRBL_VALID_MCODES)
 
         # Mock FS methods
         mocked_file_data = mocker.mock_open(read_data=content)

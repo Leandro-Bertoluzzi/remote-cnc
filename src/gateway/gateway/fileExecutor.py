@@ -28,9 +28,10 @@ from core.domain.gateway import (
     EVENTS_CHANNEL,
 )
 from core.ports.redis_client import RedisClient
-from core.utilities.gcode.constants import GCODE_PROGRAM_END_CODES
 
 from gateway.ports.cnc_controller import CncController
+
+GCODE_PROGRAM_END_CODES = ["M2", "M02", "M30"]
 
 logger = logging.getLogger(__name__)
 

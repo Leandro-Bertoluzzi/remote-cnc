@@ -1,10 +1,10 @@
 from typing import TypedDict
 
-from mayavi import mlab
+from mayavi import mlab  # ty:ignore[unresolved-import]
 from PIL import Image
-from pyvirtualdisplay import Display
+from pyvirtualdisplay import Display  # ty:ignore[unresolved-import]
 
-import worker.utils.gcodeParser as gcode
+import worker.utilities.gcodeParser as gcode
 
 # Types definition
 Color = tuple[float, float, float]

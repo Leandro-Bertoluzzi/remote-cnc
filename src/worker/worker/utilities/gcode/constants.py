@@ -1,6 +1,6 @@
-# VALID COMMAND CODES
-
 """
+G-code constants for Grbl 1.1.
+
 List of Supported G-Codes in Grbl v1.1:
   - Non-Modal Commands: G4, G10L2, G10L20, G28, G30, G28.1, G30.1, G53, G92, G92.1
   - Motion Modes: G0, G1, G2, G3, G38.2, G38.3, G38.4, G38.5, G80
@@ -20,7 +20,7 @@ List of Supported G-Codes in Grbl v1.1:
   (*) Commands not enabled by default in config.h
 """
 
-GCODE_VALID_GCODES = [
+GRBL_VALID_GCODES = [
     "G0",
     "G1",
     "G2",
@@ -29,7 +29,7 @@ GCODE_VALID_GCODES = [
     "G38.3",
     "G38.4",
     "G38.5",
-    "G80",  # Motion Modes
+    "G80",
     "G4",
     "G10",
     "G28",
@@ -38,54 +38,52 @@ GCODE_VALID_GCODES = [
     "G30.1",
     "G53",
     "G92",
-    "G92.1",  # Non-Modal Commands
+    "G92.1",
     "G93",
-    "G94",  # Feed Rate Modes
+    "G94",
     "G20",
-    "G21",  # Unit modes
+    "G21",
     "G90",
-    "G91",  # Distance modes
-    "G91.1",  # Arc IJK Distance Modes
+    "G91",
+    "G91.1",
     "G17",
     "G18",
-    "G19",  # Plane Select Modes
+    "G19",
     "G43.1",
-    "G49",  # Tool Length Offset Modes
-    "G40",  # Cutter Compensation Modes
+    "G49",
+    "G40",
     "G54",
     "G55",
     "G56",
     "G57",
     "G58",
-    "G59",  # Coordinate System Modes
-    "G61",  # Control Modes
+    "G59",
+    "G61",
     "G00",
     "G01",
     "G02",
     "G03",
-    "G04",  # Alternative syntax for codes
+    "G04",
 ]
 
-GCODE_VALID_MCODES = [
+GRBL_VALID_MCODES = [
     "M0",
     "M1",
     "M2",
     "M00",
     "M01",
     "M02",
-    "M30",  # Program Flow
+    "M30",
     "M7",
     "M8",
     "M9",
     "M07",
     "M08",
-    "M09",  # Coolant Control
+    "M09",
     "M3",
     "M4",
     "M5",
     "M03",
     "M04",
-    "M05",  # Spindle Control
+    "M05",
 ]
-
-GCODE_PROGRAM_END_CODES = ["M2", "M02", "M30"]
