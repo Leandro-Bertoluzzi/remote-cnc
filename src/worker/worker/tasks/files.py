@@ -2,9 +2,10 @@ from core.adapters.file_storage import FileSystemStorage
 from core.config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
 from core.database.base import SessionLocal
 from core.database.repositories.fileRepository import FileRepository
-from core.utilities.gcode.gcodeAnalyser import GcodeAnalyser
 from worker.main import app
-from worker.utils.gcode2png import GcodeRenderer
+from worker.utilities.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
+from worker.utilities.gcode.gcodeAnalyser import GcodeAnalyser
+from worker.utilities.gcode2png import GcodeRenderer
 
 
 @app.task(name="create_thumbnail", ignore_result=True)
@@ -46,7 +47,7 @@ def generateFileReport(file_id: int) -> None:
         file_path = files_helper.get_file_path(file.user_id, file.file_name)
 
         # 2. Instantiate the G-code analyser
-        analyser = GcodeAnalyser(file_path)
+        analyser = GcodeAnalyser(file_path, GRBL_VALID_GCODES, GRBL_VALID_MCODES)
 
         # 3. Analyse and save the generated report
         report = analyser.analyse()
