@@ -41,7 +41,7 @@ from core.domain.gateway import (
     QUEUE_HIGH,
     SESSION_KEY,
 )
-from core.ports.redis_client import RedisClient
+from core.ports.redis_client import IPubSub, RedisClient
 
 
 class GatewayClient:
@@ -277,13 +277,12 @@ class GatewayClient:
     # Events subscription (for Worker / callers that wait on results)
     # ------------------------------------------------------------------
 
-    def subscribe_events(self) -> redis.client.PubSub:
+    def subscribe_events(self) -> IPubSub:
         """Return a PubSub object subscribed to the events channel."""
         return self.subscribe_channels(EVENTS_CHANNEL)
 
-    def subscribe_channels(self, *channels: str) -> redis.client.PubSub:
+    def subscribe_channels(self, *channels: str) -> IPubSub:
         """Return a PubSub object subscribed to one or more channels."""
-        r: Any = self._redis_factory()
-        ps = r.pubsub()
+        ps = self._redis().pubsub()
         ps.subscribe(*channels)
         return ps

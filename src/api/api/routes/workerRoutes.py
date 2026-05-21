@@ -1,9 +1,9 @@
+from core.domain.worker import WorkerStatus
 from core.schemas.worker import (
     WorkerAvailableResponse,
     WorkerOnResponse,
     WorkerTaskResponse,
 )
-from core.utilities.worker.workerClient import WorkerStatus
 from fastapi import APIRouter, HTTPException
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep

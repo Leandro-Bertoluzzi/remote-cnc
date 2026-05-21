@@ -1,7 +1,7 @@
 """Tests that verify the ConnectionErrorWidget is displayed when services fail.
 
 These tests validate the core resilience requirement: when external services
-(DB, Redis, Celery) are unavailable, the app shows an inline error widget
+(DB, Redis, Worker) are unavailable, the app shows an inline error widget
 with retry and back-to-menu buttons instead of crashing or showing empty views.
 """
 

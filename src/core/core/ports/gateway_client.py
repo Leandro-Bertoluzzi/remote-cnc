@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, Protocol, runtime_checkable
 
-import redis
+from core.ports.redis_client import IPubSub
 
 
 @runtime_checkable
@@ -111,10 +111,10 @@ class IGatewayClient(Protocol):
     # Events subscription
     # ------------------------------------------------------------------
 
-    def subscribe_events(self) -> redis.client.PubSub:
+    def subscribe_events(self) -> IPubSub:
         """Return a PubSub subscribed to the events channel."""
         ...
 
-    def subscribe_channels(self, *channels: str) -> redis.client.PubSub:
+    def subscribe_channels(self, *channels: str) -> IPubSub:
         """Return a PubSub subscribed to one or more channels."""
         ...

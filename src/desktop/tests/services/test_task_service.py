@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 from core.database.models import Task
+from core.ports.worker_client import IWorkerClient
 from desktop.services.taskService import TaskService
 from pytest_mock.plugin import MockerFixture
 
@@ -18,12 +19,13 @@ class TestTaskService:
         mock_repo_class = mocker.patch("desktop.services.taskService.TaskRepository")
         mock_repo = mock_repo_class.return_value
         mock_repo.create_task.return_value = mock_task
-        mock_client = mocker.patch("desktop.services.taskService.WorkerClient")
-        mock_client_instance = mock_client.return_value
-        mock_client_instance.send_task.return_value = "worker-id"
+
+        mock_worker = MagicMock(spec=IWorkerClient)
+        mock_worker.send_task.return_value = "worker-id"
+        mocker.patch("desktop.services.taskService._get_worker_client", return_value=mock_worker)
 
         result = TaskService.create_and_execute_task(1, 2, 3, 4, "test task", "note")
 
         assert result == "worker-id"
         mock_repo.create_task.assert_called_once_with(1, 2, 3, 4, "test task", "note")
-        mock_client_instance.send_task.assert_called_once_with(42)
+        mock_worker.send_task.assert_called_once_with(42)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, cast
 
 import fakeredis
 import pytest
@@ -43,7 +43,7 @@ class FakeRedisWithLua(fakeredis.FakeRedis):
         raw = self.get(key)
         if raw is None:
             return 0
-        data = json.loads(raw)
+        data = json.loads(cast(bytes, raw))
         if data.get("session_id") == session_id:
             self.delete(key)
             return 1

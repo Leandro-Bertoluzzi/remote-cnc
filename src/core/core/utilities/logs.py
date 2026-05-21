@@ -11,7 +11,7 @@ from core.utilities.loggerFactory import LOGS_DATETIME_FORMAT
 from core.utilities.logsInterpreter import LogsInterpreter
 
 _LOG_FILE_FIXED_NAMES = {
-    "celery.log": "Registros del worker",
+    "worker.log": "Registros del worker",
     "controller.log": "Registros del controlador grbl",
     "gateway.log": "Streaming de CNC gateway",
 }

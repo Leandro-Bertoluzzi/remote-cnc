@@ -3,17 +3,27 @@
 import logging
 from typing import Optional
 
+from core.adapters.worker.worker_client import WorkerClient
 from core.database.models import TASK_DEFAULT_PRIORITY, Task, TaskStatus
 from core.database.repositories.taskRepository import TaskRepository
-from core.utilities.worker.workerClient import WorkerClient
+from core.ports.worker_client import IWorkerClient
 
 from desktop.services import get_db_session
 
 logger = logging.getLogger(__name__)
 
+_worker_client: IWorkerClient | None = None
+
+
+def _get_worker_client() -> IWorkerClient:
+    global _worker_client  # noqa: PLW0603
+    if _worker_client is None:
+        _worker_client = WorkerClient.from_config()
+    return _worker_client
+
 
 class TaskService:
-    """Encapsulates all task-related operations (DB + Celery/Redis)."""
+    """Encapsulates all task-related operations (DB + worker)."""
 
     @classmethod
     def get_all_tasks(cls, user_id: int, status: str = "all") -> list[Task]:
@@ -73,11 +83,11 @@ class TaskService:
 
     @classmethod
     def send_task_to_worker(cls, task_db_id: int) -> str:
-        """Dispatch a task to the Celery worker.
+        """Dispatch a task to the worker.
 
         Returns the worker task ID (string).
         """
-        return WorkerClient().send_task(task_db_id)
+        return _get_worker_client().send_task(task_db_id)
 
     @classmethod
     def create_and_execute_task(
@@ -91,11 +101,11 @@ class TaskService:
     ) -> str:
         """Create a task, approve it, and send it to the worker.
 
-        Returns the Celery worker task ID.
+        Returns the worker task ID.
         """
         with get_db_session() as session:
             repository = TaskRepository(session)
             task = repository.create_task(user_id, file_id, tool_id, material_id, name, note)
             repository.update_task_status(task.id, TaskStatus.APPROVED.value, user_id)
 
-        return WorkerClient().send_task(task.id)
+        return _get_worker_client().send_task(task.id)
