@@ -1,8 +1,11 @@
 import logging
 
-from core.database.exceptions import DatabaseError, EntityNotFoundError
+from core.database.exceptions import (
+    DatabaseError,
+    DuplicatedFileNameError,
+    EntityNotFoundError,
+)
 from core.database.models import File
-from core.database.repositories.fileRepository import DuplicatedFileNameError
 from core.utilities.files import FileSystemError, InvalidFile
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.FileDataDialog import FileDataDialog

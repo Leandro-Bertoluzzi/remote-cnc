@@ -1,8 +1,8 @@
-from core.database.repositories.fileRepository import FileRepository
-from core.database.repositories.materialRepository import MaterialRepository
-from core.database.repositories.taskRepository import TaskRepository
-from core.database.repositories.toolRepository import ToolRepository
-from core.database.repositories.userRepository import UserRepository
+from core.adapters.database.file_repository import FileRepository
+from core.adapters.database.material_repository import MaterialRepository
+from core.adapters.database.task_repository import TaskRepository
+from core.adapters.database.tool_repository import ToolRepository
+from core.adapters.database.user_repository import UserRepository
 
 
 def test_task(mocked_session):

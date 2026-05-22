@@ -2,8 +2,8 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
+from core.adapters.database.task_repository import TaskRepository
 from core.database.models import TaskStatus
-from core.database.repositories.taskRepository import TaskRepository
 from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,

@@ -1,10 +1,7 @@
 import pytest
+from core.adapters.database.file_repository import FileRepository
+from core.database.exceptions import DuplicatedFileError, DuplicatedFileNameError
 from core.database.models import File
-from core.database.repositories.fileRepository import (
-    DuplicatedFileError,
-    DuplicatedFileNameError,
-    FileRepository,
-)
 from sqlalchemy.exc import SQLAlchemyError
 
 

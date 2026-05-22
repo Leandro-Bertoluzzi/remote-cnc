@@ -1,7 +1,6 @@
 import pytest
-from core.database.exceptions import DatabaseError
+from core.database.exceptions import DatabaseError, DuplicatedFileNameError
 from core.database.models import File, User
-from core.database.repositories.fileRepository import DuplicatedFileNameError
 from core.utilities.files import FileSystemError
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog

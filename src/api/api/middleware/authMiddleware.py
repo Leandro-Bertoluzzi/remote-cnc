@@ -1,15 +1,14 @@
 from typing import Annotated
 
 from core.database.models import User
-from core.database.repositories.userRepository import UserRepository
 from core.utilities.security import verify_token
 from fastapi import Depends, HTTPException, Request
 from jwt import ExpiredSignatureError, InvalidSignatureError
 
-from api.middleware.dbMiddleware import GetDbSession
+from api.middleware.dbMiddleware import GetUserRepository
 
 
-def auth_user(request: Request, db_session: GetDbSession) -> User:
+def auth_user(request: Request, repository: GetUserRepository) -> User:
     token = None
 
     if "Authorization" in request.headers:
@@ -20,7 +19,6 @@ def auth_user(request: Request, db_session: GetDbSession) -> User:
     if not token:
         raise HTTPException(401, detail="Unauthorized: Authentication Token is missing!")
     try:
-        repository = UserRepository(db_session)
         data = verify_token(token)
         user = repository.get_user_by_id(data["user_id"])
     except ExpiredSignatureError as error:
@@ -33,8 +31,8 @@ def auth_user(request: Request, db_session: GetDbSession) -> User:
     return user
 
 
-def auth_admin(request: Request, db_session: GetDbSession) -> User:
-    user = auth_user(request, db_session)
+def auth_admin(request: Request, repository: GetUserRepository) -> User:
+    user = auth_user(request, repository)
 
     if user.role != "admin":
         raise HTTPException(401, detail="Unauthorized: This endpoint requires admin permission")

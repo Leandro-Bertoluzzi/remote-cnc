@@ -1,23 +1,22 @@
+from __future__ import annotations
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
-from core.database.exceptions import DatabaseError, EntityNotFoundError
+from core.database.exceptions import (
+    DatabaseError,
+    DuplicatedUserError,
+    EntityNotFoundError,
+    InvalidRole,
+)
 from core.database.models import VALID_ROLES, User
+from core.ports.db_session import DbSession
+from core.ports.user_repository import IUserRepository
 from core.utilities.security import hash_password
 
 
-# Custom exceptions
-class InvalidRole(Exception):
-    pass
-
-
-class DuplicatedUserError(Exception):
-    pass
-
-
-class UserRepository:
-    def __init__(self, _session: Session):
+class UserRepository(IUserRepository):
+    def __init__(self, _session: DbSession):
         self.session = _session
 
     def create_user(self, name: str, email: str, password: str, role: str):
@@ -95,6 +94,3 @@ class UserRepository:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f"Error removing the user from the DB: {e}") from e
-
-    def close_session(self):
-        self.session.close()

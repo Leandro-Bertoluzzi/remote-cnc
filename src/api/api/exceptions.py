@@ -6,13 +6,16 @@ business logic instead of repetitive try/except blocks.
 
 import logging
 
-from core.database.exceptions import DatabaseError, EntityNotFoundError, Unauthorized
-from core.database.repositories.fileRepository import (
+from core.database.exceptions import (
+    DatabaseError,
     DuplicatedFileError,
     DuplicatedFileNameError,
+    DuplicatedUserError,
+    EntityNotFoundError,
+    InvalidRole,
+    InvalidTaskStatus,
+    Unauthorized,
 )
-from core.database.repositories.taskRepository import InvalidTaskStatus
-from core.database.repositories.userRepository import DuplicatedUserError, InvalidRole
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 

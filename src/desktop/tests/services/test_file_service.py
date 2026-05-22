@@ -1,48 +1,97 @@
-from unittest.mock import MagicMock
+from unittest.mock import ANY, MagicMock
 
 from core.database.models import File
-from core.ports.worker_client import IWorkerClient
 from desktop.services.fileService import FileService
 from pytest_mock.plugin import MockerFixture
 
 
 class TestFileService:
-    """Tests for FileService, especially broker-failure resilience in create_file."""
+    @staticmethod
+    def _mock_db_and_repo(mocker: MockerFixture):
+        session = MagicMock()
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = session
+        session_ctx.__exit__.return_value = None
 
-    def test_create_file_success(self, mocker: MockerFixture):
-        mock_file = MagicMock(spec=File)
-        mock_file.id = 10
+        mocker.patch("desktop.services.fileService.get_db_session", return_value=session_ctx)
+        repository = MagicMock()
+        get_repo = mocker.patch(
+            "desktop.services.fileService.get_file_repository",
+            return_value=repository,
+        )
+        return session, repository, get_repo
 
-        mocker.patch("desktop.services.fileService.get_db_session")
-        mock_fm_class = mocker.patch("desktop.services.fileService.FileManager")
-        mock_fm_class.return_value.create_file.return_value = mock_file
+    def test_get_all_files(self, mocker: MockerFixture):
+        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        expected_files = [MagicMock(spec=File), MagicMock(spec=File)]
+        repository.get_all_files.return_value = expected_files
 
-        mock_worker = MagicMock(spec=IWorkerClient)
-        mocker.patch("desktop.services.fileService._get_worker_client", return_value=mock_worker)
+        result = FileService.get_all_files()
 
-        result = FileService.create_file(1, "test.gcode", "/tmp/test.gcode")
+        assert result == expected_files
+        get_repo.assert_called_once_with(session)
+        repository.get_all_files.assert_called_once_with()
 
-        assert result == mock_file
-        mock_worker.generate_file_report.assert_called_once_with(10)
-        mock_worker.create_thumbnail.assert_called_once_with(10)
+    def test_rename_file(self, mocker: MockerFixture):
+        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        file_obj = MagicMock(spec=File)
 
-    def test_create_file_broker_failure_still_creates_file(self, mocker: MockerFixture):
-        """If the broker is unavailable, the file should still be created."""
-        mock_file = MagicMock(spec=File)
-        mock_file.id = 10
+        FileService.rename_file(user_id=5, file=file_obj, new_name="renamed.gcode")
 
-        mocker.patch("desktop.services.fileService.get_db_session")
-        mock_fm_class = mocker.patch("desktop.services.fileService.FileManager")
-        mock_fm_class.return_value.create_file.return_value = mock_file
+        get_repo.assert_called_once_with(session)
+        file_manager_cls.assert_called_once_with(repository, ANY)
+        file_manager_cls.return_value.rename_file.assert_called_once_with(
+            5, file_obj, "renamed.gcode"
+        )
 
-        mock_worker = MagicMock(spec=IWorkerClient)
-        mock_worker.generate_file_report.side_effect = Exception("broker unavailable")
-        mocker.patch("desktop.services.fileService._get_worker_client", return_value=mock_worker)
+    def test_remove_file(self, mocker: MockerFixture):
+        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        file_obj = MagicMock(spec=File)
 
-        # Should NOT raise — the exception is caught internally
-        result = FileService.create_file(1, "test.gcode", "/tmp/test.gcode")
+        FileService.remove_file(file_obj)
 
-        # File is still returned
-        assert result == mock_file
-        # Thumbnail is NOT called because both calls share a single try block
-        mock_worker.create_thumbnail.assert_not_called()
+        get_repo.assert_called_once_with(session)
+        file_manager_cls.assert_called_once_with(repository, ANY)
+        file_manager_cls.return_value.remove_file.assert_called_once_with(file_obj)
+
+    def test_create_file_schedules_worker_tasks(self, mocker: MockerFixture):
+        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        created_file = MagicMock(spec=File)
+        created_file.id = 10
+        file_manager_cls.return_value.create_file.return_value = created_file
+
+        worker = MagicMock()
+        mocker.patch("desktop.services.fileService._get_worker_client", return_value=worker)
+
+        result = FileService.create_file(1, "piece.gcode", "/tmp/piece.gcode")
+
+        assert result == created_file
+        get_repo.assert_called_once_with(session)
+        file_manager_cls.assert_called_once_with(repository, ANY)
+        file_manager_cls.return_value.create_file.assert_called_once_with(
+            1, "piece.gcode", "/tmp/piece.gcode"
+        )
+        worker.generate_file_report.assert_called_once_with(10)
+        worker.create_thumbnail.assert_called_once_with(10)
+
+    def test_create_file_worker_failure_still_returns_file(self, mocker: MockerFixture):
+        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        created_file = MagicMock(spec=File)
+        created_file.id = 10
+        file_manager_cls.return_value.create_file.return_value = created_file
+
+        worker = MagicMock()
+        worker.generate_file_report.side_effect = RuntimeError("broker unavailable")
+        mocker.patch("desktop.services.fileService._get_worker_client", return_value=worker)
+
+        result = FileService.create_file(1, "piece.gcode", "/tmp/piece.gcode")
+
+        assert result == created_file
+        get_repo.assert_called_once_with(session)
+        file_manager_cls.assert_called_once_with(repository, ANY)
+        worker.generate_file_report.assert_called_once_with(10)
+        worker.create_thumbnail.assert_not_called()
