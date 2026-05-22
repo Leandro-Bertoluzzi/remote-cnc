@@ -1,10 +1,9 @@
-from core.database.repositories.userRepository import UserRepository
 from core.database.types import RoleType
 from core.utilities.security import generate_token, validate_password
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 
-from api.middleware.dbMiddleware import GetDbSession
+from api.middleware.dbMiddleware import GetUserRepository
 
 rootRoutes = APIRouter()
 
@@ -48,8 +47,7 @@ class UserLoginResponse(BaseModel):
 
 
 @rootRoutes.post("/login", tags=["Login"], summary="User login", response_model=UserLoginResponse)
-def login(request: UserLogin, db_session: GetDbSession):
-    repository = UserRepository(db_session)
+def login(request: UserLogin, repository: GetUserRepository):
     user = repository.get_user_by_email(request.email)
 
     if not user:

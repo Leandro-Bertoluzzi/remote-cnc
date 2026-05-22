@@ -1,7 +1,7 @@
+from core.adapters.database.file_repository import FileRepository
 from core.adapters.file_storage import FileSystemStorage
 from core.config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
 from core.database.base import SessionLocal
-from core.database.repositories.fileRepository import FileRepository
 from worker.main import app
 from worker.utilities.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
 from worker.utilities.gcode.gcodeAnalyser import GcodeAnalyser

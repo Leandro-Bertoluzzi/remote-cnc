@@ -1,25 +1,25 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import joinedload
 
-from core.database.exceptions import DatabaseError, EntityNotFoundError
+from core.database.exceptions import (
+    DatabaseError,
+    DuplicatedFileError,
+    DuplicatedFileNameError,
+    EntityNotFoundError,
+)
 from core.database.models import File, User
 from core.database.types import FileReport
+from core.ports.db_session import DbSession
+from core.ports.file_repository import IFileRepository
 
 
-# Custom exceptions
-class DuplicatedFileError(Exception):
-    pass
-
-
-class DuplicatedFileNameError(Exception):
-    pass
-
-
-class FileRepository:
-    def __init__(self, _session: Session):
+class FileRepository(IFileRepository):
+    def __init__(self, _session: DbSession):
         self.session = _session
 
     def check_file_exists(self, user_id: int, file_name: str, file_hash: str):
@@ -127,6 +127,3 @@ class FileRepository:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f"Error removing the file from the DB: {e}") from e
-
-    def close_session(self):
-        self.session.close()

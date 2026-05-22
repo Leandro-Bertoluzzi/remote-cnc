@@ -1,6 +1,6 @@
 """FileManager — application-layer adapter combining DB and file storage.
 
-Coordinates ``FileRepository`` (DB) and ``IFileStorage`` (filesystem) to
+Coordinates ``IFileRepository`` (DB port) and ``IFileStorage`` (filesystem) to
 provide transactional file operations with automatic rollback on failure.
 """
 
@@ -11,16 +11,14 @@ import shutil
 from pathlib import Path
 from typing import BinaryIO
 
-from sqlalchemy.orm import Session
-
 from core.database.models import File
-from core.database.repositories.fileRepository import FileRepository
+from core.ports.file_repository import IFileRepository
 from core.ports.file_storage import IFileStorage
 
 
 class FileManager:
-    def __init__(self, db_session: Session, file_storage: IFileStorage):
-        self.session = db_session
+    def __init__(self, file_repository: IFileRepository, file_storage: IFileStorage):
+        self.file_repository = file_repository
         self.file_storage = file_storage
 
     def read_file(self, file_id: int) -> str:
@@ -31,8 +29,7 @@ class FileManager:
         - EntityNotFoundError: The file was not found in the DB.
         - FileSystemError: An error occurred while reading.
         """
-        repository = FileRepository(self.session)
-        file = repository.get_file_by_id(file_id)
+        file = self.file_repository.get_file_by_id(file_id)
         return self.file_storage.read_file(file.user_id, file.file_name)
 
     def upload_file(self, user_id: int, file_name: str, file: BinaryIO) -> File:
@@ -45,7 +42,7 @@ class FileManager:
         - InvalidFile: Invalid file extension.
         - FileSystemError: An error occurred during file creation in FS.
         """
-        repository = FileRepository(self.session)
+        repository = self.file_repository
         file_hash = self._compute_hash_from_file(file)
         repository.check_file_exists(user_id, file_name, file_hash)
 
@@ -66,7 +63,7 @@ class FileManager:
         - InvalidFile: Invalid file extension.
         - FileSystemError: An error occurred during file creation in FS.
         """
-        repository = FileRepository(self.session)
+        repository = self.file_repository
         file_hash = self._compute_hash(origin_path)
         repository.check_file_exists(user_id, file_name, file_hash)
 
@@ -87,7 +84,7 @@ class FileManager:
         - DatabaseError: Error from ORM.
         - FileSystemError: An error occurred during file update in FS.
         """
-        repository = FileRepository(self.session)
+        repository = self.file_repository
         repository.check_file_exists(user_id, new_name, "impossible-hash")
 
         original_path = self.file_storage.get_file_path(file.user_id, file.file_name)
@@ -104,8 +101,7 @@ class FileManager:
         Raises:
         - DuplicatedFileNameError, InvalidFile, EntityNotFoundError, DatabaseError, FileSystemError.
         """
-        repository = FileRepository(self.session)
-        file = repository.get_file_by_id(file_id)
+        file = self.file_repository.get_file_by_id(file_id)
         return self.rename_file(user_id, file, new_name)
 
     def remove_file(self, file: File) -> None:
@@ -121,9 +117,8 @@ class FileManager:
 
         self.file_storage.delete_file(file.user_id, file.file_name)
 
-        repository = FileRepository(self.session)
         try:
-            repository.remove_file(file.id)
+            self.file_repository.remove_file(file.id)
         except Exception as error:
             self._rollback_removed(file_path)
             raise error
@@ -136,8 +131,7 @@ class FileManager:
         Raises:
         - EntityNotFoundError, DatabaseError, FileSystemError.
         """
-        repository = FileRepository(self.session)
-        file = repository.get_file_by_id(file_id)
+        file = self.file_repository.get_file_by_id(file_id)
         self.remove_file(file)
 
     # ------------------------------------------------------------------

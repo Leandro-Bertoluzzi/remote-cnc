@@ -5,10 +5,10 @@ from typing import Optional
 
 from core.adapters.worker.worker_client import WorkerClient
 from core.database.models import TASK_DEFAULT_PRIORITY, Task, TaskStatus
-from core.database.repositories.taskRepository import TaskRepository
 from core.ports.worker_client import IWorkerClient
 
 from desktop.services import get_db_session
+from desktop.services.dependencies import get_task_repository
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class TaskService:
     @classmethod
     def get_all_tasks(cls, user_id: int, status: str = "all") -> list[Task]:
         with get_db_session() as session:
-            repository = TaskRepository(session)
+            repository = get_task_repository(session)
             return repository.get_all_tasks_from_user(user_id, status=status)
 
     @classmethod
@@ -42,7 +42,7 @@ class TaskService:
         note: str = "",
     ) -> Task:
         with get_db_session() as session:
-            repository = TaskRepository(session)
+            repository = get_task_repository(session)
             return repository.create_task(user_id, file_id, tool_id, material_id, name, note)
 
     @classmethod
@@ -58,7 +58,7 @@ class TaskService:
         priority: int = TASK_DEFAULT_PRIORITY,
     ) -> None:
         with get_db_session() as session:
-            repository = TaskRepository(session)
+            repository = get_task_repository(session)
             repository.update_task(
                 task_id, user_id, file_id, tool_id, material_id, name, note, priority
             )
@@ -72,13 +72,13 @@ class TaskService:
         cancellation_reason: str = "",
     ) -> None:
         with get_db_session() as session:
-            repository = TaskRepository(session)
+            repository = get_task_repository(session)
             repository.update_task_status(task_id, new_status, admin_id, cancellation_reason)
 
     @classmethod
     def remove_task(cls, task_id: int) -> None:
         with get_db_session() as session:
-            repository = TaskRepository(session)
+            repository = get_task_repository(session)
             repository.remove_task(task_id)
 
     @classmethod
@@ -104,7 +104,7 @@ class TaskService:
         Returns the worker task ID.
         """
         with get_db_session() as session:
-            repository = TaskRepository(session)
+            repository = get_task_repository(session)
             task = repository.create_task(user_id, file_id, tool_id, material_id, name, note)
             repository.update_task_status(task.id, TaskStatus.APPROVED.value, user_id)
 

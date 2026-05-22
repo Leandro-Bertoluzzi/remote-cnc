@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
 from core.database.exceptions import DatabaseError, EntityNotFoundError
 from core.database.models import Material
+from core.ports.db_session import DbSession
+from core.ports.material_repository import IMaterialRepository
 
 
-class MaterialRepository:
-    def __init__(self, _session: Session):
+class MaterialRepository(IMaterialRepository):
+    def __init__(self, _session: DbSession):
         self.session = _session
 
     def create_material(self, name: str, description: str):
@@ -62,6 +65,3 @@ class MaterialRepository:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f"Error removing the material from the DB: {e}") from e
-
-    def close_session(self):
-        self.session.close()

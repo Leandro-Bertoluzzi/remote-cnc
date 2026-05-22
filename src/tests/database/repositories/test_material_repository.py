@@ -1,6 +1,6 @@
 import pytest
+from core.adapters.database.material_repository import MaterialRepository
 from core.database.models import Material
-from core.database.repositories.materialRepository import MaterialRepository
 from sqlalchemy.exc import SQLAlchemyError
 
 

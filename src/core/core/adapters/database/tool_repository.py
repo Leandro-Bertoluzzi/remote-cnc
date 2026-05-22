@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
 from core.database.exceptions import DatabaseError, EntityNotFoundError
 from core.database.models import Tool
+from core.ports.db_session import DbSession
+from core.ports.tool_repository import IToolRepository
 
 
-class ToolRepository:
-    def __init__(self, _session: Session):
+class ToolRepository(IToolRepository):
+    def __init__(self, _session: DbSession):
         self.session = _session
 
     def create_tool(self, name: str, description: str):
@@ -63,6 +66,3 @@ class ToolRepository:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f"Error removing the tool from the DB: {e}") from e
-
-    def close_session(self):
-        self.session.close()

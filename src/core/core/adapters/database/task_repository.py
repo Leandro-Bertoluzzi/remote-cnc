@@ -1,22 +1,26 @@
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import joinedload
 
-from core.database.exceptions import DatabaseError, EntityNotFoundError, Unauthorized
+from core.database.exceptions import (
+    DatabaseError,
+    EntityNotFoundError,
+    InvalidTaskStatus,
+    Unauthorized,
+)
 from core.database.models import TASK_EMPTY_NOTE, Task, TaskStatus
+from core.ports.db_session import DbSession
+from core.ports.task_repository import ITaskRepository
 from core.utilities.validators import is_valid_task_state, validate_transition
 
 
-# Custom exceptions
-class InvalidTaskStatus(Exception):
-    pass
-
-
-class TaskRepository:
-    def __init__(self, _session: Session):
+class TaskRepository(ITaskRepository):
+    def __init__(self, _session: DbSession):
         self.session = _session
 
     def create_task(
@@ -179,6 +183,3 @@ class TaskRepository:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise DatabaseError(f"Error removing the task from the DB: {e}") from e
-
-    def close_session(self):
-        self.session.close()

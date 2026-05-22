@@ -1,7 +1,10 @@
 from typing import TYPE_CHECKING
 
-from core.database.exceptions import DatabaseError
-from core.database.repositories.fileRepository import DuplicatedFileError, DuplicatedFileNameError
+from core.database.exceptions import (
+    DatabaseError,
+    DuplicatedFileError,
+    DuplicatedFileNameError,
+)
 from core.utilities.files import FileSystemError, InvalidFile
 
 from desktop.components.cards.FileCard import FileCard
