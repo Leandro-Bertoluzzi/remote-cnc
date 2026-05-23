@@ -1,11 +1,7 @@
 from conftest import TestingSession, engine, test_admin, test_user
-from core.database.base import Base
-from core.database.models import File
-
-# Seed data
-test_file1 = File(1, "file_1.gcode", "files/file1.gcode")
-test_file2 = File(1, "file_2.gcode", "files/file2.gcode")
-test_file3 = File(2, "file_3.gcode", "files/file3.gcode")
+from core.adapters.database.base import Base
+from core.adapters.database.file_repository import FileRepository
+from core.adapters.database.user_repository import UserRepository
 
 
 class TestFileRoutes:
@@ -15,12 +11,19 @@ class TestFileRoutes:
 
         # Seeds the database with test data
         with TestingSession() as session:
-            session.add(test_user)
-            session.add(test_admin)
-            session.add(test_file1)
-            session.add(test_file2)
-            session.add(test_file3)
-            session.commit()
+            user_repository = UserRepository(session)
+            file_repository = FileRepository(session)
+
+            created_user = user_repository.create_user(
+                test_user.name, test_user.email, "password", test_user.role
+            )
+            created_admin = user_repository.create_user(
+                test_admin.name, test_admin.email, "password", test_admin.role
+            )
+
+            file_repository.create_file(created_user.id, "file_1.gcode", "hash-1")
+            file_repository.create_file(created_user.id, "file_2.gcode", "hash-2")
+            file_repository.create_file(created_admin.id, "file_3.gcode", "hash-3")
 
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)

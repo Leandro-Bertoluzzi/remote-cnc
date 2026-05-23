@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import pytest
-from core.database.base import Base
+from core.adapters.database.base import Base
 
 # Constants
 created_time = datetime(2023, 12, 25, 0, 0, 0)

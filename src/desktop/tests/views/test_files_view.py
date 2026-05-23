@@ -1,6 +1,10 @@
 import pytest
-from core.database.exceptions import DatabaseError, DuplicatedFileError, DuplicatedFileNameError
-from core.database.models import File, User
+from core.domain.entities import File, User
+from core.domain.exceptions import (
+    DuplicatedFileError,
+    DuplicatedFileNameError,
+    PersistenceError,
+)
 from core.utilities.files import FileSystemError
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.FileCard import FileCard
@@ -142,7 +146,7 @@ class TestFilesView:
             (DuplicatedFileNameError("mocked error"), "warning"),
             (DuplicatedFileError("mocked error"), "warning"),
             (FileSystemError("mocked error"), "critical"),
-            (DatabaseError("mocked error"), "critical"),
+            (PersistenceError("mocked error"), "critical"),
         ],
     )
     def test_files_view_create_file_repeated_name(

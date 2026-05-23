@@ -1,6 +1,6 @@
 from unittest.mock import ANY, MagicMock
 
-from core.database.models import File
+from core.domain.entities import File
 from desktop.services.fileService import FileService
 from pytest_mock.plugin import MockerFixture
 

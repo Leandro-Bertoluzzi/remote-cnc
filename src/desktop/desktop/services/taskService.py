@@ -4,7 +4,8 @@ import logging
 from typing import Optional
 
 from core.adapters.worker.worker_client import WorkerClient
-from core.database.models import TASK_DEFAULT_PRIORITY, Task, TaskStatus
+from core.domain.entities import Task
+from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
 from core.ports.worker_client import IWorkerClient
 
 from desktop.services import get_db_session

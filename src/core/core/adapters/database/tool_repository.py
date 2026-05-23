@@ -3,8 +3,9 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from core.database.exceptions import DatabaseError, EntityNotFoundError
-from core.database.models import Tool
+from core.adapters.database.mappers import to_tool_domain
+from core.adapters.database.models import Tool
+from core.domain.exceptions import EntityNotFoundError, PersistenceError
 from core.ports.db_session import DbSession
 from core.ports.tool_repository import IToolRepository
 
@@ -18,27 +19,28 @@ class ToolRepository(IToolRepository):
             new_tool = Tool(name=name, description=description)
             self.session.add(new_tool)
             self.session.commit()
-            return new_tool
+            self.session.refresh(new_tool)
+            return to_tool_domain(new_tool)
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error creating the tool in the DB: {e}") from e
+            raise PersistenceError(f"Error creating the tool in the DB: {e}") from e
 
     def get_tool_by_id(self, id: int):
         try:
             tool = self.session.get(Tool, id)
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error retrieving the tool with ID {id}: {e}") from e
+            raise PersistenceError(f"Error retrieving the tool with ID {id}: {e}") from e
 
         if not tool:
             raise EntityNotFoundError(f"Tool with ID {id} was not found")
-        return tool
+        return to_tool_domain(tool)
 
     def get_all_tools(self):
         try:
             tools = self.session.scalars(select(Tool)).all()
-            return tools
+            return [to_tool_domain(tool) for tool in tools]
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error retrieving tools from the DB: {e}") from e
+            raise PersistenceError(f"Error retrieving tools from the DB: {e}") from e
 
     def update_tool(self, id: int, name: str, description: str):
         try:
@@ -50,10 +52,10 @@ class ToolRepository(IToolRepository):
             tool.description = description
             self.session.commit()
             self.session.refresh(tool)
-            return tool
+            return to_tool_domain(tool)
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error updating the tool in the DB: {e}") from e
+            raise PersistenceError(f"Error updating the tool in the DB: {e}") from e
 
     def remove_tool(self, id: int):
         try:
@@ -65,4 +67,4 @@ class ToolRepository(IToolRepository):
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error removing the tool from the DB: {e}") from e
+            raise PersistenceError(f"Error removing the tool from the DB: {e}") from e

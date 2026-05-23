@@ -4,7 +4,7 @@ Extracted from conftest.py to avoid name collision with the core test conftest
 when both 'tests/' and 'api/tests/' are on pythonpath.
 """
 
-from core.database.models import User
+from core.domain.entities import User
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 

@@ -1,4 +1,4 @@
-from core.database.types import RoleType
+from core.domain.types import RoleType
 from core.utilities.security import generate_token, validate_password
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
@@ -57,6 +57,10 @@ def login(request: UserLogin, repository: GetUserRepository):
     if not checks:
         raise HTTPException(404, detail="No autorizado: Combinación inválida de email y contraseña")
 
-    userData = user.__dict__
-    userData["token"] = generate_token(user.id)
-    return userData
+    return UserLoginResponse(
+        id=user.id,
+        name=user.name,
+        email=user.email,
+        role=user.role,
+        token=generate_token(user.id),
+    )

@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from core.database.types import StatusType
+from core.domain.types import StatusType
 
 
 class TaskCreate(BaseModel):

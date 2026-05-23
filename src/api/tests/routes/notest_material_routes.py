@@ -1,10 +1,6 @@
 from conftest import TestingSession, engine
-from core.database.base import Base
-from core.database.models import Material
-
-# Example materials
-test_material1 = Material("Material 1", "A very useful material")
-test_material2 = Material("Material 2", "A not so useful material")
+from core.adapters.database.base import Base
+from core.adapters.database.material_repository import MaterialRepository
 
 
 class TestMaterialRoutes:
@@ -14,9 +10,9 @@ class TestMaterialRoutes:
 
         # Seeds the database with test data
         with TestingSession() as session:
-            session.add(test_material1)
-            session.add(test_material2)
-            session.commit()
+            material_repository = MaterialRepository(session)
+            material_repository.create_material("Material 1", "A very useful material")
+            material_repository.create_material("Material 2", "A not so useful material")
 
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)

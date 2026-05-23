@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from core.database.models import User
+from core.domain.entities import User
 
 
 @runtime_checkable

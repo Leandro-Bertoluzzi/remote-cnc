@@ -1,14 +1,10 @@
 from conftest import TestingSession, engine, test_admin, test_user
-from core.database.base import Base
-from core.database.models import File, Material, Task, Tool
-
-# Example tasks
-test_file = File(1, "file_1.gcode", "files/file1.gcode")
-test_material = Material("Material 1", "A very useful material")
-test_tool = Tool("Tool 1", "A very useful tool")
-test_task1 = Task(1, 1, 1, 1, "Task 1", "A note", "pending_approval", 0)
-test_task2 = Task(1, 1, 1, 1, "Task 2", "A note", "on_hold", 1)
-test_task3 = Task(2, 1, 1, 1, "Task 3", "A note", "on_hold", 1)
+from core.adapters.database.base import Base
+from core.adapters.database.file_repository import FileRepository
+from core.adapters.database.material_repository import MaterialRepository
+from core.adapters.database.task_repository import TaskRepository
+from core.adapters.database.tool_repository import ToolRepository
+from core.adapters.database.user_repository import UserRepository
 
 
 class TestTaskRoutes:
@@ -18,15 +14,34 @@ class TestTaskRoutes:
 
         # Seeds the database with test data
         with TestingSession() as session:
-            session.add(test_user)
-            session.add(test_admin)
-            session.add(test_file)
-            session.add(test_material)
-            session.add(test_tool)
-            session.add(test_task1)
-            session.add(test_task2)
-            session.add(test_task3)
-            session.commit()
+            user_repository = UserRepository(session)
+            file_repository = FileRepository(session)
+            material_repository = MaterialRepository(session)
+            tool_repository = ToolRepository(session)
+            task_repository = TaskRepository(session)
+
+            created_user = user_repository.create_user(
+                test_user.name, test_user.email, "password", test_user.role
+            )
+            created_admin = user_repository.create_user(
+                test_admin.name, test_admin.email, "password", test_admin.role
+            )
+
+            file = file_repository.create_file(created_user.id, "file_1.gcode", "hash-1")
+            material = material_repository.create_material("Material 1", "A very useful material")
+            tool = tool_repository.create_tool("Tool 1", "A very useful tool")
+
+            task_repository.create_task(
+                created_user.id, file.id, tool.id, material.id, "Task 1", "A note"
+            )
+            task2 = task_repository.create_task(
+                created_user.id, file.id, tool.id, material.id, "Task 2", "A note"
+            )
+            task_repository.update_task_status(task2.id, "on_hold", created_admin.id)
+            task3 = task_repository.create_task(
+                created_admin.id, file.id, tool.id, material.id, "Task 3", "A note"
+            )
+            task_repository.update_task_status(task3.id, "on_hold", created_admin.id)
 
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)

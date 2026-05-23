@@ -80,6 +80,16 @@ across the entire monorepo, implemented via `typing.Protocol`.
 - **Composition roots** are the only places where adapters are instantiated and
   injected.
 
+### Domain and persistence boundaries
+
+- SQLAlchemy ORM models are infrastructure concerns and live exclusively under
+  `core/core/adapters/database/`.
+- Domain/application layers (`core/domain`, ports, API routes, worker tasks,
+  desktop services/views/components) must consume **domain entities**, never
+  ORM classes.
+- Repository adapters are responsible for mapping ORM ↔ domain through explicit
+  mappers.
+
 ### Migration strategy
 
 The adoption is incremental to minimize risk:

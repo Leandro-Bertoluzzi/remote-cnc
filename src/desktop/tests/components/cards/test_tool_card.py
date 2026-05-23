@@ -1,5 +1,5 @@
 import pytest
-from core.database.models import Tool
+from core.domain.entities import Tool
 from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
 from desktop.services.toolService import ToolService

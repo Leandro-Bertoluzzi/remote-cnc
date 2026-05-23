@@ -1,6 +1,6 @@
 """Service layer for User domain operations."""
 
-from core.database.models import User
+from core.domain.entities import User
 
 from desktop.services import get_db_session
 from desktop.services.dependencies import get_user_repository

@@ -1,6 +1,6 @@
-from core.database.models import TaskStatus
+from core.domain.task import TaskStatus
 
-valid_transitions = {
+VALID_TASK_TRANSITIONS = {
     "pending_approval": ["on_hold", "cancelled"],
     "on_hold": ["in_progress", "cancelled"],
     "in_progress": ["finished", "failed"],
@@ -11,7 +11,7 @@ valid_transitions = {
 
 
 def validate_transition(status: str, new_status: str):
-    if new_status in valid_transitions[status]:
+    if new_status in VALID_TASK_TRANSITIONS[status]:
         return True
     else:
         return False

@@ -1,4 +1,4 @@
-from core.database.models import VALID_ROLES
+from core.domain.task import VALID_ROLES
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLineEdit
 

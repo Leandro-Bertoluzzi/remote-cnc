@@ -1,6 +1,6 @@
 """Service layer for cross-cutting asset queries."""
 
-from core.database.models import File, Material, Tool
+from core.domain.entities import File, Material, Tool
 
 from desktop.services import get_db_session
 from desktop.services.dependencies import (

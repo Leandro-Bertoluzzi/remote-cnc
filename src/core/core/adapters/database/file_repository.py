@@ -6,14 +6,15 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 
-from core.database.exceptions import (
-    DatabaseError,
+from core.adapters.database.mappers import to_file_domain
+from core.adapters.database.models import File, User
+from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
     EntityNotFoundError,
+    PersistenceError,
 )
-from core.database.models import File, User
-from core.database.types import FileReport
+from core.domain.types import FileReport
 from core.ports.db_session import DbSession
 from core.ports.file_repository import IFileRepository
 
@@ -48,10 +49,11 @@ class FileRepository(IFileRepository):
             new_file = File(user_id, file_name, file_hash)
             self.session.add(new_file)
             self.session.commit()
-            return new_file
+            self.session.refresh(new_file)
+            return to_file_domain(new_file, include_user=False)
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error creating the file in the DB: {e}") from e
+            raise PersistenceError(f"Error creating the file in the DB: {e}") from e
 
     def get_all_files_from_user(self, user_id: int):
         try:
@@ -61,31 +63,35 @@ class FileRepository(IFileRepository):
                 raise EntityNotFoundError(f"User with ID {user_id} not found")
 
             files = (
-                self.session.scalars(select(File).join(File.user).where(File.user_id == user_id))
+                self.session.scalars(
+                    select(File).options(joinedload(File.user)).where(File.user_id == user_id)
+                )
                 .unique()
                 .all()
             )
 
-            return files
+            return [to_file_domain(file) for file in files]
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error looking for user in the DB: {e}") from e
+            raise PersistenceError(f"Error looking for user in the DB: {e}") from e
 
     def get_all_files(self):
         try:
             files = self.session.scalars(select(File).options(joinedload(File.user))).all()
 
-            return files
+            return [to_file_domain(file) for file in files]
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error retrieving files from the DB: {e}") from e
+            raise PersistenceError(f"Error retrieving files from the DB: {e}") from e
 
     def get_file_by_id(self, id: int):
         try:
-            file = self.session.get(File, id)
+            file = self.session.scalars(
+                select(File).options(joinedload(File.user)).where(File.id == id)
+            ).first()
             if not file:
                 raise EntityNotFoundError(f"File with ID {id} was not found")
-            return file
+            return to_file_domain(file)
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error looking for file with ID {id} in the DB: {e}") from e
+            raise PersistenceError(f"Error looking for file with ID {id} in the DB: {e}") from e
 
     def update_file(self, id: int, user_id: int, file_name: str, file_hash: Optional[str] = None):
         try:
@@ -99,10 +105,10 @@ class FileRepository(IFileRepository):
                 file.file_hash = file_hash
             self.session.commit()
             self.session.refresh(file)
-            return file
+            return to_file_domain(file, include_user=False)
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error updating the file in the DB: {e}") from e
+            raise PersistenceError(f"Error updating the file in the DB: {e}") from e
 
     def save_file_report(self, id: int, report: FileReport):
         try:
@@ -114,7 +120,7 @@ class FileRepository(IFileRepository):
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error updating the file in the DB: {e}") from e
+            raise PersistenceError(f"Error updating the file in the DB: {e}") from e
 
     def remove_file(self, id: int):
         try:
@@ -126,4 +132,4 @@ class FileRepository(IFileRepository):
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error removing the file from the DB: {e}") from e
+            raise PersistenceError(f"Error removing the file from the DB: {e}") from e

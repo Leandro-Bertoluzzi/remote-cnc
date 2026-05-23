@@ -5,7 +5,7 @@ import logging
 from core.adapters.file_manager import FileManager
 from core.adapters.file_storage import FileSystemStorage
 from core.adapters.worker.worker_client import WorkerClient
-from core.database.models import File
+from core.domain.entities import File
 from core.ports.worker_client import IWorkerClient
 
 from desktop.config import FILES_FOLDER_PATH

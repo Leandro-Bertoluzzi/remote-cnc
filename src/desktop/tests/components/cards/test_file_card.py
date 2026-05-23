@@ -1,6 +1,6 @@
 import pytest
-from core.database.exceptions import DatabaseError, DuplicatedFileNameError
-from core.database.models import File, User
+from core.domain.entities import File, User
+from core.domain.exceptions import DuplicatedFileNameError, PersistenceError
 from core.utilities.files import FileSystemError
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
@@ -119,7 +119,7 @@ class TestFileCard:
 
         # Mock file service methods
         mock_rename_file = mocker.patch.object(
-            FileService, "rename_file", side_effect=DatabaseError("mocked error")
+            FileService, "rename_file", side_effect=PersistenceError("mocked error")
         )
 
         # Mock parent methods
@@ -173,7 +173,7 @@ class TestFileCard:
 
         # Mock file service methods
         mock_delete_file = mocker.patch.object(
-            FileService, "remove_file", side_effect=DatabaseError("mocked error")
+            FileService, "remove_file", side_effect=PersistenceError("mocked error")
         )
 
         # Mock parent methods

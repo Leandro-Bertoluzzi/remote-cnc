@@ -7,16 +7,18 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 
-from core.database.exceptions import (
-    DatabaseError,
+from core.adapters.database.mappers import to_task_domain
+from core.adapters.database.models import Task
+from core.domain.exceptions import (
     EntityNotFoundError,
     InvalidTaskStatus,
+    PersistenceError,
     Unauthorized,
 )
-from core.database.models import TASK_EMPTY_NOTE, Task, TaskStatus
+from core.domain.task import TASK_EMPTY_NOTE, TaskStatus
+from core.domain.validators import is_valid_task_state, validate_transition
 from core.ports.db_session import DbSession
 from core.ports.task_repository import ITaskRepository
-from core.utilities.validators import is_valid_task_state, validate_transition
 
 
 class TaskRepository(ITaskRepository):
@@ -37,10 +39,11 @@ class TaskRepository(ITaskRepository):
 
             self.session.add(new_task)
             self.session.commit()
-            return new_task
+            self.session.refresh(new_task)
+            return to_task_domain(new_task)
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error creating the task in the DB: {e}") from e
+            raise PersistenceError(f"Error creating the task in the DB: {e}") from e
 
     def get_task_by_id(self, id: int):
         try:
@@ -51,9 +54,9 @@ class TaskRepository(ITaskRepository):
                 joinedload(Task.user),
             )
             task = self.session.scalars(query.where(Task.id == id)).unique().first()
-            return task
+            return to_task_domain(task)
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error looking for task with ID {id} in the DB: {e}") from e
+            raise PersistenceError(f"Error looking for task with ID {id} in the DB: {e}") from e
 
     def _get_filtered_tasks(self, user_id: Optional[int], status: str, order_criterion=None):
         if order_criterion is None:
@@ -69,21 +72,22 @@ class TaskRepository(ITaskRepository):
             query = query.where(Task.user_id == user_id)
         if status != "all":
             query = query.where(Task.status == status)
-        return self.session.scalars(query.order_by(order_criterion)).unique().all()
+        tasks = self.session.scalars(query.order_by(order_criterion)).unique().all()
+        return [to_task_domain(task) for task in tasks]
 
     def get_all_tasks_from_user(self, user_id: int, status: str = "all"):
         try:
             tasks = self._get_filtered_tasks(user_id, status)
             return tasks
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error retrieving tasks from the DB: {e}") from e
+            raise PersistenceError(f"Error retrieving tasks from the DB: {e}") from e
 
     def get_all_tasks(self, status: str = "all"):
         try:
             tasks = self._get_filtered_tasks(user_id=None, status=status)
             return tasks
         except SQLAlchemyError as e:
-            raise DatabaseError(f"Error retrieving tasks from the DB: {e}") from e
+            raise PersistenceError(f"Error retrieving tasks from the DB: {e}") from e
 
     def are_there_tasks_with_status(self, status: str) -> bool:
         query = select(func.count()).select_from(Task).where(Task.status == status)
@@ -112,19 +116,25 @@ class TaskRepository(ITaskRepository):
             if not task or task.user_id != user_id:
                 raise EntityNotFoundError(f"Task with ID {id} was not found for this user")
 
-            task.file_id = file_id or task.file_id
-            task.tool_id = tool_id or task.tool_id
-            task.material_id = material_id or task.material_id
-            task.name = name or task.name
-            task.note = note or task.note
-            task.priority = priority or task.priority
+            if file_id is not None:
+                task.file_id = file_id
+            if tool_id is not None:
+                task.tool_id = tool_id
+            if material_id is not None:
+                task.material_id = material_id
+            if name is not None:
+                task.name = name
+            if note is not None:
+                task.note = note
+            if priority is not None:
+                task.priority = priority
 
             self.session.commit()
             self.session.refresh(task)
-            return task
+            return self.get_task_by_id(id)
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error updating task with ID {id} in DB: {e}") from e
+            raise PersistenceError(f"Error updating task with ID {id} in DB: {e}") from e
 
     def update_task_status(
         self,
@@ -167,10 +177,10 @@ class TaskRepository(ITaskRepository):
 
             self.session.commit()
             self.session.refresh(task)
-            return task
+            return self.get_task_by_id(id)
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error updating the task status in the DB: {e}") from e
+            raise PersistenceError(f"Error updating the task status in the DB: {e}") from e
 
     def remove_task(self, id: int):
         try:
@@ -182,4 +192,4 @@ class TaskRepository(ITaskRepository):
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            raise DatabaseError(f"Error removing the task from the DB: {e}") from e
+            raise PersistenceError(f"Error removing the task from the DB: {e}") from e

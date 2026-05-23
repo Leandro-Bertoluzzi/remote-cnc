@@ -1,6 +1,6 @@
 """Service layer for Tool domain operations."""
 
-from core.database.models import Tool
+from core.domain.entities import Tool
 
 from desktop.services import get_db_session
 from desktop.services.dependencies import get_tool_repository

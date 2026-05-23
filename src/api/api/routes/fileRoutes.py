@@ -1,7 +1,7 @@
 from core.adapters.file_manager import FileManager
 from core.adapters.file_storage import FileSystemStorage
 from core.config import FILES_FOLDER_PATH
-from core.database.types import FileReport
+from core.domain.types import FileReport
 from core.schemas.files import FileContentResponse, FileResponse, FileUpdate
 from core.schemas.general import GenericResponse
 from fastapi import APIRouter, HTTPException, UploadFile

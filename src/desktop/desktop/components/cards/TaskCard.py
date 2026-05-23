@@ -1,6 +1,7 @@
 import logging
 
-from core.database.models import TASK_DEFAULT_PRIORITY, File, Material, Task, TaskStatus, Tool
+from core.domain.entities import File, Material, Task, Tool
+from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog

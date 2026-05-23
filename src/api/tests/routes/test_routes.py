@@ -1,24 +1,14 @@
-import datetime
 import hashlib
 
 import pytest  # noqa: F401
 from api_db import TestingSession, engine, test_admin, test_user
+from core.adapters.database.base import Base
+from core.adapters.database.file_repository import FileRepository
+from core.adapters.database.material_repository import MaterialRepository
+from core.adapters.database.task_repository import TaskRepository
+from core.adapters.database.tool_repository import ToolRepository
+from core.adapters.database.user_repository import UserRepository
 from core.adapters.file_manager import FileManager
-from core.database.base import Base
-from core.database.models import File, Material, Task, Tool
-
-# Seed data
-creation_time = datetime.datetime(2000, 1, 1, 0, 0, 0)
-test_file = File(1, "file_1.gcode", hashlib.sha256(b"G54").hexdigest(), creation_time)
-test_file2 = File(1, "file_2.gcode", hashlib.sha256(b"G55").hexdigest(), creation_time)
-test_file3 = File(2, "file_3.gcode", hashlib.sha256(b";empty").hexdigest(), creation_time)
-test_material = Material("Material 1", "A very useful material", creation_time)
-test_material2 = Material("Material 2", "A not so useful material", creation_time)
-test_tool = Tool("Tool 1", "A very useful tool", creation_time)
-test_tool2 = Tool("Tool 2", "A not so useful tool", creation_time)
-test_task1 = Task(1, 1, 1, 1, "Task 1", "A note", "pending_approval", 0, creation_time)
-test_task2 = Task(1, 1, 1, 1, "Task 2", "A note", "on_hold", 1, creation_time)
-test_task3 = Task(2, 1, 1, 1, "Task 3", "A note", "on_hold", 1, creation_time)
 
 
 class TestRoutes:
@@ -28,19 +18,46 @@ class TestRoutes:
 
         # Seeds the database with test data
         with TestingSession() as session:
-            session.add(test_user)
-            session.add(test_admin)
-            session.add(test_file)
-            session.add(test_file2)
-            session.add(test_file3)
-            session.add(test_material)
-            session.add(test_material2)
-            session.add(test_tool)
-            session.add(test_tool2)
-            session.add(test_task1)
-            session.add(test_task2)
-            session.add(test_task3)
-            session.commit()
+            user_repository = UserRepository(session)
+            file_repository = FileRepository(session)
+            material_repository = MaterialRepository(session)
+            tool_repository = ToolRepository(session)
+            task_repository = TaskRepository(session)
+
+            created_user = user_repository.create_user(
+                test_user.name, test_user.email, "password", test_user.role
+            )
+            created_admin = user_repository.create_user(
+                test_admin.name, test_admin.email, "password", test_admin.role
+            )
+
+            file1 = file_repository.create_file(
+                created_user.id, "file_1.gcode", hashlib.sha256(b"G54").hexdigest()
+            )
+            file_repository.create_file(
+                created_user.id, "file_2.gcode", hashlib.sha256(b"G55").hexdigest()
+            )
+            file_repository.create_file(
+                created_admin.id, "file_3.gcode", hashlib.sha256(b";empty").hexdigest()
+            )
+
+            material1 = material_repository.create_material("Material 1", "A very useful material")
+            material_repository.create_material("Material 2", "A not so useful material")
+
+            tool1 = tool_repository.create_tool("Tool 1", "A very useful tool")
+            tool_repository.create_tool("Tool 2", "A not so useful tool")
+
+            task_repository.create_task(
+                created_user.id, file1.id, tool1.id, material1.id, "Task 1", "A note"
+            )
+            task2 = task_repository.create_task(
+                created_user.id, file1.id, tool1.id, material1.id, "Task 2", "A note"
+            )
+            task_repository.update_task_status(task2.id, "on_hold", created_admin.id)
+            task3 = task_repository.create_task(
+                created_admin.id, file1.id, tool1.id, material1.id, "Task 3", "A note"
+            )
+            task_repository.update_task_status(task3.id, "on_hold", created_admin.id)
 
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)

@@ -1,5 +1,5 @@
 import pytest
-from core.database.models import Tool
+from core.domain.entities import Tool
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
 
 

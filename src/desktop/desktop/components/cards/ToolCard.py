@@ -1,4 +1,4 @@
-from core.database.models import Tool
+from core.domain.entities import Tool
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
 from desktop.helpers.utils import needs_confirmation

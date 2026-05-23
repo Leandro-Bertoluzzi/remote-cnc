@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Callable
 
-from core.database.models import Base
+from core.domain.entities import DomainModel
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from typing_extensions import TypedDict
@@ -23,9 +23,9 @@ ViewList = TypedDict(
         "title": str,
         "empty_msg": str,
         "create_btn_text": str,
-        "items": list[Base],
+        "items": list[DomainModel],
         "create_btn_action": Callable[[], None],
-        "get_item_widget": Callable[[Base], QWidget],
+        "get_item_widget": Callable[[DomainModel], QWidget],
     },
 )
 
@@ -99,7 +99,7 @@ class BaseListView(BaseView):
         self,
         title: str,
         empty_msg: str,
-        get_item_widget: Callable[[Base], QWidget],
+        get_item_widget: Callable[[DomainModel], QWidget],
         create_btn_text: str = "",
         create_btn_action: Callable[[], None] = lambda: None,
     ):
@@ -116,5 +116,5 @@ class BaseListView(BaseView):
     # Abstract methods
 
     @abstractmethod
-    def getItems(self) -> list[Base]:
+    def getItems(self) -> list[DomainModel]:
         raise NotImplementedError  # pragma: no cover
