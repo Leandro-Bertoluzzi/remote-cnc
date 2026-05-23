@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Optional, Protocol, runtime_checkable
 
-from core.database.models import TASK_EMPTY_NOTE, Task
+from core.domain.entities import Task
+from core.domain.task import TASK_EMPTY_NOTE
 
 
 @runtime_checkable

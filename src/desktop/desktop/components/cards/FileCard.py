@@ -1,11 +1,11 @@
 import logging
 
-from core.database.exceptions import (
-    DatabaseError,
+from core.domain.entities import File
+from core.domain.exceptions import (
     DuplicatedFileNameError,
     EntityNotFoundError,
+    PersistenceError,
 )
-from core.database.models import File
 from core.utilities.files import FileSystemError, InvalidFile
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
@@ -55,7 +55,7 @@ class FileCard(Card):
             self.showWarning("Nombre repetido", str(error))
         except (InvalidFile, FileSystemError) as error:
             self.showError("Error de guardado", str(error))
-        except (DatabaseError, EntityNotFoundError) as error:
+        except (PersistenceError, EntityNotFoundError) as error:
             self.showError("Error de base de datos", str(error))
         else:
             self.getView().refreshLayout()
@@ -66,7 +66,7 @@ class FileCard(Card):
             FileService.remove_file(self.file)
         except FileSystemError as error:
             self.showError("Error de borrado", str(error))
-        except (DatabaseError, EntityNotFoundError) as error:
+        except (PersistenceError, EntityNotFoundError) as error:
             self.showError("Error de base de datos", str(error))
         else:
             self.getView().refreshLayout()

@@ -1,7 +1,7 @@
 import pytest
 from core.adapters.database.file_repository import FileRepository
-from core.database.exceptions import DuplicatedFileError, DuplicatedFileNameError
-from core.database.models import File
+from core.domain.entities import File
+from core.domain.exceptions import DuplicatedFileError, DuplicatedFileNameError
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -158,7 +158,7 @@ class TestFileRepository:
 
     def test_error_get_file_by_id_db_error(self, mocker, mocked_session):
         # Mock DB method to simulate exception
-        mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
+        mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
 
         # Call the method under test and assert exception

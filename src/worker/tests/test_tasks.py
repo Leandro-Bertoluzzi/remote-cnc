@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 
 import pytest
 from core.adapters.database.task_repository import TaskRepository
-from core.database.models import TaskStatus
 from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
     EVENT_FILE_PROGRESS,
 )
+from core.domain.task import TaskStatus
 from core.ports.gateway_client import IGatewayClient
 from pytest_mock.plugin import MockerFixture
 from worker.tasks.cnc import executeTask

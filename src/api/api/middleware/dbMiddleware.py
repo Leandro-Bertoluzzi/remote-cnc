@@ -1,11 +1,11 @@
 from typing import Annotated
 
+from core.adapters.database.base import SessionLocal
 from core.adapters.database.file_repository import FileRepository
 from core.adapters.database.material_repository import MaterialRepository
 from core.adapters.database.task_repository import TaskRepository
 from core.adapters.database.tool_repository import ToolRepository
 from core.adapters.database.user_repository import UserRepository
-from core.database.base import SessionLocal
 from core.ports.db_session import DbSession
 from core.ports.file_repository import IFileRepository
 from core.ports.material_repository import IMaterialRepository

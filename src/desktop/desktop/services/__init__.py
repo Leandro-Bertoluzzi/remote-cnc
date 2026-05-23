@@ -2,7 +2,7 @@
 
 from contextlib import contextmanager
 
-from core.database.base import SessionLocal
+from core.adapters.database.base import SessionLocal
 
 
 @contextmanager

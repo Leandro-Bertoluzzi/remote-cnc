@@ -1,4 +1,4 @@
-from core.database.models import User
+from core.domain.entities import User
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 from desktop.helpers.utils import needs_confirmation

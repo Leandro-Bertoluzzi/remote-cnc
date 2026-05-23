@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
-from core.database.models import Task, TaskStatus
+from core.domain.entities import Task
+from core.domain.task import TaskStatus
 from desktop.services.taskService import TaskService
 from pytest_mock.plugin import MockerFixture
 

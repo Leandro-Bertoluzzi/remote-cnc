@@ -6,14 +6,14 @@ business logic instead of repetitive try/except blocks.
 
 import logging
 
-from core.database.exceptions import (
-    DatabaseError,
+from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
     DuplicatedUserError,
     EntityNotFoundError,
     InvalidRole,
     InvalidTaskStatus,
+    PersistenceError,
     Unauthorized,
 )
 from fastapi import FastAPI, Request
@@ -33,8 +33,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def unauthorized_handler(_request: Request, exc: Unauthorized) -> JSONResponse:
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
-    @app.exception_handler(DatabaseError)
-    async def database_error_handler(_request: Request, exc: DatabaseError) -> JSONResponse:
+    @app.exception_handler(PersistenceError)
+    async def database_error_handler(_request: Request, exc: PersistenceError) -> JSONResponse:
         logger.error("Database error: %s", exc)
         return JSONResponse(status_code=500, content={"detail": "Internal database error"})
 

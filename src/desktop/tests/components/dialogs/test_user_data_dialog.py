@@ -1,5 +1,6 @@
 import pytest
-from core.database.models import VALID_ROLES, User
+from core.domain.entities import User
+from core.domain.task import VALID_ROLES
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 
 

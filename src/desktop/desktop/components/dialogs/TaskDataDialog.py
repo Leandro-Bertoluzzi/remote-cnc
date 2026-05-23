@@ -1,6 +1,6 @@
 from typing import Optional
 
-from core.database.models import File, Material, Task, Tool
+from core.domain.entities import File, Material, Task, Tool
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QTextEdit
 

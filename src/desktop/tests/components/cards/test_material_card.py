@@ -1,5 +1,5 @@
 import pytest
-from core.database.models import Material
+from core.domain.entities import Material
 from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from desktop.services.materialService import MaterialService

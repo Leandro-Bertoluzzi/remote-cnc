@@ -1,5 +1,5 @@
 import pytest
-from core.database.models import File, Material, Task, Tool
+from core.domain.entities import File, Material, Task, Tool
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 
 

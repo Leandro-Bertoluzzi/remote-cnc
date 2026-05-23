@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from core.database.models import User
+from core.domain.entities import User
 from core.utilities.security import verify_token
 from fastapi import Depends, HTTPException, Request
 from jwt import ExpiredSignatureError, InvalidSignatureError

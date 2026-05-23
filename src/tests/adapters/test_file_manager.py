@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from core.adapters.file_manager import FileManager
-from core.database.models import File
+from core.domain.entities import File
 from core.ports.file_repository import IFileRepository
 from core.ports.file_storage import IFileStorage
 

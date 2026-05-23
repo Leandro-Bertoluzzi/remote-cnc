@@ -1,5 +1,5 @@
 import pytest
-from core.database.models import User
+from core.domain.entities import User
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 from desktop.services.userService import UserService

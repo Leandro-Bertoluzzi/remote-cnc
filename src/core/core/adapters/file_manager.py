@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 from typing import BinaryIO
 
-from core.database.models import File
+from core.domain.entities import File
 from core.ports.file_repository import IFileRepository
 from core.ports.file_storage import IFileStorage
 
@@ -25,7 +25,7 @@ class FileManager:
         """Read the content of a file in the FS.
 
         Raises:
-        - DatabaseError: Error from ORM.
+        - PersistenceError: Error from ORM.
         - EntityNotFoundError: The file was not found in the DB.
         - FileSystemError: An error occurred while reading.
         """
@@ -38,7 +38,7 @@ class FileManager:
         Raises:
         - DuplicatedFileNameError: A file with the same name already exists.
         - DuplicatedFileError: A file with the same content already exists.
-        - DatabaseError: Error from ORM.
+        - PersistenceError: Error from ORM.
         - InvalidFile: Invalid file extension.
         - FileSystemError: An error occurred during file creation in FS.
         """
@@ -59,7 +59,7 @@ class FileManager:
         Raises:
         - DuplicatedFileNameError: A file with the same name already exists.
         - DuplicatedFileError: A file with the same content already exists.
-        - DatabaseError: Error from ORM.
+        - PersistenceError: Error from ORM.
         - InvalidFile: Invalid file extension.
         - FileSystemError: An error occurred during file creation in FS.
         """
@@ -81,7 +81,7 @@ class FileManager:
         - DuplicatedFileNameError: A file with the same name already exists.
         - InvalidFile: Invalid file extension.
         - EntityNotFoundError: The file was not found in the DB.
-        - DatabaseError: Error from ORM.
+        - PersistenceError: Error from ORM.
         - FileSystemError: An error occurred during file update in FS.
         """
         repository = self.file_repository
@@ -99,7 +99,11 @@ class FileManager:
         """Rename a file by its DB ID.
 
         Raises:
-        - DuplicatedFileNameError, InvalidFile, EntityNotFoundError, DatabaseError, FileSystemError.
+        - DuplicatedFileNameError: A file with the same name already exists.
+        - InvalidFile: Invalid file extension.
+        - EntityNotFoundError: The file was not found in the DB.
+        - PersistenceError: Error from ORM.
+        - FileSystemError: An error occurred during file update in FS.
         """
         file = self.file_repository.get_file_by_id(file_id)
         return self.rename_file(user_id, file, new_name)
@@ -109,7 +113,7 @@ class FileManager:
 
         Raises:
         - EntityNotFoundError: The file was not found in the DB.
-        - DatabaseError: Error from ORM.
+        - PersistenceError: Error from ORM.
         - FileSystemError: An error occurred during file removal in FS.
         """
         file_path = self.file_storage.get_file_path(file.user_id, file.file_name)
@@ -129,7 +133,9 @@ class FileManager:
         """Remove a file by its DB ID.
 
         Raises:
-        - EntityNotFoundError, DatabaseError, FileSystemError.
+        - EntityNotFoundError: The file was not found in the DB.
+        - PersistenceError: Error from ORM.
+        - FileSystemError: An error occurred during file removal in FS.
         """
         file = self.file_repository.get_file_by_id(file_id)
         self.remove_file(file)

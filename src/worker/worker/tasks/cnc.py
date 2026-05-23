@@ -15,13 +15,13 @@ import json
 import logging
 
 from celery.utils.log import get_task_logger
+from core.adapters.database.base import SessionLocal
 from core.adapters.database.task_repository import TaskRepository
 from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
 from core.config import FILES_FOLDER_PATH
-from core.database.base import SessionLocal
-from core.database.models import TaskStatus
 from core.domain.gateway import EVENT_FILE_FAILED, EVENT_FILE_FINISHED
+from core.domain.task import TaskStatus
 from worker.main import app
 
 logger = logging.getLogger(__name__)

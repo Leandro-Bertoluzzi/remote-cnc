@@ -3,8 +3,9 @@ import datetime
 import api.middleware.dbMiddleware as dbMiddleware
 from api.main import app
 from api_db import TestingSession, engine
-from core.database.base import Base
-from core.database.models import User
+from core.adapters.database.base import Base
+from core.adapters.database.user_repository import UserRepository
+from core.domain.entities import User
 from fastapi.testclient import TestClient
 from jwt import ExpiredSignatureError, InvalidSignatureError
 
@@ -43,10 +44,9 @@ class TestAuthMiddleware:
 
         # Seeds the database with test data
         with TestingSession() as session:
-            session.add(test_user)
-            session.add(test_admin)
-            session.commit()
-            session.close()
+            repository = UserRepository(session)
+            repository.create_user(test_user.name, test_user.email, "password", test_user.role)
+            repository.create_user(test_admin.name, test_admin.email, "password", test_admin.role)
 
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)

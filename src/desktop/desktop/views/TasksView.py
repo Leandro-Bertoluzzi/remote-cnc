@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, cast
 
-from core.database.models import TaskStatus
+from core.domain.task import TaskStatus
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QVBoxLayout
 

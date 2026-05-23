@@ -1,6 +1,6 @@
 import pytest
 from core.adapters.database.tool_repository import ToolRepository
-from core.database.models import Tool
+from core.domain.entities import Tool
 from sqlalchemy.exc import SQLAlchemyError
 
 

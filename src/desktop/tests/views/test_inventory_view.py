@@ -1,5 +1,5 @@
 import pytest
-from core.database.models import Material, Tool
+from core.domain.entities import Material, Tool
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.cards.MsgCard import MsgCard

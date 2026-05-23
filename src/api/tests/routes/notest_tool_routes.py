@@ -1,10 +1,6 @@
 from conftest import TestingSession, engine
-from core.database.base import Base
-from core.database.models import Tool
-
-# Example tools
-test_tool1 = Tool("Tool 1", "A very useful tool")
-test_tool2 = Tool("Tool 2", "A not so useful tool")
+from core.adapters.database.base import Base
+from core.adapters.database.tool_repository import ToolRepository
 
 
 class TestToolRoutes:
@@ -14,9 +10,9 @@ class TestToolRoutes:
 
         # Seeds the database with test data
         with TestingSession() as session:
-            session.add(test_tool1)
-            session.add(test_tool2)
-            session.commit()
+            tool_repository = ToolRepository(session)
+            tool_repository.create_tool("Tool 1", "A very useful tool")
+            tool_repository.create_tool("Tool 2", "A not so useful tool")
 
     def teardown_class(self):
         Base.metadata.drop_all(bind=engine)

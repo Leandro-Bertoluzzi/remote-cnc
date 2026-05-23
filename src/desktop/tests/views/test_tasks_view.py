@@ -1,5 +1,6 @@
 import pytest
-from core.database.models import Task, TaskStatus
+from core.domain.entities import Task
+from core.domain.task import TaskStatus
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.cards.TaskCard import TaskCard

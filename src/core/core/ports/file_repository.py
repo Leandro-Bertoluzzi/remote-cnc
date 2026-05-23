@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from core.database.models import File
-from core.database.types import FileReport
+from core.domain.entities import File
+from core.domain.types import FileReport
 
 
 @runtime_checkable

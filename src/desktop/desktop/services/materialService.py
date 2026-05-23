@@ -1,6 +1,6 @@
 """Service layer for Material domain operations."""
 
-from core.database.models import Material
+from core.domain.entities import Material
 
 from desktop.services import get_db_session
 from desktop.services.dependencies import get_material_repository

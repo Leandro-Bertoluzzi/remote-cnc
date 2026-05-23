@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
-from core.database.exceptions import (
-    DatabaseError,
+from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
+    PersistenceError,
 )
 from core.utilities.files import FileSystemError, InvalidFile
 
@@ -50,7 +50,7 @@ class FilesView(BaseListView):
         except (InvalidFile, FileSystemError) as error:
             self.showError("Error de guardado", str(error))
             return
-        except DatabaseError as error:
+        except PersistenceError as error:
             self.showError("Error de base de datos", str(error))
             return
 
