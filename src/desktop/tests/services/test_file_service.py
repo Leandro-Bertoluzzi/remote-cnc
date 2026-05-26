@@ -1,11 +1,27 @@
 from unittest.mock import ANY, MagicMock
 
+import pytest
 from core.domain.entities import File
+from core.ports.file_storage import IFileStorage
+from desktop.services import fileService as fileservice_module
 from desktop.services.fileService import FileService
 from pytest_mock.plugin import MockerFixture
 
 
 class TestFileService:
+    @pytest.fixture(autouse=True)
+    def configure_file_storage(self):
+        """Inject a mock IFileStorage so _get_file_storage() never raises.
+
+        Replaces the module-level ``_file_storage`` directly — the same
+        mechanism ``fileService.configure()`` uses — and restores ``None``
+        after each test so tests are fully isolated.
+        """
+        mock_storage = MagicMock(spec=IFileStorage)
+        fileservice_module._file_storage = mock_storage
+        yield mock_storage
+        fileservice_module._file_storage = None
+
     @staticmethod
     def _mock_db_and_repo(mocker: MockerFixture):
         session = MagicMock()

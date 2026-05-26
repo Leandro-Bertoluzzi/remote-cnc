@@ -1,10 +1,12 @@
+"""Infrastructure adapter: renders G-code files as PNG thumbnails."""
+
 from typing import TypedDict
 
 from mayavi import mlab  # type: ignore
 from PIL import Image
 from pyvirtualdisplay import Display  # type: ignore
 
-import worker.utilities.gcodeParser as gcode
+import worker.domain.gcode.parser as gcode
 
 # Types definition
 Color = tuple[float, float, float]

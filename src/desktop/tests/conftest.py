@@ -2,7 +2,9 @@ from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
+from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
+from core.ports.worker_client import IWorkerClient
 from desktop.app_context import AppContext
 from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
@@ -40,6 +42,26 @@ def helpers():
     return Helpers
 
 
+def make_mock_context() -> AppContext:
+    """Return an ``AppContext`` where every port is a ``MagicMock``.
+
+    Using this helper avoids ``default_factory`` calls that would try to
+    instantiate concrete adapters at import time during tests.
+    """
+    return AppContext(
+        gateway=MagicMock(spec=IGatewayClient),
+        worker=MagicMock(spec=IWorkerClient),
+        file_storage=MagicMock(spec=IFileStorage),
+        session_factory=MagicMock(),
+    )
+
+
+@pytest.fixture
+def mock_context() -> AppContext:
+    """Pytest fixture that provides a fully-mocked ``AppContext``."""
+    return make_mock_context()
+
+
 # Mock for UI elements
 
 
@@ -52,10 +74,9 @@ def mock_window(mocker: MockerFixture):
     parent.backToMenu = mocker.Mock()
     parent.changeView = mocker.Mock()
     parent.startWorkerMonitor = mocker.Mock()
-    mock_gateway = MagicMock(spec=IGatewayClient)
-    mock_context = AppContext(gateway=mock_gateway)
-    parent._context = mock_context
-    parent.worker_monitor = GatewayMonitor(mock_gateway)
+    context = make_mock_context()
+    parent._context = context
+    parent.worker_monitor = GatewayMonitor(context.gateway)
     return cast(MainWindow, parent)
 
 
