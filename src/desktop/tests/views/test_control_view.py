@@ -30,7 +30,12 @@ class TestControlView:
         self.mock_gateway = mocker.MagicMock()
         self.mock_sync = mocker.MagicMock(spec=GatewayMonitor)
         mocker.patch("desktop.views.ControlView.GatewayMonitor", return_value=self.mock_sync)
-        self.mock_context = AppContext(gateway=self.mock_gateway)
+        self.mock_context = AppContext(
+            gateway=self.mock_gateway,
+            worker=mocker.MagicMock(),
+            file_storage=mocker.MagicMock(),
+            session_factory=mocker.MagicMock(),
+        )
 
         # Create an instance of ControlView
         self.parent = mock_window

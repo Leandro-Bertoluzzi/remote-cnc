@@ -75,7 +75,8 @@ def test_generate_file_report_success():
     storage = MagicMock(spec=IFileStorage)
     file = _make_file(file_id=3)
     repo.get_file_by_id.return_value = file
-    storage.get_file_path.return_value = Path("/files/2/part.gcode")
+    fake_content = "G0 X10\nG1 X20\n"
+    storage.read_file.return_value = fake_content
 
     fake_report = {"lines": 100, "gcodes": ["G0", "G1"]}
 
@@ -90,8 +91,8 @@ def test_generate_file_report_success():
         )
 
     repo.get_file_by_id.assert_called_once_with(3)
-    storage.get_file_path.assert_called_once_with(2, "part.gcode")
-    mock_analyser_cls.assert_called_once_with(Path("/files/2/part.gcode"), ["G0", "G1"], ["M3"])
+    storage.read_file.assert_called_once_with(2, "part.gcode")
+    mock_analyser_cls.assert_called_once_with(fake_content, ["G0", "G1"], ["M3"])
     mock_analyser_cls.return_value.analyse.assert_called_once()
     repo.save_file_report.assert_called_once_with(3, fake_report)
 

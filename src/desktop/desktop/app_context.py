@@ -8,7 +8,7 @@ via constructor arguments — never by importing singletons directly.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable
 
 from core.adapters.database.base import SessionLocal
@@ -31,10 +31,10 @@ class AppContext:
     Concrete adapters are only referenced in ``create_app_context`` below.
     """
 
-    gateway: IGatewayClient = field(default_factory=GatewayClient.from_config)
-    worker: IWorkerClient = field(default_factory=WorkerClient.from_config)
-    file_storage: IFileStorage = field(default_factory=lambda: FileSystemStorage(FILES_FOLDER_PATH))
-    session_factory: Callable[..., DbSession] = field(default_factory=lambda: SessionLocal)
+    gateway: IGatewayClient
+    worker: IWorkerClient
+    file_storage: IFileStorage
+    session_factory: Callable[..., DbSession]
 
 
 def create_app_context() -> AppContext:

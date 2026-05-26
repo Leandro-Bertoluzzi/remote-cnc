@@ -1,4 +1,4 @@
-"""FileManager — application-layer adapter combining DB and file storage.
+"""FileManager — application service coordinating DB and file storage.
 
 Coordinates ``IFileRepository`` (DB port) and ``IFileStorage`` (filesystem) to
 provide transactional file operations with automatic rollback on failure.

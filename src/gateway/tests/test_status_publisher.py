@@ -13,7 +13,7 @@ from core.domain.gateway import (
     STATUS_CHANNEL,
 )
 from fakes import FakeController, FakeFileExecutor, FakeSessionManager
-from gateway.statusPublisher import STATUS_INTERVAL, StatusPublisher
+from gateway.application.status_publisher import STATUS_INTERVAL, StatusPublisher
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -67,7 +67,7 @@ class TestGatewayStateProp:
 class TestPublishIfDue:
     def test_not_publishes_before_interval(self):
         publisher, *_, redis_mock = make_publisher()
-        with patch("gateway.statusPublisher.time") as mock_time:
+        with patch("gateway.application.status_publisher.time") as mock_time:
             mock_time.time.side_effect = [0.0, 0.05]  # elapsed < STATUS_INTERVAL
             publisher.publish_if_due()  # sets _last_publish = 0.0
             result = publisher.publish_if_due()
@@ -76,7 +76,7 @@ class TestPublishIfDue:
 
     def test_publishes_when_interval_elapsed(self):
         publisher, *_, redis_mock = make_publisher()
-        with patch("gateway.statusPublisher.time") as mock_time:
+        with patch("gateway.application.status_publisher.time") as mock_time:
             mock_time.time.side_effect = [0.0, STATUS_INTERVAL + 0.01]
             publisher.publish_if_due()
             result = publisher.publish_if_due()

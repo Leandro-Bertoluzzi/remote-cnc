@@ -14,7 +14,6 @@ import json
 import logging
 from typing import Any, Optional
 
-from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from core.domain.gateway import (
     EVENT_SESSION_ACQUIRED,
     EVENT_SESSION_RELEASED,
@@ -29,13 +28,7 @@ logger = logging.getLogger(__name__)
 class SessionManager:
     """Server-side session validation for the Gateway process."""
 
-    def __init__(
-        self,
-        redis_conn: RedisClient,
-        host: str = REDIS_HOST,
-        port: int = REDIS_PORT,
-        db: int = REDIS_DB_STORAGE,
-    ):
+    def __init__(self, redis_conn: RedisClient):
         self._redis = redis_conn
 
     # ------------------------------------------------------------------

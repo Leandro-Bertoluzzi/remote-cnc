@@ -8,7 +8,7 @@ from core.adapters.database.material_repository import MaterialRepository
 from core.adapters.database.task_repository import TaskRepository
 from core.adapters.database.tool_repository import ToolRepository
 from core.adapters.database.user_repository import UserRepository
-from core.adapters.file_manager import FileManager
+from core.application.file_manager import FileManager
 
 
 class TestRoutes:

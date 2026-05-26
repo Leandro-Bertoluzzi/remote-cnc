@@ -2,7 +2,7 @@
 
 import logging
 
-from core.adapters.file_manager import FileManager
+from core.application.file_manager import FileManager
 from core.domain.entities import File
 from core.ports.file_storage import IFileStorage
 from core.ports.worker_client import IWorkerClient

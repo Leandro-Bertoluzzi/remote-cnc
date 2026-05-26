@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from core.adapters.file_manager import FileManager
+from core.application.file_manager import FileManager
 from core.domain.entities import File
 from core.ports.file_repository import IFileRepository
 from core.ports.file_storage import IFileStorage

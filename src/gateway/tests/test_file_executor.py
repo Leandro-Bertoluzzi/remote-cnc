@@ -16,7 +16,7 @@ from core.domain.gateway import (
     EVENTS_CHANNEL,
 )
 from fakes import FakeController
-from gateway.fileExecutor import FileExecutor
+from gateway.application.file_executor import FileExecutor
 
 
 def make_executor(

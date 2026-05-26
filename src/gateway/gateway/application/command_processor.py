@@ -10,7 +10,6 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any
 
-from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from core.domain.gateway import (
     ACTION_PAUSE,
     ACTION_RESUME,
@@ -37,8 +36,8 @@ from gateway.schemas import (
 )
 
 if TYPE_CHECKING:
-    from gateway.fileExecutor import FileExecutor
-    from gateway.sessionManager import SessionManager
+    from gateway.application.file_executor import FileExecutor
+    from gateway.application.session_manager import SessionManager
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +60,6 @@ class CommandProcessor:
         session_manager: SessionManager,
         file_executor: FileExecutor,
         redis_conn: RedisClient,
-        host: str = REDIS_HOST,
-        port: int = REDIS_PORT,
-        db: int = REDIS_DB_STORAGE,
     ):
         self.controller = controller
         self.session_manager = session_manager

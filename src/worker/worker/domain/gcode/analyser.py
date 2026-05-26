@@ -1,6 +1,5 @@
 import re
 from collections import Counter
-from pathlib import Path
 from typing import Pattern
 
 # Regular expressions to classify commands
@@ -20,11 +19,11 @@ class GcodeAnalyser:
 
     def __init__(
         self,
-        file_path: str | Path,
+        content: str,
         valid_gcodes: list[str],
         valid_mcodes: list[str],
     ):
-        self.file_path = file_path
+        self._content = content
         self._valid_gcodes = valid_gcodes
         self._valid_mcodes = valid_mcodes
 
@@ -39,21 +38,19 @@ class GcodeAnalyser:
         commands_mcode = {}
         unsupported_commands = []
 
-        with open(self.file_path, "r") as gcode:
-            content = gcode.read()
+        content = self._content
+        total_lines = len(content.splitlines())
+        pause_count = self._count(pause_pattern, content)
+        movement_lines = self._count(move_pattern, content)
+        comment_count = self._count(comment_pattern, content)
+        tools = self._find_all_unique(t_pattern, content)
+        max_feedrate = self._find_max(feedrate_pattern, content)
+        commands_gcode = self._count_all(gcode_pattern, content)
+        commands_mcode = self._count_all(mcode_pattern, content)
 
-            total_lines = len(content.splitlines())
-            pause_count = self._count(pause_pattern, content)
-            movement_lines = self._count(move_pattern, content)
-            comment_count = self._count(comment_pattern, content)
-            tools = self._find_all_unique(t_pattern, content)
-            max_feedrate = self._find_max(feedrate_pattern, content)
-            commands_gcode = self._count_all(gcode_pattern, content)
-            commands_mcode = self._count_all(mcode_pattern, content)
-
-            unsupported_commands = list(
-                filter(lambda x: x not in self._valid_gcodes, commands_gcode.keys())
-            ) + list(filter(lambda x: x not in self._valid_mcodes, commands_mcode.keys()))
+        unsupported_commands = list(
+            filter(lambda x: x not in self._valid_gcodes, commands_gcode.keys())
+        ) + list(filter(lambda x: x not in self._valid_mcodes, commands_mcode.keys()))
 
         return {
             "total_lines": total_lines,
