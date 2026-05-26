@@ -4,10 +4,9 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from core.adapters.database.base import engine
+from core.adapters.database.base import check_db_connection, dispose_db
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 
 from api.exceptions import register_exception_handlers
 from api.routes.cncRoutes import cncRoutes
@@ -32,8 +31,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
     # Verify DB connectivity
     try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
+        check_db_connection()
         logger.info("Database connection verified")
     except Exception:
         logger.exception("Database connection failed — the API will start but DB queries may fail")
@@ -42,7 +40,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
     # --- Shutdown ---
     logger.info("Shutting down API server...")
-    engine.dispose()
+    dispose_db()
     logger.info("Database connections closed")
 
 

@@ -1,8 +1,7 @@
 import re
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
-
 from core.domain.types import RoleType
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 _PASSWORD_RE = re.compile(
     r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,20}$"

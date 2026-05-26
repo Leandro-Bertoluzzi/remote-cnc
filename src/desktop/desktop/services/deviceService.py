@@ -2,31 +2,45 @@
 
 import logging
 
-from core.adapters.gateway.gateway_client import GatewayClient
-from core.adapters.worker.worker_client import WorkerClient
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
 from core.ports.gateway_client import IGatewayClient
 from core.ports.worker_client import IWorkerClient
 
 logger = logging.getLogger(__name__)
 
-# Module-level shared instances
-_gateway_client: IGatewayClient | None = None
-_worker_client: IWorkerClient | None = None
+# Module-level port references — set once by configure() at startup.
+# Services never instantiate concrete adapters directly.
+_gateway: IGatewayClient | None = None
+_worker: IWorkerClient | None = None
+
+
+def configure(gateway: IGatewayClient, worker: IWorkerClient) -> None:
+    """Inject the port implementations used by ``DeviceService``.
+
+    Must be called from the composition root (``desktop/main.py``)
+    before any ``DeviceService`` method is invoked.
+    """
+    global _gateway, _worker  # noqa: PLW0603
+    _gateway = gateway
+    _worker = worker
 
 
 def _get_gateway() -> IGatewayClient:
-    global _gateway_client  # noqa: PLW0603
-    if _gateway_client is None:
-        _gateway_client = GatewayClient.from_config()
-    return _gateway_client
+    if _gateway is None:
+        raise RuntimeError(
+            "DeviceService has not been configured. "
+            "Call desktop.services.deviceService.configure() first."
+        )
+    return _gateway
 
 
 def _get_worker() -> IWorkerClient:
-    global _worker_client  # noqa: PLW0603
-    if _worker_client is None:
-        _worker_client = WorkerClient.from_config()
-    return _worker_client
+    if _worker is None:
+        raise RuntimeError(
+            "DeviceService has not been configured. "
+            "Call desktop.services.deviceService.configure() first."
+        )
+    return _worker
 
 
 class DeviceService:

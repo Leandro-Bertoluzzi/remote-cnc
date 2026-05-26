@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock.plugin import MockerFixture
-from worker.utilities.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
-from worker.utilities.gcode.gcodeAnalyser import GcodeAnalyser
+from worker.domain.gcode.analyser import GcodeAnalyser
+from worker.domain.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
 
 
 class TestGcodeAnalyser:

@@ -1,56 +1,52 @@
+"""Celery task wrappers for G-code file processing.
+
+This module is the **composition root** for file-processing tasks:
+it builds concrete infrastructure adapters and delegates all application
+logic to the pure handlers in ``worker.tasks.handlers.files_handler``.
+
+No business logic lives here — add it to the handlers instead.
+"""
+
 from core.adapters.database.base import SessionLocal
 from core.adapters.database.file_repository import FileRepository
 from core.adapters.file_storage import FileSystemStorage
 from core.config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
+from worker.adapters.rendering.gcode_renderer import GcodeRenderer
+from worker.domain.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
 from worker.main import app
-from worker.utilities.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
-from worker.utilities.gcode.gcodeAnalyser import GcodeAnalyser
-from worker.utilities.gcode2png import GcodeRenderer
+from worker.tasks.handlers.files_handler import (
+    create_thumbnail_handler,
+    generate_file_report_handler,
+)
 
 
 @app.task(name="create_thumbnail", ignore_result=True)
 def createThumbnail(file_id: int) -> None:
+    """Celery entry-point: build adapters and run the thumbnail handler."""
     db_session = SessionLocal()
     try:
-        repository = FileRepository(db_session)
-
-        # 1. Get the requested file
-        file = repository.get_file_by_id(file_id)
-        if not file:
-            raise Exception("No se encontró el archivo en la base de datos")
-
-        files_helper = FileSystemStorage(FILES_FOLDER_PATH)
-        file_path = files_helper.get_file_path(file.user_id, file.file_name)
-
-        # 2. Instantiate the G-code renderer
-        renderer = GcodeRenderer()
-
-        # 3. Generate the thumbnail and save it to images folder
-        output = IMAGES_FOLDER_PATH + "/img" + str(file.id) + ".png"
-        renderer.run(str(file_path), output, moves=False)
+        create_thumbnail_handler(
+            file_id=file_id,
+            repo=FileRepository(db_session),
+            storage=FileSystemStorage(FILES_FOLDER_PATH),
+            images_folder=IMAGES_FOLDER_PATH,
+            renderer=GcodeRenderer(),
+        )
     finally:
         db_session.close()
 
 
 @app.task(name="generate_report", ignore_result=True)
 def generateFileReport(file_id: int) -> None:
+    """Celery entry-point: build adapters and run the file-report handler."""
     db_session = SessionLocal()
     try:
-        repository = FileRepository(db_session)
-
-        # 1. Get the requested file
-        file = repository.get_file_by_id(file_id)
-        if not file:
-            raise Exception("No se encontró el archivo en la base de datos")
-
-        files_helper = FileSystemStorage(FILES_FOLDER_PATH)
-        file_path = files_helper.get_file_path(file.user_id, file.file_name)
-
-        # 2. Instantiate the G-code analyser
-        analyser = GcodeAnalyser(file_path, GRBL_VALID_GCODES, GRBL_VALID_MCODES)
-
-        # 3. Analyse and save the generated report
-        report = analyser.analyse()
-        repository.save_file_report(file_id, report)
+        generate_file_report_handler(
+            file_id=file_id,
+            repo=FileRepository(db_session),
+            storage=FileSystemStorage(FILES_FOLDER_PATH),
+            valid_gcodes=GRBL_VALID_GCODES,
+            valid_mcodes=GRBL_VALID_MCODES,
+        )
     finally:
         db_session.close()

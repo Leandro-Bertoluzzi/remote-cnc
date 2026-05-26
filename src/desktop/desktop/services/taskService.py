@@ -3,7 +3,6 @@
 import logging
 from typing import Optional
 
-from core.adapters.worker.worker_client import WorkerClient
 from core.domain.entities import Task
 from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
 from core.ports.worker_client import IWorkerClient
@@ -13,13 +12,26 @@ from desktop.services.dependencies import get_task_repository
 
 logger = logging.getLogger(__name__)
 
+# Port reference — set by configure() at startup.
 _worker_client: IWorkerClient | None = None
 
 
-def _get_worker_client() -> IWorkerClient:
+def configure(worker: IWorkerClient) -> None:
+    """Inject the worker port used by ``TaskService``.
+
+    Must be called from the composition root (``desktop/main.py``)
+    before any ``TaskService`` method that dispatches to the worker.
+    """
     global _worker_client  # noqa: PLW0603
+    _worker_client = worker
+
+
+def _get_worker_client() -> IWorkerClient:
     if _worker_client is None:
-        _worker_client = WorkerClient.from_config()
+        raise RuntimeError(
+            "TaskService has not been configured. "
+            "Call desktop.services.taskService.configure() first."
+        )
     return _worker_client
 
 

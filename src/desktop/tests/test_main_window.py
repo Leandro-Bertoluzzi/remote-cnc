@@ -1,7 +1,9 @@
 from unittest.mock import MagicMock
 
 import pytest
+from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
+from core.ports.worker_client import IWorkerClient
 from desktop.app_context import AppContext
 from desktop.MainWindow import MainWindow
 from desktop.services.deviceService import DeviceService
@@ -14,7 +16,12 @@ from pytestqt.qtbot import QtBot
 
 
 def _make_context() -> AppContext:
-    return AppContext(gateway=MagicMock(spec=IGatewayClient))
+    return AppContext(
+        gateway=MagicMock(spec=IGatewayClient),
+        worker=MagicMock(spec=IWorkerClient),
+        file_storage=MagicMock(spec=IFileStorage),
+        session_factory=MagicMock(),
+    )
 
 
 class TestMainWindow:

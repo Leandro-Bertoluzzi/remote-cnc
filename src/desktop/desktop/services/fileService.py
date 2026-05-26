@@ -3,25 +3,47 @@
 import logging
 
 from core.adapters.file_manager import FileManager
-from core.adapters.file_storage import FileSystemStorage
-from core.adapters.worker.worker_client import WorkerClient
 from core.domain.entities import File
+from core.ports.file_storage import IFileStorage
 from core.ports.worker_client import IWorkerClient
 
-from desktop.config import FILES_FOLDER_PATH
 from desktop.services import get_db_session
 from desktop.services.dependencies import get_file_repository
 
 logger = logging.getLogger(__name__)
 
+# Port references — set by configure() at startup.
 _worker_client: IWorkerClient | None = None
+_file_storage: IFileStorage | None = None
+
+
+def configure(worker: IWorkerClient, storage: IFileStorage) -> None:
+    """Inject the worker and file-storage ports used by ``FileService``.
+
+    Must be called from the composition root (``desktop/main.py``)
+    before any ``FileService`` method is invoked.
+    """
+    global _worker_client, _file_storage  # noqa: PLW0603
+    _worker_client = worker
+    _file_storage = storage
 
 
 def _get_worker_client() -> IWorkerClient:
-    global _worker_client  # noqa: PLW0603
     if _worker_client is None:
-        _worker_client = WorkerClient.from_config()
+        raise RuntimeError(
+            "FileService has not been configured. "
+            "Call desktop.services.fileService.configure() first."
+        )
     return _worker_client
+
+
+def _get_file_storage() -> IFileStorage:
+    if _file_storage is None:
+        raise RuntimeError(
+            "FileService has not been configured. "
+            "Call desktop.services.fileService.configure() first."
+        )
+    return _file_storage
 
 
 class FileService:
@@ -42,7 +64,7 @@ class FileService:
         """
         with get_db_session() as session:
             repository = get_file_repository(session)
-            file_manager = FileManager(repository, FileSystemStorage(FILES_FOLDER_PATH))
+            file_manager = FileManager(repository, _get_file_storage())
             file = file_manager.create_file(user_id, name, origin_path)
 
         # Schedule background tasks — broker failure should not prevent file creation
@@ -63,12 +85,12 @@ class FileService:
     def rename_file(cls, user_id: int, file: File, new_name: str) -> None:
         with get_db_session() as session:
             repository = get_file_repository(session)
-            file_manager = FileManager(repository, FileSystemStorage(FILES_FOLDER_PATH))
+            file_manager = FileManager(repository, _get_file_storage())
             file_manager.rename_file(user_id, file, new_name)
 
     @classmethod
     def remove_file(cls, file: File) -> None:
         with get_db_session() as session:
             repository = get_file_repository(session)
-            file_manager = FileManager(repository, FileSystemStorage(FILES_FOLDER_PATH))
+            file_manager = FileManager(repository, _get_file_storage())
             file_manager.remove_file(file)

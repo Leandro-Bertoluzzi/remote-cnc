@@ -1,9 +1,8 @@
 import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
-
 from core.domain.types import StatusType
+from pydantic import BaseModel, ConfigDict
 
 
 class TaskCreate(BaseModel):
