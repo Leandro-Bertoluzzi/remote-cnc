@@ -24,13 +24,13 @@ Se requiere unificar el acceso al puerto serial en un único punto para garantiz
 ### Arquitectura actual
 
 ```
-┌──────────┐  REST/SSE   ┌──────────┐  Celery task   ┌────────────────┐  Serial
-│  Web App │────────────▶│   API    │──────────────▶│    Worker      │────────▶ CNC
-└──────────┘             └──────────┘               │  (cnc_server)  │
-                                                    │  (execute_task)│
-                                                    └────────────────┘  Serial
-┌──────────┐  Direct serial                                           ────────▶ CNC
-│ Desktop  │──────────────────────────────────────────────────────────┘
+┌──────────┐  REST/SSE      ┌──────────┐  Celery task   ┌────────────────┐  Serial
+│  Web App │──────────────▶│   API    │──────────────▶ │    Worker      │────────▶ CNC
+└──────────┘                └──────────┘                │  (cnc_server)  │
+                                                        │ (execute_task) │
+                                                        └────────────────┘
+┌──────────┐  Direct serial                                              Serial
+│ Desktop  │───────────────────────────────────────────────────────────────────▶ CNC
 └──────────┘
 ```
 
@@ -63,16 +63,16 @@ Se adopta la **opción 2**: crear un proceso CNC Gateway dedicado. Se implementa
 ### Arquitectura propuesta
 
 ```
-┌──────────┐  REST/SSE  ┌──────────┐              ┌────────────────┐
-│  Web App │───────────▶│   API    │─── Redis ───▶│   CNC Gateway  │──── Serial ──▶ CNC
-└──────────┘            └──────────┘              │  (always-on)   │
-                                                  └────────────────┘
-┌──────────┐  REST/Redis ┌──────────┐                    ▲
-│ Desktop  │────────────▶│   API    │──── Redis ─────────┘
+┌──────────┐  REST/SSE   ┌──────────┐               ┌────────────────┐
+│  Web App │───────────▶│   API    │─── Redis ───▶ │   CNC Gateway  │──── Serial ──▶ CNC
+└──────────┘             └──────────┘               │  (always-on)   │
+                                                    └────────────────┘
+┌──────────┐ REST/Redis  ┌──────────┐                    ▲
+│ Desktop  │───────────▶│   API    │──── Redis ─────────┘
 └──────────┘             └──────────┘
-                    ┌────────────────┐
-                    │  Celery Worker  │─── Redis ──────┘
-                    │  (file tasks)   │
+                    ┌────────────────┐                   ▲
+                    │  Celery Worker │─── Redis ─────────┘
+                    │  (file tasks)  │
                     └────────────────┘
 ```
 

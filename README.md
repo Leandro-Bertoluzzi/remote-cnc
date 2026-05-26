@@ -90,34 +90,49 @@ This is a **uv workspace** monorepo. All Python source lives under `src/`:
 
 ```text
 src/
-├── pyproject.toml          # Workspace root (virtual)
-├── uv.lock                 # Single lockfile for the whole workspace
-├── core/                   # Shared library: database, config, utilities, schemas
+├── pyproject.toml             # Workspace root (virtual)
+├── uv.lock                    # Single lockfile for the whole workspace
+├── core/                      # Shared kernel (domain, ports, adapters)
 │   ├── pyproject.toml
-│   ├── core/               # Python package
-│   ├── alembic/            # Database migrations
+│   ├── core/
+│   │   ├── domain/            # Domain entities, types, exceptions
+│   │   ├── ports/             # Shared protocols (interfaces)
+│   │   ├── adapters/          # Infra implementations (DB, gateway, worker, files)
+│   │   ├── config/
+│   │   ├── schemas/
+│   │   └── utilities/
+│   ├── alembic/               # Database migrations
 │   └── alembic.ini
-├── api/                    # FastAPI REST API
+├── api/                       # FastAPI REST API
 │   ├── pyproject.toml
-│   ├── main.py             # Entry point
-│   ├── routes/
-│   ├── middleware/
-│   └── tests/
-├── worker/                 # Celery background worker
+│   └── api/
+│       ├── main.py            # Entry point
+│       ├── routes/
+│       ├── middleware/
+│       └── tests/
+├── worker/                    # Celery background worker
 │   ├── pyproject.toml
-│   ├── main.py             # Entry point
-│   ├── tasks/
-│   └── tests/
-├── gateway/                # CNC gateway (serial communication)
+│   └── worker/
+│       ├── main.py            # Entry point
+│       ├── tasks/
+│       └── tests/
+├── gateway/                   # CNC gateway (serial communication)
 │   ├── pyproject.toml
-│   └── gateway/            # Python package
-├── desktop/                # PyQt5 desktop application
+│   └── gateway/
+│       ├── main.py            # Composition root
+│       ├── ports/             # Gateway-specific protocols
+│       ├── adapters/          # GRBL + serial adapters
+│       └── tests/
+├── desktop/                   # PyQt5 desktop application
 │   ├── pyproject.toml
-│   ├── main.py             # Entry point
-│   ├── views/
-│   ├── components/
-│   └── tests/
-└── tests/                  # Core / shared tests + mocks
+│   └── desktop/
+│       ├── main.py            # Entry point
+│       ├── app_context.py     # Composition root
+│       ├── views/
+│       ├── components/
+│       ├── services/
+│       └── tests/
+└── tests/                     # Core / shared tests + mocks
     ├── conftest.py
     └── mocks/
 ```

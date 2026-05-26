@@ -13,6 +13,7 @@ entirely by the CNC Gateway process.
 
 import json
 import logging
+import time
 
 from celery.utils.log import get_task_logger
 from core.adapters.database.base import SessionLocal
@@ -146,8 +147,6 @@ def _wait_for_completion(
     to the ``grbl_status`` channel (Desktop, Web SSE). This function
     only cares about the terminal events.
     """
-    import time
-
     deadline = time.time() + FILE_EVENT_TIMEOUT
 
     for raw_message in pubsub.listen():
