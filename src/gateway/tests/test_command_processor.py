@@ -20,7 +20,7 @@ from core.domain.gateway import (
     MSG_REALTIME,
 )
 from fakes import FakeController, FakeFileExecutor, FakeSessionManager
-from gateway.commandProcessor import CommandProcessor
+from gateway.application.command_processor import CommandProcessor
 
 # ---------------------------------------------------------------------------
 # Helpers

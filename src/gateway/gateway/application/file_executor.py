@@ -20,7 +20,6 @@ from collections import deque
 from pathlib import Path
 from typing import Any, Optional
 
-from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from core.domain.gateway import (
     EVENT_FILE_FAILED,
     EVENT_FILE_FINISHED,
@@ -49,9 +48,6 @@ class FileExecutor:
         self,
         controller: CncController,
         redis_conn: RedisClient,
-        host: str = REDIS_HOST,
-        port: int = REDIS_PORT,
-        db: int = REDIS_DB_STORAGE,
     ):
         self.controller = controller
         self._redis = redis_conn

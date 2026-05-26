@@ -39,10 +39,10 @@ from core.utilities.loggerFactory import setup_stream_logger
 
 from gateway.adapters.cnc.controller import GrblController
 from gateway.adapters.serial import SerialService
-from gateway.commandProcessor import CommandProcessor
-from gateway.fileExecutor import FileExecutor
-from gateway.sessionManager import SessionManager
-from gateway.statusPublisher import StatusPublisher
+from gateway.application.command_processor import CommandProcessor
+from gateway.application.file_executor import FileExecutor
+from gateway.application.session_manager import SessionManager
+from gateway.application.status_publisher import StatusPublisher
 
 logger = logging.getLogger(__name__)
 

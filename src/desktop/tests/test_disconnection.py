@@ -170,7 +170,12 @@ class TestDisconnectionMainWindow:
         # Mock closeEvent to prevent actual window closing during tests
         mocker.patch.object(MainWindow, "closeEvent", lambda self, event: event.accept())
 
-        window = MainWindow(AppContext(gateway=MagicMock(spec=IGatewayClient)))
+        window = MainWindow(AppContext(
+            gateway=MagicMock(spec=IGatewayClient),
+            worker=MagicMock(),
+            file_storage=MagicMock(),
+            session_factory=MagicMock(),
+        ))
         qtbot.addWidget(window)
 
         # Simulate a view constructor that raises

@@ -1,5 +1,4 @@
 import pytest
-from pytest_mock.plugin import MockerFixture
 from worker.domain.gcode.analyser import GcodeAnalyser
 from worker.domain.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
 
@@ -56,12 +55,8 @@ N90 G66
             ),
         ],
     )
-    def test_file_sender_start(self, mocker: MockerFixture, content, expected):
-        analyser = GcodeAnalyser("/path/to/file", GRBL_VALID_GCODES, GRBL_VALID_MCODES)
-
-        # Mock FS methods
-        mocked_file_data = mocker.mock_open(read_data=content)
-        mocker.patch("builtins.open", mocked_file_data)
+    def test_file_sender_start(self, content, expected):
+        analyser = GcodeAnalyser(content, GRBL_VALID_GCODES, GRBL_VALID_MCODES)
 
         # Call method under test
         result = analyser.analyse()

@@ -11,7 +11,7 @@ from core.domain.gateway import (
     EVENTS_CHANNEL,
     SESSION_KEY,
 )
-from gateway.sessionManager import SessionManager
+from gateway.application.session_manager import SessionManager
 
 # ---------------------------------------------------------------------------
 # Helpers

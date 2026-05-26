@@ -59,10 +59,10 @@ def generate_file_report_handler(
     if not file:
         raise Exception("No se encontró el archivo en la base de datos")
 
-    file_path = storage.get_file_path(file.user_id, file.file_name)
+    content = storage.read_file(file.user_id, file.file_name)
 
     # 2. Instantiate the G-code analyser
-    analyser = GcodeAnalyser(file_path, valid_gcodes, valid_mcodes)
+    analyser = GcodeAnalyser(content, valid_gcodes, valid_mcodes)
 
     # 3. Analyse and save the generated report
     report = analyser.analyse()
