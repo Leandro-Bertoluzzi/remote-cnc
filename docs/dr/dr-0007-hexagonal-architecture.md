@@ -94,14 +94,31 @@ across the entire monorepo, implemented via `typing.Protocol`.
 
 The adoption is incremental to minimize risk:
 
-- **Phase 1 — `gateway` (this decision):** define `CncController` and
-  `RedisClient` protocols; update all gateway components to depend on protocols
-  only. Validate that tests pass and Pylance reports zero errors. Move `core.utilities.grbl.*`
-  (currently used only by `gateway`) into the `gateway` package, making it a
-  proper adapter hidden behind `CncController`.
-- **Phase 2 — `api` and `worker`:** apply the same pattern to their Redis
-  usage and any other infrastructure dependencies.
-- **Phase 3 — `desktop`:** apply to Qt-independent business logic.
+- **Phase 1 — `gateway`:** `CncController` and `RedisClient` protocols were
+  introduced and gateway components now depend on ports.
+- **Phase 2 — `api` and `worker`:** Dependencies wired through ports/adapters
+  (DB repositories, gateway client, worker client).
+- **Phase 3 — `desktop`:** Composition-root wiring and shared ports usage;
+  migration of remaining Qt-independent business logic.
+
+### Implementation status (2026-05)
+
+At the time of this update, Ports & Adapters has already been applied beyond
+the initial `GrblController` / `RedisClient` scope:
+
+- Database boundary: `DbSession` and repository ports (`IFileRepository`,
+  `ITaskRepository`, `IUserRepository`, `IMaterialRepository`, `IToolRepository`)
+  with concrete SQLAlchemy adapters under `core/core/adapters/database/`.
+- External clients: `IGatewayClient` and `IWorkerClient` ports with concrete
+  adapters in `core/core/adapters/gateway/` and `core/core/adapters/worker/`.
+- File system boundary: `IFileStorage` port with `FileSystemStorage` adapter.
+- CNC stack (gateway): `CncController` and `SerialPort` ports with GRBL/serial
+  adapters under `gateway/gateway/adapters/`.
+
+All shared interfaces are currently centralized under `core/core/ports/`.
+This keeps adoption simple today, while leaving room to extract shared contracts
+into dedicated packages in the future if `core` is narrowed to domain-only
+concerns.
 
 ## Consequences
 
@@ -121,7 +138,8 @@ The adoption is incremental to minimize risk:
 
 ## Next Steps
 
-- [ ] Phase 1: implement `core/core/ports/redis_client.py` and
-      `gateway/gateway/ports/cnc_controller.py`; update all four gateway components.
-- [ ] Phase 2: extend `RedisClient` usage to `api` and `worker` packages.
-- [ ] Phase 3: apply to `desktop`.
+- [ ] Consolidate gateway around `CncController` + `RedisClient` ports.
+- [ ] Introduce shared DB, gateway, worker and file-storage ports/adapters in `core`.
+- [ ] Complete remaining worker adapter-boundary migrations.
+- [ ] Complete remaining desktop Qt-independent business logic migration.
+- [ ] Re-evaluate whether shared ports should move from `core` to dedicated packages.
