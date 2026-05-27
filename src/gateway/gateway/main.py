@@ -21,7 +21,9 @@ import sys
 import time
 
 import redis
+from core.adapters.file_storage import FileSystemStorage
 from core.config import (
+    FILES_FOLDER_PATH,
     GRBL_SIMULATION,
     REDIS_DB_STORAGE,
     REDIS_HOST,
@@ -101,7 +103,9 @@ def create_gateway(
 
     # Sub-systems
     session_manager = SessionManager(redis_conn=redis_conn)
-    file_executor = FileExecutor(controller, redis_conn=redis_conn)
+    file_executor = FileExecutor(
+        controller, redis_conn=redis_conn, storage=FileSystemStorage(FILES_FOLDER_PATH)
+    )
     status_publisher = StatusPublisher(
         controller,
         session_manager,

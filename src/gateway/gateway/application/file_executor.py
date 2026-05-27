@@ -26,6 +26,7 @@ from core.domain.gateway import (
     EVENT_FILE_STARTED,
     EVENTS_CHANNEL,
 )
+from core.ports.file_storage import IFileStorage
 from core.ports.redis_client import RedisClient
 
 from gateway.ports.cnc_controller import CncController
@@ -48,9 +49,11 @@ class FileExecutor:
         self,
         controller: CncController,
         redis_conn: RedisClient,
+        storage: IFileStorage,
     ):
         self.controller = controller
         self._redis = redis_conn
+        self._storage = storage
         self._reset_state()
 
     # ------------------------------------------------------------------
@@ -93,7 +96,7 @@ class FileExecutor:
             return
 
         try:
-            self._gcode = open(path, "r")
+            self._gcode = self._storage.open_for_reading(path)
         except OSError as exc:
             logger.error("Cannot open file %s: %s", file_path, exc)
             self._publish_event(

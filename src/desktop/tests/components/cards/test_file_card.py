@@ -4,7 +4,6 @@ from core.domain.exceptions import DuplicatedFileNameError, PersistenceError
 from core.utilities.files import FileSystemError
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
-from desktop.services.fileService import FileService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -42,7 +41,7 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
         # Mock file service methods
-        mock_rename_file = mocker.patch.object(FileService, "rename_file")
+        mock_rename_file = self.parent._context.file_service.rename_file
 
         # Call the updateFile method
         self.card.updateFile()
@@ -60,14 +59,11 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock file service methods
-        mock_rename_file = mocker.patch.object(FileService, "rename_file")
-
         # Call the updateFile method
         self.card.updateFile()
 
         # Validate function calls
-        assert mock_rename_file.call_count == 0
+        assert self.parent._context.file_service.rename_file.call_count == 0
 
     def test_file_card_update_file_repeated_name(self, mocker: MockerFixture):
         # Mock FileDataDialog methods
@@ -76,8 +72,8 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
         # Mock file service methods
-        mock_rename_file = mocker.patch.object(
-            FileService, "rename_file", side_effect=DuplicatedFileNameError("mocked error")
+        self.parent._context.file_service.rename_file.side_effect = DuplicatedFileNameError(
+            "mocked error"
         )
 
         # Mock parent methods
@@ -87,7 +83,7 @@ class TestFileCard:
         self.card.updateFile()
 
         # Validate function calls
-        assert mock_rename_file.call_count == 1
+        assert self.parent._context.file_service.rename_file.call_count == 1
         assert mock_popup.call_count == 1
 
     def test_file_card_update_file_fs_error(self, mocker: MockerFixture):
@@ -97,9 +93,7 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
         # Mock file service methods
-        mock_rename_file = mocker.patch.object(
-            FileService, "rename_file", side_effect=FileSystemError("mocked error")
-        )
+        self.parent._context.file_service.rename_file.side_effect = FileSystemError("mocked error")
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")
@@ -108,7 +102,7 @@ class TestFileCard:
         self.card.updateFile()
 
         # Validate function calls
-        assert mock_rename_file.call_count == 1
+        assert self.parent._context.file_service.rename_file.call_count == 1
         assert mock_popup.call_count == 1
 
     def test_file_card_update_file_db_error(self, mocker: MockerFixture):
@@ -118,9 +112,7 @@ class TestFileCard:
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
         # Mock file service methods
-        mock_rename_file = mocker.patch.object(
-            FileService, "rename_file", side_effect=PersistenceError("mocked error")
-        )
+        self.parent._context.file_service.rename_file.side_effect = PersistenceError("mocked error")
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")
@@ -129,7 +121,7 @@ class TestFileCard:
         self.card.updateFile()
 
         # Validate function calls
-        assert mock_rename_file.call_count == 1
+        assert self.parent._context.file_service.rename_file.call_count == 1
         assert mock_popup.call_count == 1
 
     @pytest.mark.parametrize(
@@ -139,23 +131,20 @@ class TestFileCard:
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock file service methods
-        mock_delete_file = mocker.patch.object(FileService, "remove_file")
-
         # Call the removeFile method
         self.card.removeFile()
 
         # Validate function calls
-        assert mock_delete_file.call_count == (1 if expected_updated else 0)
+        assert self.parent._context.file_service.remove_file.call_count == (
+            1 if expected_updated else 0
+        )
 
     def test_file_card_remove_file_fs_error(self, mocker: MockerFixture):
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
         # Mock file service methods
-        mock_delete_file = mocker.patch.object(
-            FileService, "remove_file", side_effect=FileSystemError("mocked error")
-        )
+        self.parent._context.file_service.remove_file.side_effect = FileSystemError("mocked error")
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")
@@ -164,7 +153,7 @@ class TestFileCard:
         self.card.removeFile()
 
         # Validate function calls
-        assert mock_delete_file.call_count == 1
+        assert self.parent._context.file_service.remove_file.call_count == 1
         assert mock_popup.call_count == 1
 
     def test_file_card_remove_file_db_error(self, mocker: MockerFixture):
@@ -172,9 +161,7 @@ class TestFileCard:
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
         # Mock file service methods
-        mock_delete_file = mocker.patch.object(
-            FileService, "remove_file", side_effect=PersistenceError("mocked error")
-        )
+        self.parent._context.file_service.remove_file.side_effect = PersistenceError("mocked error")
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")
@@ -183,5 +170,5 @@ class TestFileCard:
         self.card.removeFile()
 
         # Validate function calls
-        assert mock_delete_file.call_count == 1
+        assert self.parent._context.file_service.remove_file.call_count == 1
         assert mock_popup.call_count == 1

@@ -6,44 +6,40 @@ from pytest_mock.plugin import MockerFixture
 
 class TestMaterialService:
     @staticmethod
-    def _mock_db_and_repo(mocker: MockerFixture):
+    def _make_service_and_repo(mocker: MockerFixture):
         session = MagicMock()
-        session_ctx = MagicMock()
-        session_ctx.__enter__.return_value = session
-        session_ctx.__exit__.return_value = None
-
-        mocker.patch("desktop.services.materialService.get_db_session", return_value=session_ctx)
+        session_factory = MagicMock()
+        session_factory.return_value.__enter__.return_value = session
+        session_factory.return_value.__exit__.return_value = None
         repository = MagicMock()
-        get_repo = mocker.patch(
+        mocker.patch(
             "desktop.services.materialService.get_material_repository",
             return_value=repository,
         )
-        return session, repository, get_repo
+        service = MaterialService(session_factory=session_factory)
+        return service, session, repository
 
     def test_get_all_materials(self, mocker: MockerFixture):
-        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        service, session, repository = self._make_service_and_repo(mocker)
         expected = [MagicMock(), MagicMock()]
         repository.get_all_materials.return_value = expected
 
-        result = MaterialService.get_all_materials()
+        result = service.get_all_materials()
 
         assert result == expected
-        get_repo.assert_called_once_with(session)
         repository.get_all_materials.assert_called_once_with()
 
     def test_create_material(self, mocker: MockerFixture):
-        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        service, session, repository = self._make_service_and_repo(mocker)
 
-        result = MaterialService.create_material("MDF", "desc")
+        result = service.create_material("MDF", "desc")
 
-        get_repo.assert_called_once_with(session)
         repository.create_material.assert_called_once_with("MDF", "desc")
         assert result is None
 
     def test_remove_material(self, mocker: MockerFixture):
-        session, repository, get_repo = self._mock_db_and_repo(mocker)
+        service, session, repository = self._make_service_and_repo(mocker)
 
-        MaterialService.remove_material(material_id=2)
+        service.remove_material(material_id=2)
 
-        get_repo.assert_called_once_with(session)
         repository.remove_material.assert_called_once_with(2)

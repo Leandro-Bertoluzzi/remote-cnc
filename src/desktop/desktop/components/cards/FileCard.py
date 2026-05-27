@@ -13,10 +13,6 @@ from desktop.components.dialogs.TaskDataDialog import TaskFromFileDialog
 from desktop.config import USER_ID
 from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.utils import needs_confirmation
-from desktop.services.assetService import AssetService
-from desktop.services.deviceService import DeviceService
-from desktop.services.fileService import FileService
-from desktop.services.taskService import TaskService
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +46,7 @@ class FileCard(Card):
             return
 
         try:
-            FileService.rename_file(USER_ID, self.file, name)
+            self.getView()._context.file_service.rename_file(USER_ID, self.file, name)
         except DuplicatedFileNameError as error:
             self.showWarning("Nombre repetido", str(error))
         except (InvalidFile, FileSystemError) as error:
@@ -63,7 +59,7 @@ class FileCard(Card):
     @needs_confirmation("¿Realmente desea eliminar el archivo?", "Eliminar archivo")
     def removeFile(self):
         try:
-            FileService.remove_file(self.file)
+            self.getView()._context.file_service.remove_file(self.file)
         except FileSystemError as error:
             self.showError("Error de borrado", str(error))
         except (PersistenceError, EntityNotFoundError) as error:
@@ -73,7 +69,7 @@ class FileCard(Card):
 
     def _create_task_dialog(self):
         try:
-            _, materials, tools = AssetService.get_assets(USER_ID)
+            _, materials, tools = self.getView()._context.asset_service.get_assets(USER_ID)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -92,7 +88,9 @@ class FileCard(Card):
         _, tool_id, material_id, name, note = task_config
 
         try:
-            TaskService.create_task(USER_ID, self.file.id, tool_id, material_id, name, note)
+            self.getView()._context.task_service.create_task(
+                USER_ID, self.file.id, tool_id, material_id, name, note
+            )
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -100,7 +98,7 @@ class FileCard(Card):
     @needs_confirmation("¿Desea ejecutar la tarea ahora?", "Ejecutar tarea")
     def executeTaskFromFile(self):
         try:
-            unavailable_reason = DeviceService.check_device_availability()
+            unavailable_reason = self.getView()._context.device_service.check_device_availability()
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
@@ -116,7 +114,7 @@ class FileCard(Card):
         _, tool_id, material_id, name, note = task_config
 
         try:
-            TaskService.create_and_execute_task(
+            self.getView()._context.task_service.create_and_execute_task(
                 USER_ID, self.file.id, tool_id, material_id, name, note
             )
         except Exception as error:

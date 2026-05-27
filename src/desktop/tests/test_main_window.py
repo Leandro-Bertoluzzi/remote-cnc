@@ -1,12 +1,5 @@
-from unittest.mock import MagicMock
-
 import pytest
-from core.ports.file_storage import IFileStorage
-from core.ports.gateway_client import IGatewayClient
-from core.ports.worker_client import IWorkerClient
-from desktop.app_context import AppContext
 from desktop.MainWindow import MainWindow
-from desktop.services.deviceService import DeviceService
 from desktop.views.MainMenu import MainMenu
 from desktop.views.UsersView import UsersView
 from PyQt5.QtGui import QCloseEvent
@@ -14,14 +7,7 @@ from PyQt5.QtWidgets import QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 
-
-def _make_context() -> AppContext:
-    return AppContext(
-        gateway=MagicMock(spec=IGatewayClient),
-        worker=MagicMock(spec=IWorkerClient),
-        file_storage=MagicMock(spec=IFileStorage),
-        session_factory=MagicMock(),
-    )
+from desktop.tests.conftest import make_mock_context
 
 
 class TestMainWindow:
@@ -31,16 +17,17 @@ class TestMainWindow:
     def test_main_window_init(
         self, qtbot: QtBot, mocker: MockerFixture, worker_on, worker_running, gateway_running
     ):
-        # Mock device service methods
-        mocker.patch.object(DeviceService, "is_worker_connected", return_value=worker_on)
-        mocker.patch.object(DeviceService, "is_worker_busy", return_value=worker_running)
-        mocker.patch.object(DeviceService, "is_gateway_running", return_value=gateway_running)
+        # Configure device service mock
+        context = make_mock_context()
+        context.device_service.is_worker_connected.return_value = worker_on
+        context.device_service.is_worker_busy.return_value = worker_running
+        context.device_service.is_gateway_running.return_value = gateway_running
 
         # Mock QMessageBox method
         mocker.patch.object(QMessageBox, "question", return_value=QMessageBox.Yes)
 
         # Instantiate window
-        window = MainWindow(_make_context())
+        window = MainWindow(context)
         qtbot.addWidget(window)
 
         # Assertions
@@ -60,11 +47,12 @@ class TestMainWindow:
         assert window.status_bar.label_device.text() == expected_device_status
 
     def test_main_window_changes_view(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock device service methods
-        mocker.patch.object(DeviceService, "is_worker_connected", return_value=False)
+        # Configure device service mock
+        context = make_mock_context()
+        context.device_service.is_worker_connected.return_value = False
 
         # Instantiate window
-        window = MainWindow(_make_context())
+        window = MainWindow(context)
         qtbot.addWidget(window)
 
         # Mock QMessageBox method
@@ -85,11 +73,12 @@ class TestMainWindow:
     def test_main_window_close_event(
         self, qtbot: QtBot, mocker: MockerFixture, msgBoxResponse, expectedMethodCalls
     ):
-        # Mock device service methods
-        mocker.patch.object(DeviceService, "is_worker_connected", return_value=False)
+        # Configure device service mock
+        context = make_mock_context()
+        context.device_service.is_worker_connected.return_value = False
 
         # Instantiate window
-        window = MainWindow(_make_context())
+        window = MainWindow(context)
         qtbot.addWidget(window)
 
         # Mock QMessageBox method

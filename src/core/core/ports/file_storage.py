@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import BinaryIO, Protocol, runtime_checkable
+from typing import IO, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -18,7 +18,7 @@ class IFileStorage(Protocol):
         """Return the text content of a user's file."""
         ...
 
-    def save_file(self, user_id: int, file: BinaryIO, filename: str) -> Path:
+    def save_file(self, user_id: int, file: IO, filename: str) -> Path:
         """Persist *file* under the user's directory and return the final path."""
         ...
 
@@ -32,4 +32,8 @@ class IFileStorage(Protocol):
 
     def delete_file(self, user_id: int, filename: str) -> None:
         """Delete a file from the user's directory."""
+        ...
+
+    def open_for_reading(self, path: str | Path) -> IO[str]:
+        """Open *path* for sequential text reading and return the file object."""
         ...

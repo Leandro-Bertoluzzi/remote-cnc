@@ -2,7 +2,6 @@
 
 import pytest
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
-from desktop.app_context import AppContext
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.CodeEditor import CodeEditor
 from desktop.components.ControllerStatus import ControllerStatus
@@ -10,7 +9,6 @@ from desktop.components.Terminal import Terminal
 from desktop.containers.ControllerActions import ControllerActions
 from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
-from desktop.services.deviceService import DeviceService
 from desktop.views.ControlView import ControlView
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QMessageBox
@@ -23,34 +21,30 @@ _FAKE_SESSION_ID = "abc123"
 class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
-        # Mock device service methods
-        mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
-
-        # Build an AppContext with a mock gateway — no real Redis connections
-        self.mock_gateway = mocker.MagicMock()
+        # Patch GatewayMonitor — no real Redis connections
         self.mock_sync = mocker.MagicMock(spec=GatewayMonitor)
         mocker.patch("desktop.views.ControlView.GatewayMonitor", return_value=self.mock_sync)
-        self.mock_context = AppContext(
-            gateway=self.mock_gateway,
-            worker=mocker.MagicMock(),
-            file_storage=mocker.MagicMock(),
-            session_factory=mocker.MagicMock(),
-        )
+
+        # Use the context provided by mock_window
+        self.mock_context = mock_window._context
+        self.mock_gateway = mock_window._context.gateway
+        mock_window._context.device_service.is_worker_busy.return_value = False
 
         # Create an instance of ControlView
         self.parent = mock_window
         self.control_view = ControlView(self.parent, self.mock_context)
         qtbot.addWidget(self.control_view)
 
+        # Reset call counts accumulated during view creation
+        self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
+        self.parent.removeToolBar.reset_mock()  # type: ignore[union-attr]
+
     # -- init ---------------------------------------------------------------
 
     @pytest.mark.parametrize("device_busy", [False, True])
     def test_control_view_init(self, qtbot: QtBot, mocker: MockerFixture, helpers, device_busy):
-        # Reset parent mocks call count
-        self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
-
         # Mock device service methods
-        mocker.patch.object(DeviceService, "is_worker_busy", return_value=device_busy)
+        self.mock_context.device_service.is_worker_busy.return_value = device_busy
 
         # Create an instance of ControlView
         control_view = ControlView(self.parent, self.mock_context)

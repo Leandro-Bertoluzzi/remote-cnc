@@ -4,9 +4,6 @@ from core.domain.task import TaskStatus
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from desktop.services.assetService import AssetService
-from desktop.services.deviceService import DeviceService
-from desktop.services.taskService import TaskService
 from desktop.views.TasksView import TasksView
 from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
 from pytest_mock.plugin import MockerFixture
@@ -20,8 +17,9 @@ class TestTaskCard:
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window):
         mocker.patch.object(TasksView, "refreshLayout")
 
-        # Patch the service methods
-        mocker.patch.object(AssetService, "get_assets", return_value=([], [], []))
+        # Configure asset service mock for TasksView init
+        mock_window._context.asset_service.get_assets.return_value = ([], [], [])
+        mock_window._context.task_service.get_all_tasks.return_value = []
 
         # Mock parent widget
         self.window = mock_window
@@ -83,7 +81,7 @@ class TestTaskCard:
         mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_task = mocker.patch.object(TaskService, "update_task")
+        mock_update_task = self.window._context.task_service.update_task
 
         # Call the updateTask method
         self.card.updateTask()
@@ -113,9 +111,8 @@ class TestTaskCard:
         mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_task = mocker.patch.object(
-            TaskService, "update_task", side_effect=Exception("mocked error")
-        )
+        self.window._context.task_service.update_task.side_effect = Exception("mocked error")
+        mock_update_task = self.window._context.task_service.update_task
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
@@ -137,7 +134,7 @@ class TestTaskCard:
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
         # Mock service method
-        mock_remove_task = mocker.patch.object(TaskService, "remove_task")
+        mock_remove_task = self.window._context.task_service.remove_task
 
         # Call the removeTask method
         self.card.removeTask()
@@ -150,9 +147,8 @@ class TestTaskCard:
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
         # Mock service method
-        mock_remove_task = mocker.patch.object(
-            TaskService, "remove_task", side_effect=Exception("mocked error")
-        )
+        self.window._context.task_service.remove_task.side_effect = Exception("mocked error")
+        mock_remove_task = self.window._context.task_service.remove_task
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
@@ -170,7 +166,7 @@ class TestTaskCard:
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
         # Mock service method
-        mock_update_task_status = mocker.patch.object(TaskService, "update_task_status")
+        mock_update_task_status = self.window._context.task_service.update_task_status
 
         # Call the removeTask method
         self.card.restoreTask()
@@ -192,9 +188,8 @@ class TestTaskCard:
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
         # Mock service method
-        mock_update_task_status = mocker.patch.object(
-            TaskService, "update_task_status", side_effect=Exception("mocked error")
-        )
+        self.window._context.task_service.update_task_status.side_effect = Exception("mocked error")
+        mock_update_task_status = self.window._context.task_service.update_task_status
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
@@ -214,7 +209,7 @@ class TestTaskCard:
         mocker.patch.object(TaskCancelDialog, "getInput", return_value=mock_input)
 
         # Mock service method
-        mock_update_task_status = mocker.patch.object(TaskService, "update_task_status")
+        mock_update_task_status = self.window._context.task_service.update_task_status
 
         # Call the removeTask method
         self.card.cancelTask()
@@ -238,9 +233,8 @@ class TestTaskCard:
         mocker.patch.object(TaskCancelDialog, "getInput", return_value=mock_input)
 
         # Mock service method
-        mock_update_task_status = mocker.patch.object(
-            TaskService, "update_task_status", side_effect=Exception("mocked error")
-        )
+        self.window._context.task_service.update_task_status.side_effect = Exception("mocked error")
+        mock_update_task_status = self.window._context.task_service.update_task_status
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
@@ -261,7 +255,7 @@ class TestTaskCard:
         mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_create_task = mocker.patch.object(TaskService, "create_task")
+        mock_create_task = self.window._context.task_service.create_task
 
         # Call the updateTask method
         self.card.repeatTask()
@@ -289,9 +283,8 @@ class TestTaskCard:
         mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_create_task = mocker.patch.object(
-            TaskService, "create_task", side_effect=Exception("mocked error")
-        )
+        self.window._context.task_service.create_task.side_effect = Exception("mocked error")
+        mock_create_task = self.window._context.task_service.create_task
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
@@ -317,14 +310,13 @@ class TestTaskCard:
         availability_return = (
             None if device_available else "Ejecución cancelada: El equipo está deshabilitado"
         )
-        mocker.patch.object(
-            DeviceService, "check_device_availability", return_value=availability_return
+        self.window._context.device_service.check_device_availability.return_value = (
+            availability_return
         )
 
         # Mock task dispatch
-        mock_send_task = mocker.patch.object(
-            TaskService, "send_task_to_worker", return_value="worker-task-id"
-        )
+        mock_send_task = self.window._context.task_service.send_task_to_worker
+        mock_send_task.return_value = "worker-task-id"
 
         # Call the approveTask method
         self.card.runTask()
@@ -341,7 +333,7 @@ class TestTaskCard:
     @pytest.mark.parametrize("msgBoxApprove", [(QMessageBox.Yes), (QMessageBox.Cancel)])
     def test_task_card_approve_task(self, setup_method, mocker: MockerFixture, msgBoxApprove):
         # Mock service methods
-        mock_update_task_status = mocker.patch.object(TaskService, "update_task_status")
+        mock_update_task_status = self.window._context.task_service.update_task_status
 
         # Mock message box methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxApprove)
@@ -363,9 +355,8 @@ class TestTaskCard:
 
     def test_task_card_approve_task_db_error(self, setup_method, mocker: MockerFixture):
         # Mock service methods
-        mock_update_task_status = mocker.patch.object(
-            TaskService, "update_task_status", side_effect=Exception("mocked error")
-        )
+        self.window._context.task_service.update_task_status.side_effect = Exception("mocked error")
+        mock_update_task_status = self.window._context.task_service.update_task_status
         # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
@@ -382,8 +373,8 @@ class TestTaskCard:
     @pytest.mark.parametrize("paused", [False, True])
     def test_task_card_pause_task(self, setup_method, mocker: MockerFixture, paused):
         # Mock service methods
-        mock_pause = mocker.patch.object(DeviceService, "request_pause")
-        mock_resume = mocker.patch.object(DeviceService, "request_resume")
+        mock_pause = self.window._context.device_service.request_pause
+        mock_resume = self.window._context.device_service.request_resume
 
         # Mock card status
         self.card.paused = paused

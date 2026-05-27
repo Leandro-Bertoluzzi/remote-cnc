@@ -8,7 +8,6 @@ from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.StatusBar import StatusBar
 from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.gatewayMonitor import GatewayMonitor
-from desktop.services.deviceService import DeviceService
 from desktop.views.MainMenu import MainMenu
 
 logger = logging.getLogger(__name__)
@@ -48,14 +47,14 @@ class MainWindow(QMainWindow):
         self.status_bar.updateDeviceStatus("---")
 
         try:
-            if not DeviceService.is_worker_connected():
+            if not self._context.device_service.is_worker_connected():
                 return
 
             self.status_bar.updateWorkerStatus("CONECTADO")
 
-            if not DeviceService.is_gateway_running():
+            if not self._context.device_service.is_gateway_running():
                 self.status_bar.updateDeviceStatus("GATEWAY OFFLINE")
-            elif DeviceService.is_worker_busy():
+            elif self._context.device_service.is_worker_busy():
                 self.status_bar.updateDeviceStatus("TRABAJANDO...")
             else:
                 self.status_bar.updateDeviceStatus("DISPONIBLE")

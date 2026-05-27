@@ -11,9 +11,6 @@ from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.components.TaskProgress import TaskProgress
 from desktop.config import USER_ID
 from desktop.helpers.connectionErrors import get_friendly_error_message
-from desktop.services.assetService import AssetService
-from desktop.services.deviceService import DeviceService
-from desktop.services.taskService import TaskService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -29,7 +26,7 @@ class TasksView(BaseListView):
         self._progress_connected = False
 
         try:
-            self.files, self.materials, self.tools = AssetService.get_assets(USER_ID)
+            self.files, self.materials, self.tools = self._context.asset_service.get_assets(USER_ID)
         except Exception as error:
             error_msg = get_friendly_error_message(error)
             self.layout().addWidget(
@@ -61,11 +58,11 @@ class TasksView(BaseListView):
         )
 
     def getItems(self):
-        tasks = TaskService.get_all_tasks(USER_ID, status="all")
+        tasks = self._context.task_service.get_all_tasks(USER_ID, status="all")
 
         # Check if there is a task in progress
         try:
-            self.device_available = DeviceService.is_device_available()
+            self.device_available = self._context.device_service.is_device_available()
         except Exception:
             logger.warning("Could not check device availability")
             self.device_available = False
@@ -145,7 +142,9 @@ class TasksView(BaseListView):
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
-            TaskService.create_task(USER_ID, file_id, tool_id, material_id, name, note)
+            self._context.task_service.create_task(
+                USER_ID, file_id, tool_id, material_id, name, note
+            )
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

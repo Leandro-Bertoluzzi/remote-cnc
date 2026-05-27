@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Protocol, TypeVar, runtime_checkable
+from typing import Any, Callable, Protocol, TypeVar, runtime_checkable
 
 T = TypeVar("T")
 
@@ -28,3 +28,7 @@ class DbSession(Protocol):
     def refresh(self, instance: Any) -> None: ...
 
     def close(self) -> None: ...
+
+
+# Custom types
+SessionFactory = Callable[..., DbSession]
