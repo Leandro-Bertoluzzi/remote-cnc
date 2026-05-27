@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
-from typing import BinaryIO
+from typing import IO
 
 from core.utilities.files import ALLOWED_FILE_EXTENSIONS, FileSystemError, InvalidFile
 
@@ -46,7 +46,7 @@ class FileSystemStorage:
         except Exception as error:
             raise FileSystemError(f"There was an error reading the file: {error}") from error
 
-    def save_file(self, user_id: int, file: BinaryIO, filename: str) -> Path:
+    def save_file(self, user_id: int, file: IO, filename: str) -> Path:
         """Persist *file* under the user's directory and return the final path."""
         if not self._is_valid_filename(filename):
             raise InvalidFile(f"Invalid file format, must be one of: {ALLOWED_FILE_EXTENSIONS}")
@@ -104,3 +104,7 @@ class FileSystemStorage:
             raise FileSystemError(
                 f"There was an error removing the file from the file system: {error}"
             ) from error
+
+    def open_for_reading(self, path: str | Path) -> IO[str]:
+        """Open *path* for sequential text reading and return the file object."""
+        return open(path, "r")

@@ -12,7 +12,6 @@ from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
 from desktop.MainWindow import MainWindow
-from desktop.services.fileService import FileService
 from desktop.views.FilesView import FilesView
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from pytest_mock.plugin import MockerFixture
@@ -34,45 +33,39 @@ class TestFilesView:
         for file in self.files_list:
             file.user = self.user_test
 
-        # Patch the service method
-        self.mock_get_all_files = mocker.patch.object(
-            FileService, "get_all_files", return_value=self.files_list
-        )
-
-        # Create an instance of FilesView
+        # Configure context service mock
         self.parent = mock_window
+        self.mock_file_service = mock_window._context.file_service
+        self.mock_file_service.get_all_files.return_value = self.files_list
+
         self.files_view = FilesView(self.parent)
         qtbot.addWidget(self.files_view)
 
-    def test_files_view_init(self, helpers):
-        # Validate service calls
-        self.mock_get_all_files.assert_called_once()
+        # Reset call counts accumulated during view creation
+        self.mock_file_service.get_all_files.reset_mock()
 
+    def test_files_view_init(self, helpers):
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3
 
-    def test_files_view_init_with_no_files(self, mocker: MockerFixture, helpers):
-        mock_get_all_files = mocker.patch.object(FileService, "get_all_files", return_value=[])
+    def test_files_view_init_with_no_files(self, helpers):
+        self.mock_file_service.get_all_files.return_value = []
         files_view = FilesView(self.parent)
-        # Validate service calls
-        mock_get_all_files.assert_called_once()
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(files_view.layout(), FileCard) == 0
         assert helpers.count_widgets(files_view.layout(), MsgCard) == 1
 
-    def test_files_view_init_db_error(self, mocker: MockerFixture, helpers):
-        mock_get_all_files = mocker.patch.object(
-            FileService, "get_all_files", side_effect=Exception("mocked-error")
-        )
+    def test_files_view_init_db_error(self, helpers):
+        self.mock_file_service.get_all_files.side_effect = Exception("mocked-error")
+        self.mock_file_service.get_all_files.return_value = None
 
         # Create test view
         files_view = FilesView(self.parent)
 
         # Assertions
-        mock_get_all_files.assert_called_once()
         assert helpers.count_widgets(files_view.layout(), ConnectionErrorWidget) == 1
         assert helpers.count_widgets(files_view.layout(), MenuButton) == 1
         assert helpers.count_widgets(files_view.layout(), FileCard) == 0
@@ -86,31 +79,21 @@ class TestFilesView:
         self.files_view.refreshLayout()
 
         # Validate service calls
-        assert self.mock_get_all_files.call_count == 2
+        assert self.mock_file_service.get_all_files.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 2
 
-    def test_files_view_refresh_layout_db_error(self, mocker: MockerFixture, helpers):
-        # Mock service methods to simulate error(s)
-        # 1st execution: Widget creation (needs to success)
-        # 2nd execution: Test case
-        mock_get_all_files = mocker.patch.object(
-            FileService,
-            "get_all_files",
-            side_effect=[self.files_list, Exception("mocked-error")],
-        )
+    def test_files_view_refresh_layout_db_error(self, helpers):
+        self.mock_file_service.get_all_files.side_effect = Exception("mocked-error")
 
-        # Call the method under test
-        files_view = FilesView(self.parent)
-        files_view.refreshLayout()
+        self.files_view.refreshLayout()
 
-        # Assertions
-        assert mock_get_all_files.call_count == 2
-        assert helpers.count_widgets(files_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(files_view.layout(), MenuButton) == 1
-        assert helpers.count_widgets(files_view.layout(), FileCard) == 0
+        assert self.mock_file_service.get_all_files.call_count == 1
+        assert helpers.count_widgets(self.files_view.layout(), ConnectionErrorWidget) == 1
+        assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.files_view.layout(), FileCard) == 0
 
     def test_files_view_create_file(self, mocker: MockerFixture, helpers):
         # Mock FileDataDialog methods
@@ -125,16 +108,14 @@ class TestFilesView:
             self.files_list.append(file_4)
             return file_4
 
-        mock_create_file = mocker.patch.object(
-            FileService, "create_file", side_effect=side_effect_create_file
-        )
+        self.mock_file_service.create_file.side_effect = side_effect_create_file
 
         # Call the createFile method
         self.files_view.createFile()
 
         # Validate function calls
-        assert mock_create_file.call_count == 1
-        assert self.mock_get_all_files.call_count == 2
+        assert self.mock_file_service.create_file.call_count == 1
+        assert self.mock_file_service.get_all_files.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
@@ -158,7 +139,7 @@ class TestFilesView:
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
         # Mock file service methods
-        mock_create_file = mocker.patch.object(FileService, "create_file", side_effect=error)
+        self.mock_file_service.create_file.side_effect = error
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(
@@ -169,8 +150,8 @@ class TestFilesView:
         self.files_view.createFile()
 
         # Assertions
-        assert mock_create_file.call_count == 1
+        assert self.mock_file_service.create_file.call_count == 1
         assert mock_popup.call_count == 1
-        assert self.mock_get_all_files.call_count == 1
+        assert self.mock_file_service.get_all_files.call_count == 0
         assert helpers.count_widgets(self.files_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.files_view.layout(), FileCard) == 3

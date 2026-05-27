@@ -9,7 +9,6 @@ from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.TaskProgress import TaskProgress
-from desktop.services.deviceService import DeviceService
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
@@ -24,7 +23,7 @@ class MonitorView(BaseView):
 
         # STATE MANAGEMENT
         try:
-            self.device_busy = DeviceService.is_worker_busy()
+            self.device_busy = self._context.device_service.is_worker_busy()
         except Exception:
             logger.warning("Could not check worker status — assuming idle")
             self.device_busy = False

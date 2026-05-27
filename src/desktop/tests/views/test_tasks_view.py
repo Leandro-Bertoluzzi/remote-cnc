@@ -8,9 +8,6 @@ from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
-from desktop.services.assetService import AssetService
-from desktop.services.deviceService import DeviceService
-from desktop.services.taskService import TaskService
 from desktop.views.TasksView import TasksView
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from pytest_mock.plugin import MockerFixture
@@ -25,38 +22,34 @@ class TestTasksView:
         task_3 = Task(user_id=1, file_id=1, tool_id=1, material_id=1, name="Example task 3")
         self.tasks_list = [task_1, task_2, task_3]
 
-        # Patch the service methods
-        mocker.patch.object(AssetService, "get_assets", return_value=([], [], []))
-
-        # Patch the getAllTasksFromUser method with the mock function
-        self.mock_get_all_tasks = mocker.patch.object(
-            TaskService, "get_all_tasks", return_value=self.tasks_list
-        )
+        # Configure service mocks via context
+        mock_window._context.asset_service.get_assets.return_value = ([], [], [])
+        mock_window._context.task_service.get_all_tasks.return_value = self.tasks_list
+        self.mock_task_service = mock_window._context.task_service
+        mock_window._context.device_service.is_device_available.return_value = False
 
         # Patch the constructor of UI components
         mocker.patch.object(TaskCard, "setup_ui")
-
-        # Patch worker/device status checks used by TasksView.getItems()
-        mocker.patch.object(DeviceService, "is_device_available", return_value=False)
 
         # Create an instance of TasksView
         self.parent = mock_window
         self.tasks_view = TasksView(self.parent)
         qtbot.addWidget(self.tasks_view)
 
-    def test_tasks_view_init(self, helpers):
-        # Validate service calls
-        self.mock_get_all_tasks.assert_called_once()
+        # Reset call counts accumulated during view creation
+        self.parent._context.asset_service.get_assets.reset_mock()
+        self.parent._context.task_service.get_all_tasks.reset_mock()
 
+    def test_tasks_view_init(self, helpers):
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 3
 
-    def test_tasks_view_init_with_no_tasks(self, mocker: MockerFixture, helpers):
-        mock_get_all_tasks = mocker.patch.object(TaskService, "get_all_tasks", return_value=[])
+    def test_tasks_view_init_with_no_tasks(self, helpers):
+        self.mock_task_service.get_all_tasks.return_value = []
         tasks_view = TasksView(self.parent)
         # Validate service calls
-        mock_get_all_tasks.assert_called_once()
+        self.mock_task_service.get_all_tasks.assert_called()
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(tasks_view.layout(), MenuButton) == 2
@@ -70,14 +63,18 @@ class TestTasksView:
             (False, True),
         ],
     )
-    def test_tasks_view_init_db_error(self, mocker, helpers, assets_error, tasks_error):
+    def test_tasks_view_init_db_error(self, helpers, assets_error, tasks_error):
         if assets_error:
-            mocker.patch.object(AssetService, "get_assets", side_effect=Exception("mocked-error"))
-        mock_get_all_tasks = mocker.patch.object(TaskService, "get_all_tasks", return_value=[])
+            self.parent._context.asset_service.get_assets.side_effect = Exception("mocked-error")
+        else:
+            self.parent._context.asset_service.get_assets.side_effect = None
+            self.parent._context.asset_service.get_assets.return_value = ([], [], [])
+
         if tasks_error:
-            mock_get_all_tasks = mocker.patch.object(
-                TaskService, "get_all_tasks", side_effect=Exception("mocked-error")
-            )
+            self.parent._context.task_service.get_all_tasks.side_effect = Exception("mocked-error")
+        else:
+            self.parent._context.task_service.get_all_tasks.side_effect = None
+            self.parent._context.task_service.get_all_tasks.return_value = []
 
         # Create test view
         tasks_view = TasksView(self.parent)
@@ -88,9 +85,9 @@ class TestTasksView:
         assert helpers.count_widgets(tasks_view.layout(), MsgCard) == 0
 
         if assets_error:
-            assert mock_get_all_tasks.call_count == 0
+            assert self.parent._context.task_service.get_all_tasks.call_count == 0
         else:
-            assert mock_get_all_tasks.call_count == 1
+            assert self.parent._context.task_service.get_all_tasks.call_count == 1
 
     def test_tasks_view_refresh_layout(self, helpers):
         # We remove a task
@@ -100,28 +97,21 @@ class TestTasksView:
         self.tasks_view.refreshLayout()
 
         # Validate service calls
-        assert self.mock_get_all_tasks.call_count == 2
+        assert self.mock_task_service.get_all_tasks.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 2
 
-    def test_tasks_view_refresh_layout_db_error(self, mocker: MockerFixture, helpers):
-        mock_get_all_tasks = mocker.patch.object(
-            TaskService,
-            "get_all_tasks",
-            side_effect=[self.tasks_list, Exception("mocked-error")],
-        )
+    def test_tasks_view_refresh_layout_db_error(self, helpers):
+        self.mock_task_service.get_all_tasks.side_effect = Exception("mocked-error")
 
-        # Call the method under test
-        tasks_view = TasksView(self.parent)
-        tasks_view.refreshLayout()
+        self.tasks_view.refreshLayout()
 
-        # Assertions
-        assert mock_get_all_tasks.call_count == 2
-        assert helpers.count_widgets(tasks_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(tasks_view.layout(), MenuButton) == 1
-        assert helpers.count_widgets(tasks_view.layout(), TaskCard) == 0
+        assert self.mock_task_service.get_all_tasks.call_count == 1
+        assert helpers.count_widgets(self.tasks_view.layout(), ConnectionErrorWidget) == 1
+        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 0
 
     def test_tasks_view_create_task(self, mocker: MockerFixture, helpers):
         # Mock TaskDataDialog methods
@@ -142,16 +132,13 @@ class TestTasksView:
             self.tasks_list.append(task_4)
             return
 
-        # Mock and keep track of function calls
-        mock_create_task = mocker.patch.object(
-            TaskService, "create_task", side_effect=side_effect_create_task
-        )
+        self.mock_task_service.create_task.side_effect = side_effect_create_task
 
         # Call the createTask method
         self.tasks_view.createTask()
 
         # Validate service calls
-        assert mock_create_task.call_count == 1
+        assert self.mock_task_service.create_task.call_count == 1
         create_task_params = {
             "user_id": 1,
             "file_id": 2,
@@ -160,12 +147,15 @@ class TestTasksView:
             "name": "Example task 4",
             "note": "Just a simple description",
         }
-        mock_create_task.assert_called_with(*create_task_params.values())
-        assert self.mock_get_all_tasks.call_count == 2
+        self.mock_task_service.create_task.assert_called_with(*create_task_params.values())
+        assert self.mock_task_service.get_all_tasks.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 4
+
+        # Restore
+        self.mock_task_service.create_task.side_effect = None
 
     def test_tasks_view_create_task_db_error(self, mocker: MockerFixture, helpers):
         # Mock TaskDataDialog methods
@@ -174,9 +164,7 @@ class TestTasksView:
         mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_inputs)
 
         # Mock service method to simulate exception
-        mock_create_task = mocker.patch.object(
-            TaskService, "create_task", side_effect=Exception("mocked-error")
-        )
+        self.mock_task_service.create_task.side_effect = Exception("mocked-error")
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
@@ -185,13 +173,16 @@ class TestTasksView:
         self.tasks_view.createTask()
 
         # Validate service calls
-        assert mock_create_task.call_count == 1
-        assert self.mock_get_all_tasks.call_count == 1
+        assert self.mock_task_service.create_task.call_count == 1
+        assert self.mock_task_service.get_all_tasks.call_count == 0
         assert mock_popup.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 3
+
+        # Restore
+        self.mock_task_service.create_task.side_effect = None
 
 
 class TestTasksViewProgress:
@@ -208,29 +199,29 @@ class TestTasksViewProgress:
 
         self.task_idle = Task(user_id=1, file_id=1, tool_id=1, material_id=1, name="Idle")
 
-        # Patch services
-        mocker.patch.object(AssetService, "get_assets", return_value=([], [], []))
+        # Configure service mocks
+        mock_window._context.asset_service.get_assets.return_value = ([], [], [])
+        mock_window._context.device_service.is_device_available.return_value = True
         mocker.patch.object(TaskCard, "setup_ui")
-        mocker.patch.object(DeviceService, "is_device_available", return_value=True)
 
         self.parent = mock_window
 
-    def _create_view(self, qtbot, mocker, tasks):
-        mocker.patch.object(TaskService, "get_all_tasks", return_value=tasks)
+    def _create_view(self, qtbot, tasks):
+        self.parent._context.task_service.get_all_tasks.return_value = tasks
         view = TasksView(self.parent)
         qtbot.addWidget(view)
         return view
 
-    def test_progress_visible_when_task_in_progress(self, qtbot: QtBot, mocker: MockerFixture):
-        view = self._create_view(qtbot, mocker, [self.task_running, self.task_idle])
+    def test_progress_visible_when_task_in_progress(self, qtbot: QtBot):
+        view = self._create_view(qtbot, [self.task_running, self.task_idle])
         assert view.task_progress.isHidden() is False
 
-    def test_progress_hidden_when_no_task_in_progress(self, qtbot: QtBot, mocker: MockerFixture):
-        view = self._create_view(qtbot, mocker, [self.task_idle])
+    def test_progress_hidden_when_no_task_in_progress(self, qtbot: QtBot):
+        view = self._create_view(qtbot, [self.task_idle])
         assert view.task_progress.isHidden() is True
 
-    def test_file_progress_signal_updates_bars(self, qtbot: QtBot, mocker: MockerFixture):
-        view = self._create_view(qtbot, mocker, [self.task_running])
+    def test_file_progress_signal_updates_bars(self, qtbot: QtBot):
+        view = self._create_view(qtbot, [self.task_running])
 
         # Emit signal
         self.monitor.file_progress.emit(30, 20, 100)
@@ -239,8 +230,8 @@ class TestTasksViewProgress:
         assert view.task_progress.sent_progress.value() == 30
         assert view.task_progress.process_progress.value() == 20
 
-    def test_file_finished_hides_progress(self, qtbot: QtBot, mocker: MockerFixture):
-        view = self._create_view(qtbot, mocker, [self.task_running])
+    def test_file_finished_hides_progress(self, qtbot: QtBot):
+        view = self._create_view(qtbot, [self.task_running])
         assert view.task_progress.isHidden() is False
 
         # After finish, tasks no longer have one in progress
@@ -251,7 +242,7 @@ class TestTasksViewProgress:
         assert view._progress_connected is False
 
     def test_file_failed_hides_progress(self, qtbot: QtBot, mocker: MockerFixture):
-        view = self._create_view(qtbot, mocker, [self.task_running])
+        view = self._create_view(qtbot, [self.task_running])
         assert view.task_progress.isHidden() is False
 
         self.task_running.status = TaskStatus.FAILED.value
@@ -261,7 +252,7 @@ class TestTasksViewProgress:
         assert view._progress_connected is False
 
     def test_close_event_disconnects_signals(self, qtbot: QtBot, mocker: MockerFixture):
-        view = self._create_view(qtbot, mocker, [self.task_running])
+        view = self._create_view(qtbot, [self.task_running])
         assert view._progress_connected is True
 
         view.close()

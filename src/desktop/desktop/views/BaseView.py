@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 class BaseView(QWidget):
     def __init__(self, parent: "MainWindow", context: "AppContext | None" = None):
         super(BaseView, self).__init__(parent)
-        self._context = context
+        # Prefer the explicitly-supplied context; fall back to parent._context so
+        # tests and MainMenu can create views without forwarding the context manually.
+        self._context = context if context is not None else getattr(parent, "_context", None)
 
     # Notifications
 

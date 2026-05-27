@@ -4,8 +4,6 @@ from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
-from desktop.services.materialService import MaterialService
-from desktop.services.toolService import ToolService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -44,10 +42,10 @@ class InventoryView(BaseListView):
         return self.getMaterials()
 
     def getTools(self):
-        return ToolService.get_all_tools()
+        return self._context.tool_service.get_all_tools()
 
     def getMaterials(self):
-        return MaterialService.get_all_materials()
+        return self._context.material_service.get_all_materials()
 
     def createTool(self):
         toolDialog = ToolDataDialog()
@@ -56,7 +54,7 @@ class InventoryView(BaseListView):
 
         name, description = toolDialog.getInputs()
         try:
-            ToolService.create_tool(name, description)
+            self._context.tool_service.create_tool(name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -69,7 +67,7 @@ class InventoryView(BaseListView):
 
         name, description = materialDialog.getInputs()
         try:
-            MaterialService.create_material(name, description)
+            self._context.material_service.create_material(name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

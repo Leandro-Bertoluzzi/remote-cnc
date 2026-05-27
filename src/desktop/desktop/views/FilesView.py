@@ -10,7 +10,6 @@ from core.utilities.files import FileSystemError, InvalidFile
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
 from desktop.config import USER_ID
-from desktop.services.fileService import FileService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -33,7 +32,7 @@ class FilesView(BaseListView):
         return FileCard(item, self)
 
     def getItems(self):
-        return FileService.get_all_files()
+        return self._context.file_service.get_all_files()
 
     def createFile(self):
         fileDialog = FileDataDialog()
@@ -43,7 +42,7 @@ class FilesView(BaseListView):
         name, path = fileDialog.getInputs()
 
         try:
-            FileService.create_file(USER_ID, name, path)
+            self._context.file_service.create_file(USER_ID, name, path)
         except (DuplicatedFileNameError, DuplicatedFileError) as error:
             self.showWarning("Archivo repetido", str(error))
             return

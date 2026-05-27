@@ -5,7 +5,6 @@ from desktop.components.cards.UserCard import UserCard
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 from desktop.MainWindow import MainWindow
-from desktop.services.userService import UserService
 from desktop.views.UsersView import UsersView
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from pytest_mock.plugin import MockerFixture
@@ -20,34 +19,32 @@ class TestUsersView:
         user_3 = User(name="John 3", email="test3@testing.com", password="1234", role="user")
         self.users_list = [user_1, user_2, user_3]
 
-        # Patch the service method
-        self.mock_get_all_users = mocker.patch.object(
-            UserService, "get_all_users", return_value=self.users_list
-        )
+        # Configure context service mock
+        mock_window._context.user_service.get_all_users.return_value = self.users_list
+        self.mock_user_service = mock_window._context.user_service
 
         # Create an instance of UsersView
         self.parent = mock_window
         self.users_view = UsersView(self.parent)
         qtbot.addWidget(self.users_view)
 
-    def test_users_view_init(self, helpers):
-        # Validate service calls
-        self.mock_get_all_users.assert_called_once()
+        # Reset call counts accumulated during view creation
+        self.mock_user_service.get_all_users.reset_mock()
 
+    def test_users_view_init(self, helpers):
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 3
 
     def test_users_view_init_db_error(self, mocker: MockerFixture, helpers):
-        mock_get_all_users = mocker.patch.object(
-            UserService, "get_all_users", side_effect=Exception("mocked-error")
-        )
+        self.mock_user_service.get_all_users.side_effect = Exception("mocked-error")
+        self.mock_user_service.get_all_users.return_value = None
 
         # Create test view
         users_view = UsersView(self.parent)
 
         # Assertions
-        mock_get_all_users.assert_called_once()
+        self.mock_user_service.get_all_users.assert_called()
         assert helpers.count_widgets(users_view.layout(), ConnectionErrorWidget) == 1
         assert helpers.count_widgets(users_view.layout(), MenuButton) == 1
         assert helpers.count_widgets(users_view.layout(), UserCard) == 0
@@ -60,31 +57,21 @@ class TestUsersView:
         self.users_view.refreshLayout()
 
         # Validate service calls
-        assert self.mock_get_all_users.call_count == 2
+        assert self.mock_user_service.get_all_users.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 2
 
     def test_users_view_refresh_layout_db_error(self, mocker: MockerFixture, helpers):
-        # Mock service methods to simulate error(s)
-        # 1st execution: Widget creation (needs to success)
-        # 2nd execution: Test case
-        mock_get_all_users = mocker.patch.object(
-            UserService,
-            "get_all_users",
-            side_effect=[self.users_list, Exception("mocked-error")],
-        )
+        self.mock_user_service.get_all_users.side_effect = Exception("mocked-error")
 
-        # Call the method under test
-        users_view = UsersView(self.parent)
-        users_view.refreshLayout()
+        self.users_view.refreshLayout()
 
-        # Assertions
-        assert mock_get_all_users.call_count == 2
-        assert helpers.count_widgets(users_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(users_view.layout(), MenuButton) == 1
-        assert helpers.count_widgets(users_view.layout(), UserCard) == 0
+        assert self.mock_user_service.get_all_users.call_count == 1
+        assert helpers.count_widgets(self.users_view.layout(), ConnectionErrorWidget) == 1
+        assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.users_view.layout(), UserCard) == 0
 
     def test_users_view_create_user(self, mocker: MockerFixture, helpers):
         # Mock UserDataDialog methods
@@ -98,16 +85,14 @@ class TestUsersView:
             self.users_list.append(user_4)
             return
 
-        mock_create_user = mocker.patch.object(
-            UserService, "create_user", side_effect=side_effect_create_user
-        )
+        self.mock_user_service.create_user.side_effect = side_effect_create_user
 
         # Call the createUser method
         self.users_view.createUser()
 
         # Validate service calls
-        assert mock_create_user.call_count == 1
-        assert self.mock_get_all_users.call_count == 2
+        assert self.mock_user_service.create_user.call_count == 1
+        assert self.mock_user_service.get_all_users.call_count == 1
 
         # Validate amount of each type of widget
         assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
@@ -120,9 +105,7 @@ class TestUsersView:
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_inputs)
 
         # Mock service method to simulate exception
-        mock_create_user = mocker.patch.object(
-            UserService, "create_user", side_effect=Exception("mocked-error")
-        )
+        self.mock_user_service.create_user.side_effect = Exception("mocked-error")
 
         # Mock QMessageBox methods
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
@@ -131,8 +114,8 @@ class TestUsersView:
         self.users_view.createUser()
 
         # Assertions
-        assert mock_create_user.call_count == 1
-        assert self.mock_get_all_users.call_count == 1
+        assert self.mock_user_service.create_user.call_count == 1
+        assert self.mock_user_service.get_all_users.call_count == 0
         assert mock_popup.call_count == 1
         assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 3

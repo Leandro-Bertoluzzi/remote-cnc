@@ -5,27 +5,18 @@ These tests validate the core resilience requirement: when external services
 with retry and back-to-menu buttons instead of crashing or showing empty views.
 """
 
-from unittest.mock import MagicMock
-
-from core.ports.gateway_client import IGatewayClient
-from desktop.app_context import AppContext
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.MainWindow import MainWindow
-from desktop.services.assetService import AssetService
-from desktop.services.deviceService import DeviceService
-from desktop.services.fileService import FileService
-from desktop.services.materialService import MaterialService
-from desktop.services.taskService import TaskService
-from desktop.services.toolService import ToolService
-from desktop.services.userService import UserService
 from desktop.views.FilesView import FilesView
 from desktop.views.InventoryView import InventoryView
 from desktop.views.TasksView import TasksView
 from desktop.views.UsersView import UsersView
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
+
+from desktop.tests.conftest import make_mock_context
 
 
 class TestConnectionErrorWidget:
@@ -70,8 +61,8 @@ class TestDisconnectionTasksView:
     def test_assets_service_failure_shows_error(
         self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
     ):
-        mocker.patch.object(
-            AssetService, "get_assets", side_effect=Exception("DB connection refused")
+        mock_window._context.asset_service.get_assets.side_effect = Exception(
+            "DB connection refused"
         )
         mocker.patch.object(TaskCard, "setup_ui")
 
@@ -84,12 +75,13 @@ class TestDisconnectionTasksView:
     def test_task_service_failure_shows_error(
         self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
     ):
-        mocker.patch.object(AssetService, "get_assets", return_value=([], [], []))
+        mock_window._context.asset_service.get_assets.return_value = ([], [], [])
+        mock_window._context.asset_service.get_assets.side_effect = None
         mocker.patch.object(TaskCard, "setup_ui")
-        mocker.patch.object(
-            TaskService, "get_all_tasks", side_effect=Exception("DB connection refused")
+        mock_window._context.task_service.get_all_tasks.side_effect = Exception(
+            "DB connection refused"
         )
-        mocker.patch.object(DeviceService, "is_device_available", return_value=False)
+        mock_window._context.device_service.is_device_available.return_value = False
 
         view = TasksView(mock_window)
         qtbot.addWidget(view)
@@ -104,8 +96,8 @@ class TestDisconnectionFilesView:
     def test_file_service_failure_shows_error(
         self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
     ):
-        mocker.patch.object(
-            FileService, "get_all_files", side_effect=Exception("DB connection refused")
+        mock_window._context.file_service.get_all_files.side_effect = Exception(
+            "DB connection refused"
         )
 
         view = FilesView(mock_window)
@@ -121,8 +113,8 @@ class TestDisconnectionUsersView:
     def test_user_service_failure_shows_error(
         self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
     ):
-        mocker.patch.object(
-            UserService, "get_all_users", side_effect=Exception("DB connection refused")
+        mock_window._context.user_service.get_all_users.side_effect = Exception(
+            "DB connection refused"
         )
 
         view = UsersView(mock_window)
@@ -138,8 +130,8 @@ class TestDisconnectionInventoryView:
     def test_tool_service_failure_shows_error(
         self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
     ):
-        mocker.patch.object(
-            ToolService, "get_all_tools", side_effect=Exception("DB connection refused")
+        mock_window._context.tool_service.get_all_tools.side_effect = Exception(
+            "DB connection refused"
         )
 
         view = InventoryView(mock_window)
@@ -150,9 +142,10 @@ class TestDisconnectionInventoryView:
     def test_material_service_failure_shows_error(
         self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
     ):
-        mocker.patch.object(ToolService, "get_all_tools", return_value=[])
-        mocker.patch.object(
-            MaterialService, "get_all_materials", side_effect=Exception("DB connection refused")
+        mock_window._context.tool_service.get_all_tools.return_value = []
+        mock_window._context.tool_service.get_all_tools.side_effect = None
+        mock_window._context.material_service.get_all_materials.side_effect = Exception(
+            "DB connection refused"
         )
 
         view = InventoryView(mock_window)
@@ -165,17 +158,12 @@ class TestDisconnectionMainWindow:
     """Test that MainWindow.changeView shows ConnectionErrorWidget on failure."""
 
     def test_change_view_failure_shows_error(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock the worker status calls in MainWindow.__init__
-        mocker.patch.object(DeviceService, "is_worker_connected", return_value=False)
         # Mock closeEvent to prevent actual window closing during tests
         mocker.patch.object(MainWindow, "closeEvent", lambda self, event: event.accept())
 
-        window = MainWindow(AppContext(
-            gateway=MagicMock(spec=IGatewayClient),
-            worker=MagicMock(),
-            file_storage=MagicMock(),
-            session_factory=MagicMock(),
-        ))
+        context = make_mock_context()
+        context.device_service.is_worker_connected.return_value = False
+        window = MainWindow(context)
         qtbot.addWidget(window)
 
         # Simulate a view constructor that raises

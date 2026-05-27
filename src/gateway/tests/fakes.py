@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import IO, Any, Callable, Optional
 from unittest.mock import MagicMock
 
 from core.domain.cnc import JogDistanceMode, JogUnit
@@ -175,7 +175,7 @@ class FakeFileExecutor(FileExecutor):
     """
 
     def __init__(self, *, running: bool = False):
-        super().__init__(FakeController(), redis_conn=MagicMock())
+        super().__init__(FakeController(), redis_conn=MagicMock(), storage=MagicMock())
         self._running = running
 
         # Replace methods with spies after super().__init__()
@@ -208,3 +208,29 @@ class FakeSessionManager:
 
     def has_active_session(self) -> bool:
         return self._active_session is not None
+
+
+class FakeFileStorage:
+    """Minimal IFileStorage fake that opens real files (tests supply tmp_path files)."""
+
+    def open_for_reading(self, path: str) -> IO[str]:
+        return open(path, "r")
+
+    # -- Stub remaining IFileStorage methods (not exercised by FileExecutor) --
+    def get_file_path(self, user_id: int, filename: str):
+        raise NotImplementedError
+
+    def read_file(self, user_id: int, filename: str) -> str:
+        raise NotImplementedError
+
+    def save_file(self, user_id, file, filename):
+        raise NotImplementedError
+
+    def copy_file(self, user_id, original_path, filename):
+        raise NotImplementedError
+
+    def rename_file(self, user_id, filename, new_filename):
+        raise NotImplementedError
+
+    def delete_file(self, user_id, filename):
+        raise NotImplementedError

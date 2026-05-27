@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from desktop.services.userService import UserService
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -21,7 +20,7 @@ class UsersView(BaseListView):
         return UserCard(user, self)
 
     def getItems(self):
-        return UserService.get_all_users()
+        return self._context.user_service.get_all_users()
 
     def createUser(self):
         userDialog = UserDataDialog()
@@ -30,7 +29,7 @@ class UsersView(BaseListView):
 
         name, email, password, role = userDialog.getInputs()
         try:
-            UserService.create_user(name, email, password, role)
+            self._context.user_service.create_user(name, email, password, role)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

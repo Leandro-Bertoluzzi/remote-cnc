@@ -15,7 +15,7 @@ from core.domain.gateway import (
     EVENT_FILE_STARTED,
     EVENTS_CHANNEL,
 )
-from fakes import FakeController
+from fakes import FakeController, FakeFileStorage
 from gateway.application.file_executor import FileExecutor
 
 
@@ -25,7 +25,7 @@ def make_executor(
 ) -> tuple[FileExecutor, FakeController, MagicMock]:
     ctrl = controller or FakeController()
     redis_mock = redis_conn or MagicMock()
-    executor = FileExecutor(ctrl, redis_conn=redis_mock)
+    executor = FileExecutor(ctrl, redis_conn=redis_mock, storage=FakeFileStorage())
     return executor, ctrl, redis_mock
 
 

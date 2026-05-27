@@ -8,8 +8,6 @@ from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.config import USER_ID
 from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.utils import needs_confirmation
-from desktop.services.deviceService import DeviceService
-from desktop.services.taskService import TaskService
 from PyQt5.QtWidgets import QPushButton
 
 logger = logging.getLogger(__name__)
@@ -96,7 +94,7 @@ class TaskCard(Card):
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
-            TaskService.update_task(
+            self.getView()._context.task_service.update_task(
                 self.task.id,
                 self.task.user_id,
                 file_id,
@@ -114,7 +112,7 @@ class TaskCard(Card):
     @needs_confirmation("¿Realmente desea eliminar la tarea?", "Eliminar tarea")
     def removeTask(self):
         try:
-            TaskService.remove_task(self.task.id)
+            self.getView()._context.task_service.remove_task(self.task.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -140,7 +138,7 @@ class TaskCard(Card):
 
     def updateTaskStatus(self, new_status: TaskStatus, cancellation_reason: str = ""):
         try:
-            TaskService.update_task_status(
+            self.getView()._context.task_service.update_task_status(
                 self.task.id, new_status.value, USER_ID, cancellation_reason
             )
         except Exception as error:
@@ -154,7 +152,9 @@ class TaskCard(Card):
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
-            TaskService.create_task(self.task.user_id, file_id, tool_id, material_id, name, note)
+            self.getView()._context.task_service.create_task(
+                self.task.user_id, file_id, tool_id, material_id, name, note
+            )
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -163,7 +163,7 @@ class TaskCard(Card):
     @needs_confirmation("¿Desea ejecutar la tarea ahora?", "Ejecutar tarea")
     def runTask(self):
         try:
-            unavailable_reason = DeviceService.check_device_availability()
+            unavailable_reason = self.getView()._context.device_service.check_device_availability()
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
@@ -173,7 +173,7 @@ class TaskCard(Card):
             return
 
         try:
-            TaskService.send_task_to_worker(self.task.id)
+            self.getView()._context.task_service.send_task_to_worker(self.task.id)
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
@@ -195,9 +195,9 @@ class TaskCard(Card):
 
         try:
             if self.paused:
-                DeviceService.request_pause()
+                self.getView()._context.device_service.request_pause()
             else:
-                DeviceService.request_resume()
+                self.getView()._context.device_service.request_resume()
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return

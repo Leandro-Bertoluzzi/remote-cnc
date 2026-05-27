@@ -3,7 +3,6 @@ from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
-from desktop.services.deviceService import DeviceService
 from desktop.views.MonitorView import MonitorView
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -13,7 +12,7 @@ class TestMonitorView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         # Mock device service methods
-        mocker.patch.object(DeviceService, "is_worker_busy", return_value=False)
+        mock_window._context.device_service.is_worker_busy.return_value = False
 
         # Mock other methods
         mocker.patch.object(GatewayMonitor, "start_monitor")
@@ -30,7 +29,7 @@ class TestMonitorView:
         self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
 
         # Mock device service methods
-        mocker.patch.object(DeviceService, "is_worker_busy", return_value=device_busy)
+        self.parent._context.device_service.is_worker_busy.return_value = device_busy
 
         # Create an instance of MonitorView
         monitor_view = MonitorView(self.parent)

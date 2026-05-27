@@ -8,6 +8,13 @@ from core.ports.worker_client import IWorkerClient
 from desktop.app_context import AppContext
 from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
+from desktop.services.assetService import AssetService
+from desktop.services.deviceService import DeviceService
+from desktop.services.fileService import FileService
+from desktop.services.materialService import MaterialService
+from desktop.services.taskService import TaskService
+from desktop.services.toolService import ToolService
+from desktop.services.userService import UserService
 from desktop.views.BaseListView import BaseListView
 from PyQt5.QtWidgets import QGridLayout, QLayout, QWidget
 from pytest_mock.plugin import MockerFixture
@@ -43,7 +50,7 @@ def helpers():
 
 
 def make_mock_context() -> AppContext:
-    """Return an ``AppContext`` where every port is a ``MagicMock``.
+    """Return an ``AppContext`` where every port and service is a ``MagicMock``.
 
     Using this helper avoids ``default_factory`` calls that would try to
     instantiate concrete adapters at import time during tests.
@@ -53,6 +60,13 @@ def make_mock_context() -> AppContext:
         worker=MagicMock(spec=IWorkerClient),
         file_storage=MagicMock(spec=IFileStorage),
         session_factory=MagicMock(),
+        asset_service=MagicMock(spec=AssetService),
+        device_service=MagicMock(spec=DeviceService),
+        file_service=MagicMock(spec=FileService),
+        material_service=MagicMock(spec=MaterialService),
+        task_service=MagicMock(spec=TaskService),
+        tool_service=MagicMock(spec=ToolService),
+        user_service=MagicMock(spec=UserService),
     )
 
 
@@ -87,4 +101,5 @@ def mock_view(mocker: MockerFixture):
     parent.refreshLayout = mocker.Mock()
     parent.showWarning = mocker.Mock()
     parent.showError = mocker.Mock()
+    parent._context = make_mock_context()
     return cast(BaseListView, parent)

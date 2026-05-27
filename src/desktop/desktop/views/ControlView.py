@@ -32,7 +32,6 @@ from desktop.components.ToolBar import ToolBar, ToolBarOptionInfo
 from desktop.containers.ButtonGrid import ButtonGrid
 from desktop.containers.ControllerActions import ControllerActions
 from desktop.helpers.gatewayMonitor import GatewayMonitor
-from desktop.services.deviceService import DeviceService
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
@@ -71,7 +70,7 @@ class ControlView(BaseView):
         self._file_paused = False
 
         try:
-            self.device_busy = DeviceService.is_worker_busy()
+            self.device_busy = context.device_service.is_worker_busy()
         except Exception:
             logger.warning("Could not check worker status — assuming idle")
             self.device_busy = False
