@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Protocol, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 T = TypeVar("T")
 
@@ -29,6 +29,25 @@ class DbSession(Protocol):
 
     def close(self) -> None: ...
 
+    def __enter__(self) -> DbSession: ...
 
-# Custom types
-SessionFactory = Callable[..., DbSession]
+    def __exit__(self, *args: Any) -> None: ...
+
+
+@runtime_checkable
+class SessionFactory(Protocol):
+    """Factory that produces database sessions usable as context managers.
+
+    Structurally compatible with SQLAlchemy's sessionmaker.
+    """
+
+    def __call__(
+        self,
+        *,
+        autocommit: bool = False,
+        autoflush: bool = True,
+        expire_on_commit: bool = True,
+        **kwargs: Any,
+    ) -> DbSession:
+        """Create a new session with optional configuration."""
+        ...

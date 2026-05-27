@@ -14,6 +14,9 @@ fileRoutes = APIRouter(prefix="/files", tags=["Files"])
 @fileRoutes.get("", response_model_by_alias=False)
 @fileRoutes.get("/", response_model_by_alias=False)
 def get_files(user: GetUserDep, repository: GetFileRepository) -> list[FileResponse]:
+    if user.id is None:
+        raise HTTPException(500, detail="User ID is required")
+
     files = repository.get_all_files_from_user(user.id)
 
     return [FileResponse.model_validate(file) for file in files]
@@ -50,9 +53,16 @@ def get_file_report(file_id: int, user: GetUserDep, repository: GetFileRepositor
 def upload_file(
     file: UploadFile, user: GetUserDep, file_manager: GetFileManager, worker: GetWorker
 ):
+    if user.id is None:
+        raise HTTPException(500, detail="User ID is required")
+
     if not file.filename:
         raise HTTPException(400, detail="Filename is required")
     new_file = file_manager.upload_file(user.id, file.filename, file.file)
+
+    if new_file.id is None:
+        raise HTTPException(500, detail="File creation failed - no ID assigned")
+
     worker.generate_file_report(new_file.id)
     worker.create_thumbnail(new_file.id)
     return new_file
@@ -62,6 +72,9 @@ def upload_file(
 def update_file_name(
     file_id: int, request: FileUpdate, user: GetUserDep, file_manager: GetFileManager
 ):
+    if user.id is None:
+        raise HTTPException(500, detail="User ID is required")
+
     result = file_manager.rename_file_by_id(user.id, file_id, request.file_name)
     return FileResponse.model_validate(result)
 

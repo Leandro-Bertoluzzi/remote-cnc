@@ -2,9 +2,9 @@
 
 from typing import TypedDict
 
-from mayavi import mlab  # type: ignore
+from mayavi import mlab
 from PIL import Image
-from pyvirtualdisplay import Display  # type: ignore
+from pyvirtualdisplay import Display
 
 import worker.domain.gcode.parser as gcode
 

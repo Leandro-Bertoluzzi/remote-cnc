@@ -1,9 +1,9 @@
-from core.schemas.general import GenericResponse
-from core.schemas.tools import ToolRequest, ToolResponse
 from fastapi import APIRouter
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetToolRepository
+from api.schemas.general import GenericResponse
+from api.schemas.tools import ToolRequest, ToolResponse
 
 toolRoutes = APIRouter(prefix="/tools", tags=["Tools"])
 

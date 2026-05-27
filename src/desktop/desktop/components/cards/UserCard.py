@@ -2,7 +2,6 @@ from core.domain.entities import User
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 from desktop.helpers.utils import needs_confirmation
-from desktop.services.userService import UserService
 
 
 class UserCard(Card):
@@ -24,9 +23,12 @@ class UserCard(Card):
         if not userDialog.exec():
             return
 
+        if self.user.id is None:
+            raise ValueError("User ID is required")
+
         name, email, _, role = userDialog.getInputs()
         try:
-            UserService.update_user(self.user.id, name, email, role)
+            self._context.user_service.update_user(self.user.id, name, email, role)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -34,8 +36,11 @@ class UserCard(Card):
 
     @needs_confirmation("¿Realmente desea eliminar el usuario?", "Eliminar usuario")
     def removeUser(self):
+        if self.user.id is None:
+            raise ValueError("User ID is required")
+
         try:
-            UserService.remove_user(self.user.id)
+            self._context.user_service.remove_user(self.user.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

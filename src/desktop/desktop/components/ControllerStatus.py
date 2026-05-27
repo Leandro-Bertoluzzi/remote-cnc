@@ -1,9 +1,9 @@
 from core.domain.cnc import Status
+from core.domain.entities import Tool
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from desktop.helpers.utils import applyStylesheet
-from desktop.services.toolService import ToolService
 
 
 class ControllerStatus(QWidget):
@@ -11,7 +11,6 @@ class ControllerStatus(QWidget):
 
     def __init__(self, parent=None):
         super(ControllerStatus, self).__init__(parent)
-        self.tool_index = 0
         self.setup_ui()
 
     def setup_ui(self):
@@ -34,7 +33,7 @@ class ControllerStatus(QWidget):
         self.z_pos = QLabel("Z: 0.0 (0.0)")
 
         layout_details = QVBoxLayout()
-        self.tool = QLabel("Tool: xxx")
+        self.tool = QLabel("Tool: ---")
         self.feedrate = QLabel("Feed rate: 0")
         self.spindle = QLabel("Spindle: 0")
 
@@ -60,20 +59,12 @@ class ControllerStatus(QWidget):
         self.y_pos.setText(f"Y: {status['mpos']['y']} ({status['wpos']['y']})")
         self.z_pos.setText(f"Z: {status['mpos']['z']} ({status['wpos']['z']})")
 
-    def set_tool(self, tool_index: int):
-        if self.tool_index == tool_index:
+    def set_tool(self, tool: Tool | None):
+        if tool is None or tool.id is None:
+            self.tool.setText("Tool: ---")
             return
 
-        try:
-            tool_info = self._get_tool_info(tool_index)
-            self.tool.setText(f"Tool: {tool_index} ({tool_info.name})")
-        except Exception:
-            return
-
-        self.tool_index = tool_index
-
-    def _get_tool_info(self, tool_index: int):
-        return ToolService.get_tool_by_id(tool_index)
+        self.tool.setText(f"Tool: {tool.id} ({tool.name})")
 
     def set_feedrate(self, feedrate: float):
         self.feedrate.setText(f"Feed rate: {feedrate}")

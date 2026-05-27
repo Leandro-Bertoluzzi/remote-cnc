@@ -2,7 +2,6 @@ import pytest
 from core.domain.entities import Tool
 from desktop.components.cards.ToolCard import ToolCard
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
-from desktop.services.toolService import ToolService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -35,7 +34,7 @@ class TestToolCard:
         mocker.patch.object(ToolDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_tool = mocker.patch.object(ToolService, "update_tool")
+        mock_update_tool = self.parent._context.tool_service.update_tool
 
         # Call the updateTool method
         self.card.updateTool()
@@ -58,9 +57,8 @@ class TestToolCard:
         mocker.patch.object(ToolDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_tool = mocker.patch.object(
-            ToolService, "update_tool", side_effect=Exception("mocked error")
-        )
+        self.parent._context.tool_service.update_tool.side_effect = Exception("mocked error")
+        mock_update_tool = self.parent._context.tool_service.update_tool
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")
@@ -82,7 +80,7 @@ class TestToolCard:
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
         # Mock service method
-        mock_remove_tool = mocker.patch.object(ToolService, "remove_tool")
+        mock_remove_tool = self.parent._context.tool_service.remove_tool
 
         # Call the removeTool method
         self.card.removeTool()
@@ -95,9 +93,8 @@ class TestToolCard:
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
         # Mock service method
-        mock_remove_tool = mocker.patch.object(
-            ToolService, "remove_tool", side_effect=Exception("mocked error")
-        )
+        self.parent._context.tool_service.remove_tool.side_effect = Exception("mocked error")
+        mock_remove_tool = self.parent._context.tool_service.remove_tool
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")

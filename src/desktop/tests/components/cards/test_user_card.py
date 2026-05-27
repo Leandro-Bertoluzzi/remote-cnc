@@ -2,7 +2,6 @@ import pytest
 from core.domain.entities import User
 from desktop.components.cards.UserCard import UserCard
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from desktop.services.userService import UserService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -35,7 +34,7 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_user = mocker.patch.object(UserService, "update_user")
+        mock_update_user = self.parent._context.user_service.update_user
 
         # Call the updateUser method
         self.card.updateUser()
@@ -59,9 +58,8 @@ class TestUserCard:
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_user = mocker.patch.object(
-            UserService, "update_user", side_effect=Exception("mocked error")
-        )
+        self.parent._context.user_service.update_user.side_effect = Exception("mocked error")
+        mock_update_user = self.parent._context.user_service.update_user
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")
@@ -83,7 +81,7 @@ class TestUserCard:
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
         # Mock service method
-        mock_remove_user = mocker.patch.object(UserService, "remove_user")
+        mock_remove_user = self.parent._context.user_service.remove_user
 
         # Call the removeUser method
         self.card.removeUser()
@@ -96,9 +94,8 @@ class TestUserCard:
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
         # Mock service method
-        mock_remove_user = mocker.patch.object(
-            UserService, "remove_user", side_effect=Exception("mocked error")
-        )
+        self.parent._context.user_service.remove_user.side_effect = Exception("mocked error")
+        mock_remove_user = self.parent._context.user_service.remove_user
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")

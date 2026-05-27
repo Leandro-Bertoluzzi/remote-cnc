@@ -35,9 +35,12 @@ class TaskDataDialog(QDialog):
 
         if taskInfo:
             self.name.setText(taskInfo.name)
-            self.file.setCurrentIndex(fileNames.index(taskInfo.file.file_name))
-            self.tool.setCurrentIndex(toolNames.index(taskInfo.tool.name))
-            self.material.setCurrentIndex(materialNames.index(taskInfo.material.name))
+            if taskInfo.file:
+                self.file.setCurrentIndex(fileNames.index(taskInfo.file.file_name))
+            if taskInfo.tool:
+                self.tool.setCurrentIndex(toolNames.index(taskInfo.tool.name))
+            if taskInfo.material:
+                self.material.setCurrentIndex(materialNames.index(taskInfo.material.name))
             self.note.setPlainText(taskInfo.note)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)

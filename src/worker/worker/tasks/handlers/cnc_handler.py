@@ -64,6 +64,8 @@ def execute_cnc_task(
             raise Exception(f"La tarea tiene un estado incorrecto: {task.status}")
 
         # 2. Resolve the G-code file path
+        if task.file is None:
+            raise Exception("Task must have an associated file")
         file_path = storage.get_file_path(task.file.user_id, task.file.file_name)
 
         # 3. Acquire a Gateway session for the worker
@@ -81,6 +83,8 @@ def execute_cnc_task(
         pubsub = gateway.subscribe_events()
 
         # 5. Mark the task as in-progress and request file execution
+        if task.id is None:
+            raise Exception("Persisted task must have ID")
         repo.update_task_status(task.id, TaskStatus.IN_PROGRESS.value)
         task_logger.info("Comenzada la ejecución del archivo: %s", file_path)
 

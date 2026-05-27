@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from core.adapters.database.base import check_db_connection, dispose_db
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan: runs startup checks and graceful shutdown."""
     # --- Startup ---
     logger.info("Starting up API server...")

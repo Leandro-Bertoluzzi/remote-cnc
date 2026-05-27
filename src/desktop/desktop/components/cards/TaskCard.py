@@ -93,8 +93,12 @@ class TaskCard(Card):
             return
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
+
+        if self.task.id is None:
+            raise ValueError("Task ID is required")
+
         try:
-            self.getView()._context.task_service.update_task(
+            self._context.task_service.update_task(
                 self.task.id,
                 self.task.user_id,
                 file_id,
@@ -111,8 +115,11 @@ class TaskCard(Card):
 
     @needs_confirmation("¿Realmente desea eliminar la tarea?", "Eliminar tarea")
     def removeTask(self):
+        if self.task.id is None:
+            raise ValueError("Task ID is required")
+
         try:
-            self.getView()._context.task_service.remove_task(self.task.id)
+            self._context.task_service.remove_task(self.task.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -137,8 +144,11 @@ class TaskCard(Card):
         self.getView().refreshLayout()
 
     def updateTaskStatus(self, new_status: TaskStatus, cancellation_reason: str = ""):
+        if self.task.id is None:
+            raise ValueError("Task ID is required")
+
         try:
-            self.getView()._context.task_service.update_task_status(
+            self._context.task_service.update_task_status(
                 self.task.id, new_status.value, USER_ID, cancellation_reason
             )
         except Exception as error:
@@ -152,7 +162,7 @@ class TaskCard(Card):
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
-            self.getView()._context.task_service.create_task(
+            self._context.task_service.create_task(
                 self.task.user_id, file_id, tool_id, material_id, name, note
             )
         except Exception as error:
@@ -163,7 +173,7 @@ class TaskCard(Card):
     @needs_confirmation("¿Desea ejecutar la tarea ahora?", "Ejecutar tarea")
     def runTask(self):
         try:
-            unavailable_reason = self.getView()._context.device_service.check_device_availability()
+            unavailable_reason = self._context.device_service.check_device_availability()
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
@@ -172,8 +182,11 @@ class TaskCard(Card):
             self.showError("No disponible", unavailable_reason)
             return
 
+        if self.task.id is None:
+            raise ValueError("Task ID is required")
+
         try:
-            self.getView()._context.task_service.send_task_to_worker(self.task.id)
+            self._context.task_service.send_task_to_worker(self.task.id)
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
@@ -195,9 +208,9 @@ class TaskCard(Card):
 
         try:
             if self.paused:
-                self.getView()._context.device_service.request_pause()
+                self._context.device_service.request_pause()
             else:
-                self.getView()._context.device_service.request_resume()
+                self._context.device_service.request_resume()
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return

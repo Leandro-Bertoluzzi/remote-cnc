@@ -14,7 +14,7 @@ class BaseView(QWidget):
         super(BaseView, self).__init__(parent)
         # Prefer the explicitly-supplied context; fall back to parent._context so
         # tests and MainMenu can create views without forwarding the context manually.
-        self._context = context if context is not None else getattr(parent, "_context", None)
+        self._context = context if context is not None else parent._context
 
     # Notifications
 

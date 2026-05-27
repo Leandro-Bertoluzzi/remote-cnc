@@ -94,6 +94,8 @@ class TaskService:
         with self._session_factory(expire_on_commit=False) as session:
             repository = get_task_repository(session)
             task = repository.create_task(user_id, file_id, tool_id, material_id, name, note)
+            if task.id is None:
+                raise ValueError("Persisted task must have ID")
             repository.update_task_status(task.id, TaskStatus.APPROVED.value, user_id)
 
         return self._worker.send_task(task.id)

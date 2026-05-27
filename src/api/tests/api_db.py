@@ -5,6 +5,7 @@ when both 'tests/' and 'api/tests/' are on pythonpath.
 """
 
 from core.domain.entities import User
+from core.ports.db_session import SessionFactory
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -25,4 +26,4 @@ test_admin = User(
 # In Docker: TEST_DB_URL = "postgresql+psycopg2://test:test@testdb:5432/cnc_db"
 TEST_DB_URL = "postgresql+psycopg2://test:test@testdb:5432/cnc_db"
 engine = create_engine(TEST_DB_URL)
-TestingSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSession: SessionFactory = sessionmaker(autocommit=False, autoflush=False, bind=engine)  # type: ignore[assignment]

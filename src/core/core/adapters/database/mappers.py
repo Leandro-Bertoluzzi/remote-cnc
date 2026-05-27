@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from typing import cast
+
 from core.adapters.database import models
 from core.domain.entities import File, Material, Task, Tool, User
+from core.domain.types import RoleType
 
 
 def to_user_domain(user: models.User | None) -> User | None:
@@ -13,7 +16,7 @@ def to_user_domain(user: models.User | None) -> User | None:
         name=user.name,
         email=user.email,
         password=user.password,
-        role=user.role,
+        role=cast(RoleType, user.role),
     )
 
 
