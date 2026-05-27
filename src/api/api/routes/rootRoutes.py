@@ -57,6 +57,9 @@ def login(request: UserLogin, repository: GetUserRepository):
     if not checks:
         raise HTTPException(404, detail="No autorizado: Combinación inválida de email y contraseña")
 
+    if user.id is None:
+        raise HTTPException(500, detail="User ID is required")
+
     return UserLoginResponse(
         id=user.id,
         name=user.name,

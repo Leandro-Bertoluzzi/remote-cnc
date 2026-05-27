@@ -2,9 +2,10 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, sessionmaker
 
 from core.config import SQLALCHEMY_DATABASE_URI
+from core.ports.db_session import SessionFactory
 
 engine = create_engine(SQLALCHEMY_DATABASE_URI)
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+SessionLocal: SessionFactory = sessionmaker(bind=engine, autocommit=False, autoflush=False)  # type: ignore[assignment]
 
 
 class Base(MappedAsDataclass, DeclarativeBase):

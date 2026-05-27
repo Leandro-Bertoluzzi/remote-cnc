@@ -421,7 +421,9 @@ class ControlView(BaseView):
         self.status_monitor.set_status(status)
         self.status_monitor.set_feedrate(parserstate["feedrate"])
         self.status_monitor.set_spindle(parserstate["spindle"])
-        self.status_monitor.set_tool(parserstate["tool"])
+
+        tool = self._context.tool_service.get_tool_by_id(parserstate["tool"])
+        self.status_monitor.set_tool(tool)
 
     def update_file_progress(self, sent_lines: int, processed_lines: int, total_lines: int):
         """Update the code editor with file-execution progress from the Gateway."""

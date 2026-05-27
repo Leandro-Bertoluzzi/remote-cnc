@@ -89,6 +89,10 @@ class FileManager:
 
         original_path = self.file_storage.get_file_path(file.user_id, file.file_name)
         updated_path = self.file_storage.rename_file(file.user_id, file.file_name, new_name)
+
+        if file.id is None:
+            raise ValueError("File ID is required for update")
+
         try:
             return repository.update_file(file.id, file.user_id, new_name)
         except Exception as error:
@@ -120,6 +124,9 @@ class FileManager:
         self._backup_file(file_path)
 
         self.file_storage.delete_file(file.user_id, file.file_name)
+
+        if file.id is None:
+            raise ValueError("File ID is required for removal")
 
         try:
             self.file_repository.remove_file(file.id)

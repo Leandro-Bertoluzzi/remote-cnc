@@ -1,9 +1,9 @@
-from core.schemas.general import GenericResponse
-from core.schemas.users import UserCreate, UserResponse, UserUpdate
 from fastapi import APIRouter
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetUserRepository
+from api.schemas.general import GenericResponse
+from api.schemas.users import UserCreate, UserResponse, UserUpdate
 
 userRoutes = APIRouter(prefix="/users", tags=["Users"])
 

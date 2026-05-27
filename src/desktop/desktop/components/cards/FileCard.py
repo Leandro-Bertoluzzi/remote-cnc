@@ -25,9 +25,8 @@ class FileCard(Card):
         self.setup_ui()
 
     def setup_ui(self):
-        description = (
-            f"Archivo {self.file.id}: {self.file.file_name}\nUsuario: {self.file.user.name}"
-        )
+        user_name = self.file.user.name if self.file.user else "Desconocido"
+        description = f"Archivo {self.file.id}: {self.file.file_name}\nUsuario: {user_name}"
         self.setDescription(description)
 
         self.addButton("Crear tarea", self.createTaskFromFile)
@@ -46,7 +45,7 @@ class FileCard(Card):
             return
 
         try:
-            self.getView()._context.file_service.rename_file(USER_ID, self.file, name)
+            self._context.file_service.rename_file(USER_ID, self.file, name)
         except DuplicatedFileNameError as error:
             self.showWarning("Nombre repetido", str(error))
         except (InvalidFile, FileSystemError) as error:
@@ -59,7 +58,7 @@ class FileCard(Card):
     @needs_confirmation("¿Realmente desea eliminar el archivo?", "Eliminar archivo")
     def removeFile(self):
         try:
-            self.getView()._context.file_service.remove_file(self.file)
+            self._context.file_service.remove_file(self.file)
         except FileSystemError as error:
             self.showError("Error de borrado", str(error))
         except (PersistenceError, EntityNotFoundError) as error:
@@ -69,7 +68,7 @@ class FileCard(Card):
 
     def _create_task_dialog(self):
         try:
-            _, materials, tools = self.getView()._context.asset_service.get_assets(USER_ID)
+            _, materials, tools = self._context.asset_service.get_assets(USER_ID)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -87,8 +86,11 @@ class FileCard(Card):
 
         _, tool_id, material_id, name, note = task_config
 
+        if self.file.id is None:
+            raise ValueError("File ID is required")
+
         try:
-            self.getView()._context.task_service.create_task(
+            self._context.task_service.create_task(
                 USER_ID, self.file.id, tool_id, material_id, name, note
             )
         except Exception as error:
@@ -98,7 +100,7 @@ class FileCard(Card):
     @needs_confirmation("¿Desea ejecutar la tarea ahora?", "Ejecutar tarea")
     def executeTaskFromFile(self):
         try:
-            unavailable_reason = self.getView()._context.device_service.check_device_availability()
+            unavailable_reason = self._context.device_service.check_device_availability()
         except Exception as error:
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
@@ -113,8 +115,11 @@ class FileCard(Card):
 
         _, tool_id, material_id, name, note = task_config
 
+        if self.file.id is None:
+            raise ValueError("File ID is required")
+
         try:
-            self.getView()._context.task_service.create_and_execute_task(
+            self._context.task_service.create_and_execute_task(
                 USER_ID, self.file.id, tool_id, material_id, name, note
             )
         except Exception as error:

@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
+    from desktop.app_context import AppContext  # pragma: no cover
     from desktop.MainWindow import MainWindow  # pragma: no cover
     from desktop.views.BaseListView import BaseListView  # pragma: no cover
 
@@ -49,8 +50,12 @@ class Card(QWidget):
 
     def getWindow(self) -> "MainWindow":
         """Get the application's main window."""
-        view = cast("BaseListView", self.parent())
-        return cast("MainWindow", view.parent())
+        return self.getView().getWindow()
+
+    @property
+    def _context(self) -> "AppContext":
+        """Get the application context from the parent view."""
+        return self.getView()._context
 
     # Notifications
 

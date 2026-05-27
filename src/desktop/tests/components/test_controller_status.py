@@ -1,13 +1,11 @@
 import pytest
 from core.domain.entities import Tool
 from desktop.components.ControllerStatus import ControllerStatus
-from desktop.services.toolService import ToolService
 
 
 class TestControllerStatus:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot):
-        # Create an instance of ControllerStatus
         self.controller_status = ControllerStatus()
         qtbot.addWidget(self.controller_status)
 
@@ -17,7 +15,7 @@ class TestControllerStatus:
         assert self.controller_status.x_pos.text() == "X: 0.0 (0.0)"
         assert self.controller_status.y_pos.text() == "Y: 0.0 (0.0)"
         assert self.controller_status.z_pos.text() == "Z: 0.0 (0.0)"
-        assert self.controller_status.tool.text() == "Tool: xxx"
+        assert self.controller_status.tool.text() == "Tool: ---"
         assert self.controller_status.feedrate.text() == "Feed rate: 0"
         assert self.controller_status.spindle.text() == "Spindle: 0"
 
@@ -38,54 +36,26 @@ class TestControllerStatus:
         assert self.controller_status.y_pos.text() == "Y: 2.55 (7.55)"
         assert self.controller_status.z_pos.text() == "Z: 3.3 (8.3)"
 
-    def test_controller_status_set_tool(self, mocker):
-        # Mock service methods
+    def test_controller_status_set_tool(self):
+        # Create test tool
         test_tool = Tool("Test tool", "It is a really useful tool")
-        mock_db_get_tool_by_id = mocker.patch.object(
-            ToolService, "get_tool_by_id", return_value=test_tool
-        )
+        test_tool.id = 2
 
         # Call method under test
-        self.controller_status.set_tool(2)
+        self.controller_status.set_tool(test_tool)
 
         # Assertions
-        assert mock_db_get_tool_by_id.call_count == 1
         assert self.controller_status.tool.text() == "Tool: 2 (Test tool)"
-        assert self.controller_status.tool_index == 2
 
-    def test_controller_status_set_tool_no_change(self, mocker):
+    def test_controller_status_set_tool_none(self):
         # Set widget initial status
         self.controller_status.tool.setText("Tool: 1 (Initial tool)")
-        self.controller_status.tool_index = 1
 
-        # Mock service methods
-        mock_db_get_tool_by_id = mocker.patch.object(ToolService, "get_tool_by_id")
-
-        # Call method under test
-        self.controller_status.set_tool(1)
+        # Call method under test with None
+        self.controller_status.set_tool(None)
 
         # Assertions
-        assert mock_db_get_tool_by_id.call_count == 0
-        assert self.controller_status.tool.text() == "Tool: 1 (Initial tool)"
-        assert self.controller_status.tool_index == 1
-
-    def test_controller_status_set_tool_db_error(self, mocker):
-        # Set widget initial status
-        self.controller_status.tool.setText("Tool: 1 (Initial tool)")
-        self.controller_status.tool_index = 1
-
-        # Mock service methods
-        mock_db_get_tool_by_id = mocker.patch.object(
-            ToolService, "get_tool_by_id", side_effect=Exception("mocked-error")
-        )
-
-        # Call method under test
-        self.controller_status.set_tool(2)
-
-        # Assertions
-        assert mock_db_get_tool_by_id.call_count == 1
-        assert self.controller_status.tool.text() == "Tool: 1 (Initial tool)"
-        assert self.controller_status.tool_index == 1
+        assert self.controller_status.tool.text() == "Tool: ---"
 
     def test_controller_status_set_feedrate(self):
         # Call method under test

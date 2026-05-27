@@ -1,14 +1,14 @@
 from core.domain.worker import WorkerStatus
-from core.schemas.worker import (
-    WorkerAvailableResponse,
-    WorkerOnResponse,
-    WorkerTaskResponse,
-)
 from fastapi import APIRouter, HTTPException
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.gatewayMiddleware import GetGateway
 from api.middleware.workerMiddleware import GetWorker
+from api.schemas.worker import (
+    WorkerAvailableResponse,
+    WorkerOnResponse,
+    WorkerTaskResponse,
+)
 
 workerRoutes = APIRouter(prefix="/worker", tags=["Worker"])
 

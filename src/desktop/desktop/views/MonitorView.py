@@ -115,4 +115,6 @@ class MonitorView(BaseView):
         self.status_monitor.set_status(status)
         self.status_monitor.set_feedrate(feedrate)
         self.status_monitor.set_spindle(spindle)
-        self.status_monitor.set_tool(tool_index)
+
+        tool = self._context.tool_service.get_tool_by_id(tool_index)
+        self.status_monitor.set_tool(tool)

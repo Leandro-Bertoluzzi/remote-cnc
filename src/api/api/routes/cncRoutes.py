@@ -6,19 +6,19 @@ from core.domain.gateway import (
     ACTION_SOFT_RESET,
     ACTION_STOP,
 )
-from core.schemas.cnc import CncCommand, CncJogCommand
-from core.schemas.general import GenericResponse
-from core.schemas.session import (
+from fastapi import APIRouter, Header, HTTPException
+
+from api.middleware.authMiddleware import GetAdminDep
+from api.middleware.gatewayMiddleware import GetGateway
+from api.schemas.cnc import CncCommand, CncJogCommand
+from api.schemas.general import GenericResponse
+from api.schemas.session import (
     GatewayStateResponse,
     RealtimeRequest,
     SessionAcquireRequest,
     SessionRenewResponse,
     SessionResponse,
 )
-from fastapi import APIRouter, Header, HTTPException
-
-from api.middleware.authMiddleware import GetAdminDep
-from api.middleware.gatewayMiddleware import GetGateway
 
 cncRoutes = APIRouter(prefix="/cnc", tags=["CNC"])
 
@@ -71,6 +71,9 @@ def acquire_session(
     """Acquire the exclusive CNC session (distributed lock)."""
     if not gateway.is_gateway_running():
         raise HTTPException(503, detail="CNC Gateway no está disponible")
+
+    if admin.id is None:
+        raise HTTPException(500, detail="Authenticated admin must have ID")
 
     session_id = gateway.acquire_session(
         user_id=admin.id,

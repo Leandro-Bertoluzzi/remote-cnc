@@ -2,7 +2,6 @@ import pytest
 from core.domain.entities import Material
 from desktop.components.cards.MaterialCard import MaterialCard
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
-from desktop.services.materialService import MaterialService
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -37,7 +36,7 @@ class TestMaterialCard:
         mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_material = mocker.patch.object(MaterialService, "update_material")
+        mock_update_material = self.parent._context.material_service.update_material
 
         # Call the updateMaterial method
         self.card.updateMaterial()
@@ -60,9 +59,10 @@ class TestMaterialCard:
         mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_input)
 
         # Mock service method
-        mock_update_material = mocker.patch.object(
-            MaterialService, "update_material", side_effect=Exception("mocked error")
+        self.parent._context.material_service.update_material.side_effect = Exception(
+            "mocked error"
         )
+        mock_update_material = self.parent._context.material_service.update_material
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")
@@ -84,7 +84,7 @@ class TestMaterialCard:
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
         # Mock service method
-        mock_remove_material = mocker.patch.object(MaterialService, "remove_material")
+        mock_remove_material = self.parent._context.material_service.remove_material
 
         # Call the removeMaterial method
         self.card.removeMaterial()
@@ -97,9 +97,10 @@ class TestMaterialCard:
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
 
         # Mock service method
-        mock_remove_material = mocker.patch.object(
-            MaterialService, "remove_material", side_effect=Exception("mocked error")
+        self.parent._context.material_service.remove_material.side_effect = Exception(
+            "mocked error"
         )
+        mock_remove_material = self.parent._context.material_service.remove_material
 
         # Mock parent methods
         mock_popup = mocker.patch.object(self.parent, "showError")

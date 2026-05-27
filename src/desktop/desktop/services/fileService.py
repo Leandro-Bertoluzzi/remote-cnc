@@ -43,6 +43,12 @@ class FileService:
             file = file_manager.create_file(user_id, name, origin_path)
 
         # Schedule background tasks — broker failure should not prevent file creation
+        if file.id is None:
+            logger.error(
+                "Archivo creado sin ID - no se puede programar generación de reporte/thumbnail"
+            )
+            return file
+
         try:
             self._worker.generate_file_report(file.id)
             self._worker.create_thumbnail(file.id)

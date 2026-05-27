@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import mocks.grbl as grbl_mocks
 import pytest
-from adapters.cnc.fakes import FakeSerial  # type: ignore
+from adapters.cnc.fakes import FakeSerial
 from gateway.adapters.cnc.communicator import GrblCommunicator
 from gateway.adapters.cnc.controller import GrblController
 from gateway.adapters.cnc.monitor import GrblMonitor

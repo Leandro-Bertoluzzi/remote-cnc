@@ -2,7 +2,6 @@ from core.domain.entities import Material
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
 from desktop.helpers.utils import needs_confirmation
-from desktop.services.materialService import MaterialService
 
 
 class MaterialCard(Card):
@@ -24,9 +23,12 @@ class MaterialCard(Card):
         if not materialDialog.exec():
             return
 
+        if self.material.id is None:
+            raise ValueError("Material ID is required")
+
         name, description = materialDialog.getInputs()
         try:
-            MaterialService.update_material(self.material.id, name, description)
+            self._context.material_service.update_material(self.material.id, name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -34,8 +36,11 @@ class MaterialCard(Card):
 
     @needs_confirmation("¿Realmente desea eliminar el material?", "Eliminar material")
     def removeMaterial(self):
+        if self.material.id is None:
+            raise ValueError("Material ID is required")
+
         try:
-            MaterialService.remove_material(self.material.id)
+            self._context.material_service.remove_material(self.material.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

@@ -17,7 +17,7 @@ class User(DomainModel):
     name: str
     email: str
     password: str
-    role: RoleType | str
+    role: RoleType
 
 
 @dataclass(slots=True)

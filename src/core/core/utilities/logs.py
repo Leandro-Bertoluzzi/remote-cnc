@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 
 from core.config import LOGS_FOLDER_PATH
-from core.schemas.logs import LogsResponse
 from core.utilities.files import getFilesInFolder
 from core.utilities.loggerFactory import LOGS_DATETIME_FORMAT
 from core.utilities.logsInterpreter import LogsInterpreter
@@ -21,7 +20,7 @@ def get_log_path(file_name: str):
     return Path(LOGS_FOLDER_PATH) / file_name
 
 
-def classify_log_files() -> list[LogsResponse]:
+def classify_log_files() -> list:
     log_files = getFilesInFolder(LOGS_FOLDER_PATH)
     classified_files = []
 

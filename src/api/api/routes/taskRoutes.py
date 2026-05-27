@@ -1,9 +1,9 @@
-from core.schemas.general import GenericResponse
-from core.schemas.tasks import TaskCreate, TaskResponse, TaskUpdate, TaskUpdateStatus
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetTaskRepository
+from api.schemas.general import GenericResponse
+from api.schemas.tasks import TaskCreate, TaskResponse, TaskUpdate, TaskUpdateStatus
 
 taskRoutes = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -13,6 +13,9 @@ taskRoutes = APIRouter(prefix="/tasks", tags=["Tasks"])
 def get_tasks_by_user(
     user: GetUserDep, repository: GetTaskRepository, status: str = "all"
 ) -> list[TaskResponse]:
+    if user.id is None:
+        raise HTTPException(500, detail="User ID is required")
+
     tasks = repository.get_all_tasks_from_user(user.id, status)
 
     return [TaskResponse.model_validate(task) for task in tasks]
@@ -30,6 +33,9 @@ def get_tasks_from_all_users(
 @taskRoutes.post("", response_model=TaskResponse)
 @taskRoutes.post("/", response_model=TaskResponse)
 def create_new_task(request: TaskCreate, user: GetUserDep, repository: GetTaskRepository):
+    if user.id is None:
+        raise HTTPException(500, detail="User ID is required")
+
     return repository.create_task(
         user.id, request.file_id, request.tool_id, request.material_id, request.name, request.note
     )
@@ -50,6 +56,9 @@ def update_existing_task_status(
 def update_existing_task(
     task_id: int, request: TaskUpdate, user: GetUserDep, repository: GetTaskRepository
 ):
+    if user.id is None:
+        raise HTTPException(500, detail="User ID is required")
+
     result = repository.update_task(
         task_id,
         user.id,

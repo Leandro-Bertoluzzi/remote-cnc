@@ -2,7 +2,6 @@ from core.domain.entities import Tool
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
 from desktop.helpers.utils import needs_confirmation
-from desktop.services.toolService import ToolService
 
 
 class ToolCard(Card):
@@ -24,9 +23,12 @@ class ToolCard(Card):
         if not toolDialog.exec():
             return
 
+        if self.tool.id is None:
+            raise ValueError("Tool ID is required")
+
         name, description = toolDialog.getInputs()
         try:
-            ToolService.update_tool(self.tool.id, name, description)
+            self._context.tool_service.update_tool(self.tool.id, name, description)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return
@@ -34,8 +36,11 @@ class ToolCard(Card):
 
     @needs_confirmation("¿Realmente desea eliminar la herramienta?", "Eliminar herramienta")
     def removeTool(self):
+        if self.tool.id is None:
+            raise ValueError("Tool ID is required")
+
         try:
-            ToolService.remove_tool(self.tool.id)
+            self._context.tool_service.remove_tool(self.tool.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

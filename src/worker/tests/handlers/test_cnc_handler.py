@@ -70,7 +70,7 @@ def _make_gateway(pubsub_messages: list) -> MagicMock:
     return mock_gw
 
 
-def _call(task_id: int, repo: MagicMock, gateway: MagicMock, storage: MagicMock = None):
+def _call(task_id: int, repo: MagicMock, gateway: MagicMock, storage: MagicMock | None = None):
     if storage is None:
         storage = MagicMock(spec=IFileStorage)
     execute_cnc_task(

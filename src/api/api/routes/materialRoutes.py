@@ -1,9 +1,9 @@
-from core.schemas.general import GenericResponse
-from core.schemas.materials import MaterialRequest, MaterialResponse
 from fastapi import APIRouter
 
 from api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from api.middleware.dbMiddleware import GetMaterialRepository
+from api.schemas.general import GenericResponse
+from api.schemas.materials import MaterialRequest, MaterialResponse
 
 materialRoutes = APIRouter(prefix="/materials", tags=["Materials"])
 
