@@ -56,7 +56,12 @@ GRBL_STATUS_DISCONNECTED: Status = {
 
 
 class ControlView(BaseView):
-    def __init__(self, parent: "MainWindow", context: AppContext | None = None):
+    def __init__(
+        self,
+        parent: "MainWindow",
+        context: AppContext | None = None,
+        gateway_monitor: GatewayMonitor | None = None,
+    ):
         super(ControlView, self).__init__(parent, context)
 
         if context is None:
@@ -78,12 +83,13 @@ class ControlView(BaseView):
         self.setup_ui()
 
         # GATEWAY SYNC — status via PubSub
-        self.gateway_sync = GatewayMonitor(context.gateway)
-        self.gateway_sync.new_status.connect(self.update_device_status)
-        self.gateway_sync.new_message.connect(self.write_to_terminal)
-        self.gateway_sync.file_progress.connect(self.update_file_progress)
-        self.gateway_sync.file_finished.connect(self.finished_file_execution)
-        self.gateway_sync.file_failed.connect(self.failed_file_execution)
+        self._gateway_monitor = gateway_monitor
+        if self._gateway_monitor is not None:
+            self._gateway_monitor.new_status.connect(self.update_device_status)
+            self._gateway_monitor.new_message.connect(self.write_to_terminal)
+            self._gateway_monitor.file_progress.connect(self.update_file_progress)
+            self._gateway_monitor.file_finished.connect(self.finished_file_execution)
+            self._gateway_monitor.file_failed.connect(self.failed_file_execution)
 
         # HEARTBEAT TIMER
         self._heartbeat_timer = QTimer(self)
@@ -155,7 +161,7 @@ class ControlView(BaseView):
         layout.addWidget(self.terminal, 1, 1)
 
         layout.addWidget(
-            MenuButton("Volver al menú", onClick=self.backToMenu),
+            MenuButton("Volver al menú", onClick=self.back_to_menu),
             2,
             0,
             1,
@@ -173,7 +179,8 @@ class ControlView(BaseView):
             ("Importar", self.code_editor.import_file, False),
             ("Exportar", self.code_editor.export_file, False),
         ]
-        self.tool_bar_files = ToolBar(file_options, self.getWindow(), self)
+        self.tool_bar_files = ToolBar(file_options, self)
+        self.toolbar_added.emit(self.tool_bar_files)
 
         if self.device_busy:
             return
@@ -184,19 +191,20 @@ class ControlView(BaseView):
             ("Pausar", self.toggle_pause, True),
             ("Conectar", self.toggle_connected, True),
         ]
-        self.tool_bar_grbl = ToolBar(exec_options, self.getWindow(), self)
+        self.tool_bar_grbl = ToolBar(exec_options, self)
+        self.toolbar_added.emit(self.tool_bar_grbl)
         self.pause_button = self.tool_bar_grbl.get_options()["pausar"]
         self.connect_button = self.tool_bar_grbl.get_options()["conectar"]
 
     # EVENTS
 
-    def backToMenu(self):
+    def back_to_menu(self):
         """Removes the tool bar from the main window and goes back to the main menu"""
         self.disconnect_device()
-        self.getWindow().removeToolBar(self.tool_bar_files)
+        self.toolbar_removed.emit(self.tool_bar_files)
         if not self.device_busy:
-            self.getWindow().removeToolBar(self.tool_bar_grbl)
-        self.getWindow().backToMenu()
+            self.toolbar_removed.emit(self.tool_bar_grbl)
+        return super().back_to_menu()
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         self.disconnect_device()
@@ -237,7 +245,8 @@ class ControlView(BaseView):
         self.enable_controls(True)
 
         # Start real-time status sync + heartbeat
-        self.gateway_sync.start_monitor()
+        if self._gateway_monitor is not None:
+            self._gateway_monitor.start_monitor()
         self._heartbeat_timer.start()
 
     def disconnect_device(self):
@@ -259,7 +268,8 @@ class ControlView(BaseView):
         self._file_paused = False
 
         try:
-            self.gateway_sync.stop_monitor()
+            if self._gateway_monitor is not None:
+                self._gateway_monitor.stop_monitor()
             self._heartbeat_timer.stop()
             self.connect_button.setText("Conectar")
             self.enable_controls(False)

@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.TaskProgress import TaskProgress
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
@@ -18,8 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 class MonitorView(BaseView):
-    def __init__(self, parent: "MainWindow", **kwargs):
+    def __init__(
+        self, parent: "MainWindow", gateway_monitor: GatewayMonitor | None = None, **kwargs
+    ):
         super(MonitorView, self).__init__(parent, **kwargs)
+        self._gateway_monitor = gateway_monitor
 
         # STATE MANAGEMENT
         try:
@@ -65,7 +69,7 @@ class MonitorView(BaseView):
         layout.addItem(self.placeholder, 2, 0)
 
         layout.addWidget(
-            MenuButton("Volver al menú", onClick=self.backToMenu),
+            MenuButton("Volver al menú", onClick=self.back_to_menu),
             5,
             0,
             1,
@@ -75,24 +79,20 @@ class MonitorView(BaseView):
 
     def connect_worker(self):
         """Synchronizes the status monitor with the CNC worker."""
-        if self.device_busy:
-            monitor = self.getWindow().worker_monitor
-            monitor.file_progress.connect(self.update_task_progress)
-            monitor.new_status.connect(self.update_controller_status)
+        if self.device_busy and self._gateway_monitor is not None:
+            self._gateway_monitor.file_progress.connect(self.update_task_progress)
+            self._gateway_monitor.new_status.connect(self.update_controller_status)
 
     # EVENTS
 
-    def backToMenu(self):
-        self.getWindow().backToMenu()
-
     def closeEvent(self, a0: QCloseEvent):
         """Disconnect signals before leaving the view."""
-        try:
-            monitor = self.getWindow().worker_monitor
-            monitor.file_progress.disconnect(self.update_task_progress)
-            monitor.new_status.disconnect(self.update_controller_status)
-        except (RuntimeError, TypeError):
-            pass
+        if self._gateway_monitor is not None:
+            try:
+                self._gateway_monitor.file_progress.disconnect(self.update_task_progress)
+                self._gateway_monitor.new_status.disconnect(self.update_controller_status)
+            except (RuntimeError, TypeError):
+                pass
         super().closeEvent(a0)
 
     # UI METHODS

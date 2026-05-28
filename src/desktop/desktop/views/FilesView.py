@@ -104,7 +104,7 @@ class FilesView(BaseListView):
             self.showError("Error", str(error))
             return
 
-        self.getWindow().startWorkerMonitor()
+        self.task_dispatched.emit()
         self.showInfo("Tarea enviada", "Se envió la tarea al equipo para su ejecución")
 
     def createFile(self):

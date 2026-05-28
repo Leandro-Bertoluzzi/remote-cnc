@@ -31,8 +31,8 @@ ViewList = TypedDict(
 
 
 class BaseListView(BaseView):
-    def __init__(self, parent: "MainWindow", context: "AppContext | None" = None):
-        super(BaseListView, self).__init__(parent, context)
+    def __init__(self, parent: "MainWindow", context: "AppContext | None" = None, **kwargs):
+        super(BaseListView, self).__init__(parent, context, **kwargs)
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -60,7 +60,7 @@ class BaseListView(BaseView):
                     ConnectionErrorWidget(
                         error_msg,
                         retry_callback=self.refreshLayout,
-                        back_callback=self.getWindow().backToMenu,
+                        back_callback=self.back_to_menu,
                         parent=self,
                     )
                 )
@@ -84,7 +84,7 @@ class BaseListView(BaseView):
             if not list_definition["items"] and list_definition["empty_msg"]:
                 self.layout().addWidget(MsgCard(list_definition["empty_msg"], self))
 
-        self.layout().addWidget(MenuButton("Volver al menú", onClick=self.getWindow().backToMenu))
+        self.layout().addWidget(MenuButton("Volver al menú", onClick=self.back_to_menu))
         self.update()
 
     # Attributes

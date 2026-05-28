@@ -1,7 +1,6 @@
 from typing import Callable
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QToolBar, QToolButton
+from PyQt5.QtWidgets import QToolBar, QToolButton
 
 # Custom types
 ToolBarOptionInfo = tuple[str, Callable[[], object], bool]
@@ -11,11 +10,10 @@ ToolBarOptionRefs = dict[str, QToolButton]
 class ToolBar(QToolBar):
     """Adds a custom tool bar to the window"""
 
-    def __init__(self, options: list[ToolBarOptionInfo], window: QMainWindow, parent=None):
+    def __init__(self, options: list[ToolBarOptionInfo], parent=None):
         super(ToolBar, self).__init__(parent)
 
         self.setMovable(False)
-        window.addToolBar(Qt.TopToolBarArea, self)
 
         self.options: ToolBarOptionRefs = {}
         self.add_options(options)

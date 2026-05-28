@@ -82,24 +82,24 @@ def mock_context() -> AppContext:
 @pytest.fixture
 def mock_window(mocker: MockerFixture):
     """Create a mocked instance of the main window."""
-    parent = QWidget()
-    parent.addToolBar = mocker.Mock()
-    parent.removeToolBar = mocker.Mock()
-    parent.backToMenu = mocker.Mock()
-    parent.changeView = mocker.Mock()
-    parent.startWorkerMonitor = mocker.Mock()
+    window = QWidget()
+    window.addToolBar = mocker.Mock()
+    window.removeToolBar = mocker.Mock()
+    window.backToMenu = mocker.Mock()
+    window.changeView = mocker.Mock()
+    window._on_task_dispatched = mocker.Mock()
     context = make_mock_context()
-    parent._context = context
-    parent.worker_monitor = GatewayMonitor(context.gateway)
-    return cast(MainWindow, parent)
+    window._context = context
+    window.gateway_monitor = GatewayMonitor(context.gateway)
+    return cast(MainWindow, window)
 
 
 @pytest.fixture
 def mock_view(mocker: MockerFixture):
     """Create a mocked instance of the view containing a widget."""
-    parent = QWidget()
-    parent.refreshLayout = mocker.Mock()
-    parent.showWarning = mocker.Mock()
-    parent.showError = mocker.Mock()
-    parent._context = make_mock_context()
-    return cast(BaseListView, parent)
+    view = QWidget()
+    view.refreshLayout = mocker.Mock()
+    view.showWarning = mocker.Mock()
+    view.showError = mocker.Mock()
+    view._context = make_mock_context()
+    return cast(BaseListView, view)
