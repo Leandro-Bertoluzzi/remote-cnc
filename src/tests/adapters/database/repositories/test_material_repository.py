@@ -1,6 +1,7 @@
 import pytest
 from core.adapters.database.material_repository import MaterialRepository
 from core.domain.entities import Material
+from pytest_mock.plugin import MockerFixture
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -62,7 +63,7 @@ class TestMaterialRepository:
         materials_after = material_repository.get_all_materials()
         assert len(materials_after) == len(materials_before) - 1
 
-    def test_error_create_material_db_error(self, mocker, mocked_session):
+    def test_error_create_material_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "add", side_effect=SQLAlchemyError("mocked error"))
         material_repository = MaterialRepository(mocked_session)
@@ -80,7 +81,7 @@ class TestMaterialRepository:
             material_repository.get_material_by_id(id=5000)
         assert str(error.value) == "Material with ID 5000 was not found"
 
-    def test_error_get_material_db_error(self, mocker, mocked_session):
+    def test_error_get_material_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         material_repository = MaterialRepository(mocked_session)
@@ -90,7 +91,7 @@ class TestMaterialRepository:
             material_repository.get_material_by_id(id=1)
         assert "Error retrieving the material with ID 1" in str(error.value)
 
-    def test_error_get_all_materials_db_error(self, mocker, mocked_session):
+    def test_error_get_all_materials_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         material_repository = MaterialRepository(mocked_session)
@@ -108,7 +109,7 @@ class TestMaterialRepository:
             material_repository.update_material(id=5000, name="name", description="description")
         assert str(error.value) == "Material with ID 5000 was not found"
 
-    def test_error_update_material_db_error(self, mocker, mocked_session):
+    def test_error_update_material_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         material_repository = MaterialRepository(mocked_session)
@@ -126,7 +127,7 @@ class TestMaterialRepository:
             material_repository.remove_material(id=5000)
         assert str(error.value) == "Material with ID 5000 was not found"
 
-    def test_error_remove_material_db_error(self, mocker, mocked_session):
+    def test_error_remove_material_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         material_repository = MaterialRepository(mocked_session)

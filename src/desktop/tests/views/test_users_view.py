@@ -13,7 +13,7 @@ from pytestqt.qtbot import QtBot
 
 class TestUsersView:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
+    def setup_method(self, qtbot: QtBot, mock_window: MainWindow):
         user_1 = User(name="John 1", email="test1@testing.com", password="1234", role="user")
         user_2 = User(name="John 2", email="test2@testing.com", password="1234", role="user")
         user_3 = User(name="John 3", email="test3@testing.com", password="1234", role="user")
@@ -36,7 +36,7 @@ class TestUsersView:
         assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 3
 
-    def test_users_view_init_db_error(self, mocker: MockerFixture, helpers):
+    def test_users_view_init_db_error(self, helpers):
         self.mock_user_service.get_all_users.side_effect = Exception("mocked-error")
         self.mock_user_service.get_all_users.return_value = None
 
@@ -46,7 +46,7 @@ class TestUsersView:
         # Assertions
         self.mock_user_service.get_all_users.assert_called()
         assert helpers.count_widgets(users_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(users_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(users_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(users_view.layout(), UserCard) == 0
 
     def test_users_view_refresh_layout(self, helpers):
@@ -63,14 +63,14 @@ class TestUsersView:
         assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 2
 
-    def test_users_view_refresh_layout_db_error(self, mocker: MockerFixture, helpers):
+    def test_users_view_refresh_layout_db_error(self, helpers):
         self.mock_user_service.get_all_users.side_effect = Exception("mocked-error")
 
         self.users_view.refreshLayout()
 
         assert self.mock_user_service.get_all_users.call_count == 1
         assert helpers.count_widgets(self.users_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 0
 
     def test_users_view_create_user(self, mocker: MockerFixture, helpers):
@@ -119,3 +119,30 @@ class TestUsersView:
         assert mock_popup.call_count == 1
         assert helpers.count_widgets(self.users_view.layout(), MenuButton) == 2
         assert helpers.count_widgets(self.users_view.layout(), UserCard) == 3
+
+    # Handler tests
+
+    def test_users_view_on_user_update_success(self):
+        user = self.users_list[0]
+        user.id = 1
+        self.users_view.on_user_update(user, "Updated Name", "updated@email.com", "admin")
+        self.mock_user_service.update_user.assert_called_once_with(
+            1, "Updated Name", "updated@email.com", "admin"
+        )
+        assert self.mock_user_service.get_all_users.call_count == 1
+
+    def test_users_view_on_user_update_error(self, mocker: MockerFixture):
+        self.mock_user_service.update_user.side_effect = Exception("e")
+        mock_error = mocker.patch.object(self.users_view, "showError")
+        user = self.users_list[0]
+        user.id = 1
+        self.users_view.on_user_update(user, "name", "email", "role")
+        assert mock_error.call_count == 1
+        assert self.mock_user_service.get_all_users.call_count == 0
+
+    def test_users_view_on_user_remove_success(self):
+        user = self.users_list[0]
+        user.id = 1
+        self.users_view.on_user_remove(user)
+        self.mock_user_service.remove_user.assert_called_once_with(1)
+        assert self.mock_user_service.get_all_users.call_count == 1

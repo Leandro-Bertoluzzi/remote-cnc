@@ -1,6 +1,7 @@
 import pytest
 from core.adapters.database.tool_repository import ToolRepository
 from core.domain.entities import Tool
+from pytest_mock.plugin import MockerFixture
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -62,7 +63,7 @@ class TestToolRepository:
         tools_after = tool_repository.get_all_tools()
         assert len(tools_after) == len(tools_before) - 1
 
-    def test_error_create_tool_db_error(self, mocker, mocked_session):
+    def test_error_create_tool_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "add", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
@@ -72,7 +73,7 @@ class TestToolRepository:
             tool_repository.create_tool(name="name", description="description")
         assert "Error creating the tool in the DB" in str(error.value)
 
-    def test_error_get_all_tools_db_error(self, mocker, mocked_session):
+    def test_error_get_all_tools_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
@@ -90,7 +91,7 @@ class TestToolRepository:
             tool_repository.get_tool_by_id(id=5000)
         assert str(error.value) == "Tool with ID 5000 was not found"
 
-    def test_error_get_tool_db_error(self, mocker, mocked_session):
+    def test_error_get_tool_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
@@ -108,7 +109,7 @@ class TestToolRepository:
             tool_repository.update_tool(id=5000, name="name", description="description")
         assert str(error.value) == "Tool with ID 5000 was not found"
 
-    def test_error_update_tool_db_error(self, mocker, mocked_session):
+    def test_error_update_tool_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)
@@ -126,7 +127,7 @@ class TestToolRepository:
             tool_repository.remove_tool(id=5000)
         assert str(error.value) == "Tool with ID 5000 was not found"
 
-    def test_error_remove_tool_db_error(self, mocker, mocked_session):
+    def test_error_remove_tool_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         tool_repository = ToolRepository(mocked_session)

@@ -2,9 +2,17 @@ from core.domain.entities import User
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
 from desktop.helpers.utils import needs_confirmation
+from PyQt5.QtCore import pyqtSignal
 
 
 class UserCard(Card):
+    """Presentation-only card for a User entity."""
+
+    # (user, name, email, role)
+    update_requested = pyqtSignal(object, str, str, str)
+    # (user,)
+    remove_requested = pyqtSignal(object)
+
     def __init__(self, user: User, parent=None):
         super(UserCard, self).__init__(parent)
 
@@ -23,25 +31,9 @@ class UserCard(Card):
         if not userDialog.exec():
             return
 
-        if self.user.id is None:
-            raise ValueError("User ID is required")
-
         name, email, _, role = userDialog.getInputs()
-        try:
-            self._context.user_service.update_user(self.user.id, name, email, role)
-        except Exception as error:
-            self.showError("Error de base de datos", str(error))
-            return
-        self.getView().refreshLayout()
+        self.update_requested.emit(self.user, name, email, role)
 
     @needs_confirmation("¿Realmente desea eliminar el usuario?", "Eliminar usuario")
     def removeUser(self):
-        if self.user.id is None:
-            raise ValueError("User ID is required")
-
-        try:
-            self._context.user_service.remove_user(self.user.id)
-        except Exception as error:
-            self.showError("Error de base de datos", str(error))
-            return
-        self.getView().refreshLayout()
+        self.remove_requested.emit(self.user)

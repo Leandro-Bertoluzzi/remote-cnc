@@ -1,9 +1,8 @@
 import pytest
 from core.domain.entities import File, User
-from core.domain.exceptions import DuplicatedFileNameError, PersistenceError
-from core.utilities.files import FileSystemError
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
+from desktop.components.dialogs.TaskDataDialog import TaskFromFileDialog
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -11,18 +10,14 @@ from pytestqt.qtbot import QtBot
 
 class TestFileCard:
     file = File(user_id=1, file_name="example_file.gcode", file_hash="hashed-file")
-
     user_test = User(name="test_user", email="test@email.com", password="password", role="admin")
 
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mock_view):
-        # Update file
         self.file.id = 1
         self.file.user = self.user_test
-
-        # Instantiate card
         self.parent = mock_view
-        self.card = FileCard(self.file, parent=self.parent)
+        self.card = FileCard(self.file, [], [], parent=self.parent)
         qtbot.addWidget(self.card)
 
     def test_file_card_init(self):
@@ -32,143 +27,90 @@ class TestFileCard:
         assert self.card.layout is not None
 
     @pytest.mark.parametrize(
-        "dialogResponse,expected_updated", [(QDialog.Accepted, True), (QDialog.Rejected, False)]
+        "dialogResponse,expected_emitted", [(QDialog.Accepted, True), (QDialog.Rejected, False)]
     )
-    def test_file_card_update_file(self, mocker: MockerFixture, dialogResponse, expected_updated):
-        # Mock FileDataDialog methods
+    def test_file_card_update_file(self, mocker: MockerFixture, dialogResponse, expected_emitted):
         mock_input = "updated_name.gcode", "path/to/file.gcode"
         mocker.patch.object(FileDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock file service methods
-        mock_rename_file = self.parent._context.file_service.rename_file
+        handler = mocker.Mock()
+        self.card.rename_requested.connect(handler)
 
-        # Call the updateFile method
         self.card.updateFile()
 
-        # Validate function calls
-        assert mock_rename_file.call_count == (1 if expected_updated else 0)
-
-        if expected_updated:
-            rename_file_params = {"user_id": 1, "file": self.file, "new_name": "updated_name.gcode"}
-            mock_rename_file.assert_called_with(*rename_file_params.values())
+        if expected_emitted:
+            handler.assert_called_once_with(self.file, "updated_name.gcode")
+        else:
+            handler.assert_not_called()
 
     def test_file_card_update_file_no_change(self, mocker: MockerFixture):
-        # Mock FileDataDialog methods
         mock_input = "example_file.gcode", "path/to/example_file.gcode"
         mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
         mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
 
-        # Call the updateFile method
+        handler = mocker.Mock()
+        self.card.rename_requested.connect(handler)
+
         self.card.updateFile()
 
-        # Validate function calls
-        assert self.parent._context.file_service.rename_file.call_count == 0
-
-    def test_file_card_update_file_repeated_name(self, mocker: MockerFixture):
-        # Mock FileDataDialog methods
-        mock_input = "updated_name.gcode", "path/to/file.gcode"
-        mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
-
-        # Mock file service methods
-        self.parent._context.file_service.rename_file.side_effect = DuplicatedFileNameError(
-            "mocked error"
-        )
-
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showWarning")
-
-        # Call the updateFile method
-        self.card.updateFile()
-
-        # Validate function calls
-        assert self.parent._context.file_service.rename_file.call_count == 1
-        assert mock_popup.call_count == 1
-
-    def test_file_card_update_file_fs_error(self, mocker: MockerFixture):
-        # Mock FileDataDialog methods
-        mock_input = "updated_name.gcode", "path/to/file.gcode"
-        mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
-
-        # Mock file service methods
-        self.parent._context.file_service.rename_file.side_effect = FileSystemError("mocked error")
-
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
-
-        # Call the updateFile method
-        self.card.updateFile()
-
-        # Validate function calls
-        assert self.parent._context.file_service.rename_file.call_count == 1
-        assert mock_popup.call_count == 1
-
-    def test_file_card_update_file_db_error(self, mocker: MockerFixture):
-        # Mock FileDataDialog methods
-        mock_input = "updated_name.gcode", "path/to/file.gcode"
-        mocker.patch.object(FileDataDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(FileDataDialog, "getInputs", return_value=mock_input)
-
-        # Mock file service methods
-        self.parent._context.file_service.rename_file.side_effect = PersistenceError("mocked error")
-
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
-
-        # Call the updateFile method
-        self.card.updateFile()
-
-        # Validate function calls
-        assert self.parent._context.file_service.rename_file.call_count == 1
-        assert mock_popup.call_count == 1
+        handler.assert_not_called()
 
     @pytest.mark.parametrize(
-        "msgBoxResponse,expected_updated", [(QMessageBox.Yes, True), (QMessageBox.Cancel, False)]
+        "msgBoxResponse,expected_emitted", [(QMessageBox.Yes, True), (QMessageBox.Cancel, False)]
     )
-    def test_file_card_remove_file(self, mocker: MockerFixture, msgBoxResponse, expected_updated):
-        # Mock confirmation dialog methods
+    def test_file_card_remove_file(self, mocker: MockerFixture, msgBoxResponse, expected_emitted):
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Call the removeFile method
+        handler = mocker.Mock()
+        self.card.remove_requested.connect(handler)
+
         self.card.removeFile()
 
-        # Validate function calls
-        assert self.parent._context.file_service.remove_file.call_count == (
-            1 if expected_updated else 0
-        )
+        if expected_emitted:
+            handler.assert_called_once_with(self.file)
+        else:
+            handler.assert_not_called()
 
-    def test_file_card_remove_file_fs_error(self, mocker: MockerFixture):
-        # Mock confirmation dialog methods
+    @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
+    def test_file_card_create_task_from_file(self, mocker: MockerFixture, dialogResponse):
+        mock_input = 1, 2, 3, "task name", "note"
+        mocker.patch.object(TaskFromFileDialog, "exec", return_value=dialogResponse)
+        mocker.patch.object(TaskFromFileDialog, "getInputs", return_value=mock_input)
+
+        handler = mocker.Mock()
+        self.card.create_task_requested.connect(handler)
+
+        self.card.createTaskFromFile()
+
+        if dialogResponse == QDialog.Accepted:
+            handler.assert_called_once_with(self.file, 2, 3, "task name", "note")
+        else:
+            handler.assert_not_called()
+
+    @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
+    def test_file_card_execute_task_from_file(self, mocker: MockerFixture, dialogResponse):
+        mock_input = 1, 2, 3, "task name", "note"
         mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
+        mocker.patch.object(TaskFromFileDialog, "exec", return_value=dialogResponse)
+        mocker.patch.object(TaskFromFileDialog, "getInputs", return_value=mock_input)
 
-        # Mock file service methods
-        self.parent._context.file_service.remove_file.side_effect = FileSystemError("mocked error")
+        handler = mocker.Mock()
+        self.card.execute_task_requested.connect(handler)
 
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
+        self.card.executeTaskFromFile()
 
-        # Call the removeFile method
-        self.card.removeFile()
+        if dialogResponse == QDialog.Accepted:
+            handler.assert_called_once_with(self.file, 2, 3, "task name", "note")
+        else:
+            handler.assert_not_called()
 
-        # Validate function calls
-        assert self.parent._context.file_service.remove_file.call_count == 1
-        assert mock_popup.call_count == 1
+    def test_file_card_execute_task_confirmation_rejected(self, mocker: MockerFixture):
+        mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.No)
 
-    def test_file_card_remove_file_db_error(self, mocker: MockerFixture):
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
+        handler = mocker.Mock()
+        self.card.execute_task_requested.connect(handler)
 
-        # Mock file service methods
-        self.parent._context.file_service.remove_file.side_effect = PersistenceError("mocked error")
+        self.card.executeTaskFromFile()
 
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
-
-        # Call the removeFile method
-        self.card.removeFile()
-
-        # Validate function calls
-        assert self.parent._context.file_service.remove_file.call_count == 1
-        assert mock_popup.call_count == 1
+        handler.assert_not_called()

@@ -2,11 +2,12 @@ import bcrypt
 import pytest
 from core.adapters.database.user_repository import UserRepository
 from core.domain.entities import User
+from pytest_mock.plugin import MockerFixture
 from sqlalchemy.exc import SQLAlchemyError
 
 
 class TestUserRepository:
-    def test_create_user(self, mocked_session, mocker):
+    def test_create_user(self, mocked_session, mocker: MockerFixture):
         user_repository = UserRepository(mocked_session)
         name = "New User"
         email = "new.user@email.com"
@@ -117,7 +118,7 @@ class TestUserRepository:
             )
         assert "There is already a user registered with the email" in str(error.value)
 
-    def test_error_create_user_db_error(self, mocker, mocked_session):
+    def test_error_create_user_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         user_repository = UserRepository(mocked_session)
@@ -139,7 +140,7 @@ class TestUserRepository:
         # Assertions
         assert str(error.value) == "User with ID 50 was not found"
 
-    def test_get_user_by_id_db_error(self, mocker, mocked_session):
+    def test_get_user_by_id_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         user_repository = UserRepository(mocked_session)
@@ -151,7 +152,7 @@ class TestUserRepository:
         # Assertions
         assert "Error retrieving the user with ID 1" in str(error.value)
 
-    def test_get_user_by_email_db_error(self, mocker, mocked_session):
+    def test_get_user_by_email_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         user_repository = UserRepository(mocked_session)
@@ -163,7 +164,7 @@ class TestUserRepository:
         # Assertions
         assert "Error retrieving the user with email test@testing.com" in str(error.value)
 
-    def test_error_get_all_users_db_error(self, mocker, mocked_session):
+    def test_error_get_all_users_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         user_repository = UserRepository(mocked_session)
@@ -191,7 +192,7 @@ class TestUserRepository:
             user_repository.update_user(id=5000, name="name", email="test@testing.com", role="user")
         assert str(error.value) == "User with ID 5000 was not found"
 
-    def test_error_update_user_db_error(self, mocker, mocked_session):
+    def test_error_update_user_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         user_repository = UserRepository(mocked_session)
@@ -209,7 +210,7 @@ class TestUserRepository:
             user_repository.remove_user(id=5000)
         assert str(error.value) == "User with ID 5000 was not found"
 
-    def test_error_remove_user_db_error(self, mocker, mocked_session):
+    def test_error_remove_user_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         user_repository = UserRepository(mocked_session)

@@ -2,13 +2,12 @@ import pytest
 from desktop.components.buttons.MainMenuButton import MainMenuButton
 from desktop.MainWindow import MainWindow
 from desktop.views.MainMenu import MainMenu
-from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 
 
 class TestMainMenu:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
+    def setup_method(self, qtbot: QtBot, mock_window: MainWindow):
         # Create an instance of MainMenu
         self.parent = mock_window
         self.main_menu = MainMenu(parent=self.parent)

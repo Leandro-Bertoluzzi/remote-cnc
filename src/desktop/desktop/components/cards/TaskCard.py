@@ -1,19 +1,33 @@
 import logging
 
 from core.domain.entities import File, Material, Task, Tool
-from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
+from core.domain.task import TaskStatus
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from desktop.config import USER_ID
-from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.utils import needs_confirmation
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QPushButton
 
 logger = logging.getLogger(__name__)
 
 
 class TaskCard(Card):
+    """Presentation-only card for a Task entity."""
+
+    # (task, file_id, tool_id, material_id, name, note)
+    update_requested = pyqtSignal(object, int, int, int, str, str)
+    # (task,)
+    remove_requested = pyqtSignal(object)
+    # (task, new_status_value, cancellation_reason)
+    status_change_requested = pyqtSignal(object, str, str)
+    # (task, file_id, tool_id, material_id, name, note)
+    repeat_requested = pyqtSignal(object, int, int, int, str, str)
+    # (task,)
+    run_requested = pyqtSignal(object)
+    # (task, currently_paused)
+    pause_resume_requested = pyqtSignal(object, bool)
+
     def __init__(
         self,
         task: Task,
@@ -93,37 +107,11 @@ class TaskCard(Card):
             return
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
-
-        if self.task.id is None:
-            raise ValueError("Task ID is required")
-
-        try:
-            self._context.task_service.update_task(
-                self.task.id,
-                self.task.user_id,
-                file_id,
-                tool_id,
-                material_id,
-                name,
-                note,
-                TASK_DEFAULT_PRIORITY,
-            )
-        except Exception as error:
-            self.showError("Error de base de datos", str(error))
-            return
-        self.getView().refreshLayout()
+        self.update_requested.emit(self.task, file_id, tool_id, material_id, name, note)
 
     @needs_confirmation("¿Realmente desea eliminar la tarea?", "Eliminar tarea")
     def removeTask(self):
-        if self.task.id is None:
-            raise ValueError("Task ID is required")
-
-        try:
-            self._context.task_service.remove_task(self.task.id)
-        except Exception as error:
-            self.showError("Error de base de datos", str(error))
-            return
-        self.getView().refreshLayout()
+        self.remove_requested.emit(self.task)
 
     @needs_confirmation(
         "¿Realmente desea restaurar la tarea?"
@@ -131,8 +119,7 @@ class TaskCard(Card):
         "Restaurar tarea",
     )
     def restoreTask(self):
-        self.updateTaskStatus(TaskStatus.INITIAL)
-        self.getView().refreshLayout()
+        self.status_change_requested.emit(self.task, TaskStatus.INITIAL.value, "")
 
     def cancelTask(self):
         cancelDialog = TaskCancelDialog()
@@ -140,20 +127,9 @@ class TaskCard(Card):
             return
 
         cancellation_reason = cancelDialog.getInput()
-        self.updateTaskStatus(TaskStatus.CANCELLED, cancellation_reason)
-        self.getView().refreshLayout()
-
-    def updateTaskStatus(self, new_status: TaskStatus, cancellation_reason: str = ""):
-        if self.task.id is None:
-            raise ValueError("Task ID is required")
-
-        try:
-            self._context.task_service.update_task_status(
-                self.task.id, new_status.value, USER_ID, cancellation_reason
-            )
-        except Exception as error:
-            self.showError("Error de base de datos", str(error))
-            return
+        self.status_change_requested.emit(
+            self.task, TaskStatus.CANCELLED.value, cancellation_reason
+        )
 
     def repeatTask(self):
         taskDialog = TaskDataDialog(self.files, self.tools, self.materials, taskInfo=self.task)
@@ -161,44 +137,15 @@ class TaskCard(Card):
             return
 
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
-        try:
-            self._context.task_service.create_task(
-                self.task.user_id, file_id, tool_id, material_id, name, note
-            )
-        except Exception as error:
-            self.showError("Error de base de datos", str(error))
-            return
-        self.getView().refreshLayout()
+        self.repeat_requested.emit(self.task, file_id, tool_id, material_id, name, note)
 
     @needs_confirmation("¿Desea ejecutar la tarea ahora?", "Ejecutar tarea")
     def runTask(self):
-        try:
-            unavailable_reason = self._context.device_service.check_device_availability()
-        except Exception as error:
-            self.showError("Error de conexión", get_friendly_error_message(error))
-            return
-
-        if unavailable_reason:
-            self.showError("No disponible", unavailable_reason)
-            return
-
-        if self.task.id is None:
-            raise ValueError("Task ID is required")
-
-        try:
-            self._context.task_service.send_task_to_worker(self.task.id)
-        except Exception as error:
-            self.showError("Error de conexión", get_friendly_error_message(error))
-            return
-
-        self.getWindow().startWorkerMonitor()
-        self.showInformation("Tarea enviada", "Se envió la tarea al equipo para su ejecución")
-        self.getView().refreshLayout()
+        self.run_requested.emit(self.task)
 
     @needs_confirmation("¿Realmente desea aprobar la solicitud?", "Aprobar solicitud")
     def approveTask(self):
-        self.updateTaskStatus(TaskStatus.APPROVED)
-        self.getView().refreshLayout()
+        self.status_change_requested.emit(self.task, TaskStatus.APPROVED.value, "")
 
     def pauseTask(self):
         for i in range(self.layout_buttons.count()):
@@ -206,13 +153,6 @@ class TaskCard(Card):
             if isinstance(widget, QPushButton):
                 widget.setText("Pausar" if self.paused else "Retomar")
 
-        try:
-            if self.paused:
-                self._context.device_service.request_pause()
-            else:
-                self._context.device_service.request_resume()
-        except Exception as error:
-            self.showError("Error de conexión", get_friendly_error_message(error))
-            return
-
+        # Emit before toggling so the view knows the pre-toggle state
+        self.pause_resume_requested.emit(self.task, self.paused)
         self.paused = not self.paused

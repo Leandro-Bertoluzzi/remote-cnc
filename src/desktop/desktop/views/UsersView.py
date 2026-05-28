@@ -17,7 +17,10 @@ class UsersView(BaseListView):
         self.refreshLayout()
 
     def createUserCard(self, user):
-        return UserCard(user, self)
+        card = UserCard(user, self)
+        card.update_requested.connect(self.on_user_update)
+        card.remove_requested.connect(self.on_user_remove)
+        return card
 
     def getItems(self):
         return self._context.user_service.get_all_users()
@@ -30,6 +33,30 @@ class UsersView(BaseListView):
         name, email, password, role = userDialog.getInputs()
         try:
             self._context.user_service.create_user(name, email, password, role)
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    # Signal handlers
+
+    def on_user_update(self, user, name, email, role):
+        if user.id is None:
+            return
+
+        try:
+            self._context.user_service.update_user(user.id, name, email, role)
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    def on_user_remove(self, user):
+        if user.id is None:
+            return
+
+        try:
+            self._context.user_service.remove_user(user.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

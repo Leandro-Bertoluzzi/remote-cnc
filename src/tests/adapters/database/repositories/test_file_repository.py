@@ -2,6 +2,7 @@ import pytest
 from core.adapters.database.file_repository import FileRepository
 from core.domain.entities import File
 from core.domain.exceptions import DuplicatedFileError, DuplicatedFileNameError
+from pytest_mock.plugin import MockerFixture
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -87,7 +88,7 @@ class TestFileRepository:
         files_after = file_repository.get_all_files()
         assert len(files_after) == len(files_before) - 1
 
-    def test_error_create_file_db_error(self, mocker, mocked_session):
+    def test_error_create_file_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "add", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
@@ -128,7 +129,7 @@ class TestFileRepository:
             file_repository.get_all_files_from_user(user_id=5000)
         assert str(error.value) == "User with ID 5000 not found"
 
-    def test_error_get_all_files_from_user_db_error(self, mocker, mocked_session):
+    def test_error_get_all_files_from_user_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
@@ -138,7 +139,7 @@ class TestFileRepository:
             file_repository.get_all_files_from_user(user_id=1)
         assert "Error looking for user in the DB" in str(error.value)
 
-    def test_error_get_all_files_db_error(self, mocker, mocked_session):
+    def test_error_get_all_files_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
@@ -156,7 +157,7 @@ class TestFileRepository:
             file_repository.get_file_by_id(id=5000)
         assert str(error.value) == "File with ID 5000 was not found"
 
-    def test_error_get_file_by_id_db_error(self, mocker, mocked_session):
+    def test_error_get_file_by_id_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
@@ -176,7 +177,7 @@ class TestFileRepository:
             )
         assert str(error.value) == "File with ID 5000 was not found"
 
-    def test_error_update_file_db_error(self, mocker, mocked_session):
+    def test_error_update_file_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)
@@ -196,7 +197,7 @@ class TestFileRepository:
             file_repository.remove_file(id=5000)
         assert str(error.value) == "File with ID 5000 was not found"
 
-    def test_error_remove_file_db_error(self, mocker, mocked_session):
+    def test_error_remove_file_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         file_repository = FileRepository(mocked_session)

@@ -93,9 +93,7 @@ class TestDisconnectionTasksView:
 class TestDisconnectionFilesView:
     """Test that FilesView shows ConnectionErrorWidget on service failure."""
 
-    def test_file_service_failure_shows_error(
-        self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
-    ):
+    def test_file_service_failure_shows_error(self, qtbot: QtBot, mock_window: MainWindow, helpers):
         mock_window._context.file_service.get_all_files.side_effect = Exception(
             "DB connection refused"
         )
@@ -104,15 +102,13 @@ class TestDisconnectionFilesView:
         qtbot.addWidget(view)
 
         assert helpers.count_widgets(view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(view.layout(), MenuButton) == 0
 
 
 class TestDisconnectionUsersView:
     """Test that UsersView shows ConnectionErrorWidget on service failure."""
 
-    def test_user_service_failure_shows_error(
-        self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
-    ):
+    def test_user_service_failure_shows_error(self, qtbot: QtBot, mock_window: MainWindow, helpers):
         mock_window._context.user_service.get_all_users.side_effect = Exception(
             "DB connection refused"
         )
@@ -121,15 +117,13 @@ class TestDisconnectionUsersView:
         qtbot.addWidget(view)
 
         assert helpers.count_widgets(view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(view.layout(), MenuButton) == 0
 
 
 class TestDisconnectionInventoryView:
     """Test that InventoryView shows ConnectionErrorWidget on service failure."""
 
-    def test_tool_service_failure_shows_error(
-        self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
-    ):
+    def test_tool_service_failure_shows_error(self, qtbot: QtBot, mock_window: MainWindow, helpers):
         mock_window._context.tool_service.get_all_tools.side_effect = Exception(
             "DB connection refused"
         )
@@ -140,7 +134,7 @@ class TestDisconnectionInventoryView:
         assert helpers.count_widgets(view.layout(), ConnectionErrorWidget) == 1
 
     def test_material_service_failure_shows_error(
-        self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow, helpers
+        self, qtbot: QtBot, mock_window: MainWindow, helpers
     ):
         mock_window._context.tool_service.get_all_tools.return_value = []
         mock_window._context.tool_service.get_all_tools.side_effect = None

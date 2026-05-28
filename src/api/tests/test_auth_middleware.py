@@ -8,6 +8,7 @@ from core.adapters.database.user_repository import UserRepository
 from core.domain.entities import User
 from fastapi.testclient import TestClient
 from jwt import ExpiredSignatureError, InvalidSignatureError
+from pytest_mock.plugin import MockerFixture
 
 # Example users
 test_user = User(
@@ -55,7 +56,7 @@ class TestAuthMiddleware:
     # -------------------------------- USER ------------------------------- #
     # --------------------------------------------------------------------- #
 
-    def test_auth_user_header(self, mocker):
+    def test_auth_user_header(self, mocker: MockerFixture):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock JWT validation
@@ -71,7 +72,7 @@ class TestAuthMiddleware:
         assert response.status_code == 200
         assert mock_verify_token.call_count == 1
 
-    def test_auth_user_query(self, mocker):
+    def test_auth_user_query(self, mocker: MockerFixture):
         # Mock JWT validation
         mock_verify_token = mocker.patch(
             "api.middleware.authMiddleware.verify_token",
@@ -93,7 +94,7 @@ class TestAuthMiddleware:
         assert response.status_code == 401
         assert response.json()["detail"] == "Unauthorized: Authentication Token is missing!"
 
-    def test_error_expired_token(self, mocker):
+    def test_error_expired_token(self, mocker: MockerFixture):
         headers = {"Authorization": "Bearer an-expired-token"}
 
         # Mock JWT validation
@@ -110,7 +111,7 @@ class TestAuthMiddleware:
         assert response.status_code == 401
         assert response.json()["detail"] == "Expired token, please login to generate a new one"
 
-    def test_error_invalid_token(self, mocker):
+    def test_error_invalid_token(self, mocker: MockerFixture):
         headers = {"Authorization": "Bearer an-expired-token"}
 
         # Mock JWT validation
@@ -127,7 +128,7 @@ class TestAuthMiddleware:
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid token, please login to generate a new one"
 
-    def test_error_user_not_found(self, mocker):
+    def test_error_user_not_found(self, mocker: MockerFixture):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock JWT validation
@@ -144,7 +145,7 @@ class TestAuthMiddleware:
         assert response.status_code == 400
         assert response.json()["detail"] == "User with ID 500 was not found"
 
-    def test_db_error(self, mocker):
+    def test_db_error(self, mocker: MockerFixture):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock JWT validation
@@ -171,7 +172,7 @@ class TestAuthMiddleware:
     # ------------------------------- ADMIN ------------------------------- #
     # --------------------------------------------------------------------- #
 
-    def test_auth_admin_header(self, mocker):
+    def test_auth_admin_header(self, mocker: MockerFixture):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock JWT validation
@@ -187,7 +188,7 @@ class TestAuthMiddleware:
         assert response.status_code == 200
         assert mock_verify_token.call_count == 1
 
-    def test_auth_admin_query(self, mocker):
+    def test_auth_admin_query(self, mocker: MockerFixture):
         # Mock JWT validation
         mock_verify_token = mocker.patch(
             "api.middleware.authMiddleware.verify_token",
@@ -201,7 +202,7 @@ class TestAuthMiddleware:
         assert response.status_code == 200
         assert mock_verify_token.call_count == 1
 
-    def test_auth_admin_fails(self, mocker):
+    def test_auth_admin_fails(self, mocker: MockerFixture):
         headers = {"Authorization": "Bearer a-valid-token"}
 
         # Mock JWT validation

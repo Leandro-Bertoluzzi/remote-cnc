@@ -31,10 +31,16 @@ class InventoryView(BaseListView):
         self.refreshLayout()
 
     def createToolCard(self, item):
-        return ToolCard(item, self)
+        card = ToolCard(item, self)
+        card.update_requested.connect(self.on_tool_update)
+        card.remove_requested.connect(self.on_tool_remove)
+        return card
 
     def createMaterialCard(self, item):
-        return MaterialCard(item, self)
+        card = MaterialCard(item, self)
+        card.update_requested.connect(self.on_material_update)
+        card.remove_requested.connect(self.on_material_remove)
+        return card
 
     def getItems(self):
         if self.current_index == 0:
@@ -68,6 +74,54 @@ class InventoryView(BaseListView):
         name, description = materialDialog.getInputs()
         try:
             self._context.material_service.create_material(name, description)
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    # Signal handlers
+
+    def on_tool_update(self, tool, name, description):
+        if tool.id is None:
+            return
+
+        try:
+            self._context.tool_service.update_tool(tool.id, name, description)
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    def on_tool_remove(self, tool):
+        if tool.id is None:
+            return
+
+        try:
+            self._context.tool_service.remove_tool(tool.id)
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    # Signal handlers
+
+    def on_material_update(self, material, name, description):
+        if material.id is None:
+            return
+
+        try:
+            self._context.material_service.update_material(material.id, name, description)
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    def on_material_remove(self, material):
+        if material.id is None:
+            return
+
+        try:
+            self._context.material_service.remove_material(material.id)
         except Exception as error:
             self.showError("Error de base de datos", str(error))
             return

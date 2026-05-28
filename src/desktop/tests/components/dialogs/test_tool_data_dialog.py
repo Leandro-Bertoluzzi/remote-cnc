@@ -1,19 +1,20 @@
 import pytest
 from core.domain.entities import Tool
 from desktop.components.dialogs.ToolDataDialog import ToolDataDialog
+from pytestqt.qtbot import QtBot
 
 
 class TestToolDataDialog:
     toolInfo = Tool(name="Example tool", description="Just a tool")
 
-    def test_tool_data_dialog_init(self, qtbot):
+    def test_tool_data_dialog_init(self, qtbot: QtBot):
         dialog = ToolDataDialog()
         qtbot.addWidget(dialog)
 
         assert dialog.layout() is not None
 
     @pytest.mark.parametrize("tool_info", [None, toolInfo])
-    def test_tool_data_dialog_init_widgets(self, qtbot, tool_info):
+    def test_tool_data_dialog_init_widgets(self, qtbot: QtBot, tool_info):
         dialog = ToolDataDialog(toolInfo=tool_info)
         qtbot.addWidget(dialog)
 
@@ -25,7 +26,7 @@ class TestToolDataDialog:
         assert dialog.description.toPlainText() == expectedDescription
         assert dialog.windowTitle() == expectedWindowTitle
 
-    def test_tool_data_dialog_get_inputs(self, qtbot):
+    def test_tool_data_dialog_get_inputs(self, qtbot: QtBot):
         dialog = ToolDataDialog(toolInfo=self.toolInfo)
         qtbot.addWidget(dialog)
 

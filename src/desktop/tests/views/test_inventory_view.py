@@ -16,7 +16,7 @@ from pytestqt.qtbot import QtBot
 
 class TestInventoryView:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
+    def setup_method(self, qtbot: QtBot, mock_window: MainWindow):
         tool_1 = Tool(name="Example tool 1", description="It is the first tool")
         tool_2 = Tool(name="Example tool 2", description="It is the second tool")
         tool_3 = Tool(name="Example tool 3", description="It is the third tool")
@@ -75,7 +75,7 @@ class TestInventoryView:
         inventory_view = InventoryView(self.parent)
 
         assert helpers.count_widgets(inventory_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(inventory_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(inventory_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(inventory_view.layout(), ToolCard) == 0
         assert helpers.count_widgets(inventory_view.layout(), MaterialCard) == 0
         assert helpers.count_widgets(inventory_view.layout(), MsgCard) == 0
@@ -104,11 +104,11 @@ class TestInventoryView:
         assert self.mock_tool_service.get_all_tools.call_count == 1
         assert self.mock_material_service.get_all_materials.call_count == (0 if tools_error else 1)
         assert helpers.count_widgets(self.inventory_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(self.inventory_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.inventory_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(self.inventory_view.layout(), ToolCard) == 0
         assert helpers.count_widgets(self.inventory_view.layout(), MaterialCard) == 0
 
-    def test_inventory_view_create_tool(self, mocker, helpers):
+    def test_inventory_view_create_tool(self, mocker: MockerFixture, helpers):
         mock_inputs = "Example tool 4", "It is the fourth tool"
         mocker.patch.object(ToolDataDialog, "exec", return_value=QDialogButtonBox.Save)
         mocker.patch.object(ToolDataDialog, "getInputs", return_value=mock_inputs)
@@ -128,7 +128,7 @@ class TestInventoryView:
         assert helpers.count_widgets(self.inventory_view.layout(), ToolCard) == 4
         assert helpers.count_widgets(self.inventory_view.layout(), MaterialCard) == 3
 
-    def test_inventory_view_create_tool_db_error(self, mocker, helpers):
+    def test_inventory_view_create_tool_db_error(self, mocker: MockerFixture, helpers):
         mock_inputs = "Example tool 4", "It is the fourth tool"
         mocker.patch.object(ToolDataDialog, "exec", return_value=QDialogButtonBox.Save)
         mocker.patch.object(ToolDataDialog, "getInputs", return_value=mock_inputs)
@@ -146,7 +146,7 @@ class TestInventoryView:
         assert helpers.count_widgets(self.inventory_view.layout(), ToolCard) == 3
         assert helpers.count_widgets(self.inventory_view.layout(), MaterialCard) == 3
 
-    def test_inventory_view_create_material(self, mocker, helpers):
+    def test_inventory_view_create_material(self, mocker: MockerFixture, helpers):
         mock_inputs = "Example material 4", "It is the fourth material"
         mocker.patch.object(MaterialDataDialog, "exec", return_value=QDialogButtonBox.Save)
         mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_inputs)
@@ -168,7 +168,7 @@ class TestInventoryView:
         assert helpers.count_widgets(self.inventory_view.layout(), ToolCard) == 3
         assert helpers.count_widgets(self.inventory_view.layout(), MaterialCard) == 4
 
-    def test_inventory_view_create_material_db_error(self, mocker, helpers):
+    def test_inventory_view_create_material_db_error(self, mocker: MockerFixture, helpers):
         mock_inputs = "Example material 4", "It is the fourth material"
         mocker.patch.object(MaterialDataDialog, "exec", return_value=QDialogButtonBox.Save)
         mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_inputs)
@@ -185,3 +185,46 @@ class TestInventoryView:
         assert helpers.count_widgets(self.inventory_view.layout(), MenuButton) == 3
         assert helpers.count_widgets(self.inventory_view.layout(), ToolCard) == 3
         assert helpers.count_widgets(self.inventory_view.layout(), MaterialCard) == 3
+
+    # Handler tests
+
+    def test_inventory_view_on_tool_update_success(self):
+        tool = self.tools_list[0]
+        tool.id = 1
+        self.inventory_view.on_tool_update(tool, "Updated tool", "Updated desc")
+        self.mock_tool_service.update_tool.assert_called_once_with(
+            1, "Updated tool", "Updated desc"
+        )
+        assert self.mock_tool_service.get_all_tools.call_count == 1
+
+    def test_inventory_view_on_tool_update_error(self, mocker: MockerFixture):
+        self.mock_tool_service.update_tool.side_effect = Exception("e")
+        mock_error = mocker.patch.object(self.inventory_view, "showError")
+        tool = self.tools_list[0]
+        tool.id = 1
+        self.inventory_view.on_tool_update(tool, "name", "desc")
+        assert mock_error.call_count == 1
+        assert self.mock_tool_service.get_all_tools.call_count == 0
+
+    def test_inventory_view_on_tool_remove_success(self):
+        tool = self.tools_list[0]
+        tool.id = 1
+        self.inventory_view.on_tool_remove(tool)
+        self.mock_tool_service.remove_tool.assert_called_once_with(1)
+        assert self.mock_tool_service.get_all_tools.call_count == 1
+
+    def test_inventory_view_on_material_update_success(self):
+        material = self.materials_list[0]
+        material.id = 1
+        self.inventory_view.on_material_update(material, "Updated material", "Updated desc")
+        self.mock_material_service.update_material.assert_called_once_with(
+            1, "Updated material", "Updated desc"
+        )
+        assert self.mock_material_service.get_all_materials.call_count == 1
+
+    def test_inventory_view_on_material_remove_success(self):
+        material = self.materials_list[0]
+        material.id = 1
+        self.inventory_view.on_material_remove(material)
+        self.mock_material_service.remove_material.assert_called_once_with(1)
+        assert self.mock_material_service.get_all_materials.call_count == 1

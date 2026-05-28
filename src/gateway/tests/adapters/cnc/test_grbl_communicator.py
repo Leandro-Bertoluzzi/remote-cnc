@@ -51,12 +51,12 @@ class TestGrblCommunicator:
     # ------------------------------------------------------------------ #
     # Public API methods                                                 #
     # ------------------------------------------------------------------ #
-    def test_request_status_query(self, mocker: MockerFixture):
+    def test_request_status_query(self):
         self.communicator.request_status_query()
 
         assert self.communicator._status_query_pending is True
 
-    def test_request_status_query_idempotent(self, mocker: MockerFixture):
+    def test_request_status_query_idempotent(self):
         self.communicator.request_status_query()
         self.communicator.request_status_query()
 

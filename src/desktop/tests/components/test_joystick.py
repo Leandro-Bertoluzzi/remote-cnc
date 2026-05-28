@@ -1,11 +1,13 @@
 import pytest
 from desktop.components.Joystick import Joystick
 from PyQt5.QtWidgets import QDoubleSpinBox, QLabel
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestJoystick:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock jog callback
         self.mock_jog_callback = mocker.MagicMock()
 
@@ -43,7 +45,7 @@ class TestJoystick:
         assert self.joystick.input_z.suffix() == " mm"
         assert self.joystick.input_feedrate.suffix() == " mm/min"
 
-    def test_joystick_incremental_move(self, mocker):
+    def test_joystick_incremental_move(self, mocker: MockerFixture):
         # Mock widget state
         self.joystick.input_x.setValue(1.5)
         self.joystick.input_y.setValue(1.3)
@@ -69,7 +71,7 @@ class TestJoystick:
         }
         mock_send_jog_command.assert_called_with(*jog_params.values())
 
-    def test_joystick_incremental_move_avoids_null_movement(self, mocker):
+    def test_joystick_incremental_move_avoids_null_movement(self, mocker: MockerFixture):
         # Mock widget state
         self.joystick.input_x.setValue(1.5)
         self.joystick.input_y.setValue(1.3)

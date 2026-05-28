@@ -1,6 +1,7 @@
 import pytest
 from core.domain.entities import File, Material, Task, Tool
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
+from pytestqt.qtbot import QtBot
 
 
 class TestTaskDataDialog:
@@ -9,7 +10,7 @@ class TestTaskDataDialog:
     )
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot):
+    def setup_method(self, qtbot: QtBot):
         # Mock DB data
         file = File(user_id=1, file_name="example_file.gcode", file_hash="hashed-file")
         file.id = 1
@@ -28,7 +29,7 @@ class TestTaskDataDialog:
         self.materials: list[Material] = [material]
         self.tools: list[Tool] = [tool]
 
-    def test_task_data_dialog_init(self, qtbot):
+    def test_task_data_dialog_init(self, qtbot: QtBot):
         # Instantiate the dialog
         dialog = TaskDataDialog(files=self.files, tools=self.tools, materials=self.materials)
         qtbot.addWidget(dialog)
@@ -36,7 +37,7 @@ class TestTaskDataDialog:
         assert dialog.layout() is not None
 
     @pytest.mark.parametrize("task_info", [None, taskInfo])
-    def test_task_data_dialog_init_widgets(self, qtbot, task_info):
+    def test_task_data_dialog_init_widgets(self, qtbot: QtBot, task_info):
         dialog = TaskDataDialog(
             files=self.files, tools=self.tools, materials=self.materials, taskInfo=task_info
         )
@@ -53,7 +54,7 @@ class TestTaskDataDialog:
         assert dialog.tool.currentText() == "Example tool"
         assert dialog.windowTitle() == expectedWindowTitle
 
-    def test_task_data_dialog_get_inputs(self, qtbot):
+    def test_task_data_dialog_get_inputs(self, qtbot: QtBot):
         dialog = TaskDataDialog(
             files=self.files, tools=self.tools, materials=self.materials, taskInfo=self.taskInfo
         )

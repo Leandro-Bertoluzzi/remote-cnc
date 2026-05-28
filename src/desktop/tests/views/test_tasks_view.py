@@ -110,7 +110,7 @@ class TestTasksView:
 
         assert self.mock_task_service.get_all_tasks.call_count == 1
         assert helpers.count_widgets(self.tasks_view.layout(), ConnectionErrorWidget) == 1
-        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 1
+        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 0
 
     def test_tasks_view_create_task(self, mocker: MockerFixture, helpers):
@@ -183,6 +183,63 @@ class TestTasksView:
 
         # Restore
         self.mock_task_service.create_task.side_effect = None
+
+    # Handler tests
+
+    def test_tasks_view_on_task_run_success(self, mocker: MockerFixture, helpers):
+        self.parent._context.device_service.check_device_availability.return_value = None
+        self.parent._context.task_service.send_task_to_worker.return_value = "worker-task-id"
+        mock_info = mocker.patch.object(QMessageBox, "information", return_value=QMessageBox.Ok)
+
+        task = self.tasks_list[0]
+        task.id = 1
+        self.tasks_view.on_task_run(task)
+
+        self.parent._context.task_service.send_task_to_worker.assert_called_once_with(1)
+        self.parent.startWorkerMonitor.assert_called_once()
+        assert mock_info.call_count == 1
+
+    def test_tasks_view_on_task_run_device_unavailable(self, mocker: MockerFixture):
+        self.parent._context.device_service.check_device_availability.return_value = (
+            "Equipo deshabilitado"
+        )
+        mock_error = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
+
+        task = self.tasks_list[0]
+        task.id = 1
+        self.tasks_view.on_task_run(task)
+
+        self.parent._context.task_service.send_task_to_worker.assert_not_called()
+        self.parent.startWorkerMonitor.assert_not_called()
+        assert mock_error.call_count == 1
+
+    def test_tasks_view_on_task_remove_success(self):
+        task = self.tasks_list[0]
+        task.id = 1
+        self.tasks_view.on_task_remove(task)
+
+        self.parent._context.task_service.remove_task.assert_called_once_with(1)
+        assert self.mock_task_service.get_all_tasks.call_count == 1
+
+    def test_tasks_view_on_status_change_success(self):
+
+        task = self.tasks_list[0]
+        task.id = 1
+        self.tasks_view.on_status_change(task, TaskStatus.APPROVED.value, "")
+
+        self.parent._context.task_service.update_task_status.assert_called_once_with(
+            1, TaskStatus.APPROVED.value, 1, ""
+        )
+        assert self.mock_task_service.get_all_tasks.call_count == 1
+
+    def test_tasks_view_on_pause_resume(self):
+        task = self.tasks_list[0]
+
+        self.tasks_view.on_pause_resume(task, True)
+        self.parent._context.device_service.request_pause.assert_called_once()
+
+        self.tasks_view.on_pause_resume(task, False)
+        self.parent._context.device_service.request_resume.assert_called_once()
 
 
 class TestTasksViewProgress:

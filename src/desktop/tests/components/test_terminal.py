@@ -1,11 +1,12 @@
 import pytest
 from desktop.components.Terminal import Terminal
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit
+from pytestqt.qtbot import QtBot
 
 
 class TestTerminal:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, qtbot: QtBot):
         # Create an instance of Terminal (no longer needs GrblController)
         self.terminal = Terminal()
         qtbot.addWidget(self.terminal)
@@ -23,7 +24,7 @@ class TestTerminal:
         # Assertions
         assert self.terminal.display_screen.toPlainText() == "some text\n"
 
-    def test_terminal_send_line_emits_signal(self, qtbot):
+    def test_terminal_send_line_emits_signal(self, qtbot: QtBot):
         # Mock state of widget
         self.terminal.input.setText("A G-code command")
 

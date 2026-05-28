@@ -24,7 +24,7 @@ class TestMonitorView:
         qtbot.addWidget(self.monitor_view)
 
     @pytest.mark.parametrize("device_busy", [False, True])
-    def test_monitor_view_init(self, qtbot: QtBot, mocker: MockerFixture, helpers, device_busy):
+    def test_monitor_view_init(self, qtbot: QtBot, helpers, device_busy):
         # Reset parent mocks call count
         self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
 
