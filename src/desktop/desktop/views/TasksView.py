@@ -6,11 +6,11 @@ from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QVBoxLayout
 
 from desktop.components.cards.TaskCard import TaskCard
-from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.components.TaskProgress import TaskProgress
 from desktop.config import USER_ID
 from desktop.helpers.connectionErrors import get_friendly_error_message
+from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
@@ -20,24 +20,17 @@ logger = logging.getLogger(__name__)
 
 
 class TasksView(BaseListView):
-    def __init__(self, parent: "MainWindow", **kwargs):
+    def __init__(
+        self, parent: "MainWindow", gateway_monitor: GatewayMonitor | None = None, **kwargs
+    ):
         super(TasksView, self).__init__(parent, **kwargs)
-
+        self._gateway_monitor = gateway_monitor
         self._progress_connected = False
 
-        try:
-            self.files, self.materials, self.tools = self._context.asset_service.get_assets(USER_ID)
-        except Exception as error:
-            error_msg = get_friendly_error_message(error)
-            self.layout().addWidget(
-                ConnectionErrorWidget(
-                    error_msg,
-                    retry_callback=lambda: parent.changeView(TasksView),
-                    back_callback=parent.backToMenu,
-                    parent=self,
-                )
-            )
-            return
+        # Default values for assets
+        self.files: list = []
+        self.materials: list = []
+        self.tools: list = []
 
         # Task progress bar — shown above the card list when a task is running
         self.task_progress = TaskProgress(parent=self)
@@ -65,6 +58,10 @@ class TasksView(BaseListView):
         return card
 
     def getItems(self):
+        # Load assets fresh on every refresh so cards always have up-to-date data.
+        self.files, self.materials, self.tools = self._context.asset_service.get_assets(USER_ID)
+
+        # Load tasks fresh on every refresh to reflect any changes.
         tasks = self._context.task_service.get_all_tasks(USER_ID, status="all")
 
         # Check if there is a task in progress
@@ -171,7 +168,7 @@ class TasksView(BaseListView):
             self.showError("Error de conexión", get_friendly_error_message(error))
             return
 
-        self.getWindow().startWorkerMonitor()
+        self.task_dispatched.emit()
         self.showInfo("Tarea enviada", "Se envió la tarea al equipo para su ejecución")
         self.refreshLayout()
 
@@ -188,23 +185,21 @@ class TasksView(BaseListView):
 
     def _connect_progress_signals(self):
         """Connect GatewayMonitor signals for real-time progress updates."""
-        if self._progress_connected:
+        if self._progress_connected or self._gateway_monitor is None:
             return
-        monitor = self.getWindow().worker_monitor
-        monitor.file_progress.connect(self._on_file_progress)
-        monitor.file_finished.connect(self._on_file_finished)
-        monitor.file_failed.connect(self._on_file_failed)
+        self._gateway_monitor.file_progress.connect(self._on_file_progress)
+        self._gateway_monitor.file_finished.connect(self._on_file_finished)
+        self._gateway_monitor.file_failed.connect(self._on_file_failed)
         self._progress_connected = True
 
     def _disconnect_progress_signals(self):
         """Disconnect GatewayMonitor signals."""
-        if not self._progress_connected:
+        if not self._progress_connected or self._gateway_monitor is None:
             return
         try:
-            monitor = self.getWindow().worker_monitor
-            monitor.file_progress.disconnect(self._on_file_progress)
-            monitor.file_finished.disconnect(self._on_file_finished)
-            monitor.file_failed.disconnect(self._on_file_failed)
+            self._gateway_monitor.file_progress.disconnect(self._on_file_progress)
+            self._gateway_monitor.file_finished.disconnect(self._on_file_finished)
+            self._gateway_monitor.file_failed.disconnect(self._on_file_failed)
         except (RuntimeError, TypeError):
             pass
         self._progress_connected = False

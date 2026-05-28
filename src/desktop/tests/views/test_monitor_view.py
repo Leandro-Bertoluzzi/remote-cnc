@@ -43,12 +43,9 @@ class TestMonitorView:
         # More assertions
         assert monitor_view.status_monitor.isEnabled() == device_busy
 
-    def test_monitor_view_goes_back_to_menu(self):
-        # Call method under test
-        self.monitor_view.backToMenu()
-
-        # Assertions
-        self.parent.backToMenu.assert_called_once()  # type: ignore[attr-defined]
+    def test_monitor_view_goes_back_to_menu(self, qtbot: QtBot):
+        with qtbot.waitSignal(self.monitor_view.back_requested, raising=True):
+            self.monitor_view.back_to_menu()
 
     def test_monitor_view_update_device_status(self, mocker: MockerFixture):
         # Mock methods

@@ -175,18 +175,18 @@ class TestFilesView:
             USER_ID, 1, 2, 3, "task", "note"
         )
 
-    def test_files_view_on_execute_task_success(self, mocker):
+    def test_files_view_on_execute_task_success(self, qtbot: QtBot, mocker):
         file = self.files_list[0]
         file.id = 1
         self.parent._context.device_service.check_device_availability.return_value = None
         mocker.patch.object(self.files_view, "showInfo")
 
-        self.files_view.on_execute_task(file, 2, 3, "task", "note")
+        with qtbot.waitSignal(self.files_view.task_dispatched, raising=True):
+            self.files_view.on_execute_task(file, 2, 3, "task", "note")
 
         self.parent._context.task_service.create_and_execute_task.assert_called_once_with(
             USER_ID, 1, 2, 3, "task", "note"
         )
-        self.parent.startWorkerMonitor.assert_called_once()
 
     def test_files_view_on_execute_task_device_unavailable(self, mocker: MockerFixture):
         file = self.files_list[0]

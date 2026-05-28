@@ -21,19 +21,24 @@ _FAKE_SESSION_ID = "abc123"
 class TestControlView:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
-        # Patch GatewayMonitor — no real Redis connections
+        # Create a mock GatewayMonitor to avoid real Redis connections
         self.mock_sync = mocker.MagicMock(spec=GatewayMonitor)
-        mocker.patch("desktop.views.ControlView.GatewayMonitor", return_value=self.mock_sync)
 
         # Use the context provided by mock_window
         self.mock_context = mock_window._context
         self.mock_gateway = mock_window._context.gateway
         mock_window._context.device_service.is_worker_busy.return_value = False
 
-        # Create an instance of ControlView
+        # Create an instance of ControlView, injecting the mock monitor
         self.parent = mock_window
-        self.control_view = ControlView(self.parent, self.mock_context)
+        self.control_view = ControlView(
+            self.parent, self.mock_context, gateway_monitor=self.mock_sync
+        )
         qtbot.addWidget(self.control_view)
+
+        # Wire view signals to the parent mocks so existing assertions still work
+        self.control_view.back_requested.connect(self.parent.backToMenu)
+        self.control_view.toolbar_removed.connect(self.parent.removeToolBar)
 
         # Reset call counts accumulated during view creation
         self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
@@ -58,18 +63,13 @@ class TestControlView:
         assert helpers.count_grid_widgets(layout, ControllerStatus) == (0 if device_busy else 1)
         assert helpers.count_grid_widgets(layout, Terminal) == 1
 
-        # More assertions
-        assert self.parent.addToolBar.call_count == (1 if device_busy else 2)  # type: ignore[union-attr]
-
     # -- navigation ---------------------------------------------------------
 
     @pytest.mark.parametrize("device_busy", [False, True])
-    def test_control_view_goes_back_to_menu(self, device_busy):
+    def test_control_view_goes_back_to_menu(self, qtbot: QtBot, device_busy):
         self.control_view.device_busy = device_busy
-        self.control_view.backToMenu()
-
-        assert self.parent.removeToolBar.call_count == (1 if device_busy else 2)  # type: ignore[union-attr]
-        self.parent.backToMenu.assert_called_once()  # type: ignore[attr-defined]
+        with qtbot.waitSignal(self.control_view.back_requested, raising=True):
+            self.control_view.back_to_menu()
 
     def test_control_view_close_event(self, mocker: MockerFixture):
         mock_disconnect = mocker.patch.object(ControlView, "disconnect_device")

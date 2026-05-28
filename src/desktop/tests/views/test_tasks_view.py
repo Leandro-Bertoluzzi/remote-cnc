@@ -113,6 +113,17 @@ class TestTasksView:
         assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 0
         assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 0
 
+    def test_tasks_view_refresh_layout_assets_error(self, helpers):
+        self.parent._context.asset_service.get_assets.side_effect = Exception("mocked-error")
+
+        self.tasks_view.refreshLayout()
+
+        assert self.parent._context.asset_service.get_assets.call_count == 1
+        assert self.mock_task_service.get_all_tasks.call_count == 0
+        assert helpers.count_widgets(self.tasks_view.layout(), ConnectionErrorWidget) == 1
+        assert helpers.count_widgets(self.tasks_view.layout(), MenuButton) == 0
+        assert helpers.count_widgets(self.tasks_view.layout(), TaskCard) == 0
+
     def test_tasks_view_create_task(self, mocker: MockerFixture, helpers):
         # Mock TaskDataDialog methods
         mock_inputs = 2, 3, 4, "Example task 4", "Just a simple description"
@@ -186,20 +197,20 @@ class TestTasksView:
 
     # Handler tests
 
-    def test_tasks_view_on_task_run_success(self, mocker: MockerFixture, helpers):
+    def test_tasks_view_on_task_run_success(self, qtbot: QtBot, mocker: MockerFixture):
         self.parent._context.device_service.check_device_availability.return_value = None
         self.parent._context.task_service.send_task_to_worker.return_value = "worker-task-id"
         mock_info = mocker.patch.object(QMessageBox, "information", return_value=QMessageBox.Ok)
 
         task = self.tasks_list[0]
         task.id = 1
-        self.tasks_view.on_task_run(task)
+        with qtbot.waitSignal(self.tasks_view.task_dispatched, raising=True):
+            self.tasks_view.on_task_run(task)
 
         self.parent._context.task_service.send_task_to_worker.assert_called_once_with(1)
-        self.parent.startWorkerMonitor.assert_called_once()
         assert mock_info.call_count == 1
 
-    def test_tasks_view_on_task_run_device_unavailable(self, mocker: MockerFixture):
+    def test_tasks_view_on_task_run_device_unavailable(self, qtbot: QtBot, mocker: MockerFixture):
         self.parent._context.device_service.check_device_availability.return_value = (
             "Equipo deshabilitado"
         )
@@ -207,10 +218,10 @@ class TestTasksView:
 
         task = self.tasks_list[0]
         task.id = 1
-        self.tasks_view.on_task_run(task)
+        with qtbot.assertNotEmitted(self.tasks_view.task_dispatched):
+            self.tasks_view.on_task_run(task)
 
         self.parent._context.task_service.send_task_to_worker.assert_not_called()
-        self.parent.startWorkerMonitor.assert_not_called()
         assert mock_error.call_count == 1
 
     def test_tasks_view_on_task_remove_success(self):
@@ -248,7 +259,7 @@ class TestTasksViewProgress:
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window: MainWindow):
         mocker.patch.object(GatewayMonitor, "start_monitor")
-        self.monitor = mock_window.worker_monitor
+        self.monitor = mock_window.gateway_monitor
 
         # Prepare tasks – one in progress
         self.task_running = Task(user_id=1, file_id=1, tool_id=1, material_id=1, name="Running")
@@ -265,7 +276,7 @@ class TestTasksViewProgress:
 
     def _create_view(self, qtbot, tasks):
         self.parent._context.task_service.get_all_tasks.return_value = tasks
-        view = TasksView(self.parent)
+        view = TasksView(self.parent, gateway_monitor=self.monitor)
         qtbot.addWidget(view)
         return view
 

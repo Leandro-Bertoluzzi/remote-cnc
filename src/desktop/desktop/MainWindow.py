@@ -1,5 +1,6 @@
 import logging
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
@@ -8,6 +9,7 @@ from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.StatusBar import StatusBar
 from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.gatewayMonitor import GatewayMonitor
+from desktop.views.BaseView import BaseView
 from desktop.views.MainMenu import MainMenu
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("background-color:#666666;")
 
         # CNC tasks monitor
-        self.worker_monitor = GatewayMonitor(self._context.gateway)
+        self.gateway_monitor = GatewayMonitor(self._context.gateway)
 
         # UI components
         self.status_bar = StatusBar(self)
@@ -36,8 +38,8 @@ class MainWindow(QMainWindow):
         self._refresh_worker_status()
 
         # Signals and slots
-        self.worker_monitor.file_finished.connect(self.on_task_finished)
-        self.worker_monitor.file_failed.connect(self.on_task_failed)
+        self.gateway_monitor.file_finished.connect(self._on_task_finished)
+        self.gateway_monitor.file_failed.connect(self._on_task_failed)
 
     # Worker status
 
@@ -89,7 +91,7 @@ class MainWindow(QMainWindow):
     def changeView(self, widget):
         old_widget = self.centralWidget()
         try:
-            new_widget = widget(self, context=self._context)
+            new_widget = widget(self, context=self._context, gateway_monitor=self.gateway_monitor)
         except Exception as error:
             logger.warning("Error creating view %s: %s", widget.__name__, error)
             error_msg = get_friendly_error_message(error)
@@ -101,8 +103,16 @@ class MainWindow(QMainWindow):
             old_widget.deleteLater()
             self.setCentralWidget(error_widget)
             return
+        self._connect_view_signals(new_widget)
         old_widget.deleteLater()
         self.setCentralWidget(new_widget)
+
+    def _connect_view_signals(self, view: BaseView) -> None:
+        """Connect standard view signals to MainWindow slots."""
+        view.back_requested.connect(self.backToMenu)
+        view.toolbar_added.connect(self._on_toolbar_added)
+        view.toolbar_removed.connect(self._on_toolbar_removed)
+        view.task_dispatched.connect(self._on_task_dispatched)
 
     def backToMenu(self):
         self.setCentralWidget(MainMenu(self))
@@ -138,7 +148,7 @@ class MainWindow(QMainWindow):
 
     # Slots
 
-    def on_task_finished(self):
+    def _on_task_finished(self):
         self.status_bar.updateDeviceStatus("DISPONIBLE")
         QMessageBox.information(
             self,
@@ -147,7 +157,7 @@ class MainWindow(QMainWindow):
             QMessageBox.Ok,
         )
 
-    def on_task_failed(self, error_msg: str):
+    def _on_task_failed(self, error_msg: str):
         self.status_bar.updateDeviceStatus("ERROR")
         QMessageBox.critical(
             self,
@@ -158,9 +168,14 @@ class MainWindow(QMainWindow):
             QMessageBox.Ok,
         )
 
-    # Other methods
+    def _on_toolbar_added(self, toolbar):
+        self.addToolBar(Qt.TopToolBarArea, toolbar)
 
-    def startWorkerMonitor(self):
+    def _on_toolbar_removed(self, toolbar):
+        self.removeToolBar(toolbar)
+
+    def _on_task_dispatched(self):
+        """Start the worker monitor when a task is dispatched, and update status bar."""
         self.status_bar.updateDeviceStatus("TRABAJANDO...")
-        self.worker_monitor.start_monitor()
+        self.gateway_monitor.start_monitor()
         self.status_bar.setTemporalStatusMessage("Iniciado el monitor del worker")
