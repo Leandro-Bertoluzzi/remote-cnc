@@ -55,7 +55,7 @@ def _subscribe_message() -> dict:
 
 class TestGatewayMonitor:
     @pytest.fixture(autouse=True)
-    def setup_method(self, mocker: MockerFixture):
+    def setup_method(self):
         # Inject a mock gateway directly — no Redis connections
         self.mock_pubsub = MagicMock()
         self.mock_gateway = MagicMock()

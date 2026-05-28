@@ -1,10 +1,12 @@
 import pytest
 from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestAbsoluteMoveDialog:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot, mocker):
+    def setup_method(self, qtbot: QtBot, mocker: MockerFixture):
         # Mock jog callback
         self.jog_callback = mocker.MagicMock()
 
@@ -13,7 +15,7 @@ class TestAbsoluteMoveDialog:
         self.dialog.set_jog_callback(self.jog_callback)
         qtbot.addWidget(self.dialog)
 
-    def test_material_data_dialog_get_inputs(self, qtbot):
+    def test_material_data_dialog_get_inputs(self, qtbot: QtBot):
         self.dialog.input_x.setValue(20.0)
         self.dialog.input_y.setValue(25.0)
         self.dialog.input_z.setValue(30.0)
@@ -45,7 +47,7 @@ class TestAbsoluteMoveDialog:
         assert self.dialog.input_z.suffix() == " mm"
         assert self.dialog.input_feedrate.suffix() == " mm/min"
 
-    def test_move_dialog_incremental_move(self, mocker):
+    def test_move_dialog_incremental_move(self, mocker: MockerFixture):
         # Mock widget state
         self.dialog.input_x.setValue(1.5)
         self.dialog.input_y.setValue(1.3)

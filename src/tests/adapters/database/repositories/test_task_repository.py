@@ -1,6 +1,7 @@
 import pytest
 from core.adapters.database.task_repository import TaskRepository
 from core.domain.entities import Task
+from pytest_mock.plugin import MockerFixture
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -161,7 +162,7 @@ class TestTaskRepository:
         tasks_after = task_repository.get_all_tasks()
         assert len(tasks_after) == len(tasks_before) - 1
 
-    def test_error_create_task_db_error(self, mocker, mocked_session):
+    def test_error_create_task_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "add", side_effect=SQLAlchemyError("mocked error"))
         task_repository = TaskRepository(mocked_session)
@@ -171,7 +172,7 @@ class TestTaskRepository:
             task_repository.create_task(user_id=1, file_id=1, tool_id=1, material_id=1, name="name")
         assert "Error creating the task in the DB" in str(error.value)
 
-    def test_error_get_task_by_id_db_error(self, mocker, mocked_session):
+    def test_error_get_task_by_id_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         task_repository = TaskRepository(mocked_session)
@@ -181,7 +182,7 @@ class TestTaskRepository:
             task_repository.get_task_by_id(1)
         assert "Error looking for task with ID 1 in the DB" in str(error.value)
 
-    def test_error_get_all_tasks_from_user_db_error(self, mocker, mocked_session):
+    def test_error_get_all_tasks_from_user_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         task_repository = TaskRepository(mocked_session)
@@ -191,7 +192,7 @@ class TestTaskRepository:
             task_repository.get_all_tasks_from_user(user_id=1)
         assert "Error retrieving tasks from the DB" in str(error.value)
 
-    def test_error_get_all_tasks_db_error(self, mocker, mocked_session):
+    def test_error_get_all_tasks_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "scalars", side_effect=SQLAlchemyError("mocked error"))
         task_repository = TaskRepository(mocked_session)
@@ -217,7 +218,7 @@ class TestTaskRepository:
             task_repository.update_task(id=1, user_id=2)
         assert str(error.value) == "Task with ID 1 was not found for this user"
 
-    def test_error_update_task_db_error(self, mocker, mocked_session):
+    def test_error_update_task_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         task_repository = TaskRepository(mocked_session)
@@ -289,7 +290,7 @@ class TestTaskRepository:
             task_repository.update_task_status(id=1, status="on_hold")
         assert str(error.value) == "Admin level is required to perform the action"
 
-    def test_error_update_task_status_db_error(self, mocker, mocked_session):
+    def test_error_update_task_status_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         task_repository = TaskRepository(mocked_session)
@@ -307,7 +308,7 @@ class TestTaskRepository:
             task_repository.remove_task(id=5000)
         assert str(error.value) == "Task with ID 5000 was not found"
 
-    def test_error_remove_task_db_error(self, mocker, mocked_session):
+    def test_error_remove_task_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))
         task_repository = TaskRepository(mocked_session)

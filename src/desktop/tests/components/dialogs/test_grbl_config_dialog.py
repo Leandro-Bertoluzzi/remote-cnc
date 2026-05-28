@@ -1,9 +1,10 @@
 from desktop.components.dialogs.GrblConfigurationDialog import GrblConfigurationDialog
 from PyQt5.QtWidgets import QDialogButtonBox, QTableWidget
+from pytestqt.qtbot import QtBot
 
 
 class TestGrblConfigurationDialog:
-    def test_grbl_configuration_dialog_init(self, qtbot, helpers):
+    def test_grbl_configuration_dialog_init(self, qtbot: QtBot, helpers):
         device_settings = {
             "$1": {
                 "value": "1",
@@ -31,7 +32,7 @@ class TestGrblConfigurationDialog:
         assert item_0_3 is not None and item_0_3.text() == "Sets a short hold delay..."
         assert dialog.modifiedSettings == {}
 
-    def test_grbl_configuration_dialog_update_table(self, qtbot):
+    def test_grbl_configuration_dialog_update_table(self, qtbot: QtBot):
         device_settings = {
             "$1": {
                 "value": "1",
@@ -57,7 +58,7 @@ class TestGrblConfigurationDialog:
         # Assertions
         assert dialog.modifiedSettings == {"$1": "2"}
 
-    def test_grbl_configuration_dialog_get_modified_inputs(self, qtbot):
+    def test_grbl_configuration_dialog_get_modified_inputs(self, qtbot: QtBot):
         device_settings = {
             "$1": {
                 "value": "1",

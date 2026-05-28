@@ -4,7 +4,6 @@ from core.domain.task import TaskStatus
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from desktop.views.TasksView import TasksView
 from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
@@ -14,19 +13,9 @@ class TestTaskCard:
     task = Task(user_id=1, file_id=1, tool_id=1, material_id=1, name="Example task")
 
     @pytest.fixture(scope="function")
-    def setup_method(self, qtbot: QtBot, mocker: MockerFixture, mock_window):
-        mocker.patch.object(TasksView, "refreshLayout")
-
-        # Configure asset service mock for TasksView init
-        mock_window._context.asset_service.get_assets.return_value = ([], [], [])
-        mock_window._context.task_service.get_all_tasks.return_value = []
-
-        # Mock parent widget
-        self.window = mock_window
-        self.parent = TasksView(self.window)
-
-        # Create an instance of the card
+    def setup_method(self, qtbot: QtBot, mock_view):
         self.task.id = 1
+        self.parent = mock_view
         self.card = TaskCard(self.task, False, [], [], [], parent=self.parent)
         qtbot.addWidget(self.card)
 
@@ -41,32 +30,24 @@ class TestTaskCard:
             ("cancelled", 2),
         ],
     )
-    def test_task_card_init(
-        self, qtbot: QtBot, mocker: MockerFixture, helpers, status, expected_buttons
-    ):
-        # Mock task status
+    def test_task_card_init(self, qtbot: QtBot, helpers, status, expected_buttons):
         self.task.status = status
         self.task.id = 1
 
-        # Instantiate card
         card = TaskCard(self.task, False, [], [], [])
         qtbot.addWidget(card)
 
-        # Assertions
         assert card.task == self.task
         assert card.layout() is not None
         assert helpers.count_widgets(card.layout_buttons, QPushButton) == expected_buttons
 
-    def test_task_card_init_device_busy(self, qtbot: QtBot, mocker: MockerFixture):
-        # Mock task status
+    def test_task_card_init_device_busy(self, qtbot: QtBot):
         self.task.status = TaskStatus.ON_HOLD.value
         self.task.id = 1
 
-        # Instantiate card
         card = TaskCard(self.task, True, [], [], [])
         qtbot.addWidget(card)
 
-        # Assertions
         while card.layout().count():
             child = card.layout().takeAt(0)
             if isinstance(child.widget(), QPushButton):
@@ -74,315 +55,130 @@ class TestTaskCard:
 
     @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
     def test_task_card_update_task(self, setup_method, mocker: MockerFixture, dialogResponse):
-        # Mock TaskDataDialog methods
         mock_input = 2, 3, 4, "Updated task", "Just a simple description"
         mocker.patch.object(TaskDataDialog, "__init__", return_value=None)
         mocker.patch.object(TaskDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock service method
-        mock_update_task = self.window._context.task_service.update_task
+        handler = mocker.Mock()
+        self.card.update_requested.connect(handler)
 
-        # Call the updateTask method
         self.card.updateTask()
 
-        # Validate service calls
-        expected_updated = dialogResponse == QDialog.Accepted
-        assert mock_update_task.call_count == (1 if expected_updated else 0)
-
-        if expected_updated:
-            update_task_params = {
-                "id": 1,
-                "user_id": 1,
-                "file_id": 2,
-                "tool_id": 3,
-                "material_id": 4,
-                "name": "Updated task",
-                "note": "Just a simple description",
-                "priority": 0,
-            }
-            mock_update_task.assert_called_with(*update_task_params.values())
-
-    def test_task_card_update_task_db_error(self, setup_method, mocker: MockerFixture):
-        # Mock TaskDataDialog methods
-        mock_input = 2, 3, 4, "Updated task", "Just a simple description"
-        mocker.patch.object(TaskDataDialog, "__init__", return_value=None)
-        mocker.patch.object(TaskDataDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
-
-        # Mock service method
-        self.window._context.task_service.update_task.side_effect = Exception("mocked error")
-        mock_update_task = self.window._context.task_service.update_task
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
-
-        # Call the updateTask method
-        self.card.updateTask()
-
-        # Validate service calls
-        assert mock_update_task.call_count == 1
-        assert mock_popup.call_count == 1
+        if dialogResponse == QDialog.Accepted:
+            handler.assert_called_once_with(
+                self.task, 2, 3, 4, "Updated task", "Just a simple description"
+            )
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize(
-        "msgBoxResponse,expectedMethodCalls", [(QMessageBox.Yes, 1), (QMessageBox.Cancel, 0)]
+        "msgBoxResponse,expected_emitted", [(QMessageBox.Yes, True), (QMessageBox.Cancel, False)]
     )
     def test_task_card_remove_task(
-        self, setup_method, mocker: MockerFixture, msgBoxResponse, expectedMethodCalls
+        self, setup_method, mocker: MockerFixture, msgBoxResponse, expected_emitted
     ):
-        # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock service method
-        mock_remove_task = self.window._context.task_service.remove_task
+        handler = mocker.Mock()
+        self.card.remove_requested.connect(handler)
 
-        # Call the removeTask method
         self.card.removeTask()
 
-        # Validate service calls
-        assert mock_remove_task.call_count == expectedMethodCalls
-
-    def test_task_card_remove_task_db_error(self, setup_method, mocker: MockerFixture):
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
-
-        # Mock service method
-        self.window._context.task_service.remove_task.side_effect = Exception("mocked error")
-        mock_remove_task = self.window._context.task_service.remove_task
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
-
-        # Call the removeTask method
-        self.card.removeTask()
-
-        # Validate service calls
-        assert mock_remove_task.call_count == 1
-        assert mock_popup.call_count == 1
+        if expected_emitted:
+            handler.assert_called_once_with(self.task)
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize("msgBoxResponse", [QMessageBox.Yes, QMessageBox.Cancel])
     def test_task_card_restore_task(self, setup_method, mocker: MockerFixture, msgBoxResponse):
-        # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock service method
-        mock_update_task_status = self.window._context.task_service.update_task_status
+        handler = mocker.Mock()
+        self.card.status_change_requested.connect(handler)
 
-        # Call the removeTask method
         self.card.restoreTask()
 
-        # Validate service calls
-        expected_updated = msgBoxResponse == QMessageBox.Yes
-        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
-        if expected_updated:
-            update_task_params = {
-                "id": 1,
-                "status": TaskStatus.INITIAL.value,
-                "admin_id": 1,
-                "cancellation_reason": "",
-            }
-            mock_update_task_status.assert_called_with(*update_task_params.values())
-
-    def test_task_card_restore_task_db_error(self, setup_method, mocker: MockerFixture):
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
-
-        # Mock service method
-        self.window._context.task_service.update_task_status.side_effect = Exception("mocked error")
-        mock_update_task_status = self.window._context.task_service.update_task_status
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
-
-        # Call the removeTask method
-        self.card.restoreTask()
-
-        # Validate service calls
-        assert mock_update_task_status.call_count == 1
-        assert mock_popup.call_count == 1
+        expected_emitted = msgBoxResponse == QMessageBox.Yes
+        if expected_emitted:
+            handler.assert_called_once_with(self.task, TaskStatus.INITIAL.value, "")
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
     def test_task_card_cancel_task(self, setup_method, mocker: MockerFixture, dialogResponse):
-        # Mock TaskCancelDialog methods
         mock_input = "A valid cancellation reason"
         mocker.patch.object(TaskCancelDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(TaskCancelDialog, "getInput", return_value=mock_input)
 
-        # Mock service method
-        mock_update_task_status = self.window._context.task_service.update_task_status
+        handler = mocker.Mock()
+        self.card.status_change_requested.connect(handler)
 
-        # Call the removeTask method
         self.card.cancelTask()
 
-        # Validate service calls
-        expected_updated = dialogResponse == QDialog.Accepted
-        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
-        if expected_updated:
-            update_task_params = {
-                "id": 1,
-                "status": TaskStatus.CANCELLED.value,
-                "admin_id": 1,
-                "cancellation_reason": "A valid cancellation reason",
-            }
-            mock_update_task_status.assert_called_with(*update_task_params.values())
-
-    def test_task_card_cancel_task_db_error(self, setup_method, mocker: MockerFixture):
-        # Mock TaskCancelDialog methods
-        mock_input = "A valid cancellation reason"
-        mocker.patch.object(TaskCancelDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(TaskCancelDialog, "getInput", return_value=mock_input)
-
-        # Mock service method
-        self.window._context.task_service.update_task_status.side_effect = Exception("mocked error")
-        mock_update_task_status = self.window._context.task_service.update_task_status
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
-
-        # Call the removeTask method
-        self.card.cancelTask()
-
-        # Validate service calls
-        assert mock_update_task_status.call_count == 1
-        assert mock_popup.call_count == 1
+        if dialogResponse == QDialog.Accepted:
+            handler.assert_called_once_with(
+                self.task, TaskStatus.CANCELLED.value, "A valid cancellation reason"
+            )
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize("dialogResponse", [QDialog.Accepted, QDialog.Rejected])
     def test_task_card_repeat_task(self, setup_method, mocker: MockerFixture, dialogResponse):
-        # Mock TaskDataDialog methods
         mock_input = 2, 3, 4, "Repeated task", "Just a simple description"
         mocker.patch.object(TaskDataDialog, "__init__", return_value=None)
         mocker.patch.object(TaskDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock service method
-        mock_create_task = self.window._context.task_service.create_task
+        handler = mocker.Mock()
+        self.card.repeat_requested.connect(handler)
 
-        # Call the updateTask method
         self.card.repeatTask()
 
-        # Validate service calls
-        expected_updated = dialogResponse == QDialog.Accepted
-        assert mock_create_task.call_count == (1 if expected_updated else 0)
-
-        if expected_updated:
-            update_task_params = {
-                "user_id": 1,
-                "file_id": 2,
-                "tool_id": 3,
-                "material_id": 4,
-                "name": "Repeated task",
-                "note": "Just a simple description",
-            }
-            mock_create_task.assert_called_with(*update_task_params.values())
-
-    def test_task_card_repeat_task_db_error(self, setup_method, mocker: MockerFixture):
-        # Mock TaskDataDialog methods
-        mock_input = 2, 3, 4, "Repeated task", "Just a simple description"
-        mocker.patch.object(TaskDataDialog, "__init__", return_value=None)
-        mocker.patch.object(TaskDataDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(TaskDataDialog, "getInputs", return_value=mock_input)
-
-        # Mock service method
-        self.window._context.task_service.create_task.side_effect = Exception("mocked error")
-        mock_create_task = self.window._context.task_service.create_task
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
-
-        # Call the updateTask method
-        self.card.repeatTask()
-
-        # Validate service calls
-        assert mock_create_task.call_count == 1
-        assert mock_popup.call_count == 1
+        if dialogResponse == QDialog.Accepted:
+            handler.assert_called_once_with(
+                self.task, 2, 3, 4, "Repeated task", "Just a simple description"
+            )
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize("msgBoxRun", [QMessageBox.Yes, QMessageBox.Cancel])
-    @pytest.mark.parametrize("device_available", [True, False])
-    def test_task_card_run_task(self, setup_method, mocker, msgBoxRun, device_available):
-        # Mock message box methods
+    def test_task_card_run_task(self, setup_method, mocker: MockerFixture, msgBoxRun):
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxRun)
-        mock_info_popup = mocker.patch.object(
-            QMessageBox, "information", return_value=QMessageBox.Ok
-        )
-        mock_error_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
 
-        # Mock device availability check
-        availability_return = (
-            None if device_available else "Ejecución cancelada: El equipo está deshabilitado"
-        )
-        self.window._context.device_service.check_device_availability.return_value = (
-            availability_return
-        )
+        handler = mocker.Mock()
+        self.card.run_requested.connect(handler)
 
-        # Mock task dispatch
-        mock_send_task = self.window._context.task_service.send_task_to_worker
-        mock_send_task.return_value = "worker-task-id"
-
-        # Call the approveTask method
         self.card.runTask()
 
-        # Validate call to tasks manager
-        accepted_run = msgBoxRun == QMessageBox.Yes
-        expected_run = device_available and accepted_run
-        assert mock_send_task.call_count == (1 if expected_run else 0)
-        assert self.window.startWorkerMonitor.call_count == (1 if expected_run else 0)
-        assert mock_info_popup.call_count == (1 if expected_run else 0)
-        expected_error = (not device_available) and accepted_run
-        assert mock_error_popup.call_count == (1 if expected_error else 0)
+        if msgBoxRun == QMessageBox.Yes:
+            handler.assert_called_once_with(self.task)
+        else:
+            handler.assert_not_called()
 
-    @pytest.mark.parametrize("msgBoxApprove", [(QMessageBox.Yes), (QMessageBox.Cancel)])
+    @pytest.mark.parametrize("msgBoxApprove", [QMessageBox.Yes, QMessageBox.Cancel])
     def test_task_card_approve_task(self, setup_method, mocker: MockerFixture, msgBoxApprove):
-        # Mock service methods
-        mock_update_task_status = self.window._context.task_service.update_task_status
-
-        # Mock message box methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxApprove)
 
-        # Call the approveTask method
+        handler = mocker.Mock()
+        self.card.status_change_requested.connect(handler)
+
         self.card.approveTask()
 
-        # Validate service calls
-        expected_updated = msgBoxApprove == QMessageBox.Yes
-        assert mock_update_task_status.call_count == (1 if expected_updated else 0)
-        if expected_updated:
-            update_task_params = {
-                "id": 1,
-                "status": TaskStatus.APPROVED.value,
-                "admin_id": 1,
-                "cancellation_reason": "",
-            }
-            mock_update_task_status.assert_called_with(*update_task_params.values())
-
-    def test_task_card_approve_task_db_error(self, setup_method, mocker: MockerFixture):
-        # Mock service methods
-        self.window._context.task_service.update_task_status.side_effect = Exception("mocked error")
-        mock_update_task_status = self.window._context.task_service.update_task_status
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
-
-        # Mock QMessageBox methods
-        mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
-
-        # Call the approveTask method
-        self.card.approveTask()
-
-        # Assertions
-        assert mock_update_task_status.call_count == 1
-        assert mock_popup.call_count == 1
+        if msgBoxApprove == QMessageBox.Yes:
+            handler.assert_called_once_with(self.task, TaskStatus.APPROVED.value, "")
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize("paused", [False, True])
     def test_task_card_pause_task(self, setup_method, mocker: MockerFixture, paused):
-        # Mock service methods
-        mock_pause = self.window._context.device_service.request_pause
-        mock_resume = self.window._context.device_service.request_resume
-
-        # Mock card status
         self.card.paused = paused
 
-        # Call the approveTask method
+        handler = mocker.Mock()
+        self.card.pause_resume_requested.connect(handler)
+
         self.card.pauseTask()
 
-        # Validate service calls
-        assert mock_pause.call_count == (1 if paused else 0)
-        assert mock_resume.call_count == (0 if paused else 1)
+        handler.assert_called_once_with(self.task, paused)
+        # State should be toggled after emit
         assert self.card.paused == (not paused)

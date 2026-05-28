@@ -1,13 +1,8 @@
-from typing import TYPE_CHECKING, Callable, cast
+from typing import Callable
 
 from desktop.helpers.utils import applyStylesheet
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
-
-if TYPE_CHECKING:
-    from desktop.app_context import AppContext  # pragma: no cover
-    from desktop.MainWindow import MainWindow  # pragma: no cover
-    from desktop.views.BaseListView import BaseListView  # pragma: no cover
 
 
 class Card(QWidget):
@@ -33,8 +28,6 @@ class Card(QWidget):
         # Apply custom styles
         applyStylesheet(self, __file__, "Card.qss")
 
-    # Utilities
-
     def setDescription(self, description: str) -> None:
         self.label_description.setText(description)
 
@@ -43,27 +36,3 @@ class Card(QWidget):
         button.clicked.connect(callback)
         button.setEnabled(enabled)
         self.layout_buttons.addWidget(button)
-
-    def getView(self) -> "BaseListView":
-        """Get the view containing this card."""
-        return cast("BaseListView", self.parent())
-
-    def getWindow(self) -> "MainWindow":
-        """Get the application's main window."""
-        return self.getView().getWindow()
-
-    @property
-    def _context(self) -> "AppContext":
-        """Get the application context from the parent view."""
-        return self.getView()._context
-
-    # Notifications
-
-    def showInformation(self, title, text):
-        self.getView().showInfo(title, text)
-
-    def showWarning(self, title, text):
-        self.getView().showWarning(title, text)
-
-    def showError(self, title, text):
-        self.getView().showError(title, text)

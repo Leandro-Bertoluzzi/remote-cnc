@@ -2,19 +2,21 @@ import pytest
 from core.domain.entities import File
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
 from PyQt5.QtWidgets import QFileDialog, QPushButton
+from pytest_mock.plugin import MockerFixture
+from pytestqt.qtbot import QtBot
 
 
 class TestFileDataDialog:
     fileInfo = File(user_id=1, file_name="example_file.gcode", file_hash="hashed-file")
 
-    def test_file_data_dialog_init(self, qtbot):
+    def test_file_data_dialog_init(self, qtbot: QtBot):
         dialog = FileDataDialog()
         qtbot.addWidget(dialog)
 
         assert dialog.layout() is not None
 
     @pytest.mark.parametrize("file_info", [None, fileInfo])
-    def test_file_data_dialog_init_widgets(self, qtbot, helpers, file_info):
+    def test_file_data_dialog_init_widgets(self, qtbot: QtBot, helpers, file_info):
         dialog = FileDataDialog(fileInfo=file_info)
         qtbot.addWidget(dialog)
 
@@ -30,7 +32,7 @@ class TestFileDataDialog:
         assert dialog.windowTitle() == expectedWindowTitle
         assert helpers.count_widgets(dialog.layout(), QPushButton) == buttonsCount
 
-    def test_file_data_dialog_get_inputs_new_file(self, qtbot, mocker):
+    def test_file_data_dialog_get_inputs_new_file(self, qtbot: QtBot, mocker: MockerFixture):
         dialog = FileDataDialog()
         qtbot.addWidget(dialog)
 
@@ -55,7 +57,7 @@ class TestFileDataDialog:
         assert mock_select_file.call_count == 1
         assert dialog.getInputs() == ("updated_name.gcode", "path/to/file.gcode")
 
-    def test_file_data_dialog_get_inputs_existing_file(self, qtbot):
+    def test_file_data_dialog_get_inputs_existing_file(self, qtbot: QtBot):
         dialog = FileDataDialog(fileInfo=self.fileInfo)
         qtbot.addWidget(dialog)
 

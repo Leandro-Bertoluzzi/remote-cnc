@@ -42,7 +42,7 @@ class TestControlView:
     # -- init ---------------------------------------------------------------
 
     @pytest.mark.parametrize("device_busy", [False, True])
-    def test_control_view_init(self, qtbot: QtBot, mocker: MockerFixture, helpers, device_busy):
+    def test_control_view_init(self, qtbot: QtBot, helpers, device_busy):
         # Mock device service methods
         self.mock_context.device_service.is_worker_busy.return_value = device_busy
 

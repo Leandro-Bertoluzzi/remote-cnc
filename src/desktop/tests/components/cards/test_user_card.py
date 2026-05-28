@@ -12,10 +12,7 @@ class TestUserCard:
 
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mock_view):
-        # Update user
         self.user.id = 1
-
-        # Instantiate card
         self.parent = mock_view
         self.card = UserCard(self.user, parent=self.parent)
         qtbot.addWidget(self.card)
@@ -25,84 +22,35 @@ class TestUserCard:
         assert self.card.layout is not None
 
     @pytest.mark.parametrize(
-        "dialogResponse,expected_updated", [(QDialog.Accepted, True), (QDialog.Rejected, False)]
+        "dialogResponse,expected_emitted", [(QDialog.Accepted, True), (QDialog.Rejected, False)]
     )
-    def test_user_card_update_user(self, mocker: MockerFixture, dialogResponse, expected_updated):
-        # Mock UserDataDialog methods
+    def test_user_card_update_user(self, mocker: MockerFixture, dialogResponse, expected_emitted):
         mock_input = "Updated Name", "updated@email.com", "updatedpassword", "admin"
         mocker.patch.object(UserDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock service method
-        mock_update_user = self.parent._context.user_service.update_user
+        handler = mocker.Mock()
+        self.card.update_requested.connect(handler)
 
-        # Call the updateUser method
         self.card.updateUser()
 
-        # Validate DB calls
-        assert mock_update_user.call_count == (1 if expected_updated else 0)
-
-        if expected_updated:
-            update_user_params = {
-                "id": 1,
-                "name": "Updated Name",
-                "email": "updated@email.com",
-                "role": "admin",
-            }
-            mock_update_user.assert_called_with(*update_user_params.values())
-
-    def test_user_card_update_user_db_error(self, mocker: MockerFixture):
-        # Mock UserDataDialog methods
-        mock_input = "Updated Name", "updated@email.com", "updatedpassword", "admin"
-        mocker.patch.object(UserDataDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(UserDataDialog, "getInputs", return_value=mock_input)
-
-        # Mock service method
-        self.parent._context.user_service.update_user.side_effect = Exception("mocked error")
-        mock_update_user = self.parent._context.user_service.update_user
-
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
-
-        # Call the updateUser method
-        self.card.updateUser()
-
-        # Validate DB calls
-        assert mock_update_user.call_count == 1
-        assert mock_popup.call_count == 1
+        if expected_emitted:
+            handler.assert_called_once_with(self.user, "Updated Name", "updated@email.com", "admin")
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize(
-        "msgBoxResponse,expectedMethodCalls", [(QMessageBox.Yes, 1), (QMessageBox.Cancel, 0)]
+        "msgBoxResponse,expected_emitted", [(QMessageBox.Yes, True), (QMessageBox.Cancel, False)]
     )
-    def test_user_card_remove_user(
-        self, mocker: MockerFixture, msgBoxResponse, expectedMethodCalls
-    ):
-        # Mock confirmation dialog methods
+    def test_user_card_remove_user(self, mocker: MockerFixture, msgBoxResponse, expected_emitted):
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock service method
-        mock_remove_user = self.parent._context.user_service.remove_user
+        handler = mocker.Mock()
+        self.card.remove_requested.connect(handler)
 
-        # Call the removeUser method
         self.card.removeUser()
 
-        # Validate DB calls
-        assert mock_remove_user.call_count == expectedMethodCalls
-
-    def test_user_card_remove_user_db_error(self, mocker: MockerFixture):
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
-
-        # Mock service method
-        self.parent._context.user_service.remove_user.side_effect = Exception("mocked error")
-        mock_remove_user = self.parent._context.user_service.remove_user
-
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
-
-        # Call the removeUser method
-        self.card.removeUser()
-
-        # Validate DB calls
-        assert mock_remove_user.call_count == 1
-        assert mock_popup.call_count == 1
+        if expected_emitted:
+            handler.assert_called_once_with(self.user)
+        else:
+            handler.assert_not_called()

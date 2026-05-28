@@ -2,19 +2,20 @@ import pytest
 from core.domain.entities import User
 from core.domain.task import VALID_ROLES
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
+from pytestqt.qtbot import QtBot
 
 
 class TestUserDataDialog:
     userInfo = User(name="John Doe", email="test@testing.com", password="1234", role="admin")
 
-    def test_user_data_dialog_init(self, qtbot):
+    def test_user_data_dialog_init(self, qtbot: QtBot):
         dialog = UserDataDialog()
         qtbot.addWidget(dialog)
 
         assert dialog.layout() is not None
 
     @pytest.mark.parametrize("user_info", [None, userInfo])
-    def test_user_data_dialog_init_widgets(self, qtbot, user_info):
+    def test_user_data_dialog_init_widgets(self, qtbot: QtBot, user_info):
         dialog = UserDataDialog(userInfo=user_info)
         qtbot.addWidget(dialog)
 
@@ -30,7 +31,7 @@ class TestUserDataDialog:
         assert dialog.role.currentIndex() == expectedRoleIndex
         assert dialog.windowTitle() == expectedWindowTitle
 
-    def test_user_data_dialog_get_inputs(self, qtbot):
+    def test_user_data_dialog_get_inputs(self, qtbot: QtBot):
         dialog = UserDataDialog(userInfo=self.userInfo)
         qtbot.addWidget(dialog)
 

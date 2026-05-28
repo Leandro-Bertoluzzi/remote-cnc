@@ -13,7 +13,7 @@ class TestMenuButton:
         assert button.isVisible() is False
         assert button.receivers(button.clicked) == 0
 
-    def test_menu_button_on_click(self, qtbot, mocker):
+    def test_menu_button_on_click(self, qtbot: QtBot, mocker: MockerFixture):
         mock_on_click = mocker.Mock()
 
         button = MenuButton("Test Button", onClick=mock_on_click)

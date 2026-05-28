@@ -12,10 +12,7 @@ class TestMaterialCard:
 
     @pytest.fixture(autouse=True)
     def setup_method(self, qtbot: QtBot, mock_view):
-        # Update material
         self.material.id = 1
-
-        # Instantiate card
         self.parent = mock_view
         self.card = MaterialCard(self.material, parent=self.parent)
         qtbot.addWidget(self.card)
@@ -25,89 +22,41 @@ class TestMaterialCard:
         assert self.card.layout is not None
 
     @pytest.mark.parametrize(
-        "dialogResponse,expected_updated", [(QDialog.Accepted, True), (QDialog.Rejected, False)]
+        "dialogResponse,expected_emitted", [(QDialog.Accepted, True), (QDialog.Rejected, False)]
     )
     def test_material_card_update_material(
-        self, mocker: MockerFixture, dialogResponse, expected_updated
+        self, mocker: MockerFixture, dialogResponse, expected_emitted
     ):
-        # Mock MaterialDataDialog methods
         mock_input = "Updated material", "Updated description"
         mocker.patch.object(MaterialDataDialog, "exec", return_value=dialogResponse)
         mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_input)
 
-        # Mock service method
-        mock_update_material = self.parent._context.material_service.update_material
+        handler = mocker.Mock()
+        self.card.update_requested.connect(handler)
 
-        # Call the updateMaterial method
         self.card.updateMaterial()
 
-        # Validate DB calls
-        assert mock_update_material.call_count == (1 if expected_updated else 0)
-
-        if expected_updated:
-            update_material_params = {
-                "id": 1,
-                "name": "Updated material",
-                "description": "Updated description",
-            }
-            mock_update_material.assert_called_with(*update_material_params.values())
-
-    def test_material_card_update_material_db_error(self, mocker: MockerFixture):
-        # Mock MaterialDataDialog methods
-        mock_input = "Updated material", "Updated description"
-        mocker.patch.object(MaterialDataDialog, "exec", return_value=QDialog.Accepted)
-        mocker.patch.object(MaterialDataDialog, "getInputs", return_value=mock_input)
-
-        # Mock service method
-        self.parent._context.material_service.update_material.side_effect = Exception(
-            "mocked error"
-        )
-        mock_update_material = self.parent._context.material_service.update_material
-
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
-
-        # Call the updateMaterial method
-        self.card.updateMaterial()
-
-        # Assertions
-        assert mock_update_material.call_count == 1
-        assert mock_popup.call_count == 1
+        if expected_emitted:
+            handler.assert_called_once_with(
+                self.material, "Updated material", "Updated description"
+            )
+        else:
+            handler.assert_not_called()
 
     @pytest.mark.parametrize(
-        "msgBoxResponse,expectedMethodCalls", [(QMessageBox.Yes, 1), (QMessageBox.Cancel, 0)]
+        "msgBoxResponse,expected_emitted", [(QMessageBox.Yes, True), (QMessageBox.Cancel, False)]
     )
     def test_material_card_remove_material(
-        self, mocker: MockerFixture, msgBoxResponse, expectedMethodCalls
+        self, mocker: MockerFixture, msgBoxResponse, expected_emitted
     ):
-        # Mock confirmation dialog methods
         mocker.patch.object(QMessageBox, "exec", return_value=msgBoxResponse)
 
-        # Mock service method
-        mock_remove_material = self.parent._context.material_service.remove_material
+        handler = mocker.Mock()
+        self.card.remove_requested.connect(handler)
 
-        # Call the removeMaterial method
         self.card.removeMaterial()
 
-        # Validate DB calls
-        assert mock_remove_material.call_count == expectedMethodCalls
-
-    def test_material_card_remove_material_db_error(self, mocker: MockerFixture):
-        # Mock confirmation dialog methods
-        mocker.patch.object(QMessageBox, "exec", return_value=QMessageBox.Yes)
-
-        # Mock service method
-        self.parent._context.material_service.remove_material.side_effect = Exception(
-            "mocked error"
-        )
-        mock_remove_material = self.parent._context.material_service.remove_material
-
-        # Mock parent methods
-        mock_popup = mocker.patch.object(self.parent, "showError")
-
-        # Call the removeMaterial method
-        self.card.removeMaterial()
-
-        # Validate DB calls
-        assert mock_remove_material.call_count == 1
-        assert mock_popup.call_count == 1
+        if expected_emitted:
+            handler.assert_called_once_with(self.material)
+        else:
+            handler.assert_not_called()

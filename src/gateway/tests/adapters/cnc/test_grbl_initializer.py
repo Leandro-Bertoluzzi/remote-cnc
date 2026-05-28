@@ -85,7 +85,7 @@ class TestGrblInitializer:
 
         assert "Failed starting connection with GRBL" in str(exc_info.value)
 
-    def test_open_connection_serial_error_propagates(self, mocker: MockerFixture):
+    def test_open_connection_serial_error_propagates(self):
         """A SerialException from startConnection propagates."""
         self.serial.start_side_effect = SerialException("port closed")
 

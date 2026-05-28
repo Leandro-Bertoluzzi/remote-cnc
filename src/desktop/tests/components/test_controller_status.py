@@ -1,11 +1,12 @@
 import pytest
 from core.domain.entities import Tool
 from desktop.components.ControllerStatus import ControllerStatus
+from pytestqt.qtbot import QtBot
 
 
 class TestControllerStatus:
     @pytest.fixture(autouse=True)
-    def setup_method(self, qtbot):
+    def setup_method(self, qtbot: QtBot):
         self.controller_status = ControllerStatus()
         qtbot.addWidget(self.controller_status)
 

@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, cast
 
-from core.domain.task import TaskStatus
+from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QVBoxLayout
 
@@ -53,9 +53,16 @@ class TasksView(BaseListView):
         self.refreshLayout()
 
     def createTaskCard(self, task):
-        return TaskCard(
+        card = TaskCard(
             task, self.device_available, self.files, self.tools, self.materials, parent=self
         )
+        card.update_requested.connect(self.on_task_update)
+        card.remove_requested.connect(self.on_task_remove)
+        card.status_change_requested.connect(self.on_status_change)
+        card.repeat_requested.connect(self.on_task_repeat)
+        card.run_requested.connect(self.on_task_run)
+        card.pause_resume_requested.connect(self.on_pause_resume)
+        return card
 
     def getItems(self):
         tasks = self._context.task_service.get_all_tasks(USER_ID, status="all")
@@ -87,6 +94,95 @@ class TasksView(BaseListView):
         elif hasattr(self, "task_progress"):
             self.task_progress.setVisible(False)
             self._disconnect_progress_signals()
+
+    # Signal handlers
+
+    def on_task_update(self, task, file_id, tool_id, material_id, name, note):
+        if task.id is None:
+            return
+
+        try:
+            self._context.task_service.update_task(
+                task.id,
+                task.user_id,
+                file_id,
+                tool_id,
+                material_id,
+                name,
+                note,
+                TASK_DEFAULT_PRIORITY,
+            )
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    def on_task_remove(self, task):
+        if task.id is None:
+            return
+
+        try:
+            self._context.task_service.remove_task(task.id)
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    def on_status_change(self, task, new_status_value, cancellation_reason):
+        if task.id is None:
+            return
+
+        try:
+            self._context.task_service.update_task_status(
+                task.id, new_status_value, USER_ID, cancellation_reason
+            )
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    def on_task_repeat(self, task, file_id, tool_id, material_id, name, note):
+        try:
+            self._context.task_service.create_task(
+                task.user_id, file_id, tool_id, material_id, name, note
+            )
+        except Exception as error:
+            self.showError("Error de base de datos", str(error))
+            return
+        self.refreshLayout()
+
+    def on_task_run(self, task):
+        try:
+            unavailable_reason = self._context.device_service.check_device_availability()
+        except Exception as error:
+            self.showError("Error de conexión", get_friendly_error_message(error))
+            return
+
+        if unavailable_reason:
+            self.showError("No disponible", unavailable_reason)
+            return
+
+        if task.id is None:
+            return
+
+        try:
+            self._context.task_service.send_task_to_worker(task.id)
+        except Exception as error:
+            self.showError("Error de conexión", get_friendly_error_message(error))
+            return
+
+        self.getWindow().startWorkerMonitor()
+        self.showInfo("Tarea enviada", "Se envió la tarea al equipo para su ejecución")
+        self.refreshLayout()
+
+    def on_pause_resume(self, task, currently_paused):
+        try:
+            if currently_paused:
+                self._context.device_service.request_pause()
+            else:
+                self._context.device_service.request_resume()
+        except Exception as error:
+            self.showError("Error de conexión", get_friendly_error_message(error))
 
     # Signal management
 
