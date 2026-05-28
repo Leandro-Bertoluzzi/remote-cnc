@@ -64,9 +64,6 @@ class BaseListView(BaseView):
                         parent=self,
                     )
                 )
-                self.layout().addWidget(
-                    MenuButton("Volver al menú", onClick=self.getWindow().backToMenu)
-                )
                 self.update()
                 return
 
