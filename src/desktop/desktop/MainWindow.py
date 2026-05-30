@@ -104,6 +104,10 @@ class MainWindow(QMainWindow):
             self.setCentralWidget(error_widget)
             return
         self._connect_view_signals(new_widget)
+
+        if hasattr(new_widget, "setup_toolbars"):
+            new_widget.setup_toolbars()
+
         old_widget.deleteLater()
         self.setCentralWidget(new_widget)
 

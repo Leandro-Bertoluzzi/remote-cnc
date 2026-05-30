@@ -29,7 +29,7 @@ def classify_connection_error(exc: BaseException) -> str | None:
     Returns a human-readable message string if the error is a known connection
     issue, or ``None`` if it is not.
     """
-    current: BaseException | None = exc
+    current = exc
     while current is not None:
         type_name = type(current).__name__
         module = type(current).__module__ or ""
