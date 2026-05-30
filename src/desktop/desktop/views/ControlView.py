@@ -31,6 +31,7 @@ from desktop.components.Terminal import Terminal
 from desktop.components.ToolBar import ToolBar, ToolBarOptionInfo
 from desktop.containers.ButtonGrid import ButtonGrid
 from desktop.containers.ControllerActions import ControllerActions
+from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseView import BaseView
 
@@ -151,7 +152,6 @@ class ControlView(BaseView):
         # 2               BTN_BACK                 #
         ############################################
 
-        self.createToolBars()
         panel_row = 0
         if not self.device_busy:
             layout.addWidget(self.status_monitor, 0, 0)
@@ -172,8 +172,12 @@ class ControlView(BaseView):
     def __del__(self):
         self.disconnect_device()
 
-    def createToolBars(self):
-        """Adds the tool bars to the Main window"""
+    def setup_toolbars(self):
+        """
+        Setup view-specific toolbars.
+
+        This method must be called by the caller after the view is initialized.
+        """
         file_options: list[ToolBarOptionInfo] = [
             ("Nuevo", self.code_editor.new_file, False),
             ("Importar", self.code_editor.import_file, False),
@@ -228,7 +232,7 @@ class ControlView(BaseView):
             session_id = self._gateway.acquire_session(_DESKTOP_USER_ID, _DESKTOP_CLIENT_TYPE)
         except Exception as error:
             self.connect_button.setChecked(False)
-            self.showError("Error de conexión", str(error))
+            self.showError("Error de conexión", get_friendly_error_message(error))
             return
 
         if session_id is None:
@@ -259,7 +263,7 @@ class ControlView(BaseView):
             try:
                 self._gateway.release_session(self.session_id)
             except Exception as error:
-                self.showError("Error", str(error))
+                self.showError("Error", get_friendly_error_message(error))
                 return
 
         self.session_id = None

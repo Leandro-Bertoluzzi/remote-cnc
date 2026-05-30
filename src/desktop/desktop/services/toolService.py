@@ -19,6 +19,8 @@ class ToolService:
 
     def get_tool_by_id(self, tool_id: int) -> Tool | None:
         """Returns the tool or None if not found or DB is unavailable."""
+        if tool_id == 0:
+            return None  # ID 0 is reserved for "no tool"
         with self._session_factory(expire_on_commit=False) as session:
             repository = get_tool_repository(session)
             return repository.get_tool_by_id(tool_id)

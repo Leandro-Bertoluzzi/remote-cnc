@@ -29,6 +29,24 @@ class TestToolService:
         assert result == expected
         repository.get_all_tools.assert_called_once_with()
 
+    def test_get_tool_by_id(self, mocker: MockerFixture):
+        service, session, repository = self._make_service_and_repo(mocker)
+        expected = MagicMock()
+        repository.get_tool_by_id.return_value = expected
+
+        result = service.get_tool_by_id(5)
+
+        assert result == expected
+        repository.get_tool_by_id.assert_called_once_with(5)
+
+    def test_get_tool_by_id_invalid(self, mocker: MockerFixture):
+        service, session, repository = self._make_service_and_repo(mocker)
+
+        result = service.get_tool_by_id(0)
+
+        assert result is None
+        repository.get_tool_by_id.assert_not_called()
+
     def test_create_tool(self, mocker: MockerFixture):
         service, session, repository = self._make_service_and_repo(mocker)
 

@@ -38,9 +38,13 @@ class TestControlView:
 
         # Wire view signals to the parent mocks so existing assertions still work
         self.control_view.back_requested.connect(self.parent.backToMenu)
+        self.control_view.toolbar_added.connect(self.parent.addToolBar)
         self.control_view.toolbar_removed.connect(self.parent.removeToolBar)
 
-        # Reset call counts accumulated during view creation
+        # Setup toolbars (deferred in actual code, but called here explicitly for testing)
+        self.control_view.setup_toolbars()
+
+        # Reset call counts accumulated during view creation and toolbar setup
         self.parent.addToolBar.reset_mock()  # type: ignore[union-attr]
         self.parent.removeToolBar.reset_mock()  # type: ignore[union-attr]
 
@@ -62,6 +66,46 @@ class TestControlView:
         assert helpers.count_grid_widgets(layout, CodeEditor) == 1
         assert helpers.count_grid_widgets(layout, ControllerStatus) == (0 if device_busy else 1)
         assert helpers.count_grid_widgets(layout, Terminal) == 1
+
+    # -- toolbars -----------------------------------------------------------
+
+    def test_setup_toolbars_emits_files_toolbar(self, qtbot: QtBot):
+        """setup_toolbars() emits toolbar_added for files toolbar."""
+        control_view = ControlView(self.parent, self.mock_context, gateway_monitor=self.mock_sync)
+        qtbot.addWidget(control_view)
+
+        emitted_toolbars = []
+        control_view.toolbar_added.connect(emitted_toolbars.append)
+
+        # Call setup_toolbars explicitly
+        with qtbot.waitSignal(control_view.toolbar_added, raising=True):
+            control_view.setup_toolbars()
+
+        assert len(emitted_toolbars) >= 1
+        assert control_view.tool_bar_files in emitted_toolbars
+
+    @pytest.mark.parametrize("device_busy", [False, True])
+    def test_setup_toolbars_grbl_toolbar_conditional(self, qtbot: QtBot, device_busy: bool):
+        """setup_toolbars() only adds grbl toolbar when device is not busy."""
+        self.mock_context.device_service.is_worker_busy.return_value = device_busy
+        control_view = ControlView(self.parent, self.mock_context, gateway_monitor=self.mock_sync)
+        qtbot.addWidget(control_view)
+
+        emitted_toolbars = []
+        control_view.toolbar_added.connect(emitted_toolbars.append)
+
+        # Setup toolbars
+        control_view.setup_toolbars()
+        qtbot.wait(50)  # Allow all signals to fire
+
+        if device_busy:
+            assert len(emitted_toolbars) == 1
+            assert control_view.tool_bar_files in emitted_toolbars
+            assert not hasattr(control_view, "tool_bar_grbl")
+        else:
+            assert len(emitted_toolbars) == 2
+            assert control_view.tool_bar_files in emitted_toolbars
+            assert control_view.tool_bar_grbl in emitted_toolbars
 
     # -- navigation ---------------------------------------------------------
 
@@ -294,7 +338,7 @@ class TestControlView:
         mock_set_spindle = mocker.patch.object(ControllerStatus, "set_spindle")
         mock_set_tool = mocker.patch.object(ControllerStatus, "set_tool")
 
-        self.control_view.update_device_status({}, {"feedrate": 50, "spindle": 1200, "tool": "T1"})
+        self.control_view.update_device_status({}, {"feedrate": 50, "spindle": 1200, "tool": 1})
 
         assert mock_set_status.call_count == 1
         assert mock_set_feedrate.call_count == 1
