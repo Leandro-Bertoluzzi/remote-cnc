@@ -167,7 +167,7 @@ class TestControlView:
     def test_disconnect_device_release_error(self, mocker: MockerFixture):
         self.control_view.connected = True
         self.control_view.session_id = _FAKE_SESSION_ID
-        self.mock_gateway.release_session.side_effect = Exception("redis error")
+        self.mock_gateway.release_session.side_effect = Exception("session store error")
         mock_popup = mocker.patch.object(QMessageBox, "critical", return_value=QMessageBox.Ok)
 
         self.control_view.disconnect_device()

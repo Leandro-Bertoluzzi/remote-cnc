@@ -49,7 +49,7 @@ GW_STATE_STREAMING = "streaming"
 GW_STATE_FILE_EXECUTION = "file_execution"
 
 # ---------------------------------------------------------------------------
-# Redis PubSub channels
+# PubSub channel names
 # ---------------------------------------------------------------------------
 
 STATUS_CHANNEL = "grbl_status"
@@ -57,7 +57,7 @@ MESSAGES_CHANNEL = "grbl_messages"
 EVENTS_CHANNEL = "cnc:events"
 
 # ---------------------------------------------------------------------------
-# Redis command queue names
+# Command priority queue names
 # ---------------------------------------------------------------------------
 
 QUEUE_CRITICAL = "cnc:queue:critical"
@@ -67,7 +67,7 @@ QUEUE_NORMAL = "cnc:queue:normal"
 ALL_QUEUES = [QUEUE_CRITICAL, QUEUE_HIGH, QUEUE_NORMAL]
 
 # ---------------------------------------------------------------------------
-# Redis key names
+# Key names in key-value store
 # ---------------------------------------------------------------------------
 
 SESSION_KEY = "cnc:session"

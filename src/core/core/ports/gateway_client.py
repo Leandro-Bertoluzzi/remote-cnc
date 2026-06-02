@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, Protocol, runtime_checkable
 
-from core.ports.redis_client import IPubSub
+from core.ports.pubsub_client import IPubSub
 
 
 @runtime_checkable

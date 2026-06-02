@@ -51,9 +51,10 @@ class TestLogsManager:
         assert "task_invalid.log" not in by_name
         assert by_name["worker.log"] == "Registros del worker"
         assert by_name["controller.log"] == "Registros del controlador grbl"
-        assert "Ejecución del archivo <<file>> el día 28/02/2024 a las 19:45:55" == by_name[
-            "task_file_20240228_194555.log"
-        ]
+        assert (
+            "Ejecución del archivo <<file>> el día 28/02/2024 a las 19:45:55"
+            == by_name["task_file_20240228_194555.log"]
+        )
 
     def test_interpret_file(self):
         manager = LogManager(

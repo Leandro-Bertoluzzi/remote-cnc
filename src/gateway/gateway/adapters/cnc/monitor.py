@@ -2,7 +2,7 @@ import json
 from typing import Optional
 
 from core.ports.logger import ILogger
-from core.ports.redis_client import RedisClient
+from core.ports.pubsub_client import IPubSubClient
 
 from gateway.adapters.cnc.parsers.grblMsgTypes import GRBL_MSG_STATUS
 
@@ -12,12 +12,12 @@ LOG_LEVELS = ["critical", "error", "warning", "info", "debug"]
 
 
 class GrblMonitor:
-    def __init__(self, logger: ILogger, redis_conn: RedisClient):
+    def __init__(self, logger: ILogger, pubsub_client: IPubSubClient):
         # Configure logger
         self.logger = logger
 
-        # Redis connection for publishing updates to external apps
-        self.redis = redis_conn
+        # PubSub client for publishing updates to external apps
+        self.pubsub_client = pubsub_client
 
     # LOGGER
 
@@ -65,4 +65,4 @@ class GrblMonitor:
 
     def _publish(self, msgType: str, message: str):
         pubsub_message = json.dumps({"type": msgType, "message": message})
-        self.redis.publish(PUBSUB_CHANNEL, pubsub_message)
+        self.pubsub_client.publish(PUBSUB_CHANNEL, pubsub_message)

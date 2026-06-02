@@ -1,7 +1,7 @@
 """Command processor for the CNC Gateway.
 
-Consumes commands from the priority Redis queues via ``BLPOP`` and
-dispatches them to the appropriate handler on the GrblController.
+Consumes commands from the priority queue and dispatches them to
+the appropriate handler on the GrblController.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from core.domain.gateway import (
     MSG_QUERY,
     MSG_REALTIME,
 )
-from core.ports.redis_client import RedisClient
+from core.ports.priority_queue import IPriorityQueue
 
 from gateway.ports.cnc_controller import CncController
 from gateway.schemas import (
@@ -59,12 +59,12 @@ class CommandProcessor:
         controller: CncController,
         session_manager: SessionManager,
         file_executor: FileExecutor,
-        redis_conn: RedisClient,
+        command_queue: IPriorityQueue,
     ):
         self.controller = controller
         self.session_manager = session_manager
         self.file_executor = file_executor
-        self._redis = redis_conn
+        self._command_queue = command_queue
         self._disconnect_requested = False
 
     @property
@@ -87,7 +87,7 @@ class CommandProcessor:
         timeout elapsed with no command.
         """
         effective_timeout = timeout if timeout is not None else BLPOP_TIMEOUT
-        result = self._redis.blpop(ALL_QUEUES, timeout=effective_timeout)
+        result = self._command_queue.blpop(ALL_QUEUES, timeout=effective_timeout)
         if result is None:
             return False
 

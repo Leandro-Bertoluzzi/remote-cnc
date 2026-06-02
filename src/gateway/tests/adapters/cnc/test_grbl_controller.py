@@ -1,4 +1,3 @@
-import logging
 from unittest.mock import MagicMock
 
 import mocks.grbl as grbl_mocks
@@ -18,29 +17,20 @@ from gateway.adapters.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_VERSION,
 )
 from gateway.adapters.cnc.status import GrblStatus
+from mocks.logger import FakeLogger
 from pytest_mock.plugin import MockerFixture
 from serial import SerialException
 
 
 class TestGrblController:
     @pytest.fixture(autouse=True)
-    def setup_method(self, mocker: MockerFixture):
-        grbl_logger = logging.getLogger("test_logger")
+    def setup_method(self):
         self.fake_serial = FakeSerial()
-        self.mock_redis = MagicMock()
+        self.mock_pubsub = MagicMock()
         self.grbl_controller = GrblController(
-            serial=self.fake_serial, logger=grbl_logger, redis_conn=self.mock_redis
+            serial=self.fake_serial, logger=FakeLogger(), pubsub_client=self.mock_pubsub
         )
         self.grbl_status = self.grbl_controller.grbl_status
-
-        # Mock logger methods
-        mocker.patch.object(GrblMonitor, "debug")
-        mocker.patch.object(GrblMonitor, "info")
-        mocker.patch.object(GrblMonitor, "warning")
-        mocker.patch.object(GrblMonitor, "error")
-        mocker.patch.object(GrblMonitor, "critical")
-        mocker.patch.object(GrblMonitor, "sent")
-        mocker.patch.object(GrblMonitor, "received")
 
     def _inject_mock_communicator(self, mocker: MockerFixture) -> MagicMock:
         """Injects a MagicMock communicator into the controller.

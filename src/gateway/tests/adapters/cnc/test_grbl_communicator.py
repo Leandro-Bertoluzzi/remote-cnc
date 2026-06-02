@@ -19,7 +19,7 @@ class TestGrblCommunicator:
     def setup_method(self, mocker: MockerFixture):
         grbl_logger = logging.getLogger("test_logger")
         self.grbl_status = GrblStatus()
-        self.grbl_monitor = GrblMonitor(grbl_logger, redis_conn=MagicMock())
+        self.grbl_monitor = GrblMonitor(grbl_logger, pubsub_client=MagicMock())
 
         # Callbacks
         self.mock_on_ok = mocker.MagicMock()
