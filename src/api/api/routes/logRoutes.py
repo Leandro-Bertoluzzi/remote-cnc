@@ -1,5 +1,5 @@
+from core.application.log_manager import classify_log_files, generate_log_csv, get_log_path
 from core.utilities.files import changeFileExtension
-from core.utilities.logs import classify_log_files, generate_log_csv, get_log_path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
 

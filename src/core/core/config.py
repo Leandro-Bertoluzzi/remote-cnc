@@ -97,3 +97,6 @@ LOGS_FOLDER_PATH = settings.logs_folder_path
 
 SQLALCHEMY_DATABASE_URI = settings.sqlalchemy_database_uri
 CELERY_BROKER_URL = CELERY_RESULT_BACKEND = settings.celery_broker_url
+
+# Log filename timestamp format used by the task logger and log classifier.
+LOGS_DATETIME_FORMAT = "%Y%m%d_%H%M%S"
