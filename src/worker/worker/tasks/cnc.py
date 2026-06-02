@@ -7,11 +7,13 @@ logic to the pure handler in ``worker.tasks.handlers.cnc_handler``.
 No business logic lives here — add it to the handler instead.
 """
 
-from celery.utils.log import get_task_logger
+import logging
+
 from core.adapters.database.base import SessionLocal
 from core.adapters.database.task_repository import TaskRepository
 from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
+from core.adapters.logging.logger_factory import setup_task_logger
 from core.config import FILES_FOLDER_PATH
 from worker.main import app
 from worker.tasks.handlers.cnc_handler import execute_cnc_task
@@ -27,15 +29,25 @@ def executeTask(self, task_id: int) -> None:
     - close the DB session in the finally block
     """
     db_session = SessionLocal()
-    worker_logger = get_task_logger(__name__)
+    repo = TaskRepository(db_session)
+
+    # Resolve the G-code filename for a meaningful per-task log file.
+    # Falls back to the task ID if the record cannot be fetched.
+    try:
+        task_record = repo.get_task_by_id(task_id)
+        log_name = task_record.file.file_name if task_record and task_record.file else str(task_id)
+    except Exception:
+        log_name = str(task_id)
+
+    task_file_logger = setup_task_logger(log_name, logging.INFO)
 
     try:
         execute_cnc_task(
             task_id=task_id,
-            repo=TaskRepository(db_session),
+            repo=repo,
             storage=FileSystemStorage(FILES_FOLDER_PATH),
             gateway=GatewayClient.from_config(),
-            task_logger=worker_logger,
+            task_logger=task_file_logger,
         )
     finally:
         db_session.close()

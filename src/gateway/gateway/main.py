@@ -22,6 +22,7 @@ import time
 
 import redis
 from core.adapters.file_storage import FileSystemStorage
+from core.adapters.logging.logger_factory import setup_stream_logger
 from core.config import (
     FILES_FOLDER_PATH,
     GRBL_SIMULATION,
@@ -37,7 +38,6 @@ from core.domain.gateway import (
     GW_STATE_STREAMING,
 )
 from core.ports.redis_client import RedisClient
-from core.utilities.loggerFactory import setup_stream_logger
 
 from gateway.adapters.cnc.controller import GrblController
 from gateway.adapters.serial import SerialService

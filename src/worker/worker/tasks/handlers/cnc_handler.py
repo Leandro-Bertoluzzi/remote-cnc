@@ -5,16 +5,14 @@ are received as ports (``typing.Protocol``).
 """
 
 import json
-import logging
 import time
 
 from core.domain.gateway import EVENT_FILE_FAILED, EVENT_FILE_FINISHED
 from core.domain.task import TaskStatus
 from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
+from core.ports.logger import ILogger
 from core.ports.task_repository import ITaskRepository
-
-logger = logging.getLogger(__name__)
 
 # Timeout waiting for a file-execution event (seconds).
 # A very long G-code file could run for hours, so we set a generous limit.
@@ -26,7 +24,7 @@ def execute_cnc_task(
     repo: ITaskRepository,
     storage: IFileStorage,
     gateway: IGatewayClient,
-    task_logger=None,
+    task_logger: ILogger,
 ) -> None:
     """Orchestrate a G-code file execution via the CNC Gateway.
 
@@ -43,11 +41,8 @@ def execute_cnc_task(
         repo: Task repository port.
         storage: File storage port.
         gateway: Gateway client port.
-        task_logger: Optional logger (defaults to module-level logger).
+        task_logger: Logger instance.
     """
-    if task_logger is None:
-        task_logger = logger
-
     session_id: str | None = None
     pubsub = None
 
@@ -135,7 +130,7 @@ class _FileExecutionFailed(Exception):
         super().__init__(error)
 
 
-def _wait_for_completion(pubsub, task_id: int, task_logger) -> None:
+def _wait_for_completion(pubsub, task_id: int, task_logger: ILogger) -> None:
     """Block on PubSub waiting for file_finished or file_failed.
 
     Progress monitoring is handled by consumers that subscribe directly

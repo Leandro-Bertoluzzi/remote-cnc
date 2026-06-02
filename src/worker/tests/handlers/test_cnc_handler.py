@@ -13,6 +13,7 @@ from core.domain.task import TaskStatus
 from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
 from core.ports.task_repository import ITaskRepository
+from mocks.logger import FakeLogger
 from worker.tasks.handlers.cnc_handler import execute_cnc_task
 
 # ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ def _call(task_id: int, repo: MagicMock, gateway: MagicMock, storage: MagicMock 
         repo=repo,
         storage=storage,
         gateway=gateway,
-        task_logger=MagicMock(),
+        task_logger=FakeLogger(),
     )
 
 
