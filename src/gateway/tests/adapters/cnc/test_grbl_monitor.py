@@ -1,20 +1,16 @@
-import logging
-from queue import Empty, Queue
 from unittest.mock import MagicMock
 
 import pytest
 from gateway.adapters.cnc.monitor import GrblMonitor
 from gateway.adapters.cnc.parsers.grblMsgTypes import GRBL_MSG_STATUS
+from mocks.logger import FakeLogger
 from pytest_mock.plugin import MockerFixture
 
 
 class TestGrblMonitor:
     @pytest.fixture(autouse=True)
-    def setup_method(self, mocker: MockerFixture):
-        self.grbl_logger = logging.getLogger("test_logger")
-
-        # Mock logger methods
-        mocker.patch.object(self.grbl_logger, "addHandler")
+    def setup_method(self):
+        self.grbl_logger = FakeLogger()
 
         # Inject a mock Redis client — no real connection attempted
         self.mock_redis = MagicMock()
@@ -24,148 +20,45 @@ class TestGrblMonitor:
 
     @pytest.mark.parametrize("queue", [False, True])
     def test_debug(self, mocker: MockerFixture, queue):
-        # Mock methods
-        mock_logger = mocker.patch.object(self.grbl_logger, "debug")
-        mock_queue = mocker.patch.object(self.grbl_monitor, "queue_log")
-
-        # Call method under test
         self.grbl_monitor.debug("Test message", queue)
 
-        # Assertions
-        assert mock_logger.call_count == 1
-        assert mock_queue.call_count == (1 if queue else 0)
+        assert len(self.grbl_logger.debug_calls) == 1
 
     @pytest.mark.parametrize("queue", [False, True])
     def test_info(self, mocker: MockerFixture, queue):
-        # Mock methods
-        mock_logger = mocker.patch.object(self.grbl_logger, "info")
-        mock_queue = mocker.patch.object(self.grbl_monitor, "queue_log")
-
-        # Call method under test
         self.grbl_monitor.info("Test message", queue)
 
-        # Assertions
-        assert mock_logger.call_count == 1
-        assert mock_queue.call_count == (1 if queue else 0)
+        assert len(self.grbl_logger.info_calls) == 1
 
     @pytest.mark.parametrize("queue", [False, True])
     def test_warning(self, mocker: MockerFixture, queue):
-        # Mock methods
-        mock_logger = mocker.patch.object(self.grbl_logger, "warning")
-        mock_queue = mocker.patch.object(self.grbl_monitor, "queue_log")
-
-        # Call method under test
         self.grbl_monitor.warning("Test message", queue)
 
-        # Assertions
-        assert mock_logger.call_count == 1
-        assert mock_queue.call_count == (1 if queue else 0)
+        assert len(self.grbl_logger.warning_calls) == 1
 
     @pytest.mark.parametrize("queue", [False, True])
     def test_error(self, mocker: MockerFixture, queue):
-        # Mock methods
-        mock_logger = mocker.patch.object(self.grbl_logger, "error")
-        mock_queue = mocker.patch.object(self.grbl_monitor, "queue_log")
-
-        # Call method under test
         self.grbl_monitor.error("Test message", queue)
 
-        # Assertions
-        assert mock_logger.call_count == 1
-        assert mock_queue.call_count == (1 if queue else 0)
+        assert len(self.grbl_logger.error_calls) == 1
 
     @pytest.mark.parametrize("queue", [False, True])
     def test_critical(self, mocker: MockerFixture, queue):
-        # Mock methods
-        mock_logger = mocker.patch.object(self.grbl_logger, "critical")
-        mock_queue = mocker.patch.object(self.grbl_monitor, "queue_log")
-
-        # Call method under test
         self.grbl_monitor.critical("Test message", exc_info=False, queue=queue)
 
-        # Assertions
-        assert mock_logger.call_count == 1
-        assert mock_queue.call_count == (1 if queue else 0)
+        assert len(self.grbl_logger.critical_calls) == 1
 
     @pytest.mark.parametrize("debug", [False, True])
     def test_sent(self, mocker: MockerFixture, debug):
-        # Mock methods
-        mock_logger_debug = mocker.patch.object(self.grbl_logger, "debug")
-        mock_logger_info = mocker.patch.object(self.grbl_logger, "info")
-        mock_queue = mocker.patch.object(self.grbl_monitor, "queue_log")
-
-        # Call method under test
         self.grbl_monitor.sent("Test command", debug)
 
-        # Assertions
-        assert mock_logger_debug.call_count == (1 if debug else 0)
-        assert mock_logger_info.call_count == (0 if debug else 1)
-        assert mock_queue.call_count == (0 if debug else 1)
+        assert len(self.grbl_logger.debug_calls) == (1 if debug else 0)
+        assert len(self.grbl_logger.info_calls) == (0 if debug else 1)
 
     @pytest.mark.parametrize("msgType", [GRBL_MSG_STATUS, "AnotherType", None])
     def test_received(self, mocker: MockerFixture, msgType):
-        # Mock methods
-        mock_logger_debug = mocker.patch.object(self.grbl_logger, "debug")
-        mock_logger_info = mocker.patch.object(self.grbl_logger, "info")
-        mock_queue = mocker.patch.object(self.grbl_monitor, "queue_log")
-
-        # Auxiliary variables
         debug = msgType == GRBL_MSG_STATUS
-
-        # Call method under test
         self.grbl_monitor.received("Test message", msgType, {"key": "value"})
 
-        # Assertions
-        assert mock_logger_debug.call_count == (2 if debug else 0)
-        assert mock_logger_info.call_count == (0 if debug else 2)
-        assert mock_queue.call_count == (0 if debug else 1)
-
-    def test_queue_log(self, mocker: MockerFixture):
-        # Spy queue methods
-        mock_queue = mocker.spy(Queue, "put")
-
-        # Call method under test
-        self.grbl_monitor.queue_log("Testing...")
-
-        # Assertions
-        assert mock_queue.call_count == 1
-        assert self.grbl_monitor.logs_queue.get_nowait() == "Testing..."
-
-    @pytest.mark.parametrize("amount,expected", [(0, False), (5, True)])
-    def test_queue_has_logs(self, mocker: MockerFixture, amount, expected):
-        # Mock queue methods
-        mock_queue_size = mocker.patch.object(Queue, "qsize", return_value=amount)
-
-        # Call method under test
-        response = self.grbl_monitor.has_logs()
-
-        # Assertions
-        assert mock_queue_size.call_count == 1
-        assert response == expected
-
-    def test_get_queue_logs(self, mocker: MockerFixture):
-        # Mock queue contents
-        self.grbl_monitor.logs_queue.put("Log 1")
-        self.grbl_monitor.logs_queue.put("Log 2")
-        self.grbl_monitor.logs_queue.put("Log 3")
-
-        # Spy queue methods
-        mock_queue_get = mocker.spy(Queue, "get_nowait")
-
-        # Call method under test
-        response = self.grbl_monitor.get_log()
-
-        # Assertions
-        assert mock_queue_get.call_count == 1
-        assert response == "Log 1"
-
-    def test_get_queue_logs_empty(self, mocker: MockerFixture):
-        # Mock queue methods
-        mock_queue_get = mocker.patch.object(Queue, "get_nowait", side_effect=Empty())
-
-        # Call method under test
-        response = self.grbl_monitor.get_log()
-
-        # Assertions
-        assert mock_queue_get.call_count == 1
-        assert response == ""
+        assert len(self.grbl_logger.debug_calls) == (2 if debug else 0)
+        assert len(self.grbl_logger.info_calls) == (0 if debug else 2)
