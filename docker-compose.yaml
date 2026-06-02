@@ -65,7 +65,7 @@ services:
       context: src
       dockerfile: Dockerfile.worker
       target: production
-    command: uv run --no-sync celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log
+    command: uv run --no-sync celery --app worker.main worker --loglevel=INFO --logfile=logs/worker.log
     depends_on:
       redis:
         condition: service_started
