@@ -39,30 +39,30 @@ def make_processor(
         session_valid=session_valid,
     )
     file_executor = FakeFileExecutor(running=file_running)
-    redis_mock = MagicMock()
+    command_queue = MagicMock()
     processor = CommandProcessor(
         controller,
         session_manager,
         file_executor,
-        redis_conn=redis_mock,
+        command_queue,
     )
-    return processor, controller, file_executor, session_manager, redis_mock
+    return processor, controller, file_executor, session_manager, command_queue
 
 
 def _blpop_result(
     msg_type: str, payload: dict, session_id: str = "test-session"
 ) -> tuple[bytes, bytes]:
-    """Build a (queue_bytes, raw_json) tuple for redis_mock.blpop.return_value."""
+    """Build a (queue_bytes, raw_json) tuple for command_queue.blpop.return_value."""
     message = json.dumps({"type": msg_type, "session_id": session_id, "payload": payload})
     return (b"queue:high", message.encode())
 
 
 def _queue(
-    redis_mock: MagicMock,
+    command_queue: MagicMock,
     value: tuple[bytes, bytes] | None,
 ) -> None:
-    """Set the next blpop result on *redis_mock*."""
-    redis_mock.blpop.return_value = value
+    """Set the next blpop result on *command_queue*."""
+    command_queue.blpop.return_value = value
 
 
 # ---------------------------------------------------------------------------
@@ -72,23 +72,23 @@ def _queue(
 
 class TestProcessOne:
     def test_returns_false_on_timeout(self):
-        processor, *_, redis_mock = make_processor()
-        _queue(redis_mock, None)
+        processor, *_, command_queue = make_processor()
+        _queue(command_queue, None)
         assert processor.process_one() is False
 
     def test_returns_true_when_message_processed(self):
-        processor, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_FILE_STOP, {}))
+        processor, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_FILE_STOP, {}))
         assert processor.process_one() is True
 
     def test_returns_true_on_malformed_json(self):
-        processor, *_, redis_mock = make_processor()
-        _queue(redis_mock, (b"queue:high", b"not-json"))
+        processor, *_, command_queue = make_processor()
+        _queue(command_queue, (b"queue:high", b"not-json"))
         assert processor.process_one() is True
 
     def test_malformed_json_does_not_dispatch(self):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, (b"queue:high", b"not-json"))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, (b"queue:high", b"not-json"))
         processor.process_one()
         controller.send_command_mock.assert_not_called()
 
@@ -100,14 +100,14 @@ class TestProcessOne:
 
 class TestDispatchSessionValidation:
     def test_rejects_message_with_invalid_session(self):
-        processor, controller, *_, redis_mock = make_processor(session_valid=False)
-        _queue(redis_mock, _blpop_result(MSG_COMMAND, {"command": "G0 X10"}, session_id="bad"))
+        processor, controller, *_, command_queue = make_processor(session_valid=False)
+        _queue(command_queue, _blpop_result(MSG_COMMAND, {"command": "G0 X10"}, session_id="bad"))
         processor.process_one()
         controller.send_command_mock.assert_not_called()
 
     def test_query_bypasses_session_validation(self):
-        processor, controller, *_, redis_mock = make_processor(session_valid=False)
-        _queue(redis_mock, _blpop_result(MSG_QUERY, {"query": "status"}, session_id="bad"))
+        processor, controller, *_, command_queue = make_processor(session_valid=False)
+        _queue(command_queue, _blpop_result(MSG_QUERY, {"query": "status"}, session_id="bad"))
         processor.process_one()
         controller.query_status_report_mock.assert_called_once()
 
@@ -122,58 +122,58 @@ class TestHandleRealtime:
         "action", [ACTION_PAUSE, ACTION_RESUME, ACTION_STOP, ACTION_SOFT_RESET]
     )
     def test_valid_action_does_not_log_warning(self, action, caplog):
-        processor, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": action}))
+        processor, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": action}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         assert "Invalid realtime payload" not in caplog.text
 
     def test_pause_calls_set_paused_true(self):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
         processor.process_one()
         controller.set_paused_mock.assert_called_once_with(True)
 
     def test_pause_calls_file_executor_pause_when_running(self):
-        processor, _, file_executor, _, redis_mock = make_processor(file_running=True)
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
+        processor, _, file_executor, _, command_queue = make_processor(file_running=True)
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
         processor.process_one()
         file_executor.pause.assert_called_once()
 
     def test_pause_does_not_call_file_executor_pause_when_not_running(self):
-        processor, _, file_executor, _, redis_mock = make_processor(file_running=False)
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
+        processor, _, file_executor, _, command_queue = make_processor(file_running=False)
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
         processor.process_one()
         file_executor.pause.assert_not_called()
 
     def test_resume_calls_set_paused_false(self):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": ACTION_RESUME}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_RESUME}))
         processor.process_one()
         controller.set_paused_mock.assert_called_once_with(False)
 
     def test_resume_calls_file_executor_resume_when_running(self):
-        processor, _, file_executor, _, redis_mock = make_processor(file_running=True)
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": ACTION_RESUME}))
+        processor, _, file_executor, _, command_queue = make_processor(file_running=True)
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_RESUME}))
         processor.process_one()
         file_executor.resume.assert_called_once()
 
     def test_stop_calls_soft_reset_and_file_stop_when_running(self):
-        processor, controller, file_executor, _, redis_mock = make_processor(file_running=True)
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": ACTION_STOP}))
+        processor, controller, file_executor, _, command_queue = make_processor(file_running=True)
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_STOP}))
         processor.process_one()
         controller.request_soft_reset_mock.assert_called_once()
         file_executor.stop.assert_called_once()
 
     def test_soft_reset_calls_request_soft_reset(self):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": ACTION_SOFT_RESET}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_SOFT_RESET}))
         processor.process_one()
         controller.request_soft_reset_mock.assert_called_once()
 
     def test_invalid_action_logs_warning(self, caplog):
-        processor, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_REALTIME, {"action": "unknown_action"}))
+        processor, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": "unknown_action"}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         assert "Invalid realtime payload" in caplog.text
@@ -186,22 +186,22 @@ class TestHandleRealtime:
 
 class TestHandleCommand:
     def test_valid_command_calls_send_command(self):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_COMMAND, {"command": "G0 X10"}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_COMMAND, {"command": "G0 X10"}))
         processor.process_one()
         controller.send_command_mock.assert_called_once_with("G0 X10")
 
     def test_empty_command_logs_warning(self, caplog):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_COMMAND, {"command": ""}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_COMMAND, {"command": ""}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         assert "Invalid command payload" in caplog.text
         controller.send_command_mock.assert_not_called()
 
     def test_missing_command_key_logs_warning(self, caplog):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_COMMAND, {}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_COMMAND, {}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         controller.send_command_mock.assert_not_called()
@@ -214,9 +214,10 @@ class TestHandleCommand:
 
 class TestHandleJog:
     def test_valid_jog_calls_controller_with_correct_values(self):
-        processor, controller, *_, redis_mock = make_processor()
+        processor, controller, *_, command_queue = make_processor()
         _queue(
-            redis_mock, _blpop_result(MSG_JOG, {"x": 10.0, "y": 5.0, "z": 2.0, "feedrate": 500.0})
+            command_queue,
+            _blpop_result(MSG_JOG, {"x": 10.0, "y": 5.0, "z": 2.0, "feedrate": 500.0}),
         )
         processor.process_one()
         controller.jog_mock.assert_called_once()
@@ -224,16 +225,16 @@ class TestHandleJog:
         assert args == (10.0, 5.0, 2.0, 500.0)
 
     def test_invalid_jog_logs_warning(self, caplog):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_JOG, {"x": "not-a-number"}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_JOG, {"x": "not-a-number"}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         assert "Invalid jog payload" in caplog.text
         controller.jog_mock.assert_not_called()
 
     def test_empty_jog_uses_defaults(self):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_JOG, {}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_JOG, {}))
         processor.process_one()
         controller.jog_mock.assert_called_once()
         args, _ = controller.jog_mock.call_args
@@ -247,32 +248,32 @@ class TestHandleJog:
 
 class TestHandleFileStart:
     def test_valid_payload_calls_file_executor_start(self):
-        processor, _, file_executor, _, redis_mock = make_processor()
+        processor, _, file_executor, _, command_queue = make_processor()
         _queue(
-            redis_mock,
+            command_queue,
             _blpop_result(MSG_FILE_START, {"file_path": "/tmp/test.gcode", "task_id": 1}),
         )
         processor.process_one()
         file_executor.start.assert_called_once_with("/tmp/test.gcode", 1)
 
     def test_missing_file_path_logs_warning(self, caplog):
-        processor, _, file_executor, _, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_FILE_START, {"task_id": 1}))
+        processor, _, file_executor, _, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_FILE_START, {"task_id": 1}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         assert "Invalid file_start payload" in caplog.text
         file_executor.start.assert_not_called()
 
     def test_empty_file_path_logs_warning(self, caplog):
-        processor, _, file_executor, _, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_FILE_START, {"file_path": "", "task_id": 1}))
+        processor, _, file_executor, _, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_FILE_START, {"file_path": "", "task_id": 1}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         file_executor.start.assert_not_called()
 
     def test_task_id_is_optional(self):
-        processor, _, file_executor, _, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_FILE_START, {"file_path": "/tmp/test.gcode"}))
+        processor, _, file_executor, _, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_FILE_START, {"file_path": "/tmp/test.gcode"}))
         processor.process_one()
         file_executor.start.assert_called_once_with("/tmp/test.gcode", None)
 
@@ -284,14 +285,14 @@ class TestHandleFileStart:
 
 class TestHandleFileStop:
     def test_stops_executor_when_running(self):
-        processor, _, file_executor, _, redis_mock = make_processor(file_running=True)
-        _queue(redis_mock, _blpop_result(MSG_FILE_STOP, {}))
+        processor, _, file_executor, _, command_queue = make_processor(file_running=True)
+        _queue(command_queue, _blpop_result(MSG_FILE_STOP, {}))
         processor.process_one()
         file_executor.stop.assert_called_once()
 
     def test_does_not_stop_when_not_running(self):
-        processor, _, file_executor, _, redis_mock = make_processor(file_running=False)
-        _queue(redis_mock, _blpop_result(MSG_FILE_STOP, {}))
+        processor, _, file_executor, _, command_queue = make_processor(file_running=False)
+        _queue(command_queue, _blpop_result(MSG_FILE_STOP, {}))
         processor.process_one()
         file_executor.stop.assert_not_called()
 
@@ -314,23 +315,23 @@ QUERY_METHOD_MAP = [
 class TestHandleQuery:
     @pytest.mark.parametrize("query_type,method_name", QUERY_METHOD_MAP)
     def test_valid_query_calls_correct_controller_method(self, query_type, method_name):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_QUERY, {"query": query_type}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_QUERY, {"query": query_type}))
         processor.process_one()
         getattr(controller, method_name).assert_called_once()
 
     @pytest.mark.parametrize("query_type,method_name", QUERY_METHOD_MAP)
     def test_only_one_query_method_is_called(self, query_type, method_name):
-        processor, controller, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_QUERY, {"query": query_type}))
+        processor, controller, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_QUERY, {"query": query_type}))
         processor.process_one()
         for _qt, mn in QUERY_METHOD_MAP:
             if mn != method_name:
                 getattr(controller, mn).assert_not_called()
 
     def test_unknown_query_type_logs_warning(self, caplog):
-        processor, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_QUERY, {"query": "unknown"}))
+        processor, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_QUERY, {"query": "unknown"}))
         with caplog.at_level("WARNING"):
             processor.process_one()
         assert "Invalid query payload" in caplog.text
@@ -343,8 +344,8 @@ class TestHandleQuery:
 
 class TestHandleDisconnect:
     def test_sets_should_stop_true(self):
-        processor, *_, redis_mock = make_processor()
-        _queue(redis_mock, _blpop_result(MSG_DISCONNECT, {}))
+        processor, *_, command_queue = make_processor()
+        _queue(command_queue, _blpop_result(MSG_DISCONNECT, {}))
         assert processor.should_stop is False
         processor.process_one()
         assert processor.should_stop is True

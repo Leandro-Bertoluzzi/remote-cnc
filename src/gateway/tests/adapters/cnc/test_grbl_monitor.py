@@ -12,11 +12,11 @@ class TestGrblMonitor:
     def setup_method(self):
         self.grbl_logger = FakeLogger()
 
-        # Inject a mock Redis client — no real connection attempted
-        self.mock_redis = MagicMock()
+        # Inject a mock Pub/Sub client — no real connection attempted
+        self.mock_pubsub = MagicMock()
 
         # Instantiate monitor
-        self.grbl_monitor = GrblMonitor(self.grbl_logger, redis_conn=self.mock_redis)
+        self.grbl_monitor = GrblMonitor(self.grbl_logger, pubsub_client=self.mock_pubsub)
 
     @pytest.mark.parametrize("queue", [False, True])
     def test_debug(self, mocker: MockerFixture, queue):

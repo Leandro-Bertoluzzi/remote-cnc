@@ -37,7 +37,6 @@ from core.domain.gateway import (
     GW_STATE_IDLE,
     GW_STATE_STREAMING,
 )
-from core.ports.redis_client import RedisClient
 
 from gateway.adapters.cnc.controller import GrblController
 from gateway.adapters.serial import SerialService
@@ -85,7 +84,7 @@ def create_gateway(
     logger: logging.Logger,
 ) -> tuple[GrblController, CommandProcessor, StatusPublisher, FileExecutor, SessionManager]:
     """Wire up all Gateway components and return them."""
-    redis_conn: RedisClient = redis.Redis(  # type: ignore[assignment]
+    redis_conn = redis.Redis(
         host=REDIS_HOST,
         port=REDIS_PORT,
         db=REDIS_DB_STORAGE,
@@ -97,26 +96,27 @@ def create_gateway(
     controller = GrblController(
         serial=serial_adapter,
         logger=grbl_logger,
-        redis_conn=redis_conn,
+        pubsub_client=redis_conn,
         skip_startup_validation=GRBL_SIMULATION,
     )
 
     # Sub-systems
-    session_manager = SessionManager(redis_conn=redis_conn)
+    session_manager = SessionManager(pubsub_client=redis_conn, store=redis_conn)
     file_executor = FileExecutor(
-        controller, redis_conn=redis_conn, storage=FileSystemStorage(FILES_FOLDER_PATH)
+        controller, pubsub_client=redis_conn, storage=FileSystemStorage(FILES_FOLDER_PATH)
     )
     status_publisher = StatusPublisher(
         controller,
         session_manager,
         file_executor,
-        redis_conn=redis_conn,
+        store=redis_conn,
+        pubsub_client=redis_conn,
     )
     command_processor = CommandProcessor(
         controller,
         session_manager,
         file_executor,
-        redis_conn=redis_conn,
+        command_queue=redis_conn,
     )
 
     # Connect to the CNC device

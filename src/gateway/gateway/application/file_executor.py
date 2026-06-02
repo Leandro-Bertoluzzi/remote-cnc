@@ -27,7 +27,7 @@ from core.domain.gateway import (
     EVENTS_CHANNEL,
 )
 from core.ports.file_storage import IFileStorage
-from core.ports.redis_client import RedisClient
+from core.ports.pubsub_client import IPubSubClient
 
 from gateway.ports.cnc_controller import CncController
 
@@ -48,11 +48,11 @@ class FileExecutor:
     def __init__(
         self,
         controller: CncController,
-        redis_conn: RedisClient,
+        pubsub_client: IPubSubClient,
         storage: IFileStorage,
     ):
         self.controller = controller
-        self._redis = redis_conn
+        self._pubsub_client = pubsub_client
         self._storage = storage
         self._reset_state()
 
@@ -314,4 +314,4 @@ class FileExecutor:
 
     def _publish_event(self, event_type: str, data: dict[str, Any]) -> None:
         event = json.dumps({"type": event_type, **data})
-        self._redis.publish(EVENTS_CHANNEL, event)
+        self._pubsub_client.publish(EVENTS_CHANNEL, event)

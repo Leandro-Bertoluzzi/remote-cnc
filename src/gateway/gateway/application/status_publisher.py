@@ -1,7 +1,9 @@
 """Status publisher for the CNC Gateway.
 
 Periodically reads CNC state from the GrblController and publishes a
-unified JSON payload to the ``grbl_status`` Redis PubSub channel.
+unified JSON payload to the ``grbl_status`` PubSub channel.
+
+It also stores the latest snapshot in the key-value store.
 
 The payload format is designed so that **all** consumers receive the
 same data structure regardless of gateway mode.
@@ -15,7 +17,8 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from core.domain.gateway import GATEWAY_STATE_KEY, GW_STATE_IDLE, LAST_STATUS_KEY, STATUS_CHANNEL
-from core.ports.redis_client import RedisClient
+from core.ports.key_value_store import IKeyValueStore
+from core.ports.pubsub_client import IPubSubClient
 
 from gateway.ports.cnc_controller import CncController
 
@@ -30,19 +33,21 @@ STATUS_INTERVAL = 0.10
 
 
 class StatusPublisher:
-    """Reads GrblController state and publishes to Redis PubSub."""
+    """Reads GrblController state, publishes to PubSub and stores snapshots in key-value store."""
 
     def __init__(
         self,
         controller: CncController,
         session_manager: SessionManager,
         file_executor: FileExecutor,
-        redis_conn: RedisClient,
+        store: IKeyValueStore,
+        pubsub_client: IPubSubClient,
     ):
         self.controller = controller
         self.session_manager = session_manager
         self.file_executor = file_executor
-        self._redis = redis_conn
+        self._store = store
+        self._pubsub_client = pubsub_client
         self._last_publish = 0.0
         self._gateway_state = GW_STATE_IDLE
 
@@ -53,7 +58,7 @@ class StatusPublisher:
     @gateway_state.setter
     def gateway_state(self, value: str) -> None:
         self._gateway_state = value
-        self._redis.set(GATEWAY_STATE_KEY, value)
+        self._store.set(GATEWAY_STATE_KEY, value)
 
     def publish_if_due(self) -> bool:
         """Publish a status update if enough time has elapsed.
@@ -74,9 +79,9 @@ class StatusPublisher:
         self._last_publish = time.time()
 
     def cleanup(self) -> None:
-        """Remove the gateway state keys from Redis on shutdown."""
-        self._redis.delete(GATEWAY_STATE_KEY)
-        self._redis.delete(LAST_STATUS_KEY)
+        """Remove the gateway state keys from the store on shutdown."""
+        self._store.delete(GATEWAY_STATE_KEY)
+        self._store.delete(LAST_STATUS_KEY)
 
     # ------------------------------------------------------------------
     # Internal
@@ -97,6 +102,6 @@ class StatusPublisher:
             payload["file_progress"] = self.file_executor.get_progress()
 
         message = json.dumps(payload, default=str)
-        self._redis.publish(STATUS_CHANNEL, message)
-        # Persist snapshot for REST polling (GET /cnc/status)
-        self._redis.set(LAST_STATUS_KEY, message)
+        self._pubsub_client.publish(STATUS_CHANNEL, message)
+        # Persist snapshot for polling
+        self._store.set(LAST_STATUS_KEY, message)

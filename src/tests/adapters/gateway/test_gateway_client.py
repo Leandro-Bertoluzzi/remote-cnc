@@ -64,7 +64,7 @@ def fake_redis() -> FakeRedisWithLua:
 @pytest.fixture()
 def client(fake_redis: FakeRedisWithLua) -> GatewayClient:
     """A GatewayClient backed by ``fake_redis``."""
-    return GatewayClient(redis_factory=lambda: fake_redis)
+    return GatewayClient(redis=fake_redis)
 
 
 @pytest.fixture()
