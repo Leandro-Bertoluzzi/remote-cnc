@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
 
-from desktop.helpers.utils import applyStylesheet
+from desktop.helpers.utils import apply_stylesheet
 
 
 class Terminal(QWidget):
@@ -32,7 +32,7 @@ class Terminal(QWidget):
         layout.addWidget(self.input)
 
         # Apply custom styles
-        applyStylesheet(self, __file__, "Terminal.qss")
+        apply_stylesheet(self, __file__, "Terminal.qss")
 
     def display_text(self, text):
         self.display_screen.insertPlainText(text + "\n")

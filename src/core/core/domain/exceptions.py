@@ -48,3 +48,11 @@ class InvalidRole(ValidationError):
 
 class DuplicatedUserError(ConflictError):
     pass
+
+
+class InvalidFile(ValidationError):
+    pass
+
+
+class FileSystemError(DomainError):
+    pass

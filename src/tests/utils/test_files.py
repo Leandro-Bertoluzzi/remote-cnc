@@ -5,16 +5,8 @@ import pytest
 from core.utilities.files import (
     changeFileExtension,
     createFileIfNotExists,
-    getFileNameInFolder,
     getFilesInFolder,
 )
-
-
-def test_getFileNameInFolder():
-    current = "path/to/files/current.py"
-    searched = "searched.txt"
-    expected = Path("path/to/files/searched.txt")
-    assert getFileNameInFolder(current, searched) == expected
 
 
 def test_getFilesInFolder(mocker):

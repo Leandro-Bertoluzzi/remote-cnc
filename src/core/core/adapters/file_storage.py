@@ -6,7 +6,8 @@ import shutil
 from pathlib import Path
 from typing import IO
 
-from core.utilities.files import ALLOWED_FILE_EXTENSIONS, FileSystemError, InvalidFile
+from core.domain.exceptions import FileSystemError, InvalidFile
+from core.utilities.files import ALLOWED_FILE_EXTENSIONS
 
 
 class FileSystemStorage:

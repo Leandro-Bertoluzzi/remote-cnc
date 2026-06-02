@@ -4,9 +4,9 @@ from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
     EntityNotFoundError,
+    FileSystemError,
     PersistenceError,
 )
-from core.utilities.files import FileSystemError
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.cards.MsgCard import MsgCard

@@ -1,6 +1,6 @@
 from typing import Callable
 
-from desktop.helpers.utils import applyStylesheet
+from desktop.helpers.utils import apply_stylesheet
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -26,7 +26,7 @@ class Card(QWidget):
         self.setLayout(layout)
 
         # Apply custom styles
-        applyStylesheet(self, __file__, "Card.qss")
+        apply_stylesheet(self, __file__, "Card.qss")
 
     def setDescription(self, description: str) -> None:
         self.label_description.setText(description)
