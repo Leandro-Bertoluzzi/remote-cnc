@@ -3,29 +3,6 @@ from pathlib import Path
 
 ALLOWED_FILE_EXTENSIONS = {"txt", "gcode", "nc"}
 
-# Custom exceptions
-
-
-class InvalidFile(Exception):
-    pass
-
-
-class FileSystemError(Exception):
-    pass
-
-
-def getFileNameInFolder(current: str, searched: str) -> Path:
-    """
-    - Name: getFileNameInFolder
-    - Parameter(s):
-        - current: string, path to the reference file
-        - searched: string, file name of the searched file
-    - Description:
-        Generates the absolute path to a file in the same folder
-    """
-    folder = Path(current).parent
-    return folder / searched
-
 
 def getFilesInFolder(folderPath: str) -> list[str]:
     desktop = Path(folderPath)

@@ -1,4 +1,4 @@
-from core.utilities.files import getFileNameInFolder
+from desktop.helpers.utils import get_file_name_in_folder
 from PyQt5.QtCore import QEvent, Qt
 from PyQt5.QtGui import QColor, QCursor, QPainter, QPaintEvent, QPixmap
 from PyQt5.QtSvg import QSvgRenderer
@@ -16,7 +16,7 @@ class MainMenuButton(QAbstractButton):
         super(MainMenuButton, self).__init__(parent)
 
         # Save image
-        self.imagePath = getFileNameInFolder(__file__, imageRelPath).as_posix()
+        self.imagePath = get_file_name_in_folder(__file__, imageRelPath).as_posix()
 
         # Customize painter
         self.pixmap = QPixmap(self.imagePath)

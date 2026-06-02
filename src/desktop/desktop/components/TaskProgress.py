@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFormLayout, QProgressBar, QWidget
 
-from desktop.helpers.utils import applyStylesheet
+from desktop.helpers.utils import apply_stylesheet
 
 
 class TaskProgress(QWidget):
@@ -23,7 +23,7 @@ class TaskProgress(QWidget):
         self.setLayout(layout)
 
         # Apply custom styles
-        applyStylesheet(self, __file__, "TaskProgress.qss")
+        apply_stylesheet(self, __file__, "TaskProgress.qss")
 
     def set_total(self, total_lines: int):
         self.sent_progress.setMaximum(total_lines)

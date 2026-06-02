@@ -3,7 +3,7 @@ from core.domain.entities import Tool
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from desktop.helpers.utils import applyStylesheet
+from desktop.helpers.utils import apply_stylesheet
 
 
 class ControllerStatus(QWidget):
@@ -51,7 +51,7 @@ class ControllerStatus(QWidget):
             layout_details.addWidget(label)
         layout.addLayout(layout_details)
 
-        applyStylesheet(self, __file__, "ControllerStatus.qss")
+        apply_stylesheet(self, __file__, "ControllerStatus.qss")
 
     def set_status(self, status: Status):
         self.status.setText(status["activeState"].upper())

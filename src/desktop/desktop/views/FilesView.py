@@ -4,9 +4,10 @@ from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
     EntityNotFoundError,
+    FileSystemError,
+    InvalidFile,
     PersistenceError,
 )
-from core.utilities.files import FileSystemError, InvalidFile
 
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
