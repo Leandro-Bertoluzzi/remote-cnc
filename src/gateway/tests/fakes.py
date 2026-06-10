@@ -175,7 +175,12 @@ class FakeFileExecutor(FileExecutor):
     """
 
     def __init__(self, *, running: bool = False):
-        super().__init__(FakeController(), pubsub_client=MagicMock(), storage=MagicMock())
+        super().__init__(
+            FakeController(),
+            pubsub_client=MagicMock(),
+            storage=MagicMock(),
+            logger_factory=lambda name: MagicMock(),
+        )
         self._running = running
 
         # Replace methods with spies after super().__init__()

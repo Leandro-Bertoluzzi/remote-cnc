@@ -4,10 +4,6 @@ Provides human-readable error messages in Spanish for connection failures
 to PostgreSQL, Redis, and Celery/broker services.
 """
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 # Human-readable error messages
 DB_CONNECTION_ERROR = (
     "No se pudo conectar a la base de datos.\n"

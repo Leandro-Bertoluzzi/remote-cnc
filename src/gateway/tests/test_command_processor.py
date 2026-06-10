@@ -32,7 +32,9 @@ def make_processor(
     session_valid: bool = True,
     active_session: dict | None = None,
     file_running: bool = False,
-) -> tuple[CommandProcessor, FakeController, FakeFileExecutor, FakeSessionManager, MagicMock]:
+) -> tuple[
+    CommandProcessor, FakeController, FakeFileExecutor, FakeSessionManager, MagicMock, MagicMock
+]:
     controller = FakeController()
     session_manager = FakeSessionManager(
         active_session=active_session or {"session_id": "test-session"},
@@ -40,13 +42,15 @@ def make_processor(
     )
     file_executor = FakeFileExecutor(running=file_running)
     command_queue = MagicMock()
+    logger = MagicMock()
     processor = CommandProcessor(
         controller,
         session_manager,
         file_executor,
         command_queue,
+        logger,
     )
-    return processor, controller, file_executor, session_manager, command_queue
+    return processor, controller, file_executor, session_manager, command_queue, logger
 
 
 def _blpop_result(
@@ -65,6 +69,11 @@ def _queue(
     command_queue.blpop.return_value = value
 
 
+def _assert_warning_includes(logger: MagicMock, message: str) -> None:
+    """Assert that *logger.warning* was called with a message that includes *message*."""
+    assert any(message in call.args[0] for call in logger.warning.call_args_list)
+
+
 # ---------------------------------------------------------------------------
 # process_one
 # ---------------------------------------------------------------------------
@@ -72,22 +81,22 @@ def _queue(
 
 class TestProcessOne:
     def test_returns_false_on_timeout(self):
-        processor, *_, command_queue = make_processor()
+        processor, *_, command_queue, _ = make_processor()
         _queue(command_queue, None)
         assert processor.process_one() is False
 
     def test_returns_true_when_message_processed(self):
-        processor, *_, command_queue = make_processor()
+        processor, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_FILE_STOP, {}))
         assert processor.process_one() is True
 
     def test_returns_true_on_malformed_json(self):
-        processor, *_, command_queue = make_processor()
+        processor, *_, command_queue, _ = make_processor()
         _queue(command_queue, (b"queue:high", b"not-json"))
         assert processor.process_one() is True
 
     def test_malformed_json_does_not_dispatch(self):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, (b"queue:high", b"not-json"))
         processor.process_one()
         controller.send_command_mock.assert_not_called()
@@ -100,13 +109,13 @@ class TestProcessOne:
 
 class TestDispatchSessionValidation:
     def test_rejects_message_with_invalid_session(self):
-        processor, controller, *_, command_queue = make_processor(session_valid=False)
+        processor, controller, *_, command_queue, _ = make_processor(session_valid=False)
         _queue(command_queue, _blpop_result(MSG_COMMAND, {"command": "G0 X10"}, session_id="bad"))
         processor.process_one()
         controller.send_command_mock.assert_not_called()
 
     def test_query_bypasses_session_validation(self):
-        processor, controller, *_, command_queue = make_processor(session_valid=False)
+        processor, controller, *_, command_queue, _ = make_processor(session_valid=False)
         _queue(command_queue, _blpop_result(MSG_QUERY, {"query": "status"}, session_id="bad"))
         processor.process_one()
         controller.query_status_report_mock.assert_called_once()
@@ -121,62 +130,62 @@ class TestHandleRealtime:
     @pytest.mark.parametrize(
         "action", [ACTION_PAUSE, ACTION_RESUME, ACTION_STOP, ACTION_SOFT_RESET]
     )
-    def test_valid_action_does_not_log_warning(self, action, caplog):
-        processor, *_, command_queue = make_processor()
+    def test_valid_action_does_not_log_warning(self, action):
+        processor, *_, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": action}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
-        assert "Invalid realtime payload" not in caplog.text
+        processor.process_one()
+        logger.warning.assert_not_called()
 
     def test_pause_calls_set_paused_true(self):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
         processor.process_one()
         controller.set_paused_mock.assert_called_once_with(True)
 
     def test_pause_calls_file_executor_pause_when_running(self):
-        processor, _, file_executor, _, command_queue = make_processor(file_running=True)
+        processor, _, file_executor, _, command_queue, _ = make_processor(file_running=True)
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
         processor.process_one()
         file_executor.pause.assert_called_once()
 
     def test_pause_does_not_call_file_executor_pause_when_not_running(self):
-        processor, _, file_executor, _, command_queue = make_processor(file_running=False)
+        processor, _, file_executor, _, command_queue, _ = make_processor(file_running=False)
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_PAUSE}))
         processor.process_one()
         file_executor.pause.assert_not_called()
 
     def test_resume_calls_set_paused_false(self):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_RESUME}))
         processor.process_one()
         controller.set_paused_mock.assert_called_once_with(False)
 
     def test_resume_calls_file_executor_resume_when_running(self):
-        processor, _, file_executor, _, command_queue = make_processor(file_running=True)
+        processor, _, file_executor, _, command_queue, _ = make_processor(file_running=True)
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_RESUME}))
         processor.process_one()
         file_executor.resume.assert_called_once()
 
     def test_stop_calls_soft_reset_and_file_stop_when_running(self):
-        processor, controller, file_executor, _, command_queue = make_processor(file_running=True)
+        processor, controller, file_executor, _, command_queue, _ = make_processor(
+            file_running=True
+        )
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_STOP}))
         processor.process_one()
         controller.request_soft_reset_mock.assert_called_once()
         file_executor.stop.assert_called_once()
 
     def test_soft_reset_calls_request_soft_reset(self):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": ACTION_SOFT_RESET}))
         processor.process_one()
         controller.request_soft_reset_mock.assert_called_once()
 
-    def test_invalid_action_logs_warning(self, caplog):
-        processor, *_, command_queue = make_processor()
+    def test_invalid_action_logs_warning(self):
+        processor, *_, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_REALTIME, {"action": "unknown_action"}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
-        assert "Invalid realtime payload" in caplog.text
+        processor.process_one()
+        _assert_warning_includes(logger, "Invalid realtime payload")
 
 
 # ---------------------------------------------------------------------------
@@ -186,24 +195,23 @@ class TestHandleRealtime:
 
 class TestHandleCommand:
     def test_valid_command_calls_send_command(self):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_COMMAND, {"command": "G0 X10"}))
         processor.process_one()
         controller.send_command_mock.assert_called_once_with("G0 X10")
 
-    def test_empty_command_logs_warning(self, caplog):
-        processor, controller, *_, command_queue = make_processor()
+    def test_empty_command_logs_warning(self):
+        processor, controller, *_, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_COMMAND, {"command": ""}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
-        assert "Invalid command payload" in caplog.text
+        processor.process_one()
+        _assert_warning_includes(logger, "Invalid command payload")
         controller.send_command_mock.assert_not_called()
 
-    def test_missing_command_key_logs_warning(self, caplog):
-        processor, controller, *_, command_queue = make_processor()
+    def test_missing_command_key_logs_warning(self):
+        processor, controller, *_, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_COMMAND, {}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
+        processor.process_one()
+        _assert_warning_includes(logger, "Invalid command payload")
         controller.send_command_mock.assert_not_called()
 
 
@@ -214,7 +222,7 @@ class TestHandleCommand:
 
 class TestHandleJog:
     def test_valid_jog_calls_controller_with_correct_values(self):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(
             command_queue,
             _blpop_result(MSG_JOG, {"x": 10.0, "y": 5.0, "z": 2.0, "feedrate": 500.0}),
@@ -224,16 +232,15 @@ class TestHandleJog:
         args, _kwargs = controller.jog_mock.call_args
         assert args == (10.0, 5.0, 2.0, 500.0)
 
-    def test_invalid_jog_logs_warning(self, caplog):
-        processor, controller, *_, command_queue = make_processor()
+    def test_invalid_jog_logs_warning(self):
+        processor, controller, *_, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_JOG, {"x": "not-a-number"}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
-        assert "Invalid jog payload" in caplog.text
+        processor.process_one()
+        _assert_warning_includes(logger, "Invalid jog payload")
         controller.jog_mock.assert_not_called()
 
     def test_empty_jog_uses_defaults(self):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_JOG, {}))
         processor.process_one()
         controller.jog_mock.assert_called_once()
@@ -248,34 +255,36 @@ class TestHandleJog:
 
 class TestHandleFileStart:
     def test_valid_payload_calls_file_executor_start(self):
-        processor, _, file_executor, _, command_queue = make_processor()
+        processor, _, file_executor, _, command_queue, _ = make_processor()
         _queue(
             command_queue,
-            _blpop_result(MSG_FILE_START, {"file_path": "/tmp/test.gcode", "task_id": 1}),
+            _blpop_result(
+                MSG_FILE_START,
+                {"file_path": "/tmp/test.gcode", "task_id": 1, "shared_logger_name": "test-logger"},
+            ),
         )
         processor.process_one()
-        file_executor.start.assert_called_once_with("/tmp/test.gcode", 1)
+        file_executor.start.assert_called_once_with("/tmp/test.gcode", 1, "test-logger")
 
-    def test_missing_file_path_logs_warning(self, caplog):
-        processor, _, file_executor, _, command_queue = make_processor()
+    def test_missing_file_path_logs_warning(self):
+        processor, _, file_executor, _, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_FILE_START, {"task_id": 1}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
-        assert "Invalid file_start payload" in caplog.text
+        processor.process_one()
+        _assert_warning_includes(logger, "Invalid file_start payload")
         file_executor.start.assert_not_called()
 
-    def test_empty_file_path_logs_warning(self, caplog):
-        processor, _, file_executor, _, command_queue = make_processor()
+    def test_empty_file_path_logs_warning(self):
+        processor, _, file_executor, _, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_FILE_START, {"file_path": "", "task_id": 1}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
+        processor.process_one()
+        _assert_warning_includes(logger, "Invalid file_start payload")
         file_executor.start.assert_not_called()
 
-    def test_task_id_is_optional(self):
-        processor, _, file_executor, _, command_queue = make_processor()
+    def test_task_id_and_shared_logger_name_are_optional(self):
+        processor, _, file_executor, _, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_FILE_START, {"file_path": "/tmp/test.gcode"}))
         processor.process_one()
-        file_executor.start.assert_called_once_with("/tmp/test.gcode", None)
+        file_executor.start.assert_called_once_with("/tmp/test.gcode", None, None)
 
 
 # ---------------------------------------------------------------------------
@@ -285,13 +294,13 @@ class TestHandleFileStart:
 
 class TestHandleFileStop:
     def test_stops_executor_when_running(self):
-        processor, _, file_executor, _, command_queue = make_processor(file_running=True)
+        processor, _, file_executor, _, command_queue, _ = make_processor(file_running=True)
         _queue(command_queue, _blpop_result(MSG_FILE_STOP, {}))
         processor.process_one()
         file_executor.stop.assert_called_once()
 
     def test_does_not_stop_when_not_running(self):
-        processor, _, file_executor, _, command_queue = make_processor(file_running=False)
+        processor, _, file_executor, _, command_queue, _ = make_processor(file_running=False)
         _queue(command_queue, _blpop_result(MSG_FILE_STOP, {}))
         processor.process_one()
         file_executor.stop.assert_not_called()
@@ -315,26 +324,25 @@ QUERY_METHOD_MAP = [
 class TestHandleQuery:
     @pytest.mark.parametrize("query_type,method_name", QUERY_METHOD_MAP)
     def test_valid_query_calls_correct_controller_method(self, query_type, method_name):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_QUERY, {"query": query_type}))
         processor.process_one()
         getattr(controller, method_name).assert_called_once()
 
     @pytest.mark.parametrize("query_type,method_name", QUERY_METHOD_MAP)
     def test_only_one_query_method_is_called(self, query_type, method_name):
-        processor, controller, *_, command_queue = make_processor()
+        processor, controller, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_QUERY, {"query": query_type}))
         processor.process_one()
         for _qt, mn in QUERY_METHOD_MAP:
             if mn != method_name:
                 getattr(controller, mn).assert_not_called()
 
-    def test_unknown_query_type_logs_warning(self, caplog):
-        processor, *_, command_queue = make_processor()
+    def test_unknown_query_type_logs_warning(self):
+        processor, *_, command_queue, logger = make_processor()
         _queue(command_queue, _blpop_result(MSG_QUERY, {"query": "unknown"}))
-        with caplog.at_level("WARNING"):
-            processor.process_one()
-        assert "Invalid query payload" in caplog.text
+        processor.process_one()
+        _assert_warning_includes(logger, "Invalid query payload:")
 
 
 # ---------------------------------------------------------------------------
@@ -344,7 +352,7 @@ class TestHandleQuery:
 
 class TestHandleDisconnect:
     def test_sets_should_stop_true(self):
-        processor, *_, command_queue = make_processor()
+        processor, *_, command_queue, _ = make_processor()
         _queue(command_queue, _blpop_result(MSG_DISCONNECT, {}))
         assert processor.should_stop is False
         processor.process_one()

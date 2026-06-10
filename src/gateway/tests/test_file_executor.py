@@ -25,7 +25,12 @@ def make_executor(
 ) -> tuple[FileExecutor, FakeController, MagicMock]:
     ctrl = controller or FakeController()
     pubsub_mock = pubsub_client or MagicMock()
-    executor = FileExecutor(ctrl, pubsub_client=pubsub_mock, storage=FakeFileStorage())
+    executor = FileExecutor(
+        ctrl,
+        pubsub_client=pubsub_mock,
+        storage=FakeFileStorage(),
+        logger_factory=lambda name: MagicMock(),  # logger is not under test, so use a simple mock
+    )
     return executor, ctrl, pubsub_mock
 
 

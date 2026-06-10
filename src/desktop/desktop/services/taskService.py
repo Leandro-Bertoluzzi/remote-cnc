@@ -1,6 +1,5 @@
 """Service layer for Task domain operations."""
 
-import logging
 from typing import Optional
 
 from core.domain.entities import Task
@@ -9,8 +8,6 @@ from core.ports.db_session import SessionFactory
 from core.ports.worker_client import IWorkerClient
 
 from desktop.services.dependencies import get_task_repository
-
-logger = logging.getLogger(__name__)
 
 
 class TaskService:

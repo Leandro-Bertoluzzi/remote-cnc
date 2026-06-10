@@ -1,7 +1,7 @@
 """Status publisher for the CNC Gateway.
 
-Periodically reads CNC state from the GrblController and publishes a
-unified JSON payload to the ``grbl_status`` PubSub channel.
+Periodically reads CNC state from the controller and publishes a
+unified JSON payload to the status PubSub channel.
 
 It also stores the latest snapshot in the key-value store.
 
@@ -12,7 +12,6 @@ same data structure regardless of gateway mode.
 from __future__ import annotations
 
 import json
-import logging
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -26,14 +25,12 @@ if TYPE_CHECKING:
     from gateway.application.file_executor import FileExecutor
     from gateway.application.session_manager import SessionManager
 
-logger = logging.getLogger(__name__)
-
 # How often to publish status (seconds)
 STATUS_INTERVAL = 0.10
 
 
 class StatusPublisher:
-    """Reads GrblController state, publishes to PubSub and stores snapshots in key-value store."""
+    """Reads CNC controller state, publishes to PubSub and stores snapshots in key-value store."""
 
     def __init__(
         self,

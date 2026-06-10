@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from core.adapters.database.base import check_db_connection, dispose_db
+from core.adapters.logging.logger_factory import setup_stream_logger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,7 +21,7 @@ from api.routes.toolRoutes import toolRoutes
 from api.routes.userRoutes import userRoutes
 from api.routes.workerRoutes import workerRoutes
 
-logger = logging.getLogger(__name__)
+logger = setup_stream_logger("api", logging.INFO)
 
 
 @asynccontextmanager

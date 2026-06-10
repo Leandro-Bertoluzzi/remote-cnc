@@ -1,13 +1,9 @@
-import logging
-
 from core.domain.entities import File, Material, Tool
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
 from desktop.components.dialogs.TaskDataDialog import TaskFromFileDialog
 from desktop.helpers.utils import needs_confirmation
 from PyQt5.QtCore import pyqtSignal
-
-logger = logging.getLogger(__name__)
 
 
 class FileCard(Card):

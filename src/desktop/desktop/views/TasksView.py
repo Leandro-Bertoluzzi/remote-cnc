@@ -1,4 +1,3 @@
-import logging
 from typing import TYPE_CHECKING, cast
 
 from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
@@ -15,8 +14,6 @@ from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
     from desktop.MainWindow import MainWindow  # pragma: no cover
-
-logger = logging.getLogger(__name__)
 
 
 class TasksView(BaseListView):
@@ -68,7 +65,7 @@ class TasksView(BaseListView):
         try:
             self.device_available = self._context.device_service.is_device_available()
         except Exception:
-            logger.warning("Could not check device availability")
+            self._context.logger.warning("Could not check device availability")
             self.device_available = False
 
         return tasks

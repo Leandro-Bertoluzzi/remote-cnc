@@ -17,7 +17,6 @@ See DR-0001 for the architecture rationale.
 from __future__ import annotations
 
 import json
-import logging
 import threading
 from typing import cast
 
@@ -29,9 +28,8 @@ from core.domain.gateway import (
     STATUS_CHANNEL,
 )
 from core.ports.gateway_client import IGatewayClient
+from core.ports.logger import ILogger
 from PyQt5.QtCore import QObject, pyqtSignal
-
-logger = logging.getLogger(__name__)
 
 
 class GatewayMonitor(QObject):
@@ -46,9 +44,10 @@ class GatewayMonitor(QObject):
 
     # CONSTRUCTOR
 
-    def __init__(self, gateway: IGatewayClient) -> None:
+    def __init__(self, gateway: IGatewayClient, logger: ILogger) -> None:
         super().__init__()
         self._gateway = gateway
+        self._logger = logger
         self._thread: threading.Thread | None = None
         self._running = False
 
@@ -57,7 +56,7 @@ class GatewayMonitor(QObject):
     def start_monitor(self) -> None:
         """Start listening for Gateway status updates in a background thread."""
         if self._running:
-            logger.warning("GatewayMonitor already running, ignoring duplicate start")
+            self._logger.warning("GatewayMonitor already running, ignoring duplicate start")
             return
 
         self._running = True
@@ -99,7 +98,7 @@ class GatewayMonitor(QObject):
                 elif channel == MESSAGES_CHANNEL:
                     self._handle_message(data)
         except Exception:
-            logger.exception("Error in GatewayMonitor listener thread")
+            self._logger.exception("Error in GatewayMonitor listener thread")
         finally:
             try:
                 pubsub.unsubscribe()

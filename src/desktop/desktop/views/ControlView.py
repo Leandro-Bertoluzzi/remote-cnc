@@ -12,7 +12,6 @@ All communication goes through ``GatewayClient`` → Redis queues → CNC Gatewa
 No direct serial access.  See DR-0001 for technical rationale.
 """
 
-import logging
 from typing import TYPE_CHECKING
 
 from core.domain.cnc import ParserState, Status
@@ -37,8 +36,6 @@ from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:
     from desktop.MainWindow import MainWindow  # pragma: no cover
-
-logger = logging.getLogger(__name__)
 
 # User ID used for ad-hoc sessions from the Desktop's ControlView.
 _DESKTOP_USER_ID = 0
@@ -78,7 +75,7 @@ class ControlView(BaseView):
         try:
             self.device_busy = context.device_service.is_worker_busy()
         except Exception:
-            logger.warning("Could not check worker status — assuming idle")
+            self._context.logger.warning("Could not check worker status — assuming idle")
             self.device_busy = False
 
         self.setup_ui()

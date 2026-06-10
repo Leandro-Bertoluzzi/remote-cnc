@@ -48,6 +48,7 @@ def executeTask(self, task_id: int) -> None:
             storage=FileSystemStorage(FILES_FOLDER_PATH),
             gateway=GatewayClient.from_config(),
             task_logger=task_file_logger,
+            task_logger_name=task_file_logger.name,
         )
     finally:
         db_session.close()

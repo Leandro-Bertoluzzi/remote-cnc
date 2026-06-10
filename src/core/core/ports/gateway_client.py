@@ -75,6 +75,7 @@ class IGatewayClient(Protocol):
         session_id: str,
         file_path: str,
         task_id: int | None = ...,
+        shared_logger_name: str | None = ...,
     ) -> None:
         """Request the Gateway to start executing a G-code file."""
         ...

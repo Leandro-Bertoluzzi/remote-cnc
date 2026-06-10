@@ -80,6 +80,7 @@ def _call(task_id: int, repo: MagicMock, gateway: MagicMock, storage: MagicMock 
         storage=storage,
         gateway=gateway,
         task_logger=FakeLogger(),
+        task_logger_name="test_logger",
     )
 
 

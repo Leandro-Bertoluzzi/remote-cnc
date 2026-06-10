@@ -1,12 +1,8 @@
 """Service layer for Worker and Gateway operations."""
 
-import logging
-
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
 from core.ports.gateway_client import IGatewayClient
 from core.ports.worker_client import IWorkerClient
-
-logger = logging.getLogger(__name__)
 
 
 class DeviceService:

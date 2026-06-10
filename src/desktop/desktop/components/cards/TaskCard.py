@@ -1,5 +1,3 @@
-import logging
-
 from core.domain.entities import File, Material, Task, Tool
 from core.domain.task import TaskStatus
 from desktop.components.cards.Card import Card
@@ -8,8 +6,6 @@ from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.helpers.utils import needs_confirmation
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QPushButton
-
-logger = logging.getLogger(__name__)
 
 
 class TaskCard(Card):

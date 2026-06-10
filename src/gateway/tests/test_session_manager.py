@@ -29,7 +29,7 @@ def make_manager(
     store_mock = MagicMock()
     store_mock.get.return_value = json.dumps(stored_session) if stored_session else None
     store_mock.exists.return_value = 1 if stored_session else 0
-    manager = SessionManager(pubsub_client=pubsub_mock, store=store_mock)
+    manager = SessionManager(pubsub_client=pubsub_mock, store=store_mock, logger=MagicMock())
     return manager, pubsub_mock, store_mock
 
 
