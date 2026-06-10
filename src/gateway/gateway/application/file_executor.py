@@ -1,8 +1,8 @@
 """File executor for the CNC Gateway.
 
 Manages the lifecycle of executing a complete G-code file through the
-`GrblController`.  Lines are fed into the controller's internal queue
-at a controlled rate, respecting the GRBL buffer fill level.
+CNC controller.  Lines are fed into the controller's internal queue
+at a controlled rate, respecting the command buffer fill level.
 
 File execution here is *non-blocking*: the main Gateway loop calls
 `tick` periodically, which sends one line if conditions are met.
@@ -13,12 +13,11 @@ This allows the `CommandProcessor` to keep consuming priority commands
 from __future__ import annotations
 
 import json
-import logging
 import re
 import time
 from collections import deque
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from core.domain.gateway import (
     EVENT_FILE_FAILED,
@@ -27,13 +26,12 @@ from core.domain.gateway import (
     EVENTS_CHANNEL,
 )
 from core.ports.file_storage import IFileStorage
+from core.ports.logger import ILogger
 from core.ports.pubsub_client import IPubSubClient
 
 from gateway.ports.cnc_controller import CncController
 
 GCODE_PROGRAM_END_CODES = ["M2", "M02", "M30"]
-
-logger = logging.getLogger(__name__)
 
 # Constants
 SEND_INTERVAL = 0.10  # seconds between line sends
@@ -50,11 +48,16 @@ class FileExecutor:
         controller: CncController,
         pubsub_client: IPubSubClient,
         storage: IFileStorage,
+        logger_factory: Callable[[str | None], ILogger],
     ):
         self.controller = controller
         self._pubsub_client = pubsub_client
         self._storage = storage
+        self._logger_factory = logger_factory
         self._reset_state()
+
+        # The logger is initialized with a clean state and no handlers
+        self._logger = self._logger_factory(None)
 
     # ------------------------------------------------------------------
     # State
@@ -77,15 +80,26 @@ class FileExecutor:
     # Lifecycle
     # ------------------------------------------------------------------
 
-    def start(self, file_path: str, task_id: Optional[int] = None) -> None:
-        """Open the G-code file and prepare for line-by-line execution."""
+    def start(
+        self,
+        file_path: str,
+        task_id: Optional[int] = None,
+        shared_logger_name: Optional[str] = None,
+    ) -> None:
+        """Open the G-code file and prepare for line-by-line execution.
+
+        If *shared_logger_name* is given, execution logs are appended to the shared logs file.
+        """
         if self._running:
-            logger.warning("File execution already in progress, ignoring start request")
+            self._logger.warning("File execution already in progress, ignoring start request")
             return
+
+        # Support logging to a shared file if a logger name is given
+        self._logger = self._logger_factory(shared_logger_name)
 
         path = Path(file_path)
         if not path.is_file():
-            logger.error("File not found: %s", file_path)
+            self._logger.error("File not found: %s", file_path)
             self._publish_event(
                 EVENT_FILE_FAILED,
                 {
@@ -93,12 +107,13 @@ class FileExecutor:
                     "error": f"File not found: {file_path}",
                 },
             )
+            self._reset_state()
             return
 
         try:
             self._gcode = self._storage.open_for_reading(path)
         except OSError as exc:
-            logger.error("Cannot open file %s: %s", file_path, exc)
+            self._logger.error("Cannot open file %s: %s", file_path, exc)
             self._publish_event(
                 EVENT_FILE_FAILED,
                 {
@@ -106,6 +121,7 @@ class FileExecutor:
                     "error": str(exc),
                 },
             )
+            self._reset_state()
             return
 
         # Count total lines
@@ -133,7 +149,7 @@ class FileExecutor:
                 "total_lines": self._total_lines,
             },
         )
-        logger.info("File execution started: %s (%d lines)", file_path, self._total_lines)
+        self._logger.info("File execution started: %s (%d lines)", file_path, self._total_lines)
 
     def pause(self) -> None:
         self._paused = True
@@ -154,7 +170,7 @@ class FileExecutor:
             },
         )
         self._reset_state()
-        logger.info("File execution stopped")
+        self._logger.info("File execution stopped")
 
     def tick(self) -> None:
         """Called from the main loop. Sends one line if conditions are met."""
@@ -174,7 +190,7 @@ class FileExecutor:
                     "error": error_msg,
                 },
             )
-            logger.error("File execution failed: %s", error_msg)
+            self._logger.error("File execution failed: %s", error_msg)
             self._reset_state()
             return
 
@@ -196,7 +212,7 @@ class FileExecutor:
         if now - self._last_send < SEND_INTERVAL:
             return
 
-        # Don't over-fill the GRBL buffer
+        # Don't over-fill the command buffer
         if self.controller.get_buffer_fill() > MAX_BUFFER_FILL:
             return
 
@@ -216,7 +232,7 @@ class FileExecutor:
         is_empty = not stripped
         is_comment = bool(re.match(r"(^\(.*\)$)|(^;.*)", stripped))
 
-        # Lines discarded without sending GRBL still count as processed
+        # Lines discarded without sending an actual command still count as processed
         if is_empty or is_comment:
             self._processed_lines += 1
             self._sent_lines += 1
@@ -255,17 +271,17 @@ class FileExecutor:
                 "total_lines": self._total_lines,
             },
         )
-        logger.info(
+        self._logger.info(
             "File execution finished: %d lines processed",
             self._total_lines,
         )
         self._reset_state()
 
     def _on_ok(self, done_cmd: str) -> None:
-        """Called by the controller for every GRBL ``ok`` while a file is running.
+        """Called by the controller for every ``ok`` response while a file is running.
 
         Only updates ``_processed_lines`` when the ``ok`` corresponds to the head
-        of the file-command queue.  Out-of-band oks (e.g. ``$G``, ``$J``) are
+        of the file-command queue.  Out-of-band oks (e.g. parser state queries, jog commands) are
         silently ignored.
         """
         if self._running and self._pending_file_cmds and done_cmd == self._pending_file_cmds[0]:
@@ -280,16 +296,16 @@ class FileExecutor:
         """
         if not self._running:
             return
-        task_id = self._task_id
+
         self._close_file()
         self._publish_event(
             EVENT_FILE_FAILED,
             {
-                "task_id": task_id,
+                "task_id": self._task_id,
                 "error": "Device stall detected",
             },
         )
-        logger.error("File execution failed: device stall detected")
+        self._logger.error("File execution failed: device stall detected")
         self._reset_state()
 
     def _reset_state(self) -> None:
@@ -306,6 +322,9 @@ class FileExecutor:
         self._total_lines = 0
         self._last_send = 0.0
         self._last_ok_time = 0.0
+
+        # Reset logger to a clean state without handlers
+        self._logger = self._logger_factory(None)
 
     def _close_file(self) -> None:
         if self._gcode is not None:

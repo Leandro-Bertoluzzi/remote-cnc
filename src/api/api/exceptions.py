@@ -4,8 +4,6 @@ Centralizes error handling so that route functions can focus on
 business logic instead of repetitive try/except blocks.
 """
 
-import logging
-
 from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
@@ -18,8 +16,6 @@ from core.domain.exceptions import (
 )
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-
-logger = logging.getLogger(__name__)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -35,7 +31,6 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(PersistenceError)
     async def database_error_handler(_request: Request, exc: PersistenceError) -> JSONResponse:
-        logger.error("Database error: %s", exc)
         return JSONResponse(status_code=500, content={"detail": "Internal database error"})
 
     @app.exception_handler(DuplicatedFileError)

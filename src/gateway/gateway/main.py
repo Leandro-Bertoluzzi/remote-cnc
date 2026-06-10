@@ -19,10 +19,11 @@ import logging
 import signal
 import sys
 import time
+from functools import partial
 
 import redis
 from core.adapters.file_storage import FileSystemStorage
-from core.adapters.logging.logger_factory import setup_stream_logger
+from core.adapters.logging.logger_factory import setup_combined_logger, setup_stream_logger
 from core.config import (
     FILES_FOLDER_PATH,
     GRBL_SIMULATION,
@@ -37,6 +38,7 @@ from core.domain.gateway import (
     GW_STATE_IDLE,
     GW_STATE_STREAMING,
 )
+from core.ports.logger import ILogger
 
 from gateway.adapters.cnc.controller import GrblController
 from gateway.adapters.serial import SerialService
@@ -44,8 +46,6 @@ from gateway.application.command_processor import CommandProcessor
 from gateway.application.file_executor import FileExecutor
 from gateway.application.session_manager import SessionManager
 from gateway.application.status_publisher import StatusPublisher
-
-logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Polling intervals
@@ -61,13 +61,32 @@ FILE_EXEC_BLPOP_TIMEOUT = 0.1
 PIPELINE_SUMMARY_INTERVAL = 5.0
 
 # ---------------------------------------------------------------------------
+# Internal
+# ---------------------------------------------------------------------------
+
+
+def _file_executor_logger_factory(
+    logger: logging.Logger, additional_logger_name: str | None
+) -> logging.Logger:
+    """Factory for the FileExecutor's logger.
+
+    If *additional_logger_name* is given, a ``FileHandler``  is attached so
+    that execution events are appended to a shared logs file.
+    """
+    if additional_logger_name:
+        return setup_combined_logger(logger, additional_logger_name)
+
+    return logger
+
+
+# ---------------------------------------------------------------------------
 # Graceful shutdown
 # ---------------------------------------------------------------------------
 
 _shutdown_requested = False
 
 
-def _signal_handler(signum, frame):
+def _signal_handler(signum, frame, logger: ILogger) -> None:
     global _shutdown_requested
     logger.info("Shutdown signal received (%s)", signal.Signals(signum).name)
     _shutdown_requested = True
@@ -81,7 +100,7 @@ def _signal_handler(signum, frame):
 def create_gateway(
     serial_port: str,
     serial_baudrate: int,
-    logger: logging.Logger,
+    logger: ILogger,
 ) -> tuple[GrblController, CommandProcessor, StatusPublisher, FileExecutor, SessionManager]:
     """Wire up all Gateway components and return them."""
     redis_conn = redis.Redis(
@@ -91,19 +110,24 @@ def create_gateway(
     )
 
     # GrblController — the serial owner
-    grbl_logger = setup_stream_logger("controller", logging.INFO)
     serial_adapter = SerialService()
     controller = GrblController(
         serial=serial_adapter,
-        logger=grbl_logger,
+        logger=setup_stream_logger("controller", logging.INFO),
         pubsub_client=redis_conn,
         skip_startup_validation=GRBL_SIMULATION,
     )
 
+    def file_executor_logger_factory(additional_logger_name: str | None) -> logging.Logger:
+        return _file_executor_logger_factory(logger, additional_logger_name)
+
     # Sub-systems
-    session_manager = SessionManager(pubsub_client=redis_conn, store=redis_conn)
+    session_manager = SessionManager(pubsub_client=redis_conn, store=redis_conn, logger=logger)
     file_executor = FileExecutor(
-        controller, pubsub_client=redis_conn, storage=FileSystemStorage(FILES_FOLDER_PATH)
+        controller,
+        pubsub_client=redis_conn,
+        storage=FileSystemStorage(FILES_FOLDER_PATH),
+        logger_factory=file_executor_logger_factory,
     )
     status_publisher = StatusPublisher(
         controller,
@@ -117,6 +141,7 @@ def create_gateway(
         session_manager,
         file_executor,
         command_queue=redis_conn,
+        logger=logger,
     )
 
     # Connect to the CNC device
@@ -142,7 +167,7 @@ def run_gateway(
     status_publisher: StatusPublisher,
     file_executor: FileExecutor,
     session_manager: SessionManager,
-    logger: logging.Logger,
+    logger: ILogger,
 ) -> None:
     """Main event-loop of the Gateway.
 
@@ -213,7 +238,7 @@ def run_gateway(
 def shutdown(
     controller: GrblController,
     status_publisher: StatusPublisher,
-    logger: logging.Logger,
+    logger: ILogger,
 ) -> None:
     """Clean up resources."""
     logger.info("Shutting down CNC Gateway…")
@@ -249,19 +274,9 @@ def main() -> None:
 
     gateway_logger = setup_stream_logger("gateway", logging.INFO)
 
-    # Setup logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(asctime)s] %(levelname)s [%(name)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-        ],
-    )
-
     # Register signal handlers for graceful shutdown
-    signal.signal(signal.SIGINT, _signal_handler)
-    signal.signal(signal.SIGTERM, _signal_handler)
+    signal.signal(signal.SIGINT, partial(_signal_handler, logger=gateway_logger))
+    signal.signal(signal.SIGTERM, partial(_signal_handler, logger=gateway_logger))
 
     controller = None
     status_publisher = None

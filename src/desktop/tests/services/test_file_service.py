@@ -24,12 +24,15 @@ class TestFileService:
         mock_storage = storage if storage is not None else MagicMock(spec=IFileStorage)
         mock_worker = worker if worker is not None else MagicMock(spec=IWorkerClient)
         service = FileService(
-            worker=mock_worker, storage=mock_storage, session_factory=session_factory
+            worker=mock_worker,
+            storage=mock_storage,
+            session_factory=session_factory,
+            logger=MagicMock(),
         )
         return service, session, repository, mock_worker, mock_storage
 
     def test_get_all_files(self, mocker: MockerFixture):
-        service, session, repository, _, _ = self._make_service_and_repo(mocker)
+        service, _, repository, *_ = self._make_service_and_repo(mocker)
         expected_files = [MagicMock(spec=File), MagicMock(spec=File)]
         repository.get_all_files.return_value = expected_files
 
@@ -39,7 +42,7 @@ class TestFileService:
         repository.get_all_files.assert_called_once_with()
 
     def test_rename_file(self, mocker: MockerFixture):
-        service, session, repository, _, _ = self._make_service_and_repo(mocker)
+        service, _, repository, *_ = self._make_service_and_repo(mocker)
         file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
         file_obj = MagicMock(spec=File)
 
@@ -51,7 +54,7 @@ class TestFileService:
         )
 
     def test_remove_file(self, mocker: MockerFixture):
-        service, session, repository, _, _ = self._make_service_and_repo(mocker)
+        service, _, repository, *_ = self._make_service_and_repo(mocker)
         file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
         file_obj = MagicMock(spec=File)
 
@@ -62,7 +65,7 @@ class TestFileService:
 
     def test_create_file_schedules_worker_tasks(self, mocker: MockerFixture):
         worker = MagicMock(spec=IWorkerClient)
-        service, session, repository, _, _ = self._make_service_and_repo(mocker, worker=worker)
+        service, _, repository, *_ = self._make_service_and_repo(mocker, worker=worker)
         file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
         created_file = MagicMock(spec=File)
         created_file.id = 10
@@ -81,7 +84,7 @@ class TestFileService:
     def test_create_file_worker_failure_still_returns_file(self, mocker: MockerFixture):
         worker = MagicMock(spec=IWorkerClient)
         worker.generate_file_report.side_effect = RuntimeError("broker unavailable")
-        service, session, repository, _, _ = self._make_service_and_repo(mocker, worker=worker)
+        service, _, repository, *_ = self._make_service_and_repo(mocker, worker=worker)
         file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
         created_file = MagicMock(spec=File)
         created_file.id = 10

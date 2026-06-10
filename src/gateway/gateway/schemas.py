@@ -46,6 +46,7 @@ class FileStartPayload(BaseModel):
 
     file_path: str = Field(min_length=1)
     task_id: int | None = None
+    shared_logger_name: str | None = None
 
 
 class QueryPayload(BaseModel):

@@ -60,6 +60,7 @@ def make_mock_context() -> AppContext:
         worker=MagicMock(spec=IWorkerClient),
         file_storage=MagicMock(spec=IFileStorage),
         session_factory=MagicMock(),
+        logger=MagicMock(),
         asset_service=MagicMock(spec=AssetService),
         device_service=MagicMock(spec=DeviceService),
         file_service=MagicMock(spec=FileService),
@@ -90,7 +91,7 @@ def mock_window(mocker: MockerFixture):
     window._on_task_dispatched = mocker.Mock()
     context = make_mock_context()
     window._context = context
-    window.gateway_monitor = GatewayMonitor(context.gateway)
+    window.gateway_monitor = GatewayMonitor(context.gateway, context.logger)
     return cast(MainWindow, window)
 
 

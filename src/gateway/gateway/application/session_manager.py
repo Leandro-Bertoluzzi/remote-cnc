@@ -10,7 +10,6 @@ This module provides the *server-side* validation that runs inside the Gateway p
 from __future__ import annotations
 
 import json
-import logging
 from typing import Any, Optional
 
 from core.domain.gateway import (
@@ -20,17 +19,17 @@ from core.domain.gateway import (
     SESSION_KEY,
 )
 from core.ports.key_value_store import IKeyValueStore
+from core.ports.logger import ILogger
 from core.ports.pubsub_client import IPubSubClient
-
-logger = logging.getLogger(__name__)
 
 
 class SessionManager:
     """Server-side session validation for the Gateway process."""
 
-    def __init__(self, pubsub_client: IPubSubClient, store: IKeyValueStore):
+    def __init__(self, pubsub_client: IPubSubClient, store: IKeyValueStore, logger: ILogger):
         self._pubsub_client = pubsub_client
         self._store = store
+        self._logger = logger
 
     # ------------------------------------------------------------------
     # Validation
@@ -62,7 +61,7 @@ class SessionManager:
         """Publish a session-acquired event on the events channel."""
         event = json.dumps({"type": EVENT_SESSION_ACQUIRED, "session": session_data})
         self._pubsub_client.publish(EVENTS_CHANNEL, event)
-        logger.info(
+        self._logger.info(
             "Session acquired by user %s (%s)",
             session_data.get("user_id"),
             session_data.get("client_type"),
@@ -72,4 +71,4 @@ class SessionManager:
         """Publish a session-released event on the events channel."""
         event = json.dumps({"type": EVENT_SESSION_RELEASED, "session_id": session_id})
         self._pubsub_client.publish(EVENTS_CHANNEL, event)
-        logger.info("Session %s released", session_id[:8])
+        self._logger.info("Session %s released", session_id[:8])

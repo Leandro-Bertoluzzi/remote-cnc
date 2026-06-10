@@ -25,6 +25,7 @@ def execute_cnc_task(
     storage: IFileStorage,
     gateway: IGatewayClient,
     task_logger: ILogger,
+    task_logger_name: str,
 ) -> None:
     """Orchestrate a G-code file execution via the CNC Gateway.
 
@@ -42,6 +43,7 @@ def execute_cnc_task(
         storage: File storage port.
         gateway: Gateway client port.
         task_logger: Logger instance.
+        task_logger_name: Name of the per-task logger.
     """
     session_id: str | None = None
     pubsub = None
@@ -83,7 +85,7 @@ def execute_cnc_task(
         repo.update_task_status(task.id, TaskStatus.IN_PROGRESS.value)
         task_logger.info("Comenzada la ejecución del archivo: %s", file_path)
 
-        gateway.request_file_execution(session_id, str(file_path), task.id)
+        gateway.request_file_execution(session_id, str(file_path), task.id, task_logger_name)
 
         # 6. Wait for file_finished or file_failed
         _wait_for_completion(pubsub, task.id, task_logger)

@@ -1,5 +1,3 @@
-import logging
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -11,8 +9,6 @@ from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseView import BaseView
 from desktop.views.MainMenu import MainMenu
-
-logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
@@ -27,7 +23,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("background-color:#666666;")
 
         # CNC tasks monitor
-        self.gateway_monitor = GatewayMonitor(self._context.gateway)
+        self.gateway_monitor = GatewayMonitor(self._context.gateway, self._context.logger)
 
         # UI components
         self.status_bar = StatusBar(self)
@@ -61,7 +57,7 @@ class MainWindow(QMainWindow):
             else:
                 self.status_bar.updateDeviceStatus("DISPONIBLE")
         except Exception:
-            logger.warning("Could not reach worker/Redis — starting in offline mode")
+            self._context.logger.warning("Could not reach worker/Redis — starting in offline mode")
             self.status_bar.setTemporalStatusMessage(
                 "No se pudo conectar con el worker, iniciando en modo offline...", 5000
             )
@@ -93,7 +89,7 @@ class MainWindow(QMainWindow):
         try:
             new_widget = widget(self, context=self._context, gateway_monitor=self.gateway_monitor)
         except Exception as error:
-            logger.warning("Error creating view %s: %s", widget.__name__, error)
+            self._context.logger.warning("Error creating view %s: %s", widget.__name__, error)
             error_msg = get_friendly_error_message(error)
             error_widget = ConnectionErrorWidget(
                 error_msg,

@@ -1,16 +1,13 @@
 """Service layer for File domain operations."""
 
-import logging
-
 from core.application.file_manager import FileManager
 from core.domain.entities import File
 from core.ports.db_session import SessionFactory
 from core.ports.file_storage import IFileStorage
+from core.ports.logger import ILogger
 from core.ports.worker_client import IWorkerClient
 
 from desktop.services.dependencies import get_file_repository
-
-logger = logging.getLogger(__name__)
 
 
 class FileService:
@@ -21,10 +18,12 @@ class FileService:
         worker: IWorkerClient,
         storage: IFileStorage,
         session_factory: SessionFactory,
+        logger: ILogger,
     ):
         self._worker = worker
         self._storage = storage
         self._session_factory = session_factory
+        self._logger = logger
 
     def get_all_files(self) -> list[File]:
         with self._session_factory(expire_on_commit=False) as session:
@@ -44,7 +43,7 @@ class FileService:
 
         # Schedule background tasks — broker failure should not prevent file creation
         if file.id is None:
-            logger.error(
+            self._logger.error(
                 "Archivo creado sin ID - no se puede programar generación de reporte/thumbnail"
             )
             return file
@@ -53,7 +52,7 @@ class FileService:
             self._worker.generate_file_report(file.id)
             self._worker.create_thumbnail(file.id)
         except Exception:
-            logger.warning(
+            self._logger.warning(
                 "No se pudo programar la generación de reporte/thumbnail para archivo %s. "
                 "El archivo fue creado correctamente.",
                 file.id,

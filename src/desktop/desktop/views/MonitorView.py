@@ -1,4 +1,3 @@
-import logging
 from typing import TYPE_CHECKING
 
 from core.domain.cnc import ParserState, Status
@@ -15,8 +14,6 @@ from desktop.views.BaseView import BaseView
 if TYPE_CHECKING:
     from desktop.MainWindow import MainWindow  # pragma: no cover
 
-logger = logging.getLogger(__name__)
-
 
 class MonitorView(BaseView):
     def __init__(
@@ -29,7 +26,7 @@ class MonitorView(BaseView):
         try:
             self.device_busy = self._context.device_service.is_worker_busy()
         except Exception:
-            logger.warning("Could not check worker status — assuming idle")
+            self._context.logger.warning("Could not check worker status — assuming idle")
             self.device_busy = False
 
         # UI

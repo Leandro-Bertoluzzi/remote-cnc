@@ -209,14 +209,17 @@ class GatewayClient:
         session_id: str,
         file_path: str,
         task_id: int | None = None,
+        shared_logger_name: str | None = None,
     ) -> None:
         """Request the Gateway to start executing a G-code file.
 
-        *task_id* may be ``None`` for ad-hoc executions (e.g. from the Desktop).
+        - *task_id* may be ``None`` for ad-hoc executions.
+        - *shared_logger_name* is the name of the shared logger so the Gateway
+        can append to the same log file.
         """
         msg = self._make_message(
             MSG_FILE_START,
-            {"file_path": file_path, "task_id": task_id},
+            {"file_path": file_path, "task_id": task_id, "shared_logger_name": shared_logger_name},
             session_id,
         )
         self._command_queue.rpush(QUEUE_HIGH, msg)

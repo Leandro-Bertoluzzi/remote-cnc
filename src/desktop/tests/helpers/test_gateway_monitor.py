@@ -56,11 +56,11 @@ def _subscribe_message() -> dict:
 class TestGatewayMonitor:
     @pytest.fixture(autouse=True)
     def setup_method(self):
-        # Inject a mock gateway directly — no Redis connections
+        # Inject a mock gateway
         self.mock_pubsub = MagicMock()
         self.mock_gateway = MagicMock()
         self.mock_gateway.subscribe_channels.return_value = self.mock_pubsub
-        self.monitor = GatewayMonitor(self.mock_gateway)
+        self.monitor = GatewayMonitor(self.mock_gateway, logger=MagicMock())
 
     def test_start_and_stop_monitor(self):
         """start_monitor creates a daemon thread, stop sets _running=False."""
