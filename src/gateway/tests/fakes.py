@@ -179,7 +179,7 @@ class FakeFileExecutor(FileExecutor):
             FakeController(),
             pubsub_client=MagicMock(),
             storage=MagicMock(),
-            logger_factory=lambda name: MagicMock(),
+            logger_factory=lambda name: (MagicMock(), lambda: None),
         )
         self._running = running
 

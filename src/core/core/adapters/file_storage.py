@@ -108,4 +108,8 @@ class FileSystemStorage:
 
     def open_for_reading(self, path: str | Path) -> IO[str]:
         """Open *path* for sequential text reading and return the file object."""
-        return open(path, "r")
+        file_path = Path(path)
+        if not file_path.is_file():
+            raise InvalidFile(f"File not found: {file_path}")
+
+        return open(file_path, "r")

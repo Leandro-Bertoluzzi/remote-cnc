@@ -29,7 +29,7 @@ def make_executor(
         ctrl,
         pubsub_client=pubsub_mock,
         storage=FakeFileStorage(),
-        logger_factory=lambda name: MagicMock(),  # logger is not under test, so use a simple mock
+        logger_factory=lambda name: (MagicMock(), lambda: None),
     )
     return executor, ctrl, pubsub_mock
 
@@ -53,10 +53,10 @@ def _event_types(pubsub_mock: MagicMock) -> list[str]:
 
 
 class TestStart:
-    def test_start_file_not_found_publishes_failed(self, tmp_path: Path):
+    def test_start_file_not_found_publishes_failed(self):
         executor, ctrl, pubsub_mock = make_executor()
 
-        executor.start(str(tmp_path / "nonexistent.gcode"), task_id=1)
+        executor.start("nonexistent.gcode", task_id=1)
 
         types = _event_types(pubsub_mock)
         assert EVENT_FILE_FAILED in types
@@ -678,3 +678,174 @@ class TestDrainingMode:
 
         assert EVENT_FILE_FAILED in _event_types(pubsub_mock)
         assert not executor.is_running
+
+
+# ---------------------------------------------------------------------------
+# Shared logger cleanup
+# ---------------------------------------------------------------------------
+
+
+class TestSharedLoggerCleanup:
+    """Verify that the task FileHandler is always removed when execution ends."""
+
+    def _make_executor_with_spy_factory(
+        self,
+    ) -> tuple[FileExecutor, FakeController, MagicMock, list[MagicMock]]:
+        """Return an executor whose logger_factory records every cleanup callable."""
+        ctrl = FakeController()
+        pubsub_mock = MagicMock()
+        cleanups: list[MagicMock] = []
+
+        def spy_factory(name: str | None):
+            cleanup = MagicMock()
+            cleanups.append(cleanup)
+            return MagicMock(), cleanup
+
+        executor = FileExecutor(
+            ctrl,
+            pubsub_client=pubsub_mock,
+            storage=FakeFileStorage(),
+            logger_factory=spy_factory,
+        )
+        return executor, ctrl, pubsub_mock, cleanups
+
+    def _get_cleanup_for_start(self, cleanups: list[MagicMock]) -> MagicMock:
+        """Returns the cleanup registered during execution start.
+
+        It requires discarding the first two elements, since they correspond to the calls
+        of logger_factory in the constructor.
+        """
+
+        return cleanups[2]
+
+    def test_cleanup_called_on_successful_finish(self, tmp_path: Path) -> None:
+        """cleanup() must be called after a file finishes successfully."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, pubsub_mock, cleanups = self._make_executor_with_spy_factory()
+
+        executor.start(str(gcode), task_id=1, shared_logger_name="task_test_123")
+        task_cleanup = self._get_cleanup_for_start(cleanups)
+
+        executor._last_send = 0.0
+        executor.tick()  # sends G0 X10
+        ctrl.fire_ok("G0 X10")
+        executor._last_send = 0.0
+        executor.tick()  # EOF → draining
+        executor.tick()  # drain resolves → FINISHED + _reset_state
+
+        task_cleanup.assert_called_once()
+
+    def test_cleanup_called_on_stop(self, tmp_path: Path) -> None:
+        """cleanup() must be called when the user stops execution."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, _, cleanups = self._make_executor_with_spy_factory()
+
+        executor.start(str(gcode), task_id=2, shared_logger_name="task_test_456")
+        task_cleanup = self._get_cleanup_for_start(cleanups)
+
+        executor.stop()
+
+        task_cleanup.assert_called_once()
+
+    def test_cleanup_called_on_grbl_error(self, tmp_path: Path) -> None:
+        """cleanup() must be called when GRBL reports an error during execution."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        ctrl = FakeController()
+        executor, ctrl, _, cleanups = self._make_executor_with_spy_factory()
+        # Override controller with an error-prone one
+        executor.controller = ctrl
+
+        executor.start(str(gcode), task_id=3, shared_logger_name="task_test_789")
+        task_cleanup = self._get_cleanup_for_start(cleanups)
+
+        ctrl._failed = True
+        ctrl._error_message = "Error:2"
+        executor._last_send = 0.0
+        executor.tick()
+
+        task_cleanup.assert_called_once()
+
+    def test_cleanup_called_on_stall(self, tmp_path: Path) -> None:
+        """cleanup() must be called when the stall watchdog fires."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, _, cleanups = self._make_executor_with_spy_factory()
+
+        executor.start(str(gcode), task_id=4, shared_logger_name="task_test_stall")
+        task_cleanup = self._get_cleanup_for_start(cleanups)
+
+        executor._last_send = 0.0
+        executor.tick()  # sends G0 X10 — pending ack
+        executor._last_ok_time = 0.0  # force stall timeout
+        executor.tick()
+
+        task_cleanup.assert_called_once()
+
+    def test_cleanup_called_on_file_not_found(self) -> None:
+        """cleanup() must be called even when the file does not exist."""
+        executor, _, _, cleanups = self._make_executor_with_spy_factory()
+
+        executor.start("nonexistent.gcode", task_id=5, shared_logger_name="task_test_missing")
+        task_cleanup = self._get_cleanup_for_start(cleanups)
+
+        task_cleanup.assert_called_once()
+
+    def test_no_shared_logger_cleanup(self, tmp_path: Path) -> None:
+        """When shared_logger_name is None the factory cleanup is also called."""
+        gcode = tmp_path / "test.gcode"
+        gcode.write_text("G0 X10\n")
+        executor, ctrl, _, cleanups = self._make_executor_with_spy_factory()
+
+        executor.start(str(gcode), task_id=6)  # no shared_logger_name
+        task_cleanup = self._get_cleanup_for_start(cleanups)
+
+        executor._last_send = 0.0
+        executor.tick()
+        ctrl.fire_ok("G0 X10")
+        executor._last_send = 0.0
+        executor.tick()  # EOF → draining
+        executor.tick()  # FINISHED
+
+        # The no-shared-logger cleanup is called
+        task_cleanup.assert_called_once()
+
+    def test_handler_not_accumulated_across_multiple_tasks(self, tmp_path: Path) -> None:
+        """Each new task must trigger exactly one cleanup for the previous task,
+        preventing unbounded handler accumulation."""
+        handlers: list[MagicMock] = []
+        handler_count_after: list[int] = []
+
+        def tracking_factory(name: str | None):
+            if name:
+                handlers.append(MagicMock())
+
+                def cleanup():
+                    handlers.pop()
+
+                return MagicMock(), cleanup
+            return MagicMock(), lambda: None
+
+        executor = FileExecutor(
+            FakeController(),
+            pubsub_client=MagicMock(),
+            storage=FakeFileStorage(),
+            logger_factory=tracking_factory,
+        )
+
+        for i in range(3):
+            gcode = tmp_path / f"task{i}.gcode"
+            gcode.write_text("G0 X1\n")
+            executor.start(str(gcode), task_id=i, shared_logger_name=f"task_acc_{i}")
+            executor._last_send = 0.0
+            executor.tick()
+            executor.controller.fire_ok("G0 X1")
+            executor._last_send = 0.0
+            executor.tick()  # EOF → draining
+            executor.tick()  # FINISHED → _reset_state → cleanup
+            handler_count_after.append(len(handlers))
+
+        # After each task the handler added for that task must be gone
+        assert all(count == 0 for count in handler_count_after), handler_count_after

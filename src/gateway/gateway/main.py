@@ -20,6 +20,7 @@ import signal
 import sys
 import time
 from functools import partial
+from typing import Callable
 
 import redis
 from core.adapters.file_storage import FileSystemStorage
@@ -67,16 +68,25 @@ PIPELINE_SUMMARY_INTERVAL = 5.0
 
 def _file_executor_logger_factory(
     logger: logging.Logger, additional_logger_name: str | None
-) -> logging.Logger:
+) -> tuple[logging.Logger, Callable[[], None]]:
     """Factory for the FileExecutor's logger.
 
     If *additional_logger_name* is given, a ``FileHandler``  is attached so
     that execution events are appended to a shared logs file.
+
+    Returns a tuple of (logger, cleanup_fn), where *cleanup_fn* should be called by
+    the caller to close the handler when the task is done.
     """
     if additional_logger_name:
-        return setup_combined_logger(logger, additional_logger_name)
+        combined_logger, handler = setup_combined_logger(logger, additional_logger_name)
 
-    return logger
+        def _cleanup() -> None:
+            handler.close()
+            combined_logger.removeHandler(handler)
+
+        return combined_logger, _cleanup
+
+    return logger, lambda: None
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +128,9 @@ def create_gateway(
         skip_startup_validation=GRBL_SIMULATION,
     )
 
-    def file_executor_logger_factory(additional_logger_name: str | None) -> logging.Logger:
+    def file_executor_logger_factory(
+        additional_logger_name: str | None,
+    ) -> tuple[logging.Logger, Callable[[], None]]:
         return _file_executor_logger_factory(logger, additional_logger_name)
 
     # Sub-systems

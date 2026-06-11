@@ -16,7 +16,6 @@ import json
 import re
 import time
 from collections import deque
-from pathlib import Path
 from typing import Any, Callable, Optional
 
 from core.domain.gateway import (
@@ -48,16 +47,18 @@ class FileExecutor:
         controller: CncController,
         pubsub_client: IPubSubClient,
         storage: IFileStorage,
-        logger_factory: Callable[[str | None], ILogger],
+        logger_factory: Callable[[str | None], tuple[ILogger, Callable[[], None]]],
     ):
         self.controller = controller
         self._pubsub_client = pubsub_client
         self._storage = storage
         self._logger_factory = logger_factory
-        self._reset_state()
 
-        # The logger is initialized with a clean state and no handlers
-        self._logger = self._logger_factory(None)
+        # The logger is initialized with a clean state
+        self._logger, self._logger_cleanup = self._logger_factory(None)
+
+        # Reset all execution state to defaults
+        self._reset_state()
 
     # ------------------------------------------------------------------
     # State
@@ -95,24 +96,11 @@ class FileExecutor:
             return
 
         # Support logging to a shared file if a logger name is given
-        self._logger = self._logger_factory(shared_logger_name)
-
-        path = Path(file_path)
-        if not path.is_file():
-            self._logger.error("File not found: %s", file_path)
-            self._publish_event(
-                EVENT_FILE_FAILED,
-                {
-                    "task_id": task_id,
-                    "error": f"File not found: {file_path}",
-                },
-            )
-            self._reset_state()
-            return
+        self._logger, self._logger_cleanup = self._logger_factory(shared_logger_name)
 
         try:
-            self._gcode = self._storage.open_for_reading(path)
-        except OSError as exc:
+            self._gcode = self._storage.open_for_reading(file_path)
+        except Exception as exc:
             self._logger.error("Cannot open file %s: %s", file_path, exc)
             self._publish_event(
                 EVENT_FILE_FAILED,
@@ -323,8 +311,9 @@ class FileExecutor:
         self._last_send = 0.0
         self._last_ok_time = 0.0
 
-        # Reset logger to a clean state without handlers
-        self._logger = self._logger_factory(None)
+        # Reset logger to a clean state
+        self._logger_cleanup()
+        self._logger, self._logger_cleanup = self._logger_factory(None)
 
     def _close_file(self) -> None:
         if self._gcode is not None:
