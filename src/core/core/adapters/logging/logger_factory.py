@@ -67,8 +67,14 @@ def setup_task_logger(name: str, level: int) -> logging.Logger:
     return logger
 
 
-def setup_combined_logger(base_logger: logging.Logger, new_logger_name: str) -> logging.Logger:
-    """Add a FileHandler to *base_logger* that appends to the same file as *new_logger_name*."""
+def setup_combined_logger(
+    base_logger: logging.Logger, new_logger_name: str
+) -> tuple[logging.Logger, logging.FileHandler]:
+    """Add a FileHandler to *base_logger* that appends to the same file as *new_logger_name*.
+
+    Returns the (logger, handler) tuple so the caller can manage the handler's
+    lifecycle (e.g. close it when done).
+    """
     log_path = os.path.join(LOGS_FOLDER_PATH, f"{new_logger_name}.log")
     createFileIfNotExists(log_path)
 
@@ -77,7 +83,7 @@ def setup_combined_logger(base_logger: logging.Logger, new_logger_name: str) -> 
 
     base_logger.addHandler(handler)
 
-    return base_logger
+    return base_logger, handler
 
 
 def setup_stream_logger(
