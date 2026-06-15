@@ -6,7 +6,7 @@ from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from desktop.helpers.gatewayMonitor import GatewayMonitor
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.views.TasksView import TasksView
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox

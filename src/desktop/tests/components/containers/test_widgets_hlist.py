@@ -1,4 +1,4 @@
-from desktop.containers.WidgetsHList import WidgetsHList
+from desktop.components.containers.WidgetsHList import WidgetsHList
 from PyQt5.QtWidgets import QLabel, QPushButton, QWidget
 from pytestqt.qtbot import QtBot
 

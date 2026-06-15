@@ -4,10 +4,10 @@ import pytest
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.CodeEditor import CodeEditor
+from desktop.components.containers.ControllerActions import ControllerActions
 from desktop.components.ControllerStatus import ControllerStatus
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.components.Terminal import Terminal
-from desktop.containers.ControllerActions import ControllerActions
-from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.views.ControlView import ControlView
 from PyQt5.QtGui import QCloseEvent

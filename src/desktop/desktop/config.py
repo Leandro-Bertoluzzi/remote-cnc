@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from desktop.helpers.configManager import ConfigManager
+from desktop.adapters.configManager import ConfigManager
 
 # Generate global constants
 CONFIG_FILE = Path(__file__).parent / "config.ini"

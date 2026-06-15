@@ -3,7 +3,7 @@ from core.domain.task import TaskStatus
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.TaskCancelDialog import TaskCancelDialog
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
-from desktop.helpers.utils import needs_confirmation
+from desktop.components.utils import needs_confirmation
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QPushButton
 

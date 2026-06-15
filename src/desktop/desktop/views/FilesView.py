@@ -9,10 +9,10 @@ from core.domain.exceptions import (
     PersistenceError,
 )
 
+from desktop.application.connectionErrors import get_friendly_error_message
 from desktop.components.cards.FileCard import FileCard
 from desktop.components.dialogs.FileDataDialog import FileDataDialog
 from desktop.config import USER_ID
-from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:

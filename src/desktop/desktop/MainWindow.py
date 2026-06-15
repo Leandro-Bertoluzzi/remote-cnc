@@ -3,10 +3,10 @@ from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from desktop.app_context import AppContext
+from desktop.application.connectionErrors import get_friendly_error_message
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.components.StatusBar import StatusBar
-from desktop.helpers.connectionErrors import get_friendly_error_message
-from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseView import BaseView
 from desktop.views.MainMenu import MainMenu
 

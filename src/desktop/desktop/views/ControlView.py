@@ -21,17 +21,17 @@ from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QGridLayout
 
 from desktop.app_context import AppContext
+from desktop.application.connectionErrors import get_friendly_error_message
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.CodeEditor import CodeEditor
+from desktop.components.containers.ButtonGrid import ButtonGrid
+from desktop.components.containers.ControllerActions import ControllerActions
 from desktop.components.ControllerStatus import ControllerStatus
 from desktop.components.dialogs.AbsoluteMoveDialog import AbsoluteMoveDialog
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.components.Joystick import Joystick
 from desktop.components.Terminal import Terminal
 from desktop.components.ToolBar import ToolBar, ToolBarOptionInfo
-from desktop.containers.ButtonGrid import ButtonGrid
-from desktop.containers.ControllerActions import ControllerActions
-from desktop.helpers.connectionErrors import get_friendly_error_message
-from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:

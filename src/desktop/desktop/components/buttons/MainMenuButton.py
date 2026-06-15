@@ -1,4 +1,4 @@
-from desktop.helpers.utils import get_file_name_in_folder
+from desktop.components.utils import get_file_name_in_folder
 from PyQt5.QtCore import QEvent, Qt
 from PyQt5.QtGui import QColor, QCursor, QPainter, QPaintEvent, QPixmap
 from PyQt5.QtSvg import QSvgRenderer

@@ -1,7 +1,7 @@
 from core.domain.entities import User
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.UserDataDialog import UserDataDialog
-from desktop.helpers.utils import needs_confirmation
+from desktop.components.utils import needs_confirmation
 from PyQt5.QtCore import pyqtSignal
 
 

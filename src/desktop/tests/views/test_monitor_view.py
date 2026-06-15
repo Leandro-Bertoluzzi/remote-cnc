@@ -1,7 +1,7 @@
 import pytest
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
-from desktop.helpers.gatewayMonitor import GatewayMonitor
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.views.MonitorView import MonitorView
 from pytest_mock.plugin import MockerFixture

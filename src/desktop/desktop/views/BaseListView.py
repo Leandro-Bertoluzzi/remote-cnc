@@ -6,10 +6,10 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from typing_extensions import TypedDict
 
+from desktop.application.connectionErrors import get_friendly_error_message
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.cards.MsgCard import MsgCard
 from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
-from desktop.helpers.connectionErrors import get_friendly_error_message
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:

@@ -1,8 +1,8 @@
-from desktop.helpers.utils import apply_stylesheet
+from desktop.components.StyledWidget import StyledWidget
 from PyQt5.QtWidgets import QPushButton
 
 
-class MenuButton(QPushButton):
+class MenuButton(QPushButton, StyledWidget):
     def __init__(self, text, onClick=None, goToView=None, parent=None):
         super(QPushButton, self).__init__(parent)
 
@@ -13,8 +13,6 @@ class MenuButton(QPushButton):
             self.clicked.connect(self.redirectToView)
         if onClick:
             self.clicked.connect(onClick)
-
-        apply_stylesheet(self, __file__, "MenuButton.qss")
 
     def redirectToView(self):
         parent = self.parent()

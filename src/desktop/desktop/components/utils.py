@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from PyQt5.QtWidgets import QMessageBox, QWidget
+from PyQt5.QtWidgets import QMessageBox
 
 
 # Functions
@@ -13,13 +13,6 @@ def get_file_name_in_folder(current: str, searched: str) -> Path:
     """
     folder = Path(current).parent
     return folder / searched
-
-
-def apply_stylesheet(self: QWidget, current_file: str, styles_file: str):
-    """Apply custom styles to the widget."""
-    stylesheet = get_file_name_in_folder(current_file, styles_file)
-    with open(stylesheet, "r") as styles:
-        self.setStyleSheet(styles.read())
 
 
 # Decorators

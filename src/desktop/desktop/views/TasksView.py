@@ -4,12 +4,12 @@ from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QVBoxLayout
 
+from desktop.application.connectionErrors import get_friendly_error_message
 from desktop.components.cards.TaskCard import TaskCard
 from desktop.components.dialogs.TaskDataDialog import TaskDataDialog
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.components.TaskProgress import TaskProgress
 from desktop.config import USER_ID
-from desktop.helpers.connectionErrors import get_friendly_error_message
-from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseListView import BaseListView
 
 if TYPE_CHECKING:
