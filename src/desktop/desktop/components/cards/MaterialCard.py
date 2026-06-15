@@ -1,7 +1,7 @@
 from core.domain.entities import Material
 from desktop.components.cards.Card import Card
 from desktop.components.dialogs.MaterialDataDialog import MaterialDataDialog
-from desktop.helpers.utils import needs_confirmation
+from desktop.components.utils import needs_confirmation
 from PyQt5.QtCore import pyqtSignal
 
 

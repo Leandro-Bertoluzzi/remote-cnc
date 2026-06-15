@@ -1,6 +1,6 @@
 from core.domain.cnc import JogDistanceMode
-from desktop.containers.WidgetsHList import WidgetsHList
-from desktop.mixins.JogController import JogController
+from desktop.components.containers.WidgetsHList import WidgetsHList
+from desktop.components.JogController import JogController
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout
 

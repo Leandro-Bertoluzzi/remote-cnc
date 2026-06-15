@@ -8,7 +8,7 @@ from core.domain.gateway import (
     EVENTS_CHANNEL,
     STATUS_CHANNEL,
 )
-from desktop.helpers.gatewayMonitor import GatewayMonitor
+from desktop.components.gatewayMonitor import GatewayMonitor
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 

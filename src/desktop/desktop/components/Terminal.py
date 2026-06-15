@@ -1,10 +1,10 @@
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout
 
-from desktop.helpers.utils import apply_stylesheet
+from desktop.components.StyledWidget import StyledWidget
 
 
-class Terminal(QWidget):
+class Terminal(StyledWidget):
     """Terminal widget for sending G-code commands.
 
     Emits `command_submitted(str)` when the user presses *Enter*.
@@ -30,9 +30,6 @@ class Terminal(QWidget):
         self.input = QLineEdit()
         self.input.returnPressed.connect(self.send_line)
         layout.addWidget(self.input)
-
-        # Apply custom styles
-        apply_stylesheet(self, __file__, "Terminal.qss")
 
     def display_text(self, text):
         self.display_screen.insertPlainText(text + "\n")

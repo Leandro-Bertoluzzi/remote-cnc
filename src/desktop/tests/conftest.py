@@ -6,7 +6,7 @@ from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
 from core.ports.worker_client import IWorkerClient
 from desktop.app_context import AppContext
-from desktop.helpers.gatewayMonitor import GatewayMonitor
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.MainWindow import MainWindow
 from desktop.services.assetService import AssetService
 from desktop.services.deviceService import DeviceService

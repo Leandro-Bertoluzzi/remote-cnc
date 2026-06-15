@@ -7,8 +7,8 @@ from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 
 from desktop.components.buttons.MenuButton import MenuButton
 from desktop.components.ControllerStatus import ControllerStatus
+from desktop.components.gatewayMonitor import GatewayMonitor
 from desktop.components.TaskProgress import TaskProgress
-from desktop.helpers.gatewayMonitor import GatewayMonitor
 from desktop.views.BaseView import BaseView
 
 if TYPE_CHECKING:

@@ -1,12 +1,12 @@
 from core.domain.cnc import Status
 from core.domain.entities import Tool
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
 
-from desktop.helpers.utils import apply_stylesheet
+from desktop.components.StyledWidget import StyledWidget
 
 
-class ControllerStatus(QWidget):
+class ControllerStatus(StyledWidget):
     DISCONNECTED = "DISCONNECTED"
 
     def __init__(self, parent=None):
@@ -50,8 +50,6 @@ class ControllerStatus(QWidget):
         for label in [self.tool, self.feedrate, self.spindle]:
             layout_details.addWidget(label)
         layout.addLayout(layout_details)
-
-        apply_stylesheet(self, __file__, "ControllerStatus.qss")
 
     def set_status(self, status: Status):
         self.status.setText(status["activeState"].upper())
