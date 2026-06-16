@@ -26,7 +26,7 @@ from core.domain.gateway import (
 from core.ports.logger import ILogger
 from core.ports.priority_queue import IPriorityQueue
 
-from gateway.ports.cnc_controller import CncController
+from gateway.application.ports.cnc_controller import CncController
 from gateway.schemas import (
     CommandPayload,
     FileStartPayload,

@@ -5,14 +5,14 @@ These tests validate the core resilience requirement: when external services
 with retry and back-to-menu buttons instead of crashing or showing empty views.
 """
 
-from desktop.components.buttons.MenuButton import MenuButton
-from desktop.components.cards.TaskCard import TaskCard
-from desktop.components.ConnectionErrorWidget import ConnectionErrorWidget
-from desktop.MainWindow import MainWindow
-from desktop.views.FilesView import FilesView
-from desktop.views.InventoryView import InventoryView
-from desktop.views.TasksView import TasksView
-from desktop.views.UsersView import UsersView
+from desktop.presentation.components.buttons.MenuButton import MenuButton
+from desktop.presentation.components.cards.TaskCard import TaskCard
+from desktop.presentation.components.ConnectionErrorWidget import ConnectionErrorWidget
+from desktop.presentation.MainWindow import MainWindow
+from desktop.presentation.views.FilesView import FilesView
+from desktop.presentation.views.InventoryView import InventoryView
+from desktop.presentation.views.TasksView import TasksView
+from desktop.presentation.views.UsersView import UsersView
 from pytest_mock.plugin import MockerFixture
 from pytestqt.qtbot import QtBot
 
