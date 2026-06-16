@@ -2,7 +2,7 @@
 
 This module is the **composition root** for the ``execute_task`` task:
 it builds the concrete infrastructure adapters and delegates all application
-logic to the pure handler in ``worker.tasks.handlers.cnc_handler``.
+logic to the handler.
 
 No business logic lives here — add it to the handler instead.
 """
@@ -15,8 +15,8 @@ from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
 from core.adapters.logging.logger_factory import setup_task_logger
 from core.config import FILES_FOLDER_PATH
+from worker.application.cnc_handler import execute_cnc_task
 from worker.main import app
-from worker.tasks.handlers.cnc_handler import execute_cnc_task
 
 
 @app.task(name="execute_task", bind=True, ignore_result=True)

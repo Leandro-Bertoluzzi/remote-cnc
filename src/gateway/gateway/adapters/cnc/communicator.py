@@ -16,7 +16,7 @@ from gateway.adapters.cnc.parsers.grblMsgTypes import (
     GRBL_RESULT_OK,
 )
 from gateway.adapters.cnc.status import GrblStatus, GrblStatusFlag
-from gateway.ports.serial_port import SerialPort
+from gateway.application.ports.serial_port import SerialPort
 
 if TYPE_CHECKING:
     from gateway.adapters.cnc.monitor import GrblMonitor

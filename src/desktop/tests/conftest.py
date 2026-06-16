@@ -6,8 +6,9 @@ from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
 from core.ports.worker_client import IWorkerClient
 from desktop.app_context import AppContext
-from desktop.components.gatewayMonitor import GatewayMonitor
-from desktop.MainWindow import MainWindow
+from desktop.presentation.components.gatewayMonitor import GatewayMonitor
+from desktop.presentation.MainWindow import MainWindow
+from desktop.presentation.views.BaseListView import BaseListView
 from desktop.services.assetService import AssetService
 from desktop.services.deviceService import DeviceService
 from desktop.services.fileService import FileService
@@ -15,7 +16,6 @@ from desktop.services.materialService import MaterialService
 from desktop.services.taskService import TaskService
 from desktop.services.toolService import ToolService
 from desktop.services.userService import UserService
-from desktop.views.BaseListView import BaseListView
 from PyQt5.QtWidgets import QGridLayout, QLayout, QWidget
 from pytest_mock.plugin import MockerFixture
 

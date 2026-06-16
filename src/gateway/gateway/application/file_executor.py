@@ -28,7 +28,7 @@ from core.ports.file_storage import IFileStorage
 from core.ports.logger import ILogger
 from core.ports.pubsub_client import IPubSubClient
 
-from gateway.ports.cnc_controller import CncController
+from gateway.application.ports.cnc_controller import CncController
 
 GCODE_PROGRAM_END_CODES = ["M2", "M02", "M30"]
 

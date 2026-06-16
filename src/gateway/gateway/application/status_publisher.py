@@ -19,7 +19,7 @@ from core.domain.gateway import GATEWAY_STATE_KEY, GW_STATE_IDLE, LAST_STATUS_KE
 from core.ports.key_value_store import IKeyValueStore
 from core.ports.pubsub_client import IPubSubClient
 
-from gateway.ports.cnc_controller import CncController
+from gateway.application.ports.cnc_controller import CncController
 
 if TYPE_CHECKING:
     from gateway.application.file_executor import FileExecutor

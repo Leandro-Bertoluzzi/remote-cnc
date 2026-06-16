@@ -6,7 +6,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from desktop.app_context import create_app_context
-from desktop.MainWindow import MainWindow
+from desktop.presentation.MainWindow import MainWindow
 
 
 def suppressQtWarnings():

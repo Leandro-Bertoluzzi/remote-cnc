@@ -10,7 +10,7 @@ from gateway.adapters.cnc.parsers.grblMsgTypes import (
     GRBL_MSG_FEEDBACK,
     GRBL_MSG_STARTUP,
 )
-from gateway.ports.serial_port import SerialPort
+from gateway.application.ports.serial_port import SerialPort
 
 # Type aliases
 HomingCallback = Callable[[], None]

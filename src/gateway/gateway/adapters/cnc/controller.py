@@ -28,7 +28,7 @@ from gateway.adapters.cnc.types import (
     GrblSettings,
 )
 from gateway.adapters.cnc.utils import build_jog_command, get_grbl_setting
-from gateway.ports.serial_port import SerialPort
+from gateway.application.ports.serial_port import SerialPort
 
 # Constants
 DISCONNECTED = "DISCONNECTED"
