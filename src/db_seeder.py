@@ -19,9 +19,12 @@ def seed_tables():
     """This method receives a table, a connection and inserts data to that table."""
     session = SessionLocal()
     for item in INITIAL_DATA:
+        print(f"Seeding item: {item}")
         session.add(item)
     session.commit()
 
 
 if __name__ == "__main__":
+    print("Seeding database...")
     seed_tables()
+    print("Finished seeding!")
