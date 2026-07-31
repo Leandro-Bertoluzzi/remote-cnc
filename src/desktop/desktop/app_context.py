@@ -13,6 +13,11 @@ import logging
 from dataclasses import dataclass
 
 from core.adapters.database.base import SessionLocal
+from core.adapters.database.file_repository import FileRepository
+from core.adapters.database.material_repository import MaterialRepository
+from core.adapters.database.task_repository import TaskRepository
+from core.adapters.database.tool_repository import ToolRepository
+from core.adapters.database.user_repository import UserRepository
 from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
 from core.adapters.logging.logger_factory import setup_stream_logger
@@ -23,14 +28,14 @@ from core.ports.gateway_client import IGatewayClient
 from core.ports.logger import ILogger
 from core.ports.worker_client import IWorkerClient
 
+from desktop.application.asset_service import AssetService
+from desktop.application.device_service import DeviceService
+from desktop.application.file_service import FileService
+from desktop.application.material_service import MaterialService
+from desktop.application.task_service import TaskService
+from desktop.application.tool_service import ToolService
+from desktop.application.user_service import UserService
 from desktop.config import FILES_FOLDER_PATH, LOGS_FOLDER_PATH
-from desktop.services.assetService import AssetService
-from desktop.services.deviceService import DeviceService
-from desktop.services.fileService import FileService
-from desktop.services.materialService import MaterialService
-from desktop.services.taskService import TaskService
-from desktop.services.toolService import ToolService
-from desktop.services.userService import UserService
 
 
 @dataclass
@@ -78,11 +83,35 @@ def create_app_context() -> AppContext:
         file_storage=storage,
         session_factory=session_factory,
         logger=app_logger,
-        asset_service=AssetService(session_factory),
+        asset_service=AssetService(
+            session_factory=session_factory,
+            file_repo_factory=FileRepository,
+            material_repo_factory=MaterialRepository,
+            tool_repo_factory=ToolRepository,
+        ),
         device_service=DeviceService(gateway, worker),
-        file_service=FileService(worker, storage, session_factory, app_logger),
-        material_service=MaterialService(session_factory),
-        task_service=TaskService(worker, session_factory),
-        tool_service=ToolService(session_factory),
-        user_service=UserService(session_factory),
+        file_service=FileService(
+            worker=worker,
+            storage=storage,
+            session_factory=session_factory,
+            logger=app_logger,
+            file_repo_factory=FileRepository,
+        ),
+        material_service=MaterialService(
+            session_factory=session_factory,
+            material_repo_factory=MaterialRepository,
+        ),
+        task_service=TaskService(
+            worker=worker,
+            session_factory=session_factory,
+            task_repo_factory=TaskRepository,
+        ),
+        tool_service=ToolService(
+            session_factory=session_factory,
+            tool_repo_factory=ToolRepository,
+        ),
+        user_service=UserService(
+            session_factory=session_factory,
+            user_repo_factory=UserRepository,
+        ),
     )
