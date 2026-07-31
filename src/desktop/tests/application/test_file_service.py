@@ -3,7 +3,7 @@ from unittest.mock import ANY, MagicMock
 from core.domain.entities import File
 from core.ports.file_storage import IFileStorage
 from core.ports.worker_client import IWorkerClient
-from desktop.services.fileService import FileService
+from desktop.application.file_service import FileService
 from pytest_mock.plugin import MockerFixture
 
 
@@ -16,10 +16,7 @@ class TestFileService:
         session_factory.return_value.__exit__.return_value = None
 
         repository = MagicMock()
-        mocker.patch(
-            "desktop.services.fileService.get_file_repository",
-            return_value=repository,
-        )
+        file_repo_factory = MagicMock(return_value=repository)
 
         mock_storage = storage if storage is not None else MagicMock(spec=IFileStorage)
         mock_worker = worker if worker is not None else MagicMock(spec=IWorkerClient)
@@ -28,6 +25,7 @@ class TestFileService:
             storage=mock_storage,
             session_factory=session_factory,
             logger=MagicMock(),
+            file_repo_factory=file_repo_factory,
         )
         return service, session, repository, mock_worker, mock_storage
 
@@ -43,7 +41,7 @@ class TestFileService:
 
     def test_rename_file(self, mocker: MockerFixture):
         service, _, repository, *_ = self._make_service_and_repo(mocker)
-        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
         file_obj = MagicMock(spec=File)
 
         service.rename_file(user_id=5, file=file_obj, new_name="renamed.gcode")
@@ -55,7 +53,7 @@ class TestFileService:
 
     def test_remove_file(self, mocker: MockerFixture):
         service, _, repository, *_ = self._make_service_and_repo(mocker)
-        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
         file_obj = MagicMock(spec=File)
 
         service.remove_file(file_obj)
@@ -66,7 +64,7 @@ class TestFileService:
     def test_create_file_schedules_worker_tasks(self, mocker: MockerFixture):
         worker = MagicMock(spec=IWorkerClient)
         service, _, repository, *_ = self._make_service_and_repo(mocker, worker=worker)
-        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
         created_file = MagicMock(spec=File)
         created_file.id = 10
         file_manager_cls.return_value.create_file.return_value = created_file
@@ -85,7 +83,7 @@ class TestFileService:
         worker = MagicMock(spec=IWorkerClient)
         worker.generate_file_report.side_effect = RuntimeError("broker unavailable")
         service, _, repository, *_ = self._make_service_and_repo(mocker, worker=worker)
-        file_manager_cls = mocker.patch("desktop.services.fileService.FileManager")
+        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
         created_file = MagicMock(spec=File)
         created_file.id = 10
         file_manager_cls.return_value.create_file.return_value = created_file

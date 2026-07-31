@@ -1,26 +1,24 @@
 from unittest.mock import MagicMock
 
-from desktop.services.materialService import MaterialService
-from pytest_mock.plugin import MockerFixture
+from desktop.application.material_service import MaterialService
 
 
 class TestMaterialService:
     @staticmethod
-    def _make_service_and_repo(mocker: MockerFixture):
+    def _make_service_and_repo():
         session = MagicMock()
         session_factory = MagicMock()
         session_factory.return_value.__enter__.return_value = session
         session_factory.return_value.__exit__.return_value = None
         repository = MagicMock()
-        mocker.patch(
-            "desktop.services.materialService.get_material_repository",
-            return_value=repository,
+        service = MaterialService(
+            session_factory=session_factory,
+            material_repo_factory=MagicMock(return_value=repository),
         )
-        service = MaterialService(session_factory=session_factory)
-        return service, session, repository
+        return service, repository
 
-    def test_get_all_materials(self, mocker: MockerFixture):
-        service, session, repository = self._make_service_and_repo(mocker)
+    def test_get_all_materials(self):
+        service, repository = self._make_service_and_repo()
         expected = [MagicMock(), MagicMock()]
         repository.get_all_materials.return_value = expected
 
@@ -29,16 +27,23 @@ class TestMaterialService:
         assert result == expected
         repository.get_all_materials.assert_called_once_with()
 
-    def test_create_material(self, mocker: MockerFixture):
-        service, session, repository = self._make_service_and_repo(mocker)
+    def test_create_material(self):
+        service, repository = self._make_service_and_repo()
 
         result = service.create_material("MDF", "desc")
 
         repository.create_material.assert_called_once_with("MDF", "desc")
         assert result is None
 
-    def test_remove_material(self, mocker: MockerFixture):
-        service, session, repository = self._make_service_and_repo(mocker)
+    def test_update_material(self):
+        service, repository = self._make_service_and_repo()
+
+        service.update_material(3, "MDF Updated", "new desc")
+
+        repository.update_material.assert_called_once_with(3, "MDF Updated", "new desc")
+
+    def test_remove_material(self):
+        service, repository = self._make_service_and_repo()
 
         service.remove_material(material_id=2)
 

@@ -1,4 +1,4 @@
-"""Service layer for Worker and Gateway operations."""
+"""Application service for Worker and Gateway operations."""
 
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
 from core.ports.gateway_client import IGatewayClient
