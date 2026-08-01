@@ -7,8 +7,12 @@ ConfigSection = list[ConfigOption]
 ConfigDict = dict[str, ConfigSection]
 
 
-class ConfigManager:
-    """Helper class to manage an INI file with options to customize the app"""
+class DynamicConfigManager:
+    """Manages mutable runtime configuration stored in a .ini file.
+
+    This adapter is responsible for **writing** user-adjustable settings back
+    to disk.
+    """
 
     def __init__(self, config_file: Path):
         self._file = config_file
@@ -18,9 +22,8 @@ class ConfigManager:
         self.config.read(self._file)
 
     def save_config(self):
-        f = open(self._file, "w")
-        self.config.write(f)
-        f.close()
+        with open(self._file, "w") as f:
+            self.config.write(f)
 
     # SETTERS
 
@@ -66,27 +69,3 @@ class ConfigManager:
             options.append({option: value})
 
         return options
-
-    def get_str(self, section: str, name: str, default: str = "") -> str:
-        try:
-            return self.config.get(section, name)
-        except Exception:
-            return default
-
-    def get_int(self, section: str, name: str, default: int = 0) -> int:
-        try:
-            return self.config.getint(section, name)
-        except Exception:
-            return default
-
-    def get_float(self, section: str, name: str, default: float = 0.0) -> float:
-        try:
-            return self.config.getfloat(section, name)
-        except Exception:
-            return default
-
-    def get_bool(self, section: str, name: str, default: bool = False) -> bool:
-        try:
-            return self.config.getboolean(section, name)
-        except Exception:
-            return default

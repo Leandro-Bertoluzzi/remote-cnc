@@ -13,6 +13,8 @@ from desktop.application.material_service import MaterialService
 from desktop.application.task_service import TaskService
 from desktop.application.tool_service import ToolService
 from desktop.application.user_service import UserService
+from desktop.ports.config_writer import IConfigWriter
+from desktop.ports.settings_reader import ISettingsReader
 from desktop.presentation.components.gatewayMonitor import GatewayMonitor
 from desktop.presentation.MainWindow import MainWindow
 from desktop.presentation.views.BaseListView import BaseListView
@@ -61,6 +63,8 @@ def make_mock_context() -> AppContext:
         file_storage=MagicMock(spec=IFileStorage),
         session_factory=MagicMock(),
         logger=MagicMock(),
+        settings_reader=MagicMock(spec=ISettingsReader),
+        config_writer=MagicMock(spec=IConfigWriter),
         asset_service=MagicMock(spec=AssetService),
         device_service=MagicMock(spec=DeviceService),
         file_service=MagicMock(spec=FileService),

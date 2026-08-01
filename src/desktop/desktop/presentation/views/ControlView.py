@@ -59,7 +59,7 @@ class ControlView(BaseView):
         context: AppContext | None = None,
         gateway_monitor: GatewayMonitor | None = None,
     ):
-        super(ControlView, self).__init__(parent, context)
+        super().__init__(parent, context)
 
         if context is None:
             raise ValueError("ControlView requires an AppContext")
@@ -124,7 +124,11 @@ class ControlView(BaseView):
             ],
             parent=self,
         )
-        controller_jog = Joystick(parent=self)
+        controller_jog = Joystick(
+            parent=self,
+            settings_reader=self._context.settings_reader,
+            config_writer=self._context.config_writer,
+        )
         controller_jog.set_jog_callback(self._send_jog)
         self.control_panel = ControllerActions(
             [

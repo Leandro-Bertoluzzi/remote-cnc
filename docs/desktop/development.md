@@ -30,8 +30,8 @@ $ pip install -r requirements-dev.txt
 # 3. Copy and configure the .env file
 cp .env.example .env
 
-# 4. Ask git to stop tracking configuration files
-$ git update-index --assume-unchanged desktop/config.ini
+# 4. Copy and configure the desktop config file
+cp desktop/config.ini.example src/desktop/desktop/config.ini
 ```
 
 ### Windows
