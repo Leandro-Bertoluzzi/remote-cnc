@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, cast
 
 from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
 from desktop.application.connectionErrors import get_friendly_error_message
-from desktop.config import USER_ID
+from desktop.config import settings
 from desktop.presentation.components.cards.TaskCard import TaskCard
 from desktop.presentation.components.dialogs.TaskDataDialog import TaskDataDialog
 from desktop.presentation.components.gatewayMonitor import GatewayMonitor
@@ -19,7 +19,7 @@ class TasksView(BaseListView):
     def __init__(
         self, parent: "MainWindow", gateway_monitor: GatewayMonitor | None = None, **kwargs
     ):
-        super(TasksView, self).__init__(parent, **kwargs)
+        super().__init__(parent, **kwargs)
         self._gateway_monitor = gateway_monitor
         self._progress_connected = False
 
@@ -55,10 +55,12 @@ class TasksView(BaseListView):
 
     def getItems(self):
         # Load assets fresh on every refresh so cards always have up-to-date data.
-        self.files, self.materials, self.tools = self._context.asset_service.get_assets(USER_ID)
+        self.files, self.materials, self.tools = self._context.asset_service.get_assets(
+            settings.user_id
+        )
 
         # Load tasks fresh on every refresh to reflect any changes.
-        tasks = self._context.task_service.get_all_tasks(USER_ID, status="all")
+        tasks = self._context.task_service.get_all_tasks(settings.user_id, status="all")
 
         # Check if there is a task in progress
         try:
@@ -127,7 +129,7 @@ class TasksView(BaseListView):
 
         try:
             self._context.task_service.update_task_status(
-                task.id, new_status_value, USER_ID, cancellation_reason
+                task.id, new_status_value, settings.user_id, cancellation_reason
             )
         except Exception as error:
             self.showError("Error de base de datos", str(error))
@@ -230,7 +232,7 @@ class TasksView(BaseListView):
         file_id, tool_id, material_id, name, note = taskDialog.getInputs()
         try:
             self._context.task_service.create_task(
-                USER_ID, file_id, tool_id, material_id, name, note
+                settings.user_id, file_id, tool_id, material_id, name, note
             )
         except Exception as error:
             self.showError("Error de base de datos", str(error))

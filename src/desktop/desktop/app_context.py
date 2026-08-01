@@ -35,7 +35,9 @@ from desktop.application.material_service import MaterialService
 from desktop.application.task_service import TaskService
 from desktop.application.tool_service import ToolService
 from desktop.application.user_service import UserService
-from desktop.config import FILES_FOLDER_PATH, LOGS_FOLDER_PATH
+from desktop.config import config_manager, settings
+from desktop.ports.config_writer import IConfigWriter
+from desktop.ports.settings_reader import ISettingsReader
 
 
 @dataclass
@@ -53,6 +55,10 @@ class AppContext:
     file_storage: IFileStorage
     session_factory: SessionFactory
     logger: ILogger
+
+    # Configuration ports
+    settings_reader: ISettingsReader
+    config_writer: IConfigWriter
 
     # Application services
     asset_service: AssetService
@@ -73,9 +79,9 @@ def create_app_context() -> AppContext:
     """
     gateway = GatewayClient.from_config()
     worker = WorkerClient.from_config()
-    storage = FileSystemStorage(FILES_FOLDER_PATH)
+    storage = FileSystemStorage(settings.files_folder_path)
     session_factory = SessionLocal
-    app_logger = setup_stream_logger("desktop", logging.INFO, LOGS_FOLDER_PATH)
+    app_logger = setup_stream_logger("desktop", logging.INFO, settings.logs_folder_path)
 
     return AppContext(
         gateway=gateway,
@@ -83,6 +89,8 @@ def create_app_context() -> AppContext:
         file_storage=storage,
         session_factory=session_factory,
         logger=app_logger,
+        settings_reader=settings,
+        config_writer=config_manager,
         asset_service=AssetService(
             session_factory=session_factory,
             file_repo_factory=FileRepository,

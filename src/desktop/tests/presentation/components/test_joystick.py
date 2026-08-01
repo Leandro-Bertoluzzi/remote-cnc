@@ -11,8 +11,19 @@ class TestJoystick:
         # Mock jog callback
         self.mock_jog_callback = mocker.MagicMock()
 
-        # Create an instance of Joystick (no longer takes GrblController)
-        self.joystick = Joystick()
+        # Inject fakes so Joystick never touches disk or the real singletons
+        self.fake_settings = mocker.MagicMock()
+        self.fake_settings.jog_step_x = 0.25
+        self.fake_settings.jog_step_y = 0.25
+        self.fake_settings.jog_step_z = 0.25
+        self.fake_settings.jog_feedrate = 200.0
+        self.fake_settings.jog_units = 0
+        self.mock_config_writer = mocker.MagicMock()
+
+        self.joystick = Joystick(
+            settings_reader=self.fake_settings,
+            config_writer=self.mock_config_writer,
+        )
         self.joystick.set_jog_callback(self.mock_jog_callback)
         qtbot.addWidget(self.joystick)
 
@@ -108,3 +119,46 @@ class TestJoystick:
         self.mock_jog_callback.assert_called_once_with(
             1.5, 1.3, 1.2, 500.0, "milimeters", "distance_incremental"
         )
+
+    def test_joystick_init_widgets_uses_settings(self, mocker: MockerFixture, qtbot: QtBot):
+        fake_settings = mocker.MagicMock()
+        fake_settings.jog_step_x = 1.11
+        fake_settings.jog_step_y = 2.22
+        fake_settings.jog_step_z = 3.33
+        fake_settings.jog_feedrate = 999.0
+        fake_settings.jog_units = 0
+
+        joystick = Joystick(settings_reader=fake_settings, config_writer=mocker.MagicMock())
+        qtbot.addWidget(joystick)
+
+        assert joystick.input_x.value() == 1.11
+        assert joystick.input_y.value() == 2.22
+        assert joystick.input_z.value() == 3.33
+        assert joystick.input_feedrate.value() == 999.0
+
+    def test_joystick_set_default_values(self, mocker: MockerFixture, qtbot: QtBot):
+        fake_settings = mocker.MagicMock()
+        fake_settings.jog_step_x = 0.25
+        fake_settings.jog_step_y = 0.25
+        fake_settings.jog_step_z = 0.25
+        fake_settings.jog_feedrate = 200.0
+        fake_settings.jog_units = 0
+        mock_writer = mocker.MagicMock()
+
+        joystick = Joystick(settings_reader=fake_settings, config_writer=mock_writer)
+        qtbot.addWidget(joystick)
+
+        joystick.input_x.setValue(1.25)
+        joystick.input_y.setValue(0.75)
+        joystick.input_z.setValue(0.50)
+        joystick.input_feedrate.setValue(400.0)
+        joystick.control_units.button(0).click()  # units = 0 (mm)
+
+        joystick.set_default_values()
+
+        mock_writer.set_float.assert_any_call("interface.control.jog", "stepx", 1.25)
+        mock_writer.set_float.assert_any_call("interface.control.jog", "stepy", 0.75)
+        mock_writer.set_float.assert_any_call("interface.control.jog", "stepz", 0.50)
+        mock_writer.set_float.assert_any_call("interface.control.jog", "feedrate", 400.0)
+        mock_writer.set_int.assert_called_once_with("interface.control.jog", "units", 0)
+        mock_writer.save_config.assert_called_once()

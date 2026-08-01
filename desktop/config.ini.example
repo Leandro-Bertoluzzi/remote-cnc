@@ -1,0 +1,20 @@
+; Desktop application configuration template.
+; Copy this file to src/desktop/desktop/config.ini and adjust the values
+; for your environment.
+
+[general]
+; ID of the user that will operate the desktop app.
+userid = 1
+
+; -----------------------------------------------------------------------
+; [interface.control.jog] — Default jog values for the Joystick widget.
+; -----------------------------------------------------------------------
+[interface.control.jog]
+; Step sizes for each axis (in mm or inches depending on `units`)
+stepx = 0.25
+stepy = 0.25
+stepz = 0.25
+; Feed rate used for jog moves (mm/min or in/min)
+feedrate = 200.0
+; Unit system: 0 = millimetres, 1 = inches
+units = 0

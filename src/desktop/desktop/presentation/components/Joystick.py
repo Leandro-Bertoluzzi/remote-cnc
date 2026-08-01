@@ -1,5 +1,6 @@
 from core.domain.cnc import JogDistanceMode
-from desktop.config import appConfig
+from desktop.ports.config_writer import IConfigWriter
+from desktop.ports.settings_reader import ISettingsReader
 from desktop.presentation.components.containers.ButtonGrid import ButtonGrid
 from desktop.presentation.components.containers.ButtonList import ButtonList
 from desktop.presentation.components.JogController import JogController
@@ -8,8 +9,16 @@ from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBox
 
 
 class Joystick(QWidget, JogController):
-    def __init__(self, parent=None):
-        super(Joystick, self).__init__(parent)
+    def __init__(
+        self,
+        parent=None,
+        *,
+        settings_reader: ISettingsReader,
+        config_writer: IConfigWriter,
+    ):
+        self._settings = settings_reader
+        self._config_writer = config_writer
+        super().__init__(parent)
         self.setup_ui()
         self.init_widgets()
 
@@ -58,11 +67,11 @@ class Joystick(QWidget, JogController):
         layout.addLayout(self.layout_config)
 
     def init_widgets(self):
-        step_x = appConfig.get_float("interface.control.jog", "stepx", 0.0)
-        step_y = appConfig.get_float("interface.control.jog", "stepy", 0.0)
-        step_z = appConfig.get_float("interface.control.jog", "stepz", 0.0)
-        feedrate = appConfig.get_float("interface.control.jog", "feedrate", 0.0)
-        units = appConfig.get_int("interface.control.jog", "units", 0)
+        step_x = self._settings.jog_step_x
+        step_y = self._settings.jog_step_y
+        step_z = self._settings.jog_step_z
+        feedrate = self._settings.jog_feedrate
+        units = self._settings.jog_units
 
         # Set default values
         self.input_x.setValue(step_x)
@@ -126,13 +135,13 @@ class Joystick(QWidget, JogController):
         feedrate = round(self.input_feedrate.value(), 2)
         units = self.control_units.checkedId()
 
-        # Set default values
-        appConfig.set_float("interface.control.jog", "stepx", stepx)
-        appConfig.set_float("interface.control.jog", "stepy", stepy)
-        appConfig.set_float("interface.control.jog", "stepz", stepz)
-        appConfig.set_float("interface.control.jog", "feedrate", feedrate)
-        appConfig.set_int("interface.control.jog", "units", units)
-        appConfig.save_config()
+        # Persist new default values
+        self._config_writer.set_float("interface.control.jog", "stepx", stepx)
+        self._config_writer.set_float("interface.control.jog", "stepy", stepy)
+        self._config_writer.set_float("interface.control.jog", "stepz", stepz)
+        self._config_writer.set_float("interface.control.jog", "feedrate", feedrate)
+        self._config_writer.set_int("interface.control.jog", "units", units)
+        self._config_writer.save_config()
 
     # GRBL controller interaction
 

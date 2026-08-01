@@ -9,7 +9,7 @@ from core.domain.exceptions import (
     PersistenceError,
 )
 from desktop.application.connectionErrors import get_friendly_error_message
-from desktop.config import USER_ID
+from desktop.config import settings
 from desktop.presentation.components.cards.FileCard import FileCard
 from desktop.presentation.components.dialogs.FileDataDialog import FileDataDialog
 from desktop.presentation.views.BaseListView import BaseListView
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 class FilesView(BaseListView):
     def __init__(self, parent: "MainWindow", **kwargs):
-        super(FilesView, self).__init__(parent, **kwargs)
+        super().__init__(parent, **kwargs)
         self.tools = []
         self.materials = []
         self.setItemListFromValues(
@@ -42,7 +42,7 @@ class FilesView(BaseListView):
 
     def getItems(self):
         files = self._context.file_service.get_all_files()
-        _, materials, tools = self._context.asset_service.get_assets(USER_ID)
+        _, materials, tools = self._context.asset_service.get_assets(settings.user_id)
         self.tools = tools
         self.materials = materials
         return files
@@ -51,7 +51,7 @@ class FilesView(BaseListView):
 
     def on_file_rename(self, file, new_name):
         try:
-            self._context.file_service.rename_file(USER_ID, file, new_name)
+            self._context.file_service.rename_file(settings.user_id, file, new_name)
         except DuplicatedFileNameError as error:
             self.showWarning("Nombre repetido", str(error))
         except (InvalidFile, FileSystemError) as error:
@@ -77,7 +77,7 @@ class FilesView(BaseListView):
 
         try:
             self._context.task_service.create_task(
-                USER_ID, file.id, tool_id, material_id, name, note
+                settings.user_id, file.id, tool_id, material_id, name, note
             )
         except Exception as error:
             self.showError("Error de base de datos", str(error))
@@ -98,7 +98,7 @@ class FilesView(BaseListView):
 
         try:
             self._context.task_service.create_and_execute_task(
-                USER_ID, file.id, tool_id, material_id, name, note
+                settings.user_id, file.id, tool_id, material_id, name, note
             )
         except Exception as error:
             self.showError("Error", str(error))
@@ -115,7 +115,7 @@ class FilesView(BaseListView):
         name, path = fileDialog.getInputs()
 
         try:
-            self._context.file_service.create_file(USER_ID, name, path)
+            self._context.file_service.create_file(settings.user_id, name, path)
         except (DuplicatedFileNameError, DuplicatedFileError) as error:
             self.showWarning("Archivo repetido", str(error))
             return

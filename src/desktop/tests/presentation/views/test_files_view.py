@@ -7,7 +7,7 @@ from core.domain.exceptions import (
     FileSystemError,
     PersistenceError,
 )
-from desktop.config import USER_ID
+from desktop.config import settings
 from desktop.presentation.components.buttons.MenuButton import MenuButton
 from desktop.presentation.components.cards.FileCard import FileCard
 from desktop.presentation.components.cards.MsgCard import MsgCard
@@ -138,7 +138,9 @@ class TestFilesView:
         file = self.files_list[0]
         self.files_view.on_file_rename(file, "new_name.gcode")
 
-        self.mock_file_service.rename_file.assert_called_once_with(USER_ID, file, "new_name.gcode")
+        self.mock_file_service.rename_file.assert_called_once_with(
+            settings.user_id, file, "new_name.gcode"
+        )
         assert self.mock_file_service.get_all_files.call_count == 1
 
     @pytest.mark.parametrize(
@@ -172,7 +174,7 @@ class TestFilesView:
         self.files_view.on_create_task(file, 2, 3, "task", "note")
 
         self.parent._context.task_service.create_task.assert_called_once_with(
-            USER_ID, 1, 2, 3, "task", "note"
+            settings.user_id, 1, 2, 3, "task", "note"
         )
 
     def test_files_view_on_execute_task_success(self, qtbot: QtBot, mocker):
@@ -185,7 +187,7 @@ class TestFilesView:
             self.files_view.on_execute_task(file, 2, 3, "task", "note")
 
         self.parent._context.task_service.create_and_execute_task.assert_called_once_with(
-            USER_ID, 1, 2, 3, "task", "note"
+            settings.user_id, 1, 2, 3, "task", "note"
         )
 
     def test_files_view_on_execute_task_device_unavailable(self, mocker: MockerFixture):
