@@ -20,7 +20,7 @@ mocks/
 # Documentation
 docs/
 postman/
-README.md
+*.md
 
 # User files
 gcode_files/
