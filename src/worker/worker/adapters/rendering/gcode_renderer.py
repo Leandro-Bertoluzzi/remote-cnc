@@ -1,17 +1,33 @@
 """Infrastructure adapter: renders G-code files as PNG thumbnails."""
 
+from __future__ import annotations
+
 from typing import TypedDict
 
-from mayavi import mlab
+import plotly.graph_objects as go
 from PIL import Image
-from pyvirtualdisplay import Display
 
 import worker.domain.gcode.parser as gcode
 
-# Types definition
-Color = tuple[float, float, float]
-Points = TypedDict("Points", {"x": list[float], "y": list[float], "z": list[float]})
-Coordinates = TypedDict("Coordinates", {"object": Points, "moves": Points})
+# ---------------------------------------------------------------------
+# Types
+# ---------------------------------------------------------------------
+
+
+class Points(TypedDict):
+    x: list[float]
+    y: list[float]
+    z: list[float]
+
+
+class Coordinates(TypedDict):
+    object: Points
+    moves: Points
+
+
+# ---------------------------------------------------------------------
+# Renderer
+# ---------------------------------------------------------------------
 
 
 class GcodeRenderer:
@@ -19,92 +35,196 @@ class GcodeRenderer:
         self.imgwidth = 800
         self.imgheight = 600
 
-        self.path = ""
-        self.moves = False
+        self.bedsize = (210.0, 210.0)
 
-        self.coords: Coordinates = {}
-        self.coords["object"] = {}
-        self.coords["moves"] = {}
-        self.coords["object"]["x"] = []
-        self.coords["object"]["y"] = []
-        self.coords["object"]["z"] = []
-        self.coords["moves"]["x"] = []
-        self.coords["moves"]["y"] = []
-        self.coords["moves"]["z"] = []
+        self.extrudecolor = "#007FFE"
+        self.movecolor = "#E53935"
+        self.background = "white"
 
-        self.bedsize = [210, 210]
-        red = (1, 0, 0)
-        blue = (0, 0.4980, 0.9960)
+        self._reset()
 
-        self.extrudecolor: Color = blue
-        self.movecolor: Color = red
-
-        # Virtual display configuration
-        display = Display(visible=False, size=(1280, 1024))
-        display.start()
-        mlab.options.offscreen = True
+    # -----------------------------------------------------------------
+    # Public methods
+    # -----------------------------------------------------------------
 
     def run(self, path_src: str, path_out: str, moves: bool):
+        self._reset()
+
         self.path = path_src
         self.moves = moves
 
-        self.createScene()
-        self.loadModel(self.path)
-        self.plotModel()
-        self.save(path_out)
+        self._load_model(path_src)
 
-    def loadModel(self, path: str):
+        figure = self._build_figure()
+
+        self._save(
+            figure,
+            path_out,
+        )
+
+    # -----------------------------------------------------------------
+    # Private methods
+    # -----------------------------------------------------------------
+
+    def _reset(self):
+        self.path = ""
+        self.moves = False
+        self.model = None
+
+        self.coords: Coordinates = {
+            "object": {"x": [], "y": [], "z": []},
+            "moves": {"x": [], "y": [], "z": []},
+        }
+
+    def _load_model(
+        self,
+        path: str,
+    ) -> None:
         parser = gcode.GcodeParser()
-        model = parser.parseFile(path)
+        self.model = parser.parseFile(path)
 
-        for seg in model.segments:
-            if seg.type == "G1":
-                self.coords["object"]["x"].append(seg.coords["x"])
-                self.coords["object"]["y"].append(seg.coords["y"])
-                self.coords["object"]["z"].append(seg.coords["z"])
+        for segment in self.model.segments:
+            if segment.type == "G1":
+                self.coords["object"]["x"].append(segment.coords["x"])
+                self.coords["object"]["y"].append(segment.coords["y"])
+                self.coords["object"]["z"].append(segment.coords["z"])
                 continue
 
             if self.moves:
-                self.coords["moves"]["x"].append(seg.coords["x"])
-                self.coords["moves"]["y"].append(seg.coords["y"])
-                self.coords["moves"]["z"].append(seg.coords["z"])
+                self.coords["moves"]["x"].append(segment.coords["x"])
+                self.coords["moves"]["y"].append(segment.coords["y"])
+                self.coords["moves"]["z"].append(segment.coords["z"])
 
-    def createScene(self):
-        fig1 = mlab.figure(bgcolor=(1, 1, 1), size=(self.imgwidth, self.imgheight))
-        fig1.scene.parallel_projection = False
-        fig1.scene.render_window.point_smoothing = False
-        fig1.scene.render_window.line_smoothing = False
-        fig1.scene.render_window.polygon_smoothing = False
-        fig1.scene.render_window.multi_samples = 8
+    def _build_figure(
+        self,
+    ) -> go.Figure:
+        fig = go.Figure()
 
-    def plotModel(self):
-        mlab.plot3d(
-            self.coords["object"]["x"],
-            self.coords["object"]["y"],
-            self.coords["object"]["z"],
-            color=self.extrudecolor,
-            line_width=2.0,
-            representation="wireframe",
-        )
-        if len(self.coords["moves"]["x"]) > 0:
-            mlab.plot3d(
-                self.coords["moves"]["x"],
-                self.coords["moves"]["y"],
-                self.coords["moves"]["z"],
-                color=self.movecolor,
-                line_width=2.0,
-                representation="wireframe",
+        self._add_object_trace(fig)
+
+        if self.moves:
+            self._add_moves_trace(fig)
+
+        self._configure_scene(fig)
+
+        return fig
+
+    def _add_object_trace(
+        self,
+        fig: go.Figure,
+    ) -> None:
+        fig.add_trace(
+            go.Scatter3d(
+                x=self.coords["object"]["x"],
+                y=self.coords["object"]["y"],
+                z=self.coords["object"]["z"],
+                mode="lines",
+                line={
+                    "color": self.extrudecolor,
+                    "width": 5,
+                },
+                hoverinfo="skip",
+                showlegend=False,
             )
+        )
 
-    def save(self, path_out: str):
-        mlab.view(320, 70)
-        mlab.view(distance=20)
-        mlab.view(focalpoint=(self.bedsize[0] / 2, self.bedsize[1] / 2, 20))
-        mlab.savefig(path_out, size=(800, 600))
-        mlab.close(all=True)
-        basewidth = 800
+    def _add_moves_trace(
+        self,
+        fig: go.Figure,
+    ) -> None:
+        if not self.coords["moves"]["x"]:
+            return
+
+        fig.add_trace(
+            go.Scatter3d(
+                x=self.coords["moves"]["x"],
+                y=self.coords["moves"]["y"],
+                z=self.coords["moves"]["z"],
+                mode="lines",
+                line={
+                    "color": self.movecolor,
+                    "width": 2,
+                    "dash": "dot",
+                },
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+
+    def _configure_scene(
+        self,
+        fig: go.Figure,
+    ) -> None:
+        fig.update_layout(
+            width=self.imgwidth,
+            height=self.imgheight,
+            paper_bgcolor=self.background,
+            plot_bgcolor=self.background,
+            margin={"l": 0, "r": 0, "t": 0, "b": 0},
+            scene={
+                "aspectmode": "data",
+                "camera": self._compute_camera(),
+                "xaxis": {
+                    "visible": False,
+                    "showgrid": False,
+                    "zeroline": False,
+                },
+                "yaxis": {
+                    "visible": False,
+                    "showgrid": False,
+                    "zeroline": False,
+                },
+                "zaxis": {
+                    "visible": False,
+                    "showgrid": False,
+                    "zeroline": False,
+                },
+            },
+        )
+
+    def _compute_camera(
+        self,
+    ) -> dict:
+        if self.model is None or self.model.bbox is None:
+            return {
+                "eye": {"x": -1.6, "y": -1.6, "z": 1.3},
+                "center": {"x": 0, "y": 0, "z": 0},
+            }
+
+        bbox = self.model.bbox
+
+        dx = max(bbox.dx(), 1.0)
+        dy = max(bbox.dy(), 1.0)
+        dz = max(bbox.dz(), 1.0)
+
+        size = max(dx, dy, dz)
+        distance = 1.6 + size / 150.0
+
+        return {
+            "eye": {
+                "x": -distance,
+                "y": -distance,
+                "z": distance * 0.85,
+            },
+            "center": {"x": 0, "y": 0, "z": 0},
+            "up": {"x": 0, "y": 0, "z": 1},
+        }
+
+    def _save(
+        self,
+        figure: go.Figure,
+        path_out: str,
+    ) -> None:
+        figure.write_image(
+            path_out,
+            width=self.imgwidth,
+            height=self.imgheight,
+        )
+
         img = Image.open(path_out)
+        basewidth = self.imgwidth
         wpercent = basewidth / float(img.size[0])
-        hsize = int((float(img.size[1]) * float(wpercent)))
-        img = img.resize((basewidth, hsize))
+        hsize = int(img.size[1] * wpercent)
+
+        img = img.resize((basewidth, hsize), Image.Resampling.LANCZOS)
         img.save(path_out)
