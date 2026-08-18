@@ -117,7 +117,7 @@ class GcodeParser:
         raise Exception(f"[ERROR] Line {self.lineNb}: {msg} (Text:'{self.line}')")
 
 
-class BBox(object):
+class BBox:
     def __init__(self, coords):
         self.xmin = self.xmax = coords["x"]
         self.ymin = self.ymax = coords["y"]
