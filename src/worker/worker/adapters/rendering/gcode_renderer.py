@@ -155,6 +155,9 @@ class GcodeRenderer:
         self,
         fig: go.Figure,
     ) -> None:
+        bbox = self.model.bbox
+        _default_axis_config = {"visible": False, "showgrid": False, "zeroline": False}
+
         fig.update_layout(
             width=self.imgwidth,
             height=self.imgheight,
@@ -164,21 +167,10 @@ class GcodeRenderer:
             scene={
                 "aspectmode": "data",
                 "camera": self._compute_camera(),
-                "xaxis": {
-                    "visible": False,
-                    "showgrid": False,
-                    "zeroline": False,
-                },
-                "yaxis": {
-                    "visible": False,
-                    "showgrid": False,
-                    "zeroline": False,
-                },
-                "zaxis": {
-                    "visible": False,
-                    "showgrid": False,
-                    "zeroline": False,
-                },
+                # Use the calculated bounding box to compute the scene limits
+                "xaxis": {"range": [bbox.xmin, bbox.xmax]} if bbox else _default_axis_config,
+                "yaxis": {"range": [bbox.ymin, bbox.ymax]} if bbox else _default_axis_config,
+                "zaxis": {"range": [bbox.zmin, bbox.zmax]} if bbox else _default_axis_config,
             },
         )
 
@@ -193,6 +185,7 @@ class GcodeRenderer:
 
         bbox = self.model.bbox
 
+        # Use the calculated bounding box to compute a suitable camera position
         dx = max(bbox.dx(), 1.0)
         dy = max(bbox.dy(), 1.0)
         dz = max(bbox.dz(), 1.0)
