@@ -5,13 +5,9 @@ description = "Celery worker for CNC task execution"
 requires-python = ">=3.12"
 dependencies = [
     "cnc-core",
-    "configobj>=5.0,<6",
-    "mayavi>=4.8; sys_platform == 'linux'",
-    "numpy>=1.26; sys_platform == 'linux'",
+    "plotly>=6.9",
+    "kaleido>=1.3",
     "pillow>=10.4,<11",
-    "PyQt5==5.15.11",
-    "PyVirtualDisplay>=3.0,<4; sys_platform == 'linux'",
-    "vtk>=9.3,<9.5; sys_platform == 'linux'",
 ]
 
 [build-system]
