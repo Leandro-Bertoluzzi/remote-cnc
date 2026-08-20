@@ -147,11 +147,9 @@ The `justfile` at the root of the repository contains all common development and
 | ------------------------------------- | ---------- | --------------------------------------------- |
 | `sync`                                | setup      | Install / update deps from lockfile           |
 | `lock`                                | setup      | Re-resolve & update `uv.lock`                 |
+| `fix-permissions`                     | setup      | Fix folder ownership after Docker (unix only) |
 | `test`                                | quality    | Run all tests                                 |
-| `test-core`                           | quality    | Core / shared tests                           |
-| `test-api`                            | quality    | API tests                                     |
-| `test-worker`                         | quality    | Worker tests                                  |
-| `test-desktop`                        | quality    | Desktop tests                                 |
+| `test <module>`                       | quality    | Run tests for a specific module, or the core  |
 | `lint`                                | quality    | Run linter                                    |
 | `lint-fix`                            | quality    | Run linter with auto-fix                      |
 | `format`                              | quality    | Run formatter                                 |
@@ -178,9 +176,7 @@ The `justfile` at the root of the repository contains all common development and
 | `compose-logs`                        | containers | Tail logs of all containers                   |
 | `compose-shell <service>` `*`         | containers | Open a shell in a service container           |
 | `deploy-create-builder`               | deploy     | Create multi-arch buildx builder (once)       |
-| `deploy-api <user>`                   | deploy     | Build & push multi-arch API image             |
-| `deploy-worker <user>`                | deploy     | Build & push multi-arch worker image          |
-| `deploy-gateway <user>`               | deploy     | Build & push multi-arch gateway image         |
+| `deploy-image <module> <user>`        | deploy     | Build & push multi-arch image for a module    |
 | `clean`                               | cleanup    | Remove compiled files, caches, logs, coverage |
 
 ### First-time setup
@@ -327,13 +323,13 @@ If you have made changes to the worker code, you must generate a Docker image fo
 **The first time** we generate the image, we must create a custom builder.
 
 ```bash
-docker buildx create --name raspberry --driver=docker-container
+$ just deploy-create-builder
 ```
 
-Then, the command to actually generate the image and update the remote repository is the following:
+Then, build and push the image:
 
 ```bash
-docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_user}}/cnc-worker:latest --builder=raspberry --target production --file src/Dockerfile.worker --push src
+$ just deploy-image worker {{your_dockerhub_user}}
 ```
 
 **NOTE:** You may have to log in with `docker login` previous to run the build command.
@@ -342,10 +338,10 @@ Then, follow the guide to [update Docker containers](#update-docker-containers) 
 
 ### Update CNC gateway Docker image
 
-Similarly, if you have made changes to the gateway code, generate a multi-arch image:
+Similarly, if you have made changes to the gateway code, build and push a multi-arch image:
 
 ```bash
-docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_user}}/cnc-gateway:latest --builder=raspberry --target production --file src/Dockerfile.gateway --push src
+$ just deploy-image gateway {{your_dockerhub_user}}
 ```
 
 Then, follow the guide to [update Docker containers](#update-docker-containers) in the Raspberry.
@@ -361,17 +357,16 @@ The CNC gateway manages serial communication with the physical CNC device. It sh
 
 ### Start the Celery worker manually (Linux)
 
-In case you prefer to run it without containers, you can follow the next steps.
+In case you prefer to run it without containers, you can use the following recipe.
 
 ```bash
-# Start Celery's worker server
 $ just start-worker
 ```
 
 Optionally, if you are going to make changes in the worker's code and want to see them in real time, you can start the Celery worker with auto-reload.
 
 ```bash
-$ cd src && uv run watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log
+$ just start-worker-watch
 ```
 
 ### Start the Celery worker manually (Windows)
@@ -408,11 +403,11 @@ You can use the following commands to execute tests and quality checks:
 # Run all tests
 $ just test
 
-# Run tests for a specific service
-$ just test-core
-$ just test-api
-$ just test-worker
-$ just test-desktop
+# Run tests for a specific module
+$ just test core
+$ just test api
+$ just test worker
+$ just test desktop
 
 # Run all quality checks (lint + typecheck + test)
 $ just check
