@@ -6,6 +6,8 @@
 1. [Run the Qt app](#run-the-app).
 1. [Run tests](#run-tests).
 
+> **Requirements:** [uv](https://docs.astral.sh/uv/) and [just](https://github.com/casey/just) must be installed.
+
 # Install dependencies
 
 Before using the app for the first time you should run:
@@ -14,50 +16,45 @@ Before using the app for the first time you should run:
 # Clone this project
 $ git clone https://github.com/Leandro-Bertoluzzi/remote-cnc
 
-# 1. Access the repository and folder
-$ cd remote-cnc/src
+# 1. Access the repository folder
+$ cd remote-cnc
 
-# 2. Set up your Python environment
-# Option 1: If you use Conda
-conda env create -f conda/environment-dev.yml
-conda activate remote-cnc-dev
-
-# Option 2: If you use venv and pip
-$ python -m venv env-dev
-$ source env-dev/bin/activate
-$ pip install -r requirements-dev.txt
+# 2. Install all workspace dependencies
+$ just sync
 
 # 3. Copy and configure the .env file
-cp .env.example .env
+$ cp .env.example .env
 
 # 4. Copy and configure the desktop config file
-cp desktop/config.ini.example src/desktop/desktop/config.ini
-```
-
-### Windows
-
-Take into account that the virtual environment activation with pip (step 2, option 2) is slightly different in Windows:
-
-```bash
-$ python -m venv env-dev
-$ .\env-dev\Scripts\activate
-$ pip install -r requirements-dev.txt
+$ cp desktop/config.ini.example src/desktop/desktop/config.ini
 ```
 
 # Run the app
 
-Once installed all dependencies and created the Python environment, every time you want to start the app you must run:
+Once dependencies are installed, every time you want to start the app run:
 
 ```bash
-# 1. Activate your Python environment
-# Option 1: If you use Conda
-conda activate remote-cnc-dev
+# Start the app
+$ just start-desktop
 
-# Option 2: If you use venv and pip
-$ source env-dev/bin/activate
+# Or start with auto-reload on file changes
+$ just start-desktop-watch
+```
 
-# 2. Start the app with auto-reload
-$ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python main.py
+## Start additional services
+
+The desktop app connects to the backend services (API, PostgreSQL, Redis, Worker). Start them with Docker:
+
+```bash
+$ just compose-up-dev
+```
+
+### Linux: fix folder permissions after first Docker run
+
+Docker creates the `gcode_files/`, `thumbnails/`, and `logs/` folders as root when mounting volumes for the first time. If the desktop app raises a `PermissionError` when trying to read or write files, restore ownership with:
+
+```bash
+$ just fix-permissions
 ```
 
 # Run tests
@@ -65,19 +62,19 @@ $ watchmedo auto-restart --directory=./ --pattern=*.py --recursive --  python ma
 ### Unit tests
 
 ```bash
-$ pytest -s
+$ just test desktop
 ```
 
-The coverage report is available in the folder `/htmlcov`.
+The coverage report is available in the folder `htmlcov/`.
 
 ### Code style linter
 
 ```bash
-$ uv run ruff check
+$ just lint
 ```
 
 ### Type check
 
 ```bash
-$ uv run ty check
+$ just typecheck
 ```
