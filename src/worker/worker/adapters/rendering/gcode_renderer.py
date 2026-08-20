@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import math
 from typing import TypedDict
 
-import plotly.graph_objects as go
-from PIL import Image
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 import worker.domain.gcode.parser as gcode
 
@@ -62,6 +63,8 @@ class GcodeRenderer:
             path_out,
         )
 
+        plt.close(figure)
+
     # -----------------------------------------------------------------
     # Private methods
     # -----------------------------------------------------------------
@@ -97,127 +100,121 @@ class GcodeRenderer:
 
     def _build_figure(
         self,
-    ) -> go.Figure:
-        fig = go.Figure()
+    ) -> plt.Figure:
+        fig = plt.figure(figsize=(self.imgwidth / 100, self.imgheight / 100), dpi=100)
 
-        self._add_object_trace(fig)
+        axes = fig.add_subplot(111, projection="3d")
+
+        self._add_object_trace(axes)
 
         if self.moves:
-            self._add_moves_trace(fig)
+            self._add_moves_trace(axes)
 
-        self._configure_scene(fig)
+        self._configure_axes(axes)
 
         return fig
 
     def _add_object_trace(
         self,
-        fig: go.Figure,
+        axes: Axes3D,
     ) -> None:
-        fig.add_trace(
-            go.Scatter3d(
-                x=self.coords["object"]["x"],
-                y=self.coords["object"]["y"],
-                z=self.coords["object"]["z"],
-                mode="lines",
-                line={
-                    "color": self.extrudecolor,
-                    "width": 5,
-                },
-                hoverinfo="skip",
-                showlegend=False,
-            )
+        axes.plot(
+            self.coords["object"]["x"],
+            self.coords["object"]["y"],
+            self.coords["object"]["z"],
+            color=self.extrudecolor,
+            linewidth=5,
+            solid_capstyle="round",
+            solid_joinstyle="round",
         )
 
     def _add_moves_trace(
         self,
-        fig: go.Figure,
+        axes: Axes3D,
     ) -> None:
         if not self.coords["moves"]["x"]:
             return
 
-        fig.add_trace(
-            go.Scatter3d(
-                x=self.coords["moves"]["x"],
-                y=self.coords["moves"]["y"],
-                z=self.coords["moves"]["z"],
-                mode="lines",
-                line={
-                    "color": self.movecolor,
-                    "width": 2,
-                    "dash": "dot",
-                },
-                hoverinfo="skip",
-                showlegend=False,
-            )
+        axes.plot(
+            self.coords["moves"]["x"],
+            self.coords["moves"]["y"],
+            self.coords["moves"]["z"],
+            color=self.movecolor,
+            linewidth=2,
+            linestyle="dotted",
         )
 
-    def _configure_scene(
+    def _configure_axes(
         self,
-        fig: go.Figure,
+        axes: Axes3D,
     ) -> None:
-        bbox = self.model.bbox
-        _default_axis_config = {"visible": False, "showgrid": False, "zeroline": False}
-
-        fig.update_layout(
-            width=self.imgwidth,
-            height=self.imgheight,
-            paper_bgcolor=self.background,
-            plot_bgcolor=self.background,
-            margin={"l": 0, "r": 0, "t": 0, "b": 0},
-            scene={
-                "aspectmode": "data",
-                "camera": self._compute_camera(),
-                # Use the calculated bounding box to compute the scene limits
-                "xaxis": {"range": [bbox.xmin, bbox.xmax]} if bbox else _default_axis_config,
-                "yaxis": {"range": [bbox.ymin, bbox.ymax]} if bbox else _default_axis_config,
-                "zaxis": {"range": [bbox.zmin, bbox.zmax]} if bbox else _default_axis_config,
-            },
+        axes.set_axis_off()
+        axes.set_box_aspect(
+            (self.bedsize[0], self.bedsize[1], self._z_size()),
         )
+
+        elev, azim, focal_length = self._compute_camera()
+        axes.view_init(elev=elev, azim=azim)
+        #axes.set_proj_type("persp", focal_length=focal_length)
+
+        if self.model and self.model.bbox:
+            bbox = self.model.bbox
+            eps = 0.5
+            xmin = bbox.xmin - eps if bbox.dx() == 0 else bbox.xmin
+            xmax = bbox.xmax + eps if bbox.dx() == 0 else bbox.xmax
+            ymin = bbox.ymin - eps if bbox.dy() == 0 else bbox.ymin
+            ymax = bbox.ymax + eps if bbox.dy() == 0 else bbox.ymax
+            zmin = bbox.zmin - eps if bbox.dz() == 0 else bbox.zmin
+            zmax = bbox.zmax + eps if bbox.dz() == 0 else bbox.zmax
+            axes.set_xlim(xmin, xmax)
+            axes.set_ylim(ymin, ymax)
+            axes.set_zlim(zmin, zmax)
+
+    def _z_size(self) -> float:
+        if self.model is None or self.model.bbox is None:
+            return 1.0
+
+        return max(self.model.bbox.dz(), 1.0)
 
     def _compute_camera(
         self,
-    ) -> dict:
+    ) -> tuple[float, float, float]:
+        """Return (elev, azim, focal_length) derived from the eye vector (-d, -d, d*0.85)."""
+        _base_distance = 1.6
+
         if self.model is None or self.model.bbox is None:
-            return {
-                "eye": {"x": -1.6, "y": -1.6, "z": 1.3},
-                "center": {"x": 0, "y": 0, "z": 0},
-            }
+            distance = _base_distance
+        else:
+            # Use the calculated bounding box to compute a suitable camera position
+            bbox = self.model.bbox
+            dx = max(bbox.dx(), 1.0)
+            dy = max(bbox.dy(), 1.0)
+            dz = max(bbox.dz(), 1.0)
+            size = max(dx, dy, dz)
+            distance = _base_distance + size / 150.0
 
-        bbox = self.model.bbox
+        # Convert eye vector (-d, -d, d*0.85) to spherical angles
+        ex, ey, ez = -distance, -distance, distance * 0.85
+        r_xy = math.sqrt(ex**2 + ey**2)
+        elev = math.degrees(math.atan2(ez, r_xy))   # 35°
+        azim = math.degrees(math.atan2(ey, ex))     # -135°
 
-        # Use the calculated bounding box to compute a suitable camera position
-        dx = max(bbox.dx(), 1.0)
-        dy = max(bbox.dy(), 1.0)
-        dz = max(bbox.dz(), 1.0)
+        # Wider FOV for larger models (simulates stepping back)
+        focal_length = _base_distance / distance
 
-        size = max(dx, dy, dz)
-        distance = 1.6 + size / 150.0
-
-        return {
-            "eye": {
-                "x": -distance,
-                "y": -distance,
-                "z": distance * 0.85,
-            },
-            "center": {"x": 0, "y": 0, "z": 0},
-            "up": {"x": 0, "y": 0, "z": 1},
-        }
+        return elev, azim, focal_length
 
     def _save(
         self,
-        figure: go.Figure,
+        figure: plt.Figure,
         path_out: str,
     ) -> None:
-        figure.write_image(
+        figure.savefig(
             path_out,
-            width=self.imgwidth,
-            height=self.imgheight,
+            format="png",
+            dpi=100,
+            facecolor=self.background,
+            edgecolor="none",
+            bbox_inches=None,
+            pad_inches=0,
         )
-
-        img = Image.open(path_out)
-        basewidth = self.imgwidth
-        wpercent = basewidth / float(img.size[0])
-        hsize = int(img.size[1] * wpercent)
-
-        img = img.resize((basewidth, hsize), Image.Resampling.LANCZOS)
-        img.save(path_out)
