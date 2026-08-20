@@ -4,12 +4,17 @@ from typing import Literal, TypedDict
 
 # Types definition
 Offset = TypedDict("Offset", {"x": float, "y": float, "z": float})
-Coordinate = TypedDict("Coordinate", {"x": float, "y": float, "z": float, "F": float})
+Coordinate = TypedDict("Coordinate", {"x": float, "y": float, "z": float, "f": float})
+
+
+_MODAL_MOVE_CODES = {"G0", "G00", "G1", "G01", "G2", "G02", "G3", "G03"}
+_AXIS_LETTERS = set("xyzijkfXYZIJKF")
 
 
 class GcodeParser:
     def __init__(self):
         self.model = GcodeModel(self)
+        self.last_move_code: str | None = None
 
     def parseFile(self, path: str):
         with open(path, "r") as f:
@@ -49,8 +54,15 @@ class GcodeParser:
         args = comm[1] if (len(comm) > 1) else None
 
         if code:
+            # Modal: line starts with an axis letter — re-use last movement command
+            if code[0] in _AXIS_LETTERS and self.last_move_code is not None:
+                getattr(self, "parse_" + self.last_move_code)(command)
+                return
+
             if hasattr(self, "parse_" + code):
                 getattr(self, "parse_" + code)(args)
+                if code in _MODAL_MOVE_CODES:
+                    self.last_move_code = code
             else:
                 self.warn(f"Unknown code '{code}'")
 
@@ -84,6 +96,15 @@ class GcodeParser:
     def parse_G1(self, args):
         # G1: Controlled move
         self.model.do_G0_G1(self.parseArgs(args), "G1")
+
+    def parse_G17(self, args):
+        # G17: Select XY plane
+        # Default, nothing to do
+        pass
+
+    def parse_M30(self, args):
+        # M30: Program Stop and Rewind
+        pass
 
     def parse_G20(self, args):
         # G20: Set Units to Inches
@@ -155,7 +176,7 @@ class GcodeModel:
         # save parser for messages
         self.parser = parser
         # latest coordinates & extrusion relative to offset, feedrate
-        self.relative: Coordinate = {"x": 0.0, "y": 0.0, "z": 0.0, "F": 0.0}
+        self.relative: Coordinate = {"x": 0.0, "y": 0.0, "z": 0.0, "f": 0.0}
         # offsets for relative coordinates and position reset (G92)
         self.offset: Offset = {"x": 0.0, "y": 0.0, "z": 0.0}
         # if true, args for move (G1) are given relatively (default: absolute)
@@ -169,7 +190,7 @@ class GcodeModel:
         # G0/G1: Rapid/Controlled move
         # clone previous coords
         coords = Coordinate(
-            x=self.relative["x"], y=self.relative["y"], z=self.relative["z"], F=self.relative["F"]
+            x=self.relative["x"], y=self.relative["y"], z=self.relative["z"], f=self.relative["f"]
         )
         # update changed coords
         for axis in args.keys():
@@ -185,7 +206,7 @@ class GcodeModel:
             "x": self.offset["x"] + coords["x"],
             "y": self.offset["y"] + coords["y"],
             "z": self.offset["z"] + coords["z"],
-            "F": coords["F"],  # no feedrate offset
+            "f": coords["f"],  # no feedrate offset
         }
 
         seg = Segment(type, absolute, self.parser.lineNb, self.parser.line)
@@ -239,7 +260,7 @@ class GcodeModel:
                 return bbox
 
         # start model at 0
-        coords = {"x": 0.0, "y": 0.0, "z": 0.0, "F": 0.0, "E": 0.0, "EE": 0.0}
+        coords = {"x": 0.0, "y": 0.0, "z": 0.0, "f": 0.0}
 
         # init model bbox
         self.bbox = extend(self.bbox, coords)
@@ -256,7 +277,7 @@ class GcodeModel:
             coords = seg.coords
 
             # include end point
-            extend(self.bbox, coords)
+            self.bbox = extend(self.bbox, coords)
 
             # accumulate total metrics
             self.distance += seg.distance
