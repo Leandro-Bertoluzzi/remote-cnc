@@ -3,11 +3,11 @@
 ## Overview
 
 1. [Update files](#update-files).
-1. [Update requirementss](#update-requirements).
+1. [Update dependencies](#update-dependencies).
 
 # Introduction
 
-In case you want to deploy to a Linux or Windows machine (x86), the steps are the same as in [development](./development.md) but using `requirements.txt` (or `environment.yml`) intead of the development requirements. This guide assumes you want to install and use the app in a Raspberry Pi.
+In case you want to deploy to a Linux or Windows machine (x86), the steps are the same as in [development](./development.md). This guide assumes you want to install and use the app in a Raspberry Pi.
 
 The steps described in this guide were tested in the following device:
 - **Board:** Raspberry Pi 3B+
@@ -21,13 +21,12 @@ In case you want to use just the strictly necessary files, the needed files and 
 
 ```
     .
-    ├── src                     # Source files
-    │   ├── database            # Database models and CRUD
-    │   ├── desktop             # UI components and utilities
-    │   ├── schemas             # Data validation
-    │   ├── utilities           # Various utilities
-    │   ├── config.py           # Configuration management
-    │   └── main.py             # Script to start app
+    ├── src/                    # Source files
+    │   ├── pyproject.toml      # Workspace root
+    │   ├── uv.lock             # Lockfile
+    │   └── desktop/            # Desktop app package
+    ├── desktop/
+    │   └── config.ini          # Desktop app config
     ├── deployment
     │   └── rpi
     │       └── requirements.desktop.txt
@@ -36,9 +35,9 @@ In case you want to use just the strictly necessary files, the needed files and 
 
 You can copy them by using [rsync](https://www.raspberrypi.com/documentation/computers/remote-access.html#using-rsync) or a FTP client like [FileZilla](https://docs.digitalocean.com/products/droplets/how-to/transfer-files/).
 
-# Update requirements
+# Update dependencies
 
-In case you updated the `requirements` file:
+In case you updated the dependencies:
 
 ```bash
 # If you haven't, enter the project folder and activate the environment

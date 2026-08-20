@@ -22,21 +22,13 @@ If we have made changes to the code, we must generate a Docker image for the arc
 **The first time** we generate the image, we must create a custom builder.
 
 ```bash
-docker buildx create --name raspberry --driver=docker-container
+$ just deploy-create-builder
 ```
 
-Then, the commands to actually generate the images and update the remote repository are the following:
+Then, the command to generate the image and push it to the remote repository is:
 
 ```bash
-docker buildx build --platform linux/arm/v7,linux/amd64 --builder=raspberry --target production .
-docker tag cnc-api {{your_dockerhub_user}}/cnc-api:latest
-docker push {{your_dockerhub_user}}/cnc-api:latest
-```
-
-You can also run all together in a single command:
-
-```bash
-docker buildx build --platform linux/arm/v7,linux/amd64 --tag {{your_dockerhub_user}}/cnc-api:latest --builder=raspberry --target production --push .
+$ just deploy-image api {{your_dockerhub_user}}
 ```
 
 Then, follow the guide to [update Docker containers](../../README.md#update-docker-containers) in the Raspberry.
