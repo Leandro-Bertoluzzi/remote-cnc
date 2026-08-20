@@ -11,7 +11,7 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN pip install uv --no-cache-dir
 
 # Set uv environment variables
 ENV UV_COMPILE_BYTECODE=1 \
