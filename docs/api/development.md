@@ -6,6 +6,8 @@
 1. [Run the API locally](#run-the-api-locally).
 1. [Run tests](#run-tests).
 
+> **Requirements:** [uv](https://docs.astral.sh/uv/) and [just](https://github.com/casey/just) must be installed.
+
 # Install dependencies
 
 Before using the app for the first time you should run:
@@ -14,31 +16,14 @@ Before using the app for the first time you should run:
 # Clone this project
 $ git clone https://github.com/Leandro-Bertoluzzi/remote-cnc
 
-# 1. Access the repository and folder
-$ cd remote-cnc/src
+# 1. Access the repository folder
+$ cd remote-cnc
 
-# 2. Set up your Python environment
-# Option 1: If you use Conda
-conda env create -f environment.yml
-conda activate remote-cnc-dev
-
-# Option 2: If you use venv and pip
-$ python -m venv env-dev
-$ source env-dev/bin/activate
-$ pip install -r requirements-dev.txt
+# 2. Install all workspace dependencies
+$ just sync
 
 # 3. Copy and configure the .env file
-cp .env.example .env
-```
-
-### Windows
-
-Take into account that the virtual environment activation with pip (step 2, option 2) is slightly different in Windows:
-
-```bash
-$ python -m venv env-dev
-$ .\env-dev\Scripts\activate
-$ pip install -r requirements-dev.txt
+$ cp .env.example .env
 ```
 
 ## Environment variables
@@ -51,45 +36,32 @@ token_hex(64)
 
 # Run the API locally
 
-Once installed all dependencies and created the Python environment, you can run the API locally:
+Once dependencies are installed, you can run the API locally with auto-reload:
 
 ```bash
-# 1. Activate your Python environment
-# Option 1: If you use Conda
-conda activate remote-cnc-dev
-
-# Option 2: If you use venv and pip
-$ source env-dev/bin/activate
-
-# 2. Start the app with auto-reload
-$ uvicorn app:app --reload
+$ just start-api
 ```
 
 Open [http://localhost:8000](http://localhost:8000) with your browser to see the result.
 
 # Run tests
 
-If you are using Docker, you'll have to enter the container first:
-```bash
-$ docker compose exec -it api /bin/bash
-```
-
 ### Unit tests
 
 ```bash
-$ pytest -s
+$ just test api
 ```
 
-The coverage report is available in the folder `/htmlcov`.
+The coverage report is available in the folder `htmlcov/`.
 
 ### Code style linter
 
 ```bash
-$ uv run ruff check
+$ just lint
 ```
 
 ### Type check
 
 ```bash
-$ uv run ty check
+$ just typecheck
 ```

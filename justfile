@@ -55,6 +55,12 @@ sync:
 lock:
     uv lock
 
+# Fix ownership of data folders after Docker creates them as root (Linux/macOS only)
+[group('setup')]
+[unix]
+fix-permissions:
+    chown -R $USER:$USER gcode_files thumbnails logs
+
 # ===========================================================================
 # Quality
 # ===========================================================================
