@@ -61,6 +61,7 @@ services:
     container_name: remote-cnc-redis
 
   worker:
+    image: cnc-worker
     build:
       context: src
       dockerfile: Dockerfile.worker
@@ -83,6 +84,7 @@ services:
     container_name: remote-cnc-worker
 
   gateway:
+    image: cnc-gateway
     build:
       context: src
       dockerfile: Dockerfile.gateway
@@ -110,6 +112,7 @@ services:
     profiles: ["device"]
 
   gateway-sim:
+    image: cnc-gateway-sim
     build:
       context: src
       dockerfile: Dockerfile.gateway
