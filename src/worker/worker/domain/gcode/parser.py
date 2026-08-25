@@ -1,5 +1,8 @@
 import math
 import re
+from dataclasses import dataclass
+from enum import Enum
+from itertools import pairwise
 from typing import Literal, TypedDict
 
 # Types definition
@@ -16,23 +19,31 @@ class GcodeParser:
         self.model = GcodeModel(self)
         self.last_move_code: str | None = None
 
-    def parseFile(self, path: str):
+    # -----------------------------------------------------------------
+    # Public methods
+    # -----------------------------------------------------------------
+
+    def parse_file(self, path: str):
         with open(path, "r") as f:
             # init line counter
-            self.lineNb = 0
+            self.line_number = 0
 
             for line in f:
                 # inc line counter
-                self.lineNb += 1
+                self.line_number += 1
                 # remove trailing linefeed
                 self.line = line.rstrip()
 
-                self.parseLine()
+                self._parse_line()
 
-        self.model.postProcess()
+        self.model.post_process()
         return self.model
 
-    def parseLine(self):
+    # -----------------------------------------------------------------
+    # Private methods
+    # -----------------------------------------------------------------
+
+    def _parse_line(self):
         # strip comments:
         # first handle round brackets
         command = re.sub(r"\([^)]*\)", "", self.line)
@@ -56,17 +67,17 @@ class GcodeParser:
         if code:
             # Modal: line starts with an axis letter — re-use last movement command
             if code[0] in _AXIS_LETTERS and self.last_move_code is not None:
-                getattr(self, "parse_" + self.last_move_code)(command)
+                getattr(self, "_parse_" + self.last_move_code)(command)
                 return
 
-            if hasattr(self, "parse_" + code):
-                getattr(self, "parse_" + code)(args)
+            if hasattr(self, "_parse_" + code):
+                getattr(self, "_parse_" + code)(args)
                 if code in _MODAL_MOVE_CODES:
                     self.last_move_code = code
             else:
                 self.warn(f"Unknown code '{code}'")
 
-    def parseArgs(self, args: str | None) -> dict[str, float]:
+    def _parse_args(self, args: str | None) -> dict[str, float]:
         if not args:
             return {}
 
@@ -81,68 +92,117 @@ class GcodeParser:
             dic[identifier] = coord
         return dic
 
-    def parse_G00(self, args):
+    def _parse_G00(self, args):
         # G0: Rapid move
-        self.model.do_G0_G1(self.parseArgs(args), "G0")
+        self.model.do_G0_G1(self._parse_args(args), "G0")
 
-    def parse_G0(self, args):
+    def _parse_G0(self, args):
         # G0: Rapid move
-        self.model.do_G0_G1(self.parseArgs(args), "G0")
+        self.model.do_G0_G1(self._parse_args(args), "G0")
 
-    def parse_G01(self, args):
+    def _parse_G01(self, args):
         # G1: Controlled move
-        self.model.do_G0_G1(self.parseArgs(args), "G1")
+        self.model.do_G0_G1(self._parse_args(args), "G1")
 
-    def parse_G1(self, args):
+    def _parse_G1(self, args):
         # G1: Controlled move
-        self.model.do_G0_G1(self.parseArgs(args), "G1")
+        self.model.do_G0_G1(self._parse_args(args), "G1")
 
-    def parse_G17(self, args):
+    def _parse_G17(self, args):
         # G17: Select XY plane
         # Default, nothing to do
         pass
 
-    def parse_M30(self, args):
-        # M30: Program Stop and Rewind
-        pass
-
-    def parse_G20(self, args):
+    def _parse_G20(self, args):
         # G20: Set Units to Inches
         self.error("Unsupported & incompatible: G20: Set Units to Inches")
 
-    def parse_G21(self, args):
+    def _parse_G21(self, args):
         # G21: Set Units to Millimeters
         # Default, nothing to do
         pass
 
-    def parse_G28(self, args):
+    def _parse_G28(self, args):
         # G28: Move to Origin
-        self.model.do_G28(self.parseArgs(args))
+        self.model.do_G28(self._parse_args(args))
 
-    def parse_G90(self, args):
+    def _parse_G90(self, args):
         # G90: Set to Absolute Positioning
-        self.model.setRelative(False)
+        self.model.set_relative(False)
 
-    def parse_G91(self, args):
+    def _parse_G91(self, args):
         # G91: Set to Relative Positioning
-        self.model.setRelative(True)
+        self.model.set_relative(True)
 
-    def parse_G92(self, args):
+    def _parse_G92(self, args):
         # G92: Set Position
-        self.model.do_G92(self.parseArgs(args))
+        self.model.do_G92(self._parse_args(args))
+
+    def _parse_M30(self, args):
+        # M30: Program Stop and Rewind
+        pass
 
     def warn(self, msg: str):
-        print(f"[WARN] Line {self.lineNb}: {msg} (Text:'{self.line}')")
+        print(f"[WARN] Line {self.line_number}: {msg} (Text:'{self.line}')")
 
     def error(self, msg: str):
-        raise Exception(f"[ERROR] Line {self.lineNb}: {msg} (Text:'{self.line}')")
+        raise Exception(f"[ERROR] Line {self.line_number}: {msg} (Text:'{self.line}')")
+
+
+@dataclass(slots=True)
+class Vertex:
+    """
+    A physical position reached by the toolhead.
+
+    `line_number` and `line` identify the G-code command that caused
+    the machine to reach this position. The initial vertex has no
+    associated G-code line.
+    """
+
+    x: float
+    y: float
+    z: float
+
+    line_number: int | None
+    line: str | None
+
+    def __str__(self):
+        return (
+            f"<Vertex: (x={self.x}, y={self.y}, z={self.z}), "
+            f"line_number={self.line_number}, "
+            f"line={self.line}>"
+        )
+
+
+class MovementType(Enum):
+    TRAVEL = "travel"
+    MACHINING = "machining"
+
+
+@dataclass(slots=True)
+class Polyline:
+    """
+    A continuous toolpath. Consecutive vertices describe the trajectory of the toolhead.
+
+    `type` describes how the trajectory should be interpreted:
+    - "TRAVEL": the toolhead is moving without cutting or extruding
+    - "MACHINING": the toolhead is cutting or extruding
+    """
+
+    type: MovementType
+    vertices: list[Vertex]
+
+    def __str__(self):
+        return f"<Polyline: type={self.type} ({len(self.vertices)} vertices)>"
 
 
 class BBox:
-    def __init__(self, coords):
-        self.xmin = self.xmax = coords["x"]
-        self.ymin = self.ymax = coords["y"]
-        self.zmin = self.zmax = coords["z"]
+    """Bounding box of a G-code model."""
+
+    def __init__(self, coords: Vertex):
+        self.xmin = self.xmax = coords.x
+        self.ymin = self.ymax = coords.y
+        self.zmin = self.zmax = coords.z
 
     def dx(self):
         return self.xmax - self.xmin
@@ -162,57 +222,128 @@ class BBox:
     def cz(self):
         return (self.zmax + self.zmin) / 2
 
-    def extend(self, coords):
-        self.xmin = min(self.xmin, coords["x"])
-        self.xmax = max(self.xmax, coords["x"])
-        self.ymin = min(self.ymin, coords["y"])
-        self.ymax = max(self.ymax, coords["y"])
-        self.zmin = min(self.zmin, coords["z"])
-        self.zmax = max(self.zmax, coords["z"])
+    def extend(self, coords: Vertex):
+        self.xmin = min(self.xmin, coords.x)
+        self.xmax = max(self.xmax, coords.x)
+        self.ymin = min(self.ymin, coords.y)
+        self.ymax = max(self.ymax, coords.y)
+        self.zmin = min(self.zmin, coords.z)
+        self.zmax = max(self.zmax, coords.z)
 
 
 class GcodeModel:
     def __init__(self, parser: GcodeParser):
         # save parser for messages
         self.parser = parser
-        # latest coordinates & extrusion relative to offset, feedrate
+
+        self._reset()
+
+    def _reset(self):
+        # Latest coordinates & extrusion relative to offset, feedrate
         self.relative: Coordinate = {"x": 0.0, "y": 0.0, "z": 0.0, "f": 0.0}
-        # offsets for relative coordinates and position reset (G92)
+        # Offsets for relative coordinates and position reset (G92)
         self.offset: Offset = {"x": 0.0, "y": 0.0, "z": 0.0}
-        # if true, args for move (G1) are given relatively (default: absolute)
-        self.isRelative = False
-        # the segments
-        self.segments: list[Segment] = []
+        # If true, args for move (G1) are given relatively (default: absolute)
+        self.is_relative = False
+        # The trajectories of the toolhead
+        self.polylines: list[Polyline] = []
+        # Metrics
         self.distance = 0
         self.bbox: BBox | None = None
+        # The polyline currently being constructed while parsing.
+        self._current_polyline: Polyline | None = None
 
     def do_G0_G1(self, args: dict, type: Literal["G0", "G1"]):
-        # G0/G1: Rapid/Controlled move
-        # clone previous coords
+        """Process a physical G0/G1 movement."""
+
+        # --------------------------------------------------------------
+        # Calculate the current physical position.
+        #
+        # `relative` is the logical G-code position.
+        # `offset` contains the correction introduced by G92.
+        # --------------------------------------------------------------
+
+        start = {
+            "x": self.offset["x"] + self.relative["x"],
+            "y": self.offset["y"] + self.relative["y"],
+            "z": self.offset["z"] + self.relative["z"],
+        }
+
+        # --------------------------------------------------------------
+        # Clone current logical coordinates.
+        # --------------------------------------------------------------
+
         coords = Coordinate(
             x=self.relative["x"], y=self.relative["y"], z=self.relative["z"], f=self.relative["f"]
         )
-        # update changed coords
+
+        # --------------------------------------------------------------
+        # Apply coordinates specified by the movement command.
+        # --------------------------------------------------------------
+
         for axis in args.keys():
             if axis in coords:
-                if self.isRelative:
+                if self.is_relative:
                     coords[axis] += args[axis]
                 else:
                     coords[axis] = args[axis]
             else:
                 self.warn(f"Unknown axis '{axis}'")
-        # build segment
-        absolute: Coordinate = {
+
+        # --------------------------------------------------------------
+        # Convert destination from logical coordinates into physical
+        # machine coordinates.
+        # --------------------------------------------------------------
+
+        end = {
             "x": self.offset["x"] + coords["x"],
             "y": self.offset["y"] + coords["y"],
             "z": self.offset["z"] + coords["z"],
-            "f": coords["f"],  # no feedrate offset
         }
 
-        seg = Segment(type, absolute, self.parser.lineNb, self.parser.line)
-        self.addSegment(seg)
+        # --------------------------------------------------------------
+        # G0 = travel movement
+        # G1 = machining movement
+        # --------------------------------------------------------------
 
-        # update model coords
+        movement_type = MovementType.TRAVEL if type == "G0" else MovementType.MACHINING
+
+        # --------------------------------------------------------------
+        # If this is the first physical movement, add the initial
+        # machine position.
+        # --------------------------------------------------------------
+
+        if self._current_polyline is None:
+            self._add_vertex(
+                movement_type,
+                Vertex(
+                    x=start["x"],
+                    y=start["y"],
+                    z=start["z"],
+                    line_number=None,
+                    line=None,
+                ),
+            )
+
+        # --------------------------------------------------------------
+        # Add the destination vertex.
+        # --------------------------------------------------------------
+
+        self._add_vertex(
+            movement_type,
+            Vertex(
+                x=end["x"],
+                y=end["y"],
+                z=end["z"],
+                line_number=self.parser.line_number,
+                line=self.parser.line,
+            ),
+        )
+
+        # --------------------------------------------------------------
+        # Update logical coordinates only after constructing the vertex.
+        # --------------------------------------------------------------
+
         self.relative = coords
 
     def do_G28(self, args):
@@ -235,11 +366,28 @@ class GcodeModel:
             else:
                 self.warn(f"Unknown axis '{axis}'")
 
-    def setRelative(self, isRelative):
-        self.isRelative = isRelative
+    def set_relative(self, is_relative):
+        self.is_relative = is_relative
 
-    def addSegment(self, segment):
-        self.segments.append(segment)
+    def _add_vertex(
+        self,
+        movement_type: MovementType,
+        vertex: Vertex,
+    ):
+        """
+        Add a vertex to the current toolpath.
+        A new Polyline is created whenever the movement type changes.
+        """
+
+        if self._current_polyline is None or self._current_polyline.type != movement_type:
+            self._current_polyline = Polyline(
+                type=movement_type,
+                vertices=[],
+            )
+
+            self.polylines.append(self._current_polyline)
+
+        self._current_polyline.vertices.append(vertex)
 
     def warn(self, msg: str):
         self.parser.warn(msg)
@@ -247,65 +395,34 @@ class GcodeModel:
     def error(self, msg: str):
         self.parser.error(msg)
 
-    def calcMetrics(self):
-        # init distance
-        self.distance = 0
+    def calc_metrics(self):
+        """Calculate total toolpath distance and bounding box."""
 
-        # extender helper
-        def extend(bbox: BBox | None, coords):
-            if bbox is None:
-                return BBox(coords)
-            else:
-                bbox.extend(coords)
-                return bbox
+        self.distance = 0.0
+        self.bbox = None
 
-        # start model at 0
-        coords = {"x": 0.0, "y": 0.0, "z": 0.0, "f": 0.0}
+        for polyline in self.polylines:
+            for vertex in polyline.vertices:
+                # Initialize or extend the model bounding box.
+                if self.bbox is None:
+                    self.bbox = BBox(vertex)
+                else:
+                    self.bbox.extend(vertex)
 
-        # init model bbox
-        self.bbox = extend(self.bbox, coords)
+            # Calculate distances between consecutive vertices.
+            for start, end in pairwise(polyline.vertices):
+                dx = end.x - start.x
+                dy = end.y - start.y
+                dz = end.z - start.z
 
-        # for all segments
-        for seg in self.segments:
-            # calc xyz distance
-            d = (seg.coords["x"] - coords["x"]) ** 2
-            d += (seg.coords["y"] - coords["y"]) ** 2
-            d += (seg.coords["z"] - coords["z"]) ** 2
-            seg.distance = math.sqrt(d)
+                self.distance += math.sqrt(dx * dx + dy * dy + dz * dz)
 
-            # execute segment
-            coords = seg.coords
-
-            # include end point
-            self.bbox = extend(self.bbox, coords)
-
-            # accumulate total metrics
-            self.distance += seg.distance
-
-    def postProcess(self):
-        self.calcMetrics()
+    def post_process(self):
+        self.calc_metrics()
 
     def __str__(self):
         return (
-            f"<GcodeModel: len(segments)={len(self.segments)}, "
+            f"<GcodeModel: {len(self.polylines)} polylines, "
             f"distance={self.distance}, "
-            f"bbox={self.bbox}, "
-        )
-
-
-class Segment:
-    def __init__(self, type: str, coords: Coordinate, lineNb: int, line: str):
-        self.type = type
-        self.coords = coords
-        self.lineNb = lineNb
-        self.line = line
-        self.distance: float | None = None
-
-    def __str__(self):
-        return (
-            f"<Segment: type={self.type}, "
-            f"<Coords: type={self.coords}, "
-            f"lineNb={self.lineNb}, "
-            f"line={self.line}, "
-            f"distance={self.distance}, "
+            f"bbox={self.bbox}>"
         )
