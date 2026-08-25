@@ -3,28 +3,11 @@
 from __future__ import annotations
 
 import math
-from typing import TypedDict
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-import worker.domain.gcode.parser as gcode
-
-# ---------------------------------------------------------------------
-# Types
-# ---------------------------------------------------------------------
-
-
-class Points(TypedDict):
-    x: list[float]
-    y: list[float]
-    z: list[float]
-
-
-class Coordinates(TypedDict):
-    object: Points
-    moves: Points
-
+from worker.domain.gcode.parser import GcodeParser, MovementType, Polyline
 
 # ---------------------------------------------------------------------
 # Renderer
@@ -74,29 +57,12 @@ class GcodeRenderer:
         self.moves = False
         self.model = None
 
-        self.coords: Coordinates = {
-            "object": {"x": [], "y": [], "z": []},
-            "moves": {"x": [], "y": [], "z": []},
-        }
-
     def _load_model(
         self,
         path: str,
     ) -> None:
-        parser = gcode.GcodeParser()
-        self.model = parser.parseFile(path)
-
-        for segment in self.model.segments:
-            if segment.type == "G1":
-                self.coords["object"]["x"].append(segment.coords["x"])
-                self.coords["object"]["y"].append(segment.coords["y"])
-                self.coords["object"]["z"].append(segment.coords["z"])
-                continue
-
-            if self.moves:
-                self.coords["moves"]["x"].append(segment.coords["x"])
-                self.coords["moves"]["y"].append(segment.coords["y"])
-                self.coords["moves"]["z"].append(segment.coords["z"])
+        parser = GcodeParser()
+        self.model = parser.parse_file(path)
 
     def _build_figure(
         self,
@@ -105,43 +71,47 @@ class GcodeRenderer:
 
         axes = fig.add_subplot(111, projection="3d")
 
-        self._add_object_trace(axes)
-
-        if self.moves:
-            self._add_moves_trace(axes)
+        self._plot_model(axes)
 
         self._configure_axes(axes)
 
         return fig
 
-    def _add_object_trace(
-        self,
-        axes: Axes3D,
-    ) -> None:
-        axes.plot(
-            self.coords["object"]["x"],
-            self.coords["object"]["y"],
-            self.coords["object"]["z"],
-            color=self.extrudecolor,
-            linewidth=5,
-            solid_capstyle="round",
-            solid_joinstyle="round",
-        )
+    def _plot_model(self, axes: Axes3D):
+        for polyline in self.model.polylines:
 
-    def _add_moves_trace(
-        self,
-        axes: Axes3D,
-    ) -> None:
-        if not self.coords["moves"]["x"]:
-            return
+            if polyline.type == MovementType.MACHINING:
+                self._plot_polyline(
+                    axes,
+                    polyline,
+                    color=self.extrudecolor,
+                    linewidth=1.0,
+                    solid_capstyle="round",
+                    solid_joinstyle="round",
+                )
+
+            elif (
+                polyline.type == MovementType.TRAVEL
+                and self.moves
+            ):
+                self._plot_polyline(
+                    axes,
+                    polyline,
+                    color=self.movecolor,
+                    linewidth=1.0,
+                    linestyle="dotted",
+                )
+
+    def _plot_polyline(self, axes: Axes3D, polyline: Polyline, **kwargs) -> None:
+        x = [vertex.x for vertex in polyline.vertices]
+        y = [vertex.y for vertex in polyline.vertices]
+        z = [vertex.z for vertex in polyline.vertices]
 
         axes.plot(
-            self.coords["moves"]["x"],
-            self.coords["moves"]["y"],
-            self.coords["moves"]["z"],
-            color=self.movecolor,
-            linewidth=2,
-            linestyle="dotted",
+            x,
+            y,
+            z,
+            **kwargs,
         )
 
     def _configure_axes(
