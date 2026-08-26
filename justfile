@@ -39,6 +39,10 @@ MODULES := "|api|core|desktop|gateway|worker"
 [private]
 DEPLOYABLE_MODULES := "api|gateway|worker"
 
+# Executable modules in the repo
+[private]
+EXECUTABLE_MODULES := "api|desktop|worker"
+
 # ===========================================================================
 # Setup
 # ===========================================================================
@@ -104,35 +108,36 @@ check: lint typecheck test
 # Run
 # ===========================================================================
 
-# Launch the API with uvicorn (dev, with reload)
+# Watchdog command to auto-restart a process on file changes
+[private]
+WATCHDOG_COMMAND := "watchmedo auto-restart --directory=./ --pattern=*.py --recursive --"
+
+# Launch the specific application module — usage: just start <module> [mode="watch"]
+[group('run')]
+start module mode="":
+    @echo "{{ if module =~ EXECUTABLE_MODULES { "Starting " + module } else { error("Invalid module name. Must be one of: " + EXECUTABLE_MODULES) } }}"
+    @just {{ if module == "api" { "start-api" } else if module == "desktop" { "start-desktop" } else if module == "worker" { "start-worker" } else { "" } }} {{mode}}
+
+# Launch the API with uvicorn
 [group('run')]
 [working-directory: 'src']
-start-api:
-    uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+[private]
+start-api mode="":
+    uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 {{ if mode == "watch" { "--reload" } else { "" } }}
 
 # Launch the desktop (PyQt5) app
 [group('run')]
 [working-directory: 'src']
-start-desktop:
-    uv run python -m desktop.main
-
-# Launch the desktop app with auto-reload on file changes
-[group('run')]
-[working-directory: 'src']
-start-desktop-watch:
-    uv run watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- python -m desktop.main
+[private]
+start-desktop mode="":
+    uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} python -m desktop.main
 
 # Launch the Celery worker
 [group('run')]
 [working-directory: 'src']
-start-worker:
-    uv run celery --app worker.main worker --loglevel=INFO
-
-# Launch the Celery worker with auto-reload on file changes
-[group('run')]
-[working-directory: 'src']
-start-worker-watch:
-    uv run watchmedo auto-restart --directory=./ --pattern=*.py -- celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log
+[private]
+start-worker mode="":
+    uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log
 
 # ===========================================================================
 # Database
