@@ -380,12 +380,23 @@ class GcodeModel:
         """
 
         if self._current_polyline is None or self._current_polyline.type != movement_type:
+            # Save the last vertex of the previous polyline, if any.
+            last_vertex = None
+            if self._current_polyline and self._current_polyline.vertices:
+                last_vertex = self._current_polyline.vertices[-1]
+
+            # Create a new polyline for the new movement type.
             self._current_polyline = Polyline(
                 type=movement_type,
                 vertices=[],
             )
 
+            # Add the new polyline to the model.
             self.polylines.append(self._current_polyline)
+
+            # Initialize the new polyline with the last vertex of the previous polyline, if any.
+            if last_vertex:
+                self._current_polyline.vertices.append(last_vertex)
 
         self._current_polyline.vertices.append(vertex)
 
