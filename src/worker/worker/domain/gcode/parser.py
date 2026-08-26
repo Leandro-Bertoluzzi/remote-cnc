@@ -10,8 +10,23 @@ Offset = TypedDict("Offset", {"x": float, "y": float, "z": float})
 Coordinate = TypedDict("Coordinate", {"x": float, "y": float, "z": float, "f": float})
 
 
+# Constants
 _MODAL_MOVE_CODES = {"G0", "G00", "G1", "G01", "G2", "G02", "G3", "G03"}
 _AXIS_LETTERS = set("xyzijkfXYZIJKF")
+
+
+# Custom exception classes
+class GcodeModelError(Exception):
+    """Base class for G-code model errors."""
+
+    pass
+
+
+class UnknownAxisError(GcodeModelError):
+    """Raised when an unknown axis letter is encountered in a G-code command."""
+
+    def __init__(self, axis: str):
+        super().__init__(f"Unknown axis '{axis}'")
 
 
 class GcodeParser:
@@ -94,19 +109,25 @@ class GcodeParser:
 
     def _parse_G00(self, args):
         # G0: Rapid move
-        self.model.do_G0_G1(self._parse_args(args), "G0")
+        self._parse_G0(args)
 
     def _parse_G0(self, args):
         # G0: Rapid move
-        self.model.do_G0_G1(self._parse_args(args), "G0")
+        try:
+            self.model.do_G0_G1(self._parse_args(args), "G0")
+        except UnknownAxisError as e:
+            self.warn(str(e))
 
     def _parse_G01(self, args):
         # G1: Controlled move
-        self.model.do_G0_G1(self._parse_args(args), "G1")
+        self._parse_G1(args)
 
     def _parse_G1(self, args):
         # G1: Controlled move
-        self.model.do_G0_G1(self._parse_args(args), "G1")
+        try:
+            self.model.do_G0_G1(self._parse_args(args), "G1")
+        except UnknownAxisError as e:
+            self.warn(str(e))
 
     def _parse_G17(self, args):
         # G17: Select XY plane
@@ -123,8 +144,7 @@ class GcodeParser:
         pass
 
     def _parse_G28(self, args):
-        # G28: Move to Origin
-        self.model.do_G28(self._parse_args(args))
+        self.error("Unsupported & incompatible: G28: Move to Origin")
 
     def _parse_G90(self, args):
         # G90: Set to Absolute Positioning
@@ -136,7 +156,10 @@ class GcodeParser:
 
     def _parse_G92(self, args):
         # G92: Set Position
-        self.model.do_G92(self._parse_args(args))
+        try:
+            self.model.do_G92(self._parse_args(args))
+        except UnknownAxisError as e:
+            self.error(str(e))
 
     def _parse_M30(self, args):
         # M30: Program Stop and Rewind
@@ -151,27 +174,14 @@ class GcodeParser:
 
 @dataclass(slots=True)
 class Vertex:
-    """
-    A physical position reached by the toolhead.
-
-    `line_number` and `line` identify the G-code command that caused
-    the machine to reach this position. The initial vertex has no
-    associated G-code line.
-    """
+    """A physical position reached by the toolhead."""
 
     x: float
     y: float
     z: float
 
-    line_number: int | None
-    line: str | None
-
     def __str__(self):
-        return (
-            f"<Vertex: (x={self.x}, y={self.y}, z={self.z}), "
-            f"line_number={self.line_number}, "
-            f"line={self.line}>"
-        )
+        return f"<Vertex: (x={self.x}, y={self.y}, z={self.z})>"
 
 
 class MovementType(Enum):
@@ -254,7 +264,12 @@ class GcodeModel:
         self._current_polyline: Polyline | None = None
 
     def do_G0_G1(self, args: dict, type: Literal["G0", "G1"]):
-        """Process a physical G0/G1 movement."""
+        """
+        Process a physical G0/G1 movement.
+
+        Raises:
+            UnknownAxisError: If an unknown axis letter is encountered in the G-code command.
+        """
 
         # --------------------------------------------------------------
         # Calculate the current physical position.
@@ -288,7 +303,7 @@ class GcodeModel:
                 else:
                     coords[axis] = args[axis]
             else:
-                self.warn(f"Unknown axis '{axis}'")
+                raise UnknownAxisError(axis)
 
         # --------------------------------------------------------------
         # Convert destination from logical coordinates into physical
@@ -316,13 +331,7 @@ class GcodeModel:
         if self._current_polyline is None:
             self._add_vertex(
                 movement_type,
-                Vertex(
-                    x=start["x"],
-                    y=start["y"],
-                    z=start["z"],
-                    line_number=None,
-                    line=None,
-                ),
+                Vertex(x=start["x"], y=start["y"], z=start["z"]),
             )
 
         # --------------------------------------------------------------
@@ -331,13 +340,7 @@ class GcodeModel:
 
         self._add_vertex(
             movement_type,
-            Vertex(
-                x=end["x"],
-                y=end["y"],
-                z=end["z"],
-                line_number=self.parser.line_number,
-                line=self.parser.line,
-            ),
+            Vertex(x=end["x"], y=end["y"], z=end["z"]),
         )
 
         # --------------------------------------------------------------
@@ -346,13 +349,14 @@ class GcodeModel:
 
         self.relative = coords
 
-    def do_G28(self, args):
-        # G28: Move to Origin
-        self.warn("G28 unimplemented")
-
     def do_G92(self, args: dict):
-        # G92: Set Position
-        # this changes the current coords, without moving, so do not generate a segment
+        """
+        Process a G92 command to set the current position of the toolhead.
+        This changes the current coordinates without moving, so no vertices are added.
+
+        Raises:
+            UnknownAxisError: If an unknown axis letter is encountered.
+        """
 
         # no axes mentioned == all axes to 0
         if not len(args.keys()):
@@ -364,7 +368,7 @@ class GcodeModel:
                 self.offset[axis] += self.relative[axis] - args[axis]
                 self.relative[axis] = args[axis]
             else:
-                self.warn(f"Unknown axis '{axis}'")
+                raise UnknownAxisError(axis)
 
     def set_relative(self, is_relative):
         self.is_relative = is_relative
@@ -399,12 +403,6 @@ class GcodeModel:
                 self._current_polyline.vertices.append(last_vertex)
 
         self._current_polyline.vertices.append(vertex)
-
-    def warn(self, msg: str):
-        self.parser.warn(msg)
-
-    def error(self, msg: str):
-        self.parser.error(msg)
 
     def calc_metrics(self):
         """Calculate total toolpath distance and bounding box."""
