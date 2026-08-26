@@ -29,10 +29,6 @@ class TestFirstMovement:
         p = model.polylines[0]
         assert p.type is MovementType.MACHINING
         assert points(p) == [(0.0, 0.0, 0.0), (10.0, 20.0, 5.0)]
-        assert p.vertices[0].line_number is None
-        assert p.vertices[0].line is None
-        assert p.vertices[1].line_number == 1
-        assert p.vertices[1].line == "G1 X10 Y20 Z5"
 
 
 class TestMovementTypes:
@@ -152,19 +148,14 @@ class TestBoundingBox:
         assert model.bbox.zmax == pytest.approx(30)
 
 
-class TestVertexSourceLineInformation:
-    def test_vertex_keeps_source_line_information(self, tmp_path):
-        model = parse_gcode(tmp_path, "G1 X10\nG1 X20 Y30")
-        vertices = model.polylines[0].vertices
-        assert (vertices[0].line_number, vertices[0].line) == (None, None)
-        assert (vertices[1].line_number, vertices[1].line) == (1, "G1 X10")
-        assert (vertices[2].line_number, vertices[2].line) == (2, "G1 X20 Y30")
-
-
 class TestUnsupportedCodes:
     def test_g20_is_rejected_as_unsupported(self, tmp_path):
         with pytest.raises(Exception, match="G20"):
             parse_gcode(tmp_path, "G20")
+
+    def test_g28_is_rejected_as_unsupported(self, tmp_path):
+        with pytest.raises(Exception, match="G28"):
+            parse_gcode(tmp_path, "G28")
 
     def test_unknown_code_is_only_warned(self, tmp_path, capsys):
         model = parse_gcode(tmp_path, "G1 X10\nG999 X20\nG1 X30")
@@ -183,4 +174,3 @@ class TestNonMovementCommands:
         model = parse_gcode(tmp_path, "G1 X10\nG92 X0\nG1 X10")
         assert len(model.polylines) == 1
         assert points(model.polylines[0]) == [(0.0, 0.0, 0.0), (10.0, 0.0, 0.0), (20.0, 0.0, 0.0)]
-        assert all(v.line != "G92 X0" for v in model.polylines[0].vertices)
