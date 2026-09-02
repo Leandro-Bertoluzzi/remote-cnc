@@ -123,14 +123,14 @@ start module mode="":
 [working-directory: 'src']
 [private]
 start-api mode="":
-    uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 {{ if mode == "watch" { "--reload" } else { "" } }}
+    uv run uvicorn apps.api.main:app --host 0.0.0.0 --port 8000 {{ if mode == "watch" { "--reload" } else { "" } }}
 
 # Launch the desktop (PyQt5) app
 [group('run')]
 [working-directory: 'src']
 [private]
 start-desktop mode="":
-    uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} python -m desktop.main
+    uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} python -m apps.desktop.main
 
 # Launch the Celery worker
 [group('run')]

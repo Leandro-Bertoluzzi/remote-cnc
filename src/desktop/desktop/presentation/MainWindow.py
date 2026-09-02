@@ -1,5 +1,5 @@
-from desktop.app_context import AppContext
 from desktop.application.connectionErrors import get_friendly_error_message
+from desktop.context import AppContext
 from desktop.presentation.components.ConnectionErrorWidget import ConnectionErrorWidget
 from desktop.presentation.components.gatewayMonitor import GatewayMonitor
 from desktop.presentation.components.StatusBar import StatusBar

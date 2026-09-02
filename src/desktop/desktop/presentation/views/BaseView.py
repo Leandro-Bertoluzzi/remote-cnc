@@ -6,7 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox, QWidget
 
 if TYPE_CHECKING:
-    from desktop.app_context import AppContext  # pragma: no cover
+    from desktop.context import AppContext  # pragma: no cover
     from desktop.presentation.MainWindow import MainWindow  # pragma: no cover
 
 

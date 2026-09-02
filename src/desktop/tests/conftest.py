@@ -5,7 +5,6 @@ import pytest
 from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
 from core.ports.worker_client import IWorkerClient
-from desktop.app_context import AppContext
 from desktop.application.asset_service import AssetService
 from desktop.application.device_service import DeviceService
 from desktop.application.file_service import FileService
@@ -13,6 +12,7 @@ from desktop.application.material_service import MaterialService
 from desktop.application.task_service import TaskService
 from desktop.application.tool_service import ToolService
 from desktop.application.user_service import UserService
+from desktop.context import AppContext
 from desktop.ports.config_writer import IConfigWriter
 from desktop.ports.settings_reader import ISettingsReader
 from desktop.presentation.components.gatewayMonitor import GatewayMonitor
