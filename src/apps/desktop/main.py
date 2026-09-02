@@ -3,10 +3,10 @@
 import os
 import sys
 
+from desktop.presentation.MainWindow import MainWindow
 from PyQt5.QtWidgets import QApplication
 
-from desktop.app_context import create_app_context
-from desktop.presentation.MainWindow import MainWindow
+from apps.desktop.context import create_app_context
 
 
 def suppressQtWarnings():

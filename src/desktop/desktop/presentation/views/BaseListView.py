@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
-    from desktop.app_context import AppContext  # pragma: no cover
+    from desktop.context import AppContext  # pragma: no cover
     from desktop.presentation.MainWindow import MainWindow  # pragma: no cover
 
 

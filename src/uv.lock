@@ -6,9 +6,12 @@ requires-python = ">=3.12"
 members = [
     "cnc-admin",
     "cnc-api",
+    "cnc-app-api",
+    "cnc-app-desktop",
     "cnc-core",
     "cnc-desktop",
     "cnc-gateway",
+    "cnc-manager",
     "cnc-worker",
 ]
 overrides = [{ name = "pyqt5-qt5", specifier = "==5.15.2" }]
@@ -261,9 +264,12 @@ source = { virtual = "." }
 dev = [
     { name = "celery-types" },
     { name = "cnc-api" },
+    { name = "cnc-app-api" },
+    { name = "cnc-app-desktop" },
     { name = "cnc-core" },
     { name = "cnc-desktop" },
     { name = "cnc-gateway" },
+    { name = "cnc-manager" },
     { name = "cnc-worker" },
     { name = "fakeredis" },
     { name = "pyqt5-stubs" },
@@ -283,9 +289,12 @@ dev = [
 dev = [
     { name = "celery-types", specifier = ">=0.22" },
     { name = "cnc-api", editable = "api" },
+    { name = "cnc-app-api", editable = "apps/api" },
+    { name = "cnc-app-desktop", editable = "apps/desktop" },
     { name = "cnc-core", editable = "core" },
     { name = "cnc-desktop", editable = "desktop" },
     { name = "cnc-gateway", editable = "gateway" },
+    { name = "cnc-manager", editable = "manager" },
     { name = "cnc-worker", editable = "worker" },
     { name = "fakeredis", specifier = ">=2.0,<3" },
     { name = "pyqt5-stubs", specifier = ">=5.15" },
@@ -304,7 +313,7 @@ name = "cnc-api"
 version = "0.1.0"
 source = { editable = "api" }
 dependencies = [
-    { name = "cnc-core" },
+    { name = "cnc-manager" },
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -322,7 +331,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cnc-core", editable = "core" },
+    { name = "cnc-manager", editable = "manager" },
     { name = "email-validator", specifier = ">=2.0,<3" },
     { name = "fastapi", specifier = ">=0.104,<1" },
     { name = "httpx", specifier = ">=0.24,<1" },
@@ -336,6 +345,54 @@ requires-dist = [
 dev = [
     { name = "celery-types", specifier = ">=0.22" },
     { name = "httpx", specifier = ">=0.24,<1" },
+]
+
+[[package]]
+name = "cnc-app-api"
+version = "0.1.0"
+source = { editable = "apps/api" }
+dependencies = [
+    { name = "cnc-api" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "celery-types" },
+    { name = "httpx" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "cnc-api", editable = "api" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "celery-types", specifier = ">=0.22" },
+    { name = "httpx", specifier = ">=0.24,<1" },
+]
+
+[[package]]
+name = "cnc-app-desktop"
+version = "0.1.0"
+source = { editable = "apps/desktop" }
+dependencies = [
+    { name = "cnc-desktop" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "celery-types" },
+    { name = "pyqt5-stubs" },
+    { name = "pytest-qt" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "cnc-desktop", editable = "desktop" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "celery-types", specifier = ">=0.22" },
+    { name = "pyqt5-stubs", specifier = ">=5.15" },
+    { name = "pytest-qt", specifier = ">=4.4,<5" },
 ]
 
 [[package]]
@@ -384,7 +441,7 @@ name = "cnc-desktop"
 version = "0.1.0"
 source = { editable = "desktop" }
 dependencies = [
-    { name = "cnc-core" },
+    { name = "cnc-manager" },
     { name = "pyqt5" },
 ]
 
@@ -397,7 +454,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cnc-core", editable = "core" },
+    { name = "cnc-manager", editable = "manager" },
     { name = "pyqt5", specifier = "==5.15.11" },
 ]
 
@@ -418,6 +475,31 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "cnc-core", editable = "core" }]
+
+[[package]]
+name = "cnc-manager"
+version = "0.1.0"
+source = { editable = "manager" }
+dependencies = [
+    { name = "cnc-core" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "celery-types" },
+    { name = "pyqt5-stubs" },
+    { name = "pytest-qt" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "cnc-core", editable = "core" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "celery-types", specifier = ">=0.22" },
+    { name = "pyqt5-stubs", specifier = ">=5.15" },
+    { name = "pytest-qt", specifier = ">=4.4,<5" },
+]
 
 [[package]]
 name = "cnc-worker"

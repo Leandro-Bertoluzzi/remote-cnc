@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Desktop app for CNC admin (PyQt5)"
 requires-python = ">=3.12"
 dependencies = [
-    "cnc-core",
+    "cnc-manager",
     "PyQt5==5.15.11",
 ]
 
@@ -16,7 +16,7 @@ build-backend = "hatchling.build"
 packages = ["desktop"]
 
 [tool.uv.sources]
-cnc-core = { workspace = true }
+cnc-manager = { workspace = true }
 
 [tool.ty.environment]
 extra-paths = ["../tests"]

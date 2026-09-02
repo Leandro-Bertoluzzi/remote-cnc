@@ -10,7 +10,6 @@ via constructor arguments — never by importing singletons directly.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 
 from core.adapters.database.base import SessionLocal
 from core.adapters.database.file_repository import FileRepository
@@ -22,12 +21,6 @@ from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
 from core.adapters.logging.logger_factory import setup_stream_logger
 from core.adapters.worker.worker_client import WorkerClient
-from core.ports.db_session import SessionFactory
-from core.ports.file_storage import IFileStorage
-from core.ports.gateway_client import IGatewayClient
-from core.ports.logger import ILogger
-from core.ports.worker_client import IWorkerClient
-
 from desktop.application.asset_service import AssetService
 from desktop.application.device_service import DeviceService
 from desktop.application.file_service import FileService
@@ -36,38 +29,7 @@ from desktop.application.task_service import TaskService
 from desktop.application.tool_service import ToolService
 from desktop.application.user_service import UserService
 from desktop.config import config_manager, settings
-from desktop.ports.config_writer import IConfigWriter
-from desktop.ports.settings_reader import ISettingsReader
-
-
-@dataclass
-class AppContext:
-    """Container for shared infrastructure dependencies and application services.
-
-    Infrastructure ports are ``typing.Protocol`` instances; services are
-    instantiable classes injected here at composition time.
-    Concrete adapters are only referenced in ``create_app_context`` below.
-    """
-
-    # Infrastructure ports
-    gateway: IGatewayClient
-    worker: IWorkerClient
-    file_storage: IFileStorage
-    session_factory: SessionFactory
-    logger: ILogger
-
-    # Configuration ports
-    settings_reader: ISettingsReader
-    config_writer: IConfigWriter
-
-    # Application services
-    asset_service: AssetService
-    device_service: DeviceService
-    file_service: FileService
-    material_service: MaterialService
-    task_service: TaskService
-    tool_service: ToolService
-    user_service: UserService
+from desktop.context import AppContext
 
 
 def create_app_context() -> AppContext:

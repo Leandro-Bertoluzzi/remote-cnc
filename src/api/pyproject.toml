@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "REST API for CNC admin (FastAPI)"
 requires-python = ">=3.12"
 dependencies = [
-    "cnc-core",
+    "cnc-manager",
     "email-validator>=2.0,<3",
     "fastapi>=0.104,<1",
     "httpx>=0.24,<1",
@@ -22,7 +22,7 @@ build-backend = "hatchling.build"
 packages = ["api"]
 
 [tool.uv.sources]
-cnc-core = { workspace = true }
+cnc-manager = { workspace = true }
 
 [dependency-groups]
 dev = [

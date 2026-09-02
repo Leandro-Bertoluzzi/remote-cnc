@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING
 
 from core.domain.cnc import ParserState, Status
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
-from desktop.app_context import AppContext
 from desktop.application.connectionErrors import get_friendly_error_message
+from desktop.context import AppContext
 from desktop.presentation.components.buttons.MenuButton import MenuButton
 from desktop.presentation.components.CodeEditor import CodeEditor
 from desktop.presentation.components.containers.ButtonGrid import ButtonGrid
