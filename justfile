@@ -33,7 +33,7 @@ COMPOSE_PROFILES_ALL := "--profile=simulator --profile=device --profile=ngrok"
 
 # Existing modules in the repo (regular expression)
 [private]
-MODULES := "|api|core|desktop|gateway|worker"
+MODULES := "api|core|desktop|gateway|manager|worker"
 
 # Available deployed modules in Docker hub
 [private]
