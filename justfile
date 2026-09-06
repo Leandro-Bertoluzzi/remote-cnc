@@ -145,19 +145,19 @@ start-worker mode="":
 
 # Apply pending Alembic migrations (local)
 [group('database')]
-[working-directory: 'src/core']
+[working-directory: 'src/migrations']
 db-upgrade:
     uv run alembic upgrade head
 
 # Revert last Alembic migration (local)
 [group('database')]
-[working-directory: 'src/core']
+[working-directory: 'src/migrations']
 db-downgrade:
     uv run alembic downgrade -1
 
 # Auto-generate a new Alembic revision — usage: just db-revision "description"
 [group('database')]
-[working-directory: 'src/core']
+[working-directory: 'src/migrations']
 db-revision msg:
     uv run alembic revision --autogenerate -m "{{msg}}"
 
@@ -169,13 +169,13 @@ db-seed:
 
 # Export the full DB schema as a SQL script (outputs to src/core/db_schema.sql)
 [group('database')]
-[working-directory: 'src/core']
+[working-directory: 'src/migrations']
 db-generate-schema:
     uv run alembic upgrade head --sql > db_schema.sql
 
 # Export SQL for a range of migrations — usage: just db-generate-migration <start_rev> <end_rev>
 [group('database')]
-[working-directory: 'src/core']
+[working-directory: 'src/migrations']
 db-generate-migration start end:
     uv run alembic upgrade {{start}}:{{end}} --sql > migration.sql
 

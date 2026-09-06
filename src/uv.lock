@@ -262,6 +262,7 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "alembic" },
     { name = "celery-types" },
     { name = "cnc-api" },
     { name = "cnc-app-api" },
@@ -287,6 +288,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "alembic", specifier = ">=1.10,<2" },
     { name = "celery-types", specifier = ">=0.22" },
     { name = "cnc-api", editable = "api" },
     { name = "cnc-app-api", editable = "apps/api" },
@@ -413,11 +415,6 @@ dependencies = [
     { name = "watchdog" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "alembic" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "bcrypt", specifier = ">=3.2,<4" },
@@ -432,9 +429,6 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0,<3" },
     { name = "watchdog" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "alembic", specifier = ">=1.10,<2" }]
 
 [[package]]
 name = "cnc-desktop"

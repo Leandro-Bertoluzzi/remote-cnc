@@ -79,7 +79,6 @@ class GcodeRenderer:
 
     def _plot_model(self, axes: Axes3D):
         for polyline in self.model.polylines:
-
             if polyline.type == MovementType.MACHINING:
                 self._plot_polyline(
                     axes,
@@ -90,10 +89,7 @@ class GcodeRenderer:
                     solid_joinstyle="round",
                 )
 
-            elif (
-                polyline.type == MovementType.TRAVEL
-                and self.moves
-            ):
+            elif polyline.type == MovementType.TRAVEL and self.moves:
                 self._plot_polyline(
                     axes,
                     polyline,
@@ -125,7 +121,7 @@ class GcodeRenderer:
 
         elev, azim, focal_length = self._compute_camera()
         axes.view_init(elev=elev, azim=azim)
-        #axes.set_proj_type("persp", focal_length=focal_length)
+        # axes.set_proj_type("persp", focal_length=focal_length)
 
         if self.model and self.model.bbox:
             bbox = self.model.bbox
@@ -166,8 +162,8 @@ class GcodeRenderer:
         # Convert eye vector (-d, -d, d*0.85) to spherical angles
         ex, ey, ez = -distance, -distance, distance * 0.85
         r_xy = math.sqrt(ex**2 + ey**2)
-        elev = math.degrees(math.atan2(ez, r_xy))   # 35°
-        azim = math.degrees(math.atan2(ey, ex))     # -135°
+        elev = math.degrees(math.atan2(ez, r_xy))  # 35°
+        azim = math.degrees(math.atan2(ey, ex))  # -135°
 
         # Wider FOV for larger models (simulates stepping back)
         focal_length = _base_distance / distance

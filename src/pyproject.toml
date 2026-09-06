@@ -46,6 +46,8 @@ dev = [
     # Linting & type checking
     "ruff>=0.15.6",
     "ty>=0.0.23",
+    # DB management
+    "alembic>=1.10,<2",
 ]
 
 [tool.pytest.ini_options]
