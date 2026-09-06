@@ -24,9 +24,9 @@ In case you want to use just the strictly necessary files, the needed files and 
     ├── src/                    # Source files
     │   ├── pyproject.toml      # Workspace root
     │   ├── uv.lock             # Lockfile
-    │   └── desktop/            # Desktop app package
-    ├── desktop/
-    │   └── config.ini          # Desktop app config
+    │   ├── apps/desktop/       # Desktop app
+    │   ├── core/               # CNC-core package
+    │   └── manager/            # Manager package
     ├── deployment
     │   └── rpi
     │       └── requirements.desktop.txt

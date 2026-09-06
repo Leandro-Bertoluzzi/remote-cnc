@@ -57,13 +57,16 @@ def make_mock_context() -> AppContext:
     Using this helper avoids ``default_factory`` calls that would try to
     instantiate concrete adapters at import time during tests.
     """
+    mock_settings_reader = MagicMock(spec=ISettingsReader)
+    mock_settings_reader.user_id = 1
+
     return AppContext(
         gateway=MagicMock(spec=IGatewayClient),
         worker=MagicMock(spec=IWorkerClient),
         file_storage=MagicMock(spec=IFileStorage),
         session_factory=MagicMock(),
         logger=MagicMock(),
-        settings_reader=MagicMock(spec=ISettingsReader),
+        settings_reader=mock_settings_reader,
         config_writer=MagicMock(spec=IConfigWriter),
         asset_service=MagicMock(spec=AssetService),
         device_service=MagicMock(spec=DeviceService),

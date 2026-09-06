@@ -21,7 +21,6 @@ from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
 from core.adapters.logging.logger_factory import setup_stream_logger
 from core.adapters.worker.worker_client import WorkerClient
-from desktop.config import config_manager, settings
 from desktop.context import AppContext
 from manager.application.asset_service import AssetService
 from manager.application.device_service import DeviceService
@@ -30,6 +29,8 @@ from manager.application.material_service import MaterialService
 from manager.application.task_service import TaskService
 from manager.application.tool_service import ToolService
 from manager.application.user_service import UserService
+
+from apps.desktop.config import config_manager, settings
 
 
 def create_app_context() -> AppContext:

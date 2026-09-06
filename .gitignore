@@ -27,7 +27,7 @@ gcode_files/
 thumbnails/
 
 # Desktop runtime configuration
-src/desktop/desktop/config.ini
+src/apps/desktop/config.ini
 
 # Log files
 *.log

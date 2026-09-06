@@ -1,5 +1,5 @@
 ; Desktop application configuration template.
-; Copy this file to src/desktop/desktop/config.ini and adjust the values
+; Copy this file to src/apps/desktop/config.ini and adjust the values
 ; for your environment.
 
 [general]

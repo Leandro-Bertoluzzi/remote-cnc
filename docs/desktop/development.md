@@ -26,7 +26,7 @@ $ just sync
 $ cp .env.example .env
 
 # 4. Copy and configure the desktop config file
-$ cp desktop/config.ini.example src/desktop/desktop/config.ini
+$ cp src/apps/desktop/config.ini.example src/apps/desktop/config.ini
 ```
 
 # Run the app
@@ -35,10 +35,10 @@ Once dependencies are installed, every time you want to start the app run:
 
 ```bash
 # Start the app
-$ just start-desktop
+$ just start desktop
 
 # Or start with auto-reload on file changes
-$ just start-desktop-watch
+$ just start desktop watch
 ```
 
 ## Start additional services
