@@ -1,6 +1,7 @@
 """Application service for File domain operations."""
 
 from collections.abc import Callable
+from typing import BinaryIO
 
 from core.application.file_manager import FileManager
 from core.domain.entities import File
@@ -33,8 +34,38 @@ class FileService:
             repository = self._file_repo_factory(session)
             return repository.get_all_files()
 
+    def upload_file(self, user_id: int, name: str, file: BinaryIO) -> File:
+        """Upload a file, then schedule report/thumbnail generation.
+
+        If the broker is unavailable, the file is still created but the
+        report and thumbnail will not be generated. A warning is logged.
+        """
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._file_repo_factory(session)
+            file_manager = FileManager(repository, self._storage)
+            file = file_manager.upload_file(user_id, name, file)
+
+        # Schedule background tasks — broker failure should not prevent file creation
+        if file.id is None:
+            self._logger.error(
+                "Archivo creado sin ID - no se puede programar generación de reporte/thumbnail"
+            )
+            return file
+
+        try:
+            self._worker.generate_file_report(file.id)
+            self._worker.create_thumbnail(file.id)
+        except Exception:
+            self._logger.warning(
+                "No se pudo programar la generación de reporte/thumbnail para archivo %s. "
+                "El archivo fue creado correctamente.",
+                file.id,
+            )
+
+        return file
+
     def create_file(self, user_id: int, name: str, origin_path: str) -> File:
-        """Create a file in DB + filesystem, then schedule report/thumbnail generation.
+        """Create a file, then schedule report/thumbnail generation.
 
         If the broker is unavailable, the file is still created but the
         report and thumbnail will not be generated. A warning is logged.

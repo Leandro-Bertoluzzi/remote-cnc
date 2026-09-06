@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 from core.domain.entities import Task
 from core.domain.task import TaskStatus
-from desktop.application.task_service import TaskService
+from manager.application.task_service import TaskService
 
 
 class TestTaskService:

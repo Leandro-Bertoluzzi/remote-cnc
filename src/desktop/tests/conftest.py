@@ -5,19 +5,19 @@ import pytest
 from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
 from core.ports.worker_client import IWorkerClient
-from desktop.application.asset_service import AssetService
-from desktop.application.device_service import DeviceService
-from desktop.application.file_service import FileService
-from desktop.application.material_service import MaterialService
-from desktop.application.task_service import TaskService
-from desktop.application.tool_service import ToolService
-from desktop.application.user_service import UserService
 from desktop.context import AppContext
 from desktop.ports.config_writer import IConfigWriter
 from desktop.ports.settings_reader import ISettingsReader
 from desktop.presentation.components.gatewayMonitor import GatewayMonitor
 from desktop.presentation.MainWindow import MainWindow
 from desktop.presentation.views.BaseListView import BaseListView
+from manager.application.asset_service import AssetService
+from manager.application.device_service import DeviceService
+from manager.application.file_service import FileService
+from manager.application.material_service import MaterialService
+from manager.application.task_service import TaskService
+from manager.application.tool_service import ToolService
+from manager.application.user_service import UserService
 from PyQt5.QtWidgets import QGridLayout, QLayout, QWidget
 from pytest_mock.plugin import MockerFixture
 

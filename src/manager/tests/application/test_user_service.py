@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from desktop.application.user_service import UserService
+from manager.application.user_service import UserService
 
 
 class TestUserService:
