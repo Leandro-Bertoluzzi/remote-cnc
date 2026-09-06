@@ -39,7 +39,7 @@ token_hex(64)
 Once dependencies are installed, you can run the API locally with auto-reload:
 
 ```bash
-$ just start-api
+$ just start api
 ```
 
 Open [http://localhost:8000](http://localhost:8000) with your browser to see the result.

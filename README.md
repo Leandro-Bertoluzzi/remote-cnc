@@ -92,6 +92,9 @@ This is a **uv workspace** monorepo. All Python source lives under `src/`:
 src/
 ├── pyproject.toml             # Workspace root (virtual)
 ├── uv.lock                    # Single lockfile for the whole workspace
+├── migrations/                # Database migrations
+│   ├── alembic/
+│   └── alembic.ini
 ├── core/                      # Shared kernel (domain, ports, adapters)
 │   ├── pyproject.toml
 │   ├── core/
@@ -101,8 +104,6 @@ src/
 │   │   ├── config/
 │   │   ├── schemas/
 │   │   └── utilities/
-│   ├── alembic/               # Database migrations
-│   └── alembic.ini
 ├── api/                       # FastAPI REST API
 │   ├── pyproject.toml
 │   └── api/
@@ -155,11 +156,7 @@ The `justfile` at the root of the repository contains all common development and
 | `format`                              | quality    | Run formatter                                 |
 | `typecheck`                           | quality    | Run type checker                              |
 | `check`                               | quality    | lint + typecheck + test                       |
-| `start-api`                           | run        | Start the API with uvicorn (dev)              |
-| `start-desktop`                       | run        | Start the desktop (PyQt5) app                 |
-| `start-desktop-watch`                 | run        | Desktop app with auto-reload                  |
-| `start-worker`                        | run        | Start the Celery worker                       |
-| `start-worker-watch`                  | run        | Celery worker with auto-reload                |
+| `start <app> (watch)`                 | run        | Start an app, optionally with auto-reload     |
 | `db-upgrade`                          | database   | Apply pending migrations (local)              |
 | `db-downgrade`                        | database   | Revert last migration (local)                 |
 | `db-revision <msg>`                   | database   | Auto-generate a new migration                 |
@@ -219,13 +216,13 @@ Open [http://localhost:8000](http://localhost:8000) with your browser to check i
 
 ```bash
 # Start the API
-$ just start-api
+$ just start api
 
 # Start the desktop app
-$ just start-desktop
+$ just start desktop
 
 # Start the Celery worker
-$ just start-worker
+$ just start worker
 ```
 
 You can find further information in each subproject's docs folder:
@@ -360,13 +357,13 @@ The CNC gateway manages serial communication with the physical CNC device. It sh
 In case you prefer to run it without containers, you can use the following recipe.
 
 ```bash
-$ just start-worker
+$ just start worker
 ```
 
 Optionally, if you are going to make changes in the worker's code and want to see them in real time, you can start the Celery worker with auto-reload.
 
 ```bash
-$ just start-worker-watch
+$ just start worker watch
 ```
 
 ### Start the Celery worker manually (Windows)
