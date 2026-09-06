@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from core.ports.gateway_client import IGatewayClient
 from core.ports.worker_client import IWorkerClient
-from desktop.application.device_service import DeviceService
+from manager.application.device_service import DeviceService
 
 
 def _make_service(

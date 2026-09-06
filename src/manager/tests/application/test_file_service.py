@@ -3,13 +3,13 @@ from unittest.mock import ANY, MagicMock
 from core.domain.entities import File
 from core.ports.file_storage import IFileStorage
 from core.ports.worker_client import IWorkerClient
-from desktop.application.file_service import FileService
+from manager.application.file_service import FileService
 from pytest_mock.plugin import MockerFixture
 
 
 class TestFileService:
     @staticmethod
-    def _make_service_and_repo(mocker: MockerFixture, worker=None, storage=None):
+    def _make_service_and_repo(worker=None, storage=None):
         session = MagicMock()
         session_factory = MagicMock()
         session_factory.return_value.__enter__.return_value = session
@@ -30,7 +30,7 @@ class TestFileService:
         return service, session, repository, mock_worker, mock_storage
 
     def test_get_all_files(self, mocker: MockerFixture):
-        service, _, repository, *_ = self._make_service_and_repo(mocker)
+        service, _, repository, *_ = self._make_service_and_repo()
         expected_files = [MagicMock(spec=File), MagicMock(spec=File)]
         repository.get_all_files.return_value = expected_files
 
@@ -40,8 +40,8 @@ class TestFileService:
         repository.get_all_files.assert_called_once_with()
 
     def test_rename_file(self, mocker: MockerFixture):
-        service, _, repository, *_ = self._make_service_and_repo(mocker)
-        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
+        service, _, repository, *_ = self._make_service_and_repo()
+        file_manager_cls = mocker.patch("manager.application.file_service.FileManager")
         file_obj = MagicMock(spec=File)
 
         service.rename_file(user_id=5, file=file_obj, new_name="renamed.gcode")
@@ -52,8 +52,8 @@ class TestFileService:
         )
 
     def test_remove_file(self, mocker: MockerFixture):
-        service, _, repository, *_ = self._make_service_and_repo(mocker)
-        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
+        service, _, repository, *_ = self._make_service_and_repo()
+        file_manager_cls = mocker.patch("manager.application.file_service.FileManager")
         file_obj = MagicMock(spec=File)
 
         service.remove_file(file_obj)
@@ -63,8 +63,8 @@ class TestFileService:
 
     def test_create_file_schedules_worker_tasks(self, mocker: MockerFixture):
         worker = MagicMock(spec=IWorkerClient)
-        service, _, repository, *_ = self._make_service_and_repo(mocker, worker=worker)
-        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
+        service, _, repository, *_ = self._make_service_and_repo(worker=worker)
+        file_manager_cls = mocker.patch("manager.application.file_service.FileManager")
         created_file = MagicMock(spec=File)
         created_file.id = 10
         file_manager_cls.return_value.create_file.return_value = created_file
@@ -82,8 +82,8 @@ class TestFileService:
     def test_create_file_worker_failure_still_returns_file(self, mocker: MockerFixture):
         worker = MagicMock(spec=IWorkerClient)
         worker.generate_file_report.side_effect = RuntimeError("broker unavailable")
-        service, _, repository, *_ = self._make_service_and_repo(mocker, worker=worker)
-        file_manager_cls = mocker.patch("desktop.application.file_service.FileManager")
+        service, _, repository, *_ = self._make_service_and_repo(worker=worker)
+        file_manager_cls = mocker.patch("manager.application.file_service.FileManager")
         created_file = MagicMock(spec=File)
         created_file.id = 10
         file_manager_cls.return_value.create_file.return_value = created_file
@@ -93,4 +93,41 @@ class TestFileService:
         assert result == created_file
         file_manager_cls.assert_called_once_with(repository, ANY)
         worker.generate_file_report.assert_called_once_with(10)
+        worker.create_thumbnail.assert_not_called()
+
+    def test_upload_file_schedules_worker_tasks(self, mocker: MockerFixture):
+        worker = MagicMock(spec=IWorkerClient)
+        service, _, repository, *_ = self._make_service_and_repo(worker=worker)
+        file_manager_cls = mocker.patch("manager.application.file_service.FileManager")
+        uploaded_file = MagicMock(spec=File)
+        uploaded_file.id = 20
+        file_manager_cls.return_value.upload_file.return_value = uploaded_file
+
+        result = service.upload_file(1, "piece.gcode", MagicMock())
+
+        assert result == uploaded_file
+        file_manager_cls.assert_called_once_with(repository, ANY)
+        file_manager_cls.return_value.upload_file.assert_called_once_with(
+            1, "piece.gcode", ANY
+        )
+        worker.generate_file_report.assert_called_once_with(20)
+        worker.create_thumbnail.assert_called_once_with(20)
+
+    def test_upload_file_worker_failure_still_returns_file(self, mocker: MockerFixture):
+        worker = MagicMock(spec=IWorkerClient)
+        worker.generate_file_report.side_effect = RuntimeError("broker unavailable")
+        service, _, repository, *_ = self._make_service_and_repo(worker=worker)
+        file_manager_cls = mocker.patch("manager.application.file_service.FileManager")
+        uploaded_file = MagicMock(spec=File)
+        uploaded_file.id = 20
+        file_manager_cls.return_value.upload_file.return_value = uploaded_file
+
+        result = service.upload_file(1, "piece.gcode", MagicMock())
+
+        assert result == uploaded_file
+        file_manager_cls.assert_called_once_with(repository, ANY)
+        file_manager_cls.return_value.upload_file.assert_called_once_with(
+            1, "piece.gcode", ANY
+        )
+        worker.generate_file_report.assert_called_once_with(20)
         worker.create_thumbnail.assert_not_called()

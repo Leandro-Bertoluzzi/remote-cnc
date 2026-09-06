@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from desktop.application.material_service import MaterialService
+from manager.application.material_service import MaterialService
 
 
 class TestMaterialService:

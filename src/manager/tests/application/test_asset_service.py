@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from desktop.application.asset_service import AssetService
+from manager.application.asset_service import AssetService
 
 
 class TestAssetService:

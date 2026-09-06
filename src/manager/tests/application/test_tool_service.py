@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from desktop.application.tool_service import ToolService
+from manager.application.tool_service import ToolService
 
 
 class TestToolService:
