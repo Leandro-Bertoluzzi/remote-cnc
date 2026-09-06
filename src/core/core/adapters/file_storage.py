@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import IO
 
-from core.domain.exceptions import FileSystemError, InvalidFile
+from core.domain.exceptions import FileStorageError, InvalidFile
 from core.utilities.files import ALLOWED_FILE_EXTENSIONS
 
 
@@ -45,7 +45,7 @@ class FileSystemStorage:
             with open(file_path, "r") as content:
                 return content.read()
         except Exception as error:
-            raise FileSystemError(f"There was an error reading the file: {error}") from error
+            raise FileStorageError(f"There was an error reading the file: {error}") from error
 
     def save_file(self, user_id: int, file: IO, filename: str) -> Path:
         """Persist *file* under the user's directory and return the final path."""
@@ -57,7 +57,7 @@ class FileSystemStorage:
             with open(destination, "wb") as buffer:
                 shutil.copyfileobj(file, buffer)
         except Exception as error:
-            raise FileSystemError(
+            raise FileStorageError(
                 f"There was an error writing the file in the file system: {error}"
             ) from error
 
@@ -72,7 +72,7 @@ class FileSystemStorage:
         try:
             shutil.copy(original_path, destination)
         except Exception as error:
-            raise FileSystemError(
+            raise FileStorageError(
                 f"There was an error writing the file in the file system: {error}"
             ) from error
 
@@ -89,7 +89,7 @@ class FileSystemStorage:
             new_file_path = user_folder / new_filename
             current_file_path.rename(new_file_path)
         except Exception as error:
-            raise FileSystemError(
+            raise FileStorageError(
                 f"There was an error renaming the file in the file system: {error}"
             ) from error
 
@@ -102,7 +102,7 @@ class FileSystemStorage:
             file_whole_path = user_folder / filename
             file_whole_path.unlink(missing_ok=True)
         except Exception as error:
-            raise FileSystemError(
+            raise FileStorageError(
                 f"There was an error removing the file from the file system: {error}"
             ) from error
 

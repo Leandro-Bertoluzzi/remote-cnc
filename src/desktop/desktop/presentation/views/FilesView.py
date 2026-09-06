@@ -4,7 +4,7 @@ from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
     EntityNotFoundError,
-    FileSystemError,
+    FileStorageError,
     InvalidFile,
     PersistenceError,
 )
@@ -54,7 +54,7 @@ class FilesView(BaseListView):
             self._context.file_service.rename_file(settings.user_id, file, new_name)
         except DuplicatedFileNameError as error:
             self.showWarning("Nombre repetido", str(error))
-        except (InvalidFile, FileSystemError) as error:
+        except (InvalidFile, FileStorageError) as error:
             self.showError("Error de guardado", str(error))
         except (PersistenceError, EntityNotFoundError) as error:
             self.showError("Error de base de datos", str(error))
@@ -64,7 +64,7 @@ class FilesView(BaseListView):
     def on_file_remove(self, file):
         try:
             self._context.file_service.remove_file(file)
-        except FileSystemError as error:
+        except FileStorageError as error:
             self.showError("Error de borrado", str(error))
         except (PersistenceError, EntityNotFoundError) as error:
             self.showError("Error de base de datos", str(error))
@@ -119,7 +119,7 @@ class FilesView(BaseListView):
         except (DuplicatedFileNameError, DuplicatedFileError) as error:
             self.showWarning("Archivo repetido", str(error))
             return
-        except (InvalidFile, FileSystemError) as error:
+        except (InvalidFile, FileStorageError) as error:
             self.showError("Error de guardado", str(error))
             return
         except PersistenceError as error:
