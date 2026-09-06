@@ -107,9 +107,7 @@ class TestFileService:
 
         assert result == uploaded_file
         file_manager_cls.assert_called_once_with(repository, ANY)
-        file_manager_cls.return_value.upload_file.assert_called_once_with(
-            1, "piece.gcode", ANY
-        )
+        file_manager_cls.return_value.upload_file.assert_called_once_with(1, "piece.gcode", ANY)
         worker.generate_file_report.assert_called_once_with(20)
         worker.create_thumbnail.assert_called_once_with(20)
 
@@ -126,8 +124,6 @@ class TestFileService:
 
         assert result == uploaded_file
         file_manager_cls.assert_called_once_with(repository, ANY)
-        file_manager_cls.return_value.upload_file.assert_called_once_with(
-            1, "piece.gcode", ANY
-        )
+        file_manager_cls.return_value.upload_file.assert_called_once_with(1, "piece.gcode", ANY)
         worker.generate_file_report.assert_called_once_with(20)
         worker.create_thumbnail.assert_not_called()

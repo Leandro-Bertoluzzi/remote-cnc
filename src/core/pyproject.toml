@@ -23,8 +23,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["core"]
-
-[dependency-groups]
-dev = [
-    "alembic>=1.10,<2",
-]

@@ -82,9 +82,7 @@ class GcodeAnalyser:
             # Normalize G and M commands to two-digit command numbers.
             line = re.sub(
                 r"\b([GM])(\d+)\b",
-                lambda match: (
-                    f"{match.group(1).upper()}{int(match.group(2)):02d}"
-                ),
+                lambda match: f"{match.group(1).upper()}{int(match.group(2)):02d}",
                 line,
                 flags=re.IGNORECASE,
             )
