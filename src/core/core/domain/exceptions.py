@@ -54,5 +54,5 @@ class InvalidFile(ValidationError):
     pass
 
 
-class FileSystemError(DomainError):
+class FileStorageError(DomainError):
     pass

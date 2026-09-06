@@ -4,7 +4,7 @@ from core.domain.exceptions import (
     DuplicatedFileError,
     DuplicatedFileNameError,
     EntityNotFoundError,
-    FileSystemError,
+    FileStorageError,
     PersistenceError,
 )
 from desktop.config import settings
@@ -109,7 +109,7 @@ class TestFilesView:
         [
             (DuplicatedFileNameError("mocked error"), "warning"),
             (DuplicatedFileError("mocked error"), "warning"),
-            (FileSystemError("mocked error"), "critical"),
+            (FileStorageError("mocked error"), "critical"),
             (PersistenceError("mocked error"), "critical"),
         ],
     )
@@ -147,7 +147,7 @@ class TestFilesView:
         "error, expected_method",
         [
             (DuplicatedFileNameError("e"), "showWarning"),
-            (FileSystemError("e"), "showError"),
+            (FileStorageError("e"), "showError"),
             (PersistenceError("e"), "showError"),
             (EntityNotFoundError("e"), "showError"),
         ],
