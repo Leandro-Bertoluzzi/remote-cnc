@@ -21,7 +21,7 @@ from core.adapters.file_storage import FileSystemStorage
 from core.adapters.gateway.gateway_client import GatewayClient
 from core.adapters.logging.logger_factory import setup_stream_logger
 from core.adapters.worker.worker_client import WorkerClient
-from desktop.context import AppContext
+from manager.adapters.desktop.context import AppContext
 from manager.application.asset_service import AssetService
 from manager.application.device_service import DeviceService
 from manager.application.file_service import FileService

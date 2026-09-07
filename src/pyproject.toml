@@ -9,12 +9,11 @@ package = false
 override-dependencies = ["PyQt5-Qt5==5.15.2"]
 
 [tool.uv.workspace]
-members = ["api", "core", "desktop", "gateway", "manager", "worker", "apps/api", "apps/desktop"]
+members = ["api", "core", "gateway", "manager", "worker", "apps/api", "apps/desktop"]
 
 [tool.uv.sources]
 cnc-api    = { workspace = true }
 cnc-core    = { workspace = true }
-cnc-desktop = { workspace = true }
 cnc-gateway = { workspace = true }
 cnc-manager = { workspace = true }
 cnc-worker  = { workspace = true }
@@ -26,7 +25,6 @@ dev = [
     # Workspace members (installed as editable)
     "cnc-api",
     "cnc-core",
-    "cnc-desktop",
     "cnc-gateway",
     "cnc-manager",
     "cnc-worker",

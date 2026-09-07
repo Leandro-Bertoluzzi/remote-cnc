@@ -19,7 +19,7 @@ import configparser
 from pathlib import Path
 from typing import Any
 
-from desktop.adapters.configManager import DynamicConfigManager
+from apps.desktop.adapters.configManager import DynamicConfigManager
 from pydantic import computed_field
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
