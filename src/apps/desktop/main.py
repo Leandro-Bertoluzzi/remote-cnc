@@ -3,7 +3,7 @@
 import os
 import sys
 
-from desktop.presentation.MainWindow import MainWindow
+from manager.adapters.desktop.presentation.MainWindow import MainWindow
 from PyQt5.QtWidgets import QApplication
 
 from apps.desktop.context import create_app_context

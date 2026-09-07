@@ -1,0 +1,116 @@
+from typing import TYPE_CHECKING
+
+from core.domain.cnc import ParserState, Status
+from manager.adapters.desktop.presentation.components.buttons.MenuButton import MenuButton
+from manager.adapters.desktop.presentation.components.ControllerStatus import ControllerStatus
+from manager.adapters.desktop.presentation.components.gatewayMonitor import GatewayMonitor
+from manager.adapters.desktop.presentation.components.TaskProgress import TaskProgress
+from manager.adapters.desktop.presentation.views.BaseView import BaseView
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
+
+if TYPE_CHECKING:
+    from manager.adapters.desktop.presentation.MainWindow import MainWindow  # pragma: no cover
+
+
+class MonitorView(BaseView):
+    def __init__(
+        self, parent: "MainWindow", gateway_monitor: GatewayMonitor | None = None, **kwargs
+    ):
+        super(MonitorView, self).__init__(parent, **kwargs)
+        self._gateway_monitor = gateway_monitor
+
+        # STATE MANAGEMENT
+        try:
+            self.device_busy = self._context.device_service.is_worker_busy()
+        except Exception:
+            self._context.logger.warning("Could not check worker status — assuming idle")
+            self.device_busy = False
+
+        # UI
+        self.setup_ui()
+
+        # GRBL/WORKER SYNC
+        self.connect_worker()
+
+    # SETUP METHODS
+
+    def setup_ui(self):
+        """Setup UI"""
+        layout = QGridLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
+
+        self.status_monitor = ControllerStatus(parent=self)
+        self.task_progress = TaskProgress(parent=self)
+
+        ############################################
+        # 0      STATUS      |                     #
+        #   ---------------- |                     #
+        # 1     PROGRESS     |                     #
+        #   ---------------- |                     #
+        # 2                  |                     #
+        #   -------------------------------------- #
+        # 3               BTN_BACK                 #
+        ############################################
+
+        layout.addWidget(self.status_monitor, 0, 0, 1, 1, Qt.AlignTop)
+        layout.addWidget(self.task_progress, 1, 0, 1, 1)
+        if not self.device_busy:
+            self.status_monitor.setEnabled(False)
+            self.task_progress.setEnabled(False)
+
+        self.placeholder = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        layout.addItem(self.placeholder, 2, 0)
+
+        layout.addWidget(
+            MenuButton("Volver al menú", onClick=self.back_to_menu),
+            5,
+            0,
+            1,
+            2,
+            alignment=Qt.AlignCenter,
+        )
+
+    def connect_worker(self):
+        """Synchronizes the status monitor with the CNC worker."""
+        if self.device_busy and self._gateway_monitor is not None:
+            self._gateway_monitor.file_progress.connect(self.update_task_progress)
+            self._gateway_monitor.new_status.connect(self.update_controller_status)
+
+    # EVENTS
+
+    def closeEvent(self, a0: QCloseEvent):
+        """Disconnect signals before leaving the view."""
+        if self._gateway_monitor is not None:
+            try:
+                self._gateway_monitor.file_progress.disconnect(self.update_task_progress)
+                self._gateway_monitor.new_status.disconnect(self.update_controller_status)
+            except (RuntimeError, TypeError):
+                pass
+        super().closeEvent(a0)
+
+    # UI METHODS
+
+    def update_task_progress(self, sent_lines: int, processed_lines: int, total_lines: int):
+        self.task_progress.set_total(total_lines)
+        self.task_progress.set_progress(sent_lines, processed_lines)
+
+    def update_controller_status(self, controller_status: Status, grbl_parserstate: ParserState):
+        self.update_device_status(
+            controller_status,
+            grbl_parserstate.get("feedrate", 0.0),
+            grbl_parserstate.get("spindle", 0.0),
+            grbl_parserstate.get("tool", 0),
+        )
+
+    def update_device_status(
+        self, status: Status, feedrate: float, spindle: float, tool_index: int
+    ):
+        self.status_monitor.set_status(status)
+        self.status_monitor.set_feedrate(feedrate)
+        self.status_monitor.set_spindle(spindle)
+
+        tool = self._context.tool_service.get_tool_by_id(tool_index)
+        self.status_monitor.set_tool(tool)

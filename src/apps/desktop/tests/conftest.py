@@ -1,0 +1,113 @@
+from typing import cast
+from unittest.mock import MagicMock
+
+import pytest
+from core.ports.file_storage import IFileStorage
+from core.ports.gateway_client import IGatewayClient
+from core.ports.worker_client import IWorkerClient
+from manager.adapters.desktop.context import AppContext
+from manager.adapters.desktop.ports.config_writer import IConfigWriter
+from manager.adapters.desktop.ports.settings_reader import ISettingsReader
+from manager.adapters.desktop.presentation.components.gatewayMonitor import GatewayMonitor
+from manager.adapters.desktop.presentation.MainWindow import MainWindow
+from manager.adapters.desktop.presentation.views.BaseListView import BaseListView
+from manager.application.asset_service import AssetService
+from manager.application.device_service import DeviceService
+from manager.application.file_service import FileService
+from manager.application.material_service import MaterialService
+from manager.application.task_service import TaskService
+from manager.application.tool_service import ToolService
+from manager.application.user_service import UserService
+from PyQt5.QtWidgets import QGridLayout, QLayout, QWidget
+from pytest_mock.plugin import MockerFixture
+
+
+# Helper fixtures
+class Helpers:
+    @staticmethod
+    def count_widgets(layout: QLayout, widgetType) -> int:
+        count = 0
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if isinstance(widget, widgetType):
+                count = count + 1
+        return count
+
+    @staticmethod
+    def count_grid_widgets(layout: QGridLayout, widgetType) -> int:
+        count = 0
+        for index in range(20):
+            x, y, *_ = layout.getItemPosition(index)
+            if not layout.itemAtPosition(x, y):
+                break
+            widget = layout.itemAtPosition(x, y).widget()
+            if isinstance(widget, widgetType):
+                count = count + 1
+        return count
+
+
+@pytest.fixture
+def helpers():
+    return Helpers
+
+
+def make_mock_context() -> AppContext:
+    """Return an ``AppContext`` where every port and service is a ``MagicMock``.
+
+    Using this helper avoids ``default_factory`` calls that would try to
+    instantiate concrete adapters at import time during tests.
+    """
+    mock_settings_reader = MagicMock(spec=ISettingsReader)
+    mock_settings_reader.user_id = 1
+
+    return AppContext(
+        gateway=MagicMock(spec=IGatewayClient),
+        worker=MagicMock(spec=IWorkerClient),
+        file_storage=MagicMock(spec=IFileStorage),
+        session_factory=MagicMock(),
+        logger=MagicMock(),
+        settings_reader=mock_settings_reader,
+        config_writer=MagicMock(spec=IConfigWriter),
+        asset_service=MagicMock(spec=AssetService),
+        device_service=MagicMock(spec=DeviceService),
+        file_service=MagicMock(spec=FileService),
+        material_service=MagicMock(spec=MaterialService),
+        task_service=MagicMock(spec=TaskService),
+        tool_service=MagicMock(spec=ToolService),
+        user_service=MagicMock(spec=UserService),
+    )
+
+
+@pytest.fixture
+def mock_context() -> AppContext:
+    """Pytest fixture that provides a fully-mocked ``AppContext``."""
+    return make_mock_context()
+
+
+# Mock for UI elements
+
+
+@pytest.fixture
+def mock_window(mocker: MockerFixture):
+    """Create a mocked instance of the main window."""
+    window = QWidget()
+    window.addToolBar = mocker.Mock()
+    window.removeToolBar = mocker.Mock()
+    window.backToMenu = mocker.Mock()
+    window.changeView = mocker.Mock()
+    window._on_task_dispatched = mocker.Mock()
+    context = make_mock_context()
+    window._context = context
+    window.gateway_monitor = GatewayMonitor(context.gateway, context.logger)
+    return cast(MainWindow, window)
+
+
+@pytest.fixture
+def mock_view(mocker: MockerFixture):
+    """Create a mocked instance of the view containing a widget."""
+    view = QWidget()
+    view.refreshLayout = mocker.Mock()
+    view.showWarning = mocker.Mock()
+    view.showError = mocker.Mock()
+    view._context = make_mock_context()
+    return cast(BaseListView, view)
