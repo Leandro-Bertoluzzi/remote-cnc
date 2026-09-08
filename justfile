@@ -32,8 +32,11 @@ COMPOSE_PROFILES_DEV := "--profile=simulator"
 COMPOSE_PROFILES_ALL := "--profile=simulator --profile=device --profile=ngrok"
 
 # Existing modules in the repo (regular expression)
+# Modules := packages + apps
 [private]
 MODULES := "api|core|desktop|gateway|manager|worker"
+PACKAGES := "core|gateway|manager|worker"
+APPS := "api|desktop"
 
 # Available deployed modules in Docker hub
 [private]
@@ -74,7 +77,19 @@ fix-permissions:
 [working-directory: 'src']
 test module="":
     @echo "{{ if module =~ MODULES { "Testing module: " + module } else { error("Invalid module name. Must be one of: " + MODULES) } }}"
-    uv run pytest {{ if module != "" { if module == "core" { "tests/" } else { module + "/tests/" } } else { "" } }}
+    @just {{ if module =~ APPS { "test-app " + module } else if module =~ PACKAGES { "test-pkg " + module } else { "" } }}
+
+[group('quality')]
+[working-directory: 'src']
+[private]
+test-pkg package:
+    uv run pytest {{ package + "/tests/" }}
+
+[group('quality')]
+[working-directory: 'src']
+[private]
+test-app app:
+    uv run pytest {{ "apps/" + app + "/tests/" }}
 
 # Run linter
 [group('quality')]
