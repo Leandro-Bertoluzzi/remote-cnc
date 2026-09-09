@@ -3,9 +3,8 @@ import asyncio
 import redis.asyncio as aioredis
 from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from fastapi import APIRouter, HTTPException, Request
+from manager.adapters.api.middleware.authMiddleware import GetUserDep
 from sse_starlette.sse import EventSourceResponse
-
-from api.middleware.authMiddleware import GetUserDep
 
 monitorRoutes = APIRouter(prefix="/monitor", tags=["Monitor"])
 

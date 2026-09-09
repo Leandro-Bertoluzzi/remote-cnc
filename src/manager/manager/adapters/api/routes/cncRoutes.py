@@ -7,12 +7,11 @@ from core.domain.gateway import (
     ACTION_STOP,
 )
 from fastapi import APIRouter, Header, HTTPException
-
-from api.middleware.authMiddleware import GetAdminDep
-from api.middleware.gatewayMiddleware import GetGateway
-from api.schemas.cnc import CncCommand, CncJogCommand
-from api.schemas.general import GenericResponse
-from api.schemas.session import (
+from manager.adapters.api.middleware.authMiddleware import GetAdminDep
+from manager.adapters.api.middleware.gatewayMiddleware import GetGateway
+from manager.adapters.api.schemas.cnc import CncCommand, CncJogCommand
+from manager.adapters.api.schemas.general import GenericResponse
+from manager.adapters.api.schemas.session import (
     GatewayStateResponse,
     RealtimeRequest,
     SessionAcquireRequest,

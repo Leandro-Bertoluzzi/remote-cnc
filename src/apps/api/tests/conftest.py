@@ -1,9 +1,11 @@
-import api.middleware.authMiddleware as authMiddleware
-import api.middleware.dbMiddleware as dbMiddleware
+import manager.adapters.api.middleware.authMiddleware as authMiddleware
+import manager.adapters.api.middleware.dbMiddleware as dbMiddleware
 import pytest
-from api.main import app
-from api_db import TestingSession, test_admin, test_user
 from fastapi.testclient import TestClient
+
+from apps.api.main import app
+
+from .api_db import TestingSession, test_admin, test_user
 
 
 @pytest.fixture

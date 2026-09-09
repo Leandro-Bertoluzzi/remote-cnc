@@ -1,10 +1,9 @@
 from core.domain.worker import WorkerStatus
 from fastapi import APIRouter, HTTPException
-
-from api.middleware.authMiddleware import GetAdminDep, GetUserDep
-from api.middleware.gatewayMiddleware import GetGateway
-from api.middleware.workerMiddleware import GetWorker
-from api.schemas.worker import (
+from manager.adapters.api.middleware.authMiddleware import GetAdminDep, GetUserDep
+from manager.adapters.api.middleware.gatewayMiddleware import GetGateway
+from manager.adapters.api.middleware.workerMiddleware import GetWorker
+from manager.adapters.api.schemas.worker import (
     WorkerAvailableResponse,
     WorkerOnResponse,
     WorkerTaskResponse,

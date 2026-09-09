@@ -6,8 +6,7 @@ from core.adapters.file_storage import FileSystemStorage
 from core.application.file_manager import FileManager
 from core.config import FILES_FOLDER_PATH
 from fastapi import Depends
-
-from api.middleware.dbMiddleware import GetFileRepository
+from manager.adapters.api.middleware.dbMiddleware import GetFileRepository
 
 
 def get_file_manager(repository: GetFileRepository) -> FileManager:

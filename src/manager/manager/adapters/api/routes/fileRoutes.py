@@ -1,12 +1,11 @@
 from core.domain.types import FileReport
 from fastapi import APIRouter, HTTPException, UploadFile
-
-from api.middleware.authMiddleware import GetAdminDep, GetUserDep
-from api.middleware.dbMiddleware import GetFileRepository
-from api.middleware.fileManagerMiddleware import GetFileManager
-from api.middleware.workerMiddleware import GetWorker
-from api.schemas.files import FileContentResponse, FileResponse, FileUpdate
-from api.schemas.general import GenericResponse
+from manager.adapters.api.middleware.authMiddleware import GetAdminDep, GetUserDep
+from manager.adapters.api.middleware.dbMiddleware import GetFileRepository
+from manager.adapters.api.middleware.fileManagerMiddleware import GetFileManager
+from manager.adapters.api.middleware.workerMiddleware import GetWorker
+from manager.adapters.api.schemas.files import FileContentResponse, FileResponse, FileUpdate
+from manager.adapters.api.schemas.general import GenericResponse
 
 fileRoutes = APIRouter(prefix="/files", tags=["Files"])
 

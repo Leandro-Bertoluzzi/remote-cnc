@@ -1,9 +1,8 @@
 from fastapi import APIRouter
-
-from api.middleware.authMiddleware import GetAdminDep, GetUserDep
-from api.middleware.dbMiddleware import GetToolRepository
-from api.schemas.general import GenericResponse
-from api.schemas.tools import ToolRequest, ToolResponse
+from manager.adapters.api.middleware.authMiddleware import GetAdminDep, GetUserDep
+from manager.adapters.api.middleware.dbMiddleware import GetToolRepository
+from manager.adapters.api.schemas.general import GenericResponse
+from manager.adapters.api.schemas.tools import ToolRequest, ToolResponse
 
 toolRoutes = APIRouter(prefix="/tools", tags=["Tools"])
 

@@ -4,8 +4,7 @@ from core.domain.entities import User
 from core.utilities.security import verify_token
 from fastapi import Depends, HTTPException, Request
 from jwt import ExpiredSignatureError, InvalidSignatureError
-
-from api.middleware.dbMiddleware import GetUserRepository
+from manager.adapters.api.middleware.dbMiddleware import GetUserRepository
 
 
 def auth_user(request: Request, repository: GetUserRepository) -> User:

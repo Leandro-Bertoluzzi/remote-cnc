@@ -23,28 +23,31 @@ def get_db():
         database.close()
 
 
-def get_file_repository(db_session: DbSession) -> IFileRepository:
+# Type definition
+GetDbSession = Annotated[DbSession, Depends(get_db)]
+
+
+def get_file_repository(db_session: GetDbSession) -> IFileRepository:
     return FileRepository(db_session)
 
 
-def get_task_repository(db_session: DbSession) -> ITaskRepository:
+def get_task_repository(db_session: GetDbSession) -> ITaskRepository:
     return TaskRepository(db_session)
 
 
-def get_user_repository(db_session: DbSession) -> IUserRepository:
+def get_user_repository(db_session: GetDbSession) -> IUserRepository:
     return UserRepository(db_session)
 
 
-def get_material_repository(db_session: DbSession) -> IMaterialRepository:
+def get_material_repository(db_session: GetDbSession) -> IMaterialRepository:
     return MaterialRepository(db_session)
 
 
-def get_tool_repository(db_session: DbSession) -> IToolRepository:
+def get_tool_repository(db_session: GetDbSession) -> IToolRepository:
     return ToolRepository(db_session)
 
 
 # Type definitions
-GetDbSession = Annotated[DbSession, Depends(get_db)]
 GetFileRepository = Annotated[IFileRepository, Depends(get_file_repository)]
 GetTaskRepository = Annotated[ITaskRepository, Depends(get_task_repository)]
 GetUserRepository = Annotated[IUserRepository, Depends(get_user_repository)]

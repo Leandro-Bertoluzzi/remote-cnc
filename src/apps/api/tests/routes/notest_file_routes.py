@@ -1,7 +1,8 @@
-from conftest import TestingSession, engine, test_admin, test_user
 from core.adapters.database.base import Base
 from core.adapters.database.file_repository import FileRepository
 from core.adapters.database.user_repository import UserRepository
+
+from apps.api.tests.conftest import TestingSession, engine, test_admin, test_user
 
 
 class TestFileRoutes:
