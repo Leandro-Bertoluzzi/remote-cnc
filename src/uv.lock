@@ -5,7 +5,6 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "cnc-admin",
-    "cnc-api",
     "cnc-app-api",
     "cnc-app-desktop",
     "cnc-core",
@@ -263,7 +262,6 @@ source = { virtual = "." }
 dev = [
     { name = "alembic" },
     { name = "celery-types" },
-    { name = "cnc-api" },
     { name = "cnc-app-api" },
     { name = "cnc-app-desktop" },
     { name = "cnc-core" },
@@ -288,7 +286,6 @@ dev = [
 dev = [
     { name = "alembic", specifier = ">=1.10,<2" },
     { name = "celery-types", specifier = ">=0.22" },
-    { name = "cnc-api", editable = "api" },
     { name = "cnc-app-api", editable = "apps/api" },
     { name = "cnc-app-desktop", editable = "apps/desktop" },
     { name = "cnc-core", editable = "core" },
@@ -308,9 +305,9 @@ dev = [
 ]
 
 [[package]]
-name = "cnc-api"
+name = "cnc-app-api"
 version = "0.1.0"
-source = { editable = "api" }
+source = { editable = "apps/api" }
 dependencies = [
     { name = "cnc-manager" },
     { name = "email-validator" },
@@ -339,29 +336,6 @@ requires-dist = [
     { name = "sse-starlette", specifier = ">=2.1,<3" },
     { name = "uvicorn", specifier = ">=0.20,<1" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "celery-types", specifier = ">=0.22" },
-    { name = "httpx", specifier = ">=0.24,<1" },
-]
-
-[[package]]
-name = "cnc-app-api"
-version = "0.1.0"
-source = { editable = "apps/api" }
-dependencies = [
-    { name = "cnc-api" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "celery-types" },
-    { name = "httpx" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "cnc-api", editable = "api" }]
 
 [package.metadata.requires-dev]
 dev = [

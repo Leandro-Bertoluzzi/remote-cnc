@@ -4,21 +4,21 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from api.exceptions import register_exception_handlers
-from api.routes.cncRoutes import cncRoutes
-from api.routes.fileRoutes import fileRoutes
-from api.routes.logRoutes import logRoutes
-from api.routes.materialRoutes import materialRoutes
-from api.routes.monitorRoutes import monitorRoutes
-from api.routes.rootRoutes import rootRoutes
-from api.routes.taskRoutes import taskRoutes
-from api.routes.toolRoutes import toolRoutes
-from api.routes.userRoutes import userRoutes
-from api.routes.workerRoutes import workerRoutes
 from core.adapters.database.base import check_db_connection, dispose_db
 from core.adapters.logging.logger_factory import setup_stream_logger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from manager.adapters.api.exceptions import register_exception_handlers
+from manager.adapters.api.routes.cncRoutes import cncRoutes
+from manager.adapters.api.routes.fileRoutes import fileRoutes
+from manager.adapters.api.routes.logRoutes import logRoutes
+from manager.adapters.api.routes.materialRoutes import materialRoutes
+from manager.adapters.api.routes.monitorRoutes import monitorRoutes
+from manager.adapters.api.routes.rootRoutes import rootRoutes
+from manager.adapters.api.routes.taskRoutes import taskRoutes
+from manager.adapters.api.routes.toolRoutes import toolRoutes
+from manager.adapters.api.routes.userRoutes import userRoutes
+from manager.adapters.api.routes.workerRoutes import workerRoutes
 
 logger = setup_stream_logger("api", logging.INFO)
 

@@ -1,9 +1,13 @@
 from fastapi import APIRouter, HTTPException
-
-from api.middleware.authMiddleware import GetAdminDep, GetUserDep
-from api.middleware.dbMiddleware import GetTaskRepository
-from api.schemas.general import GenericResponse
-from api.schemas.tasks import TaskCreate, TaskResponse, TaskUpdate, TaskUpdateStatus
+from manager.adapters.api.middleware.authMiddleware import GetAdminDep, GetUserDep
+from manager.adapters.api.middleware.dbMiddleware import GetTaskRepository
+from manager.adapters.api.schemas.general import GenericResponse
+from manager.adapters.api.schemas.tasks import (
+    TaskCreate,
+    TaskResponse,
+    TaskUpdate,
+    TaskUpdateStatus,
+)
 
 taskRoutes = APIRouter(prefix="/tasks", tags=["Tasks"])
 

@@ -1,10 +1,9 @@
 from core.utilities.files import changeFileExtension
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
-
-from api.middleware.authMiddleware import GetAdminDep
-from api.middleware.logManagerMiddleware import GetLogManager
-from api.schemas.logs import LogsResponse
+from manager.adapters.api.middleware.authMiddleware import GetAdminDep
+from manager.adapters.api.middleware.logManagerMiddleware import GetLogManager
+from manager.adapters.api.schemas.logs import LogsResponse
 
 logRoutes = APIRouter(prefix="/logs", tags=["Logs"])
 

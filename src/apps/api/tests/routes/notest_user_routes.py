@@ -1,5 +1,6 @@
-from conftest import TestingSession, engine, test_admin, test_user
 from core.adapters.database.base import Base
+
+from apps.api.tests.conftest import TestingSession, engine, test_admin, test_user
 
 
 class TestRoutes:

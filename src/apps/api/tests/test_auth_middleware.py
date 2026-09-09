@@ -1,14 +1,16 @@
 import datetime
 
-import api.middleware.dbMiddleware as dbMiddleware
-from api.main import app
-from api_db import TestingSession, engine
+import manager.adapters.api.middleware.dbMiddleware as dbMiddleware
 from core.adapters.database.base import Base
 from core.adapters.database.user_repository import UserRepository
 from core.domain.entities import User
 from fastapi.testclient import TestClient
 from jwt import ExpiredSignatureError, InvalidSignatureError
 from pytest_mock.plugin import MockerFixture
+
+from apps.api.main import app
+
+from .api_db import TestingSession, engine
 
 # Example users
 test_user = User(

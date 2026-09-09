@@ -1,9 +1,8 @@
 from fastapi import APIRouter
-
-from api.middleware.authMiddleware import GetAdminDep, GetUserDep
-from api.middleware.dbMiddleware import GetUserRepository
-from api.schemas.general import GenericResponse
-from api.schemas.users import UserCreate, UserResponse, UserUpdate
+from manager.adapters.api.middleware.authMiddleware import GetAdminDep, GetUserDep
+from manager.adapters.api.middleware.dbMiddleware import GetUserRepository
+from manager.adapters.api.schemas.general import GenericResponse
+from manager.adapters.api.schemas.users import UserCreate, UserResponse, UserUpdate
 
 userRoutes = APIRouter(prefix="/users", tags=["Users"])
 
