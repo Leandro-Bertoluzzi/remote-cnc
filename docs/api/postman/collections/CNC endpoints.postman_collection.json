@@ -1019,7 +1019,13 @@
 					"name": "Execute G-code command",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "x-cnc-session",
+								"value": "",
+								"type": "text"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n    \"command\": \"G17 G20 G90 G94 G54\"\r\n}",
@@ -1043,10 +1049,49 @@
 					"response": []
 				},
 				{
+					"name": "Execute realtime command",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-cnc-session",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"action\": \"pause\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cnc/realtime",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"realtime"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Execute jog command",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "x-cnc-session",
+								"value": "",
+								"type": "text"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n    \"x\": 0.25,\r\n    \"y\": 0.35,\r\n    \"z\": 0.45,\r\n    \"feedrate\": 200,\r\n    \"units\": \"milimeters\",\r\n    \"mode\": \"distance_incremental\"\r\n}",
@@ -1132,16 +1177,69 @@
 					"response": []
 				},
 				{
-					"name": "Get available ports",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
+					"name": "Get gateway state",
 					"request": {
 						"method": "GET",
 						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cnc/gateway/state",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"gateway",
+								"state"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get gateway running",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cnc/gateway/running",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"gateway",
+								"running"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get CNC status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cnc/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Acquire CNC session",
+					"request": {
+						"method": "POST",
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "",
+							"raw": "{\n    \"client_type\": \"web\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1149,13 +1247,80 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/cnc/ports",
+							"raw": "{{baseUrl}}/cnc/session",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"cnc",
-								"ports"
+								"session"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get CNC session",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cnc/session",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"session"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Renew CNC session",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-cnc-session",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cnc/session/renew",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"session",
+								"renew"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Release CNC session",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "x-cnc-session",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cnc/session",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cnc",
+								"session"
 							]
 						}
 					},
@@ -1197,31 +1362,6 @@
 			"name": "Worker",
 			"item": [
 				{
-					"name": "Worker task status",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/worker/status/:worker_task_id",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"worker",
-								"status",
-								":worker_task_id"
-							],
-							"variable": [
-								{
-									"key": "worker_task_id",
-									"value": "9bc95c6b-d40f-4eb4-ac6b-57f76b898fcd"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Worker status",
 					"request": {
 						"method": "GET",
@@ -1234,95 +1374,6 @@
 							"path": [
 								"worker",
 								"status"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Device status",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/worker/device/status",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"worker",
-								"device",
-								"status"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Check paused",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/worker/pause",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"worker",
-								"pause"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Device enable",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/worker/device/:enabled",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"worker",
-								"device",
-								":enabled"
-							],
-							"variable": [
-								{
-									"key": "enabled",
-									"value": "1",
-									"description": "0: disabled, 1: enabled"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Set paused",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/worker/pause/:paused",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"worker",
-								"pause",
-								":paused"
-							],
-							"variable": [
-								{
-									"key": "paused",
-									"value": "1",
-									"description": "0: disabled, 1: enabled"
-								}
 							]
 						}
 					},
@@ -1457,6 +1508,18 @@
 				},
 				{
 					"name": "Publish message",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -1596,7 +1659,29 @@
 						"type": "string"
 					}
 				]
-			}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		},
 		{
 			"name": "Logs",
@@ -1673,7 +1758,7 @@
 							"variable": [
 								{
 									"key": "log_name",
-									"value": "cnc_server.log"
+									"value": "api.log"
 								}
 							]
 						}
@@ -1710,7 +1795,7 @@
 							"variable": [
 								{
 									"key": "log_name",
-									"value": "cnc_server.log"
+									"value": "api.log"
 								}
 							]
 						}
@@ -1727,7 +1812,29 @@
 						"type": "string"
 					}
 				]
-			}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		},
 		{
 			"name": "Health check",
