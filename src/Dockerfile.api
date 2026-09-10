@@ -16,26 +16,29 @@ WORKDIR /app
 # Copy only workspace root + member pyproject.toml files for dependency resolution
 COPY pyproject.toml uv.lock ./
 COPY core/pyproject.toml core/pyproject.toml
-COPY api/pyproject.toml api/pyproject.toml
+COPY infrastructure/pyproject.toml infrastructure/pyproject.toml
+COPY manager/pyproject.toml manager/pyproject.toml
+COPY apps/api/pyproject.toml apps/api/pyproject.toml
 
 # Install dependencies without source (placeholder packages for workspace members)
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-workspace --package cnc-api
+    uv sync --frozen --no-install-workspace --package cnc-app-api
 
 # ---------- source layer ----------
+COPY migrations migrations
 COPY core/core core/core
-COPY core/alembic core/alembic
-COPY core/alembic.ini core/alembic.ini
-COPY api/ api/
+COPY infrastructure/infrastructure infrastructure/infrastructure
+COPY manager/manager manager/manager
+COPY apps/api/ apps/api/
 
 # ---------- targets ----------
 FROM base AS development
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --package cnc-api
-CMD ["uv", "run", "--no-sync", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    uv sync --frozen --package cnc-app-api
+CMD ["uv", "run", "--no-sync", "uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 FROM base AS production
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-editable --package cnc-api
+    uv sync --frozen --no-editable --package cnc-app-api
 # If running behind a proxy like Nginx or Traefik add --proxy-headers
-CMD ["uv", "run", "--no-sync", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers", "--root-path", "/api"]
+CMD ["uv", "run", "--no-sync", "uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "80", "--proxy-headers", "--root-path", "/api"]

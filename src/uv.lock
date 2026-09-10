@@ -312,6 +312,7 @@ name = "cnc-app-api"
 version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
+    { name = "cnc-infrastructure" },
     { name = "cnc-manager" },
     { name = "email-validator" },
     { name = "fastapi" },
@@ -330,6 +331,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cnc-infrastructure", editable = "infrastructure" },
     { name = "cnc-manager", editable = "manager" },
     { name = "email-validator", specifier = ">=2.0,<3" },
     { name = "fastapi", specifier = ">=0.104,<1" },
