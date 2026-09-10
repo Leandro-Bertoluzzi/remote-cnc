@@ -7,10 +7,10 @@ logic to the handlers.
 No business logic lives here — add it to the handlers instead.
 """
 
-from core.adapters.database.base import SessionLocal
-from core.adapters.database.file_repository import FileRepository
-from core.adapters.file_storage import FileSystemStorage
 from core.config import FILES_FOLDER_PATH, IMAGES_FOLDER_PATH
+from infrastructure.database.base import SessionLocal
+from infrastructure.database.file_repository import FileRepository
+from infrastructure.file_storage import FileSystemStorage
 from worker.adapters.rendering.gcode_renderer import GcodeRenderer
 from worker.application.files_handler import (
     create_thumbnail_handler,

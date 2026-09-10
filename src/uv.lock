@@ -9,6 +9,7 @@ members = [
     "cnc-app-desktop",
     "cnc-core",
     "cnc-gateway",
+    "cnc-infrastructure",
     "cnc-manager",
     "cnc-worker",
 ]
@@ -266,6 +267,7 @@ dev = [
     { name = "cnc-app-desktop" },
     { name = "cnc-core" },
     { name = "cnc-gateway" },
+    { name = "cnc-infrastructure" },
     { name = "cnc-manager" },
     { name = "cnc-worker" },
     { name = "fakeredis" },
@@ -290,6 +292,7 @@ dev = [
     { name = "cnc-app-desktop", editable = "apps/desktop" },
     { name = "cnc-core", editable = "core" },
     { name = "cnc-gateway", editable = "gateway" },
+    { name = "cnc-infrastructure", editable = "infrastructure" },
     { name = "cnc-manager", editable = "manager" },
     { name = "cnc-worker", editable = "worker" },
     { name = "fakeredis", specifier = ">=2.0,<3" },
@@ -378,30 +381,20 @@ version = "0.1.0"
 source = { editable = "core" }
 dependencies = [
     { name = "bcrypt" },
-    { name = "celery", extra = ["redis"] },
-    { name = "psycopg2-binary" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
-    { name = "pyserial" },
     { name = "python-dotenv" },
-    { name = "redis" },
-    { name = "sqlalchemy" },
     { name = "watchdog" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "bcrypt", specifier = ">=3.2,<4" },
-    { name = "celery", extras = ["redis"], specifier = ">=5.3,<6" },
-    { name = "psycopg2-binary", specifier = ">=2.9,<3" },
     { name = "pydantic", specifier = ">=2.0,<3" },
     { name = "pydantic-settings", specifier = ">=2.0,<3" },
     { name = "pyjwt", specifier = ">=2.4,<3" },
-    { name = "pyserial", specifier = ">=3.5,<4" },
     { name = "python-dotenv", specifier = ">=1.0,<2" },
-    { name = "redis", specifier = ">=5.0,<6" },
-    { name = "sqlalchemy", specifier = ">=2.0,<3" },
     { name = "watchdog" },
 ]
 
@@ -415,6 +408,29 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "cnc-core", editable = "core" }]
+
+[[package]]
+name = "cnc-infrastructure"
+version = "0.1.0"
+source = { editable = "infrastructure" }
+dependencies = [
+    { name = "celery", extra = ["redis"] },
+    { name = "cnc-core" },
+    { name = "psycopg2-binary" },
+    { name = "pyserial" },
+    { name = "redis" },
+    { name = "sqlalchemy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "celery", extras = ["redis"], specifier = ">=5.3,<6" },
+    { name = "cnc-core", editable = "core" },
+    { name = "psycopg2-binary", specifier = ">=2.9,<3" },
+    { name = "pyserial", specifier = ">=3.5,<4" },
+    { name = "redis", specifier = ">=5.0,<6" },
+    { name = "sqlalchemy", specifier = ">=2.0,<3" },
+]
 
 [[package]]
 name = "cnc-manager"

@@ -9,11 +9,12 @@ package = false
 override-dependencies = ["PyQt5-Qt5==5.15.2"]
 
 [tool.uv.workspace]
-members = ["core", "gateway", "manager", "worker", "apps/api", "apps/desktop"]
+members = ["core", "gateway", "infrastructure", "manager", "worker", "apps/api", "apps/desktop"]
 
 [tool.uv.sources]
 cnc-core    = { workspace = true }
 cnc-gateway = { workspace = true }
+cnc-infrastructure = { workspace = true }
 cnc-manager = { workspace = true }
 cnc-worker  = { workspace = true }
 cnc-app-api     = { workspace = true }
@@ -24,6 +25,7 @@ dev = [
     # Workspace members (installed as editable)
     "cnc-core",
     "cnc-gateway",
+    "cnc-infrastructure",
     "cnc-manager",
     "cnc-worker",
     "cnc-app-api",
@@ -47,8 +49,6 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "gateway/tests", "manager/tests", "worker/tests"]
-pythonpath = ["tests", "gateway/tests", "manager/tests", "worker/tests"]
 addopts = "--import-mode=importlib --cov=. --cov-report=html"
 filterwarnings = [
     "ignore:unclosed database:ResourceWarning",

@@ -47,9 +47,7 @@ def get_file_report(file_id: int, user: GetUserDep, file_service: GetFileService
 
 @fileRoutes.post("", response_model_by_alias=False, response_model=FileResponse)
 @fileRoutes.post("/", response_model_by_alias=False, response_model=FileResponse)
-def upload_file(
-    file: UploadFile, user: GetUserDep, file_service: GetFileService
-):
+def upload_file(file: UploadFile, user: GetUserDep, file_service: GetFileService):
     if user.id is None:
         raise HTTPException(500, detail="User ID is required")
 

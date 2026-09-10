@@ -23,8 +23,6 @@ from functools import partial
 from typing import Callable
 
 import redis
-from core.adapters.file_storage import FileSystemStorage
-from core.adapters.logging.logger_factory import setup_combined_logger, setup_stream_logger
 from core.config import (
     FILES_FOLDER_PATH,
     GRBL_SIMULATION,
@@ -40,6 +38,8 @@ from core.domain.gateway import (
     GW_STATE_STREAMING,
 )
 from core.ports.logger import ILogger
+from infrastructure.file_storage import FileSystemStorage
+from infrastructure.logging.logger_factory import setup_combined_logger, setup_stream_logger
 
 from gateway.adapters.cnc.controller import GrblController
 from gateway.adapters.serial import SerialService

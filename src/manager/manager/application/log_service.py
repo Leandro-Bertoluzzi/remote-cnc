@@ -2,8 +2,9 @@
 
 from pathlib import Path
 
-from core.application.log_manager import LogManager
 from core.ports.log_storage import ILogStorage
+
+from manager.application.log_manager import LogManager
 
 
 class LogService:

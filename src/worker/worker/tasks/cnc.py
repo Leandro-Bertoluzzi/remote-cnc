@@ -9,12 +9,12 @@ No business logic lives here — add it to the handler instead.
 
 import logging
 
-from core.adapters.database.base import SessionLocal
-from core.adapters.database.task_repository import TaskRepository
-from core.adapters.file_storage import FileSystemStorage
-from core.adapters.gateway.gateway_client import GatewayClient
-from core.adapters.logging.logger_factory import setup_task_logger
 from core.config import FILES_FOLDER_PATH
+from infrastructure.database.base import SessionLocal
+from infrastructure.database.task_repository import TaskRepository
+from infrastructure.file_storage import FileSystemStorage
+from infrastructure.gateway.gateway_client import GatewayClient
+from infrastructure.logging.logger_factory import setup_task_logger
 from worker.application.cnc_handler import execute_cnc_task
 from worker.main import app
 

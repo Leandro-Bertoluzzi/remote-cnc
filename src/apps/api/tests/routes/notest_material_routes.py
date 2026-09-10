@@ -1,5 +1,5 @@
-from core.adapters.database.base import Base
-from core.adapters.database.material_repository import MaterialRepository
+from infrastructure.database.base import Base
+from infrastructure.database.material_repository import MaterialRepository
 
 from apps.api.tests.conftest import TestingSession, engine
 
