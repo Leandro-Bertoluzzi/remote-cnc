@@ -1,13 +1,13 @@
 import hashlib
 
 import pytest  # noqa: F401
-from core.adapters.database.base import Base
-from core.adapters.database.file_repository import FileRepository
-from core.adapters.database.material_repository import MaterialRepository
-from core.adapters.database.task_repository import TaskRepository
-from core.adapters.database.tool_repository import ToolRepository
-from core.adapters.database.user_repository import UserRepository
-from core.application.file_manager import FileManager
+from infrastructure.database.base import Base
+from infrastructure.database.file_repository import FileRepository
+from infrastructure.database.material_repository import MaterialRepository
+from infrastructure.database.task_repository import TaskRepository
+from infrastructure.database.tool_repository import ToolRepository
+from infrastructure.database.user_repository import UserRepository
+from manager.application.file_manager import FileManager
 
 from apps.api.tests.api_db import TestingSession, engine, test_admin, test_user
 

@@ -5,15 +5,10 @@ description = "Shared core library: database, utilities, schemas, and configurat
 requires-python = ">=3.12"
 dependencies = [
     "bcrypt>=3.2,<4",
-    "celery[redis]>=5.3,<6",
-    "psycopg2-binary>=2.9,<3",
     "pydantic>=2.0,<3",
     "pydantic-settings>=2.0,<3",
     "PyJWT>=2.4,<3",
-    "pyserial>=3.5,<4",
     "python-dotenv>=1.0,<2",
-    "redis>=5.0,<6",
-    "SQLAlchemy>=2.0,<3",
     "watchdog",
 ]
 
@@ -23,3 +18,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["core"]
+
+[tool.ty.environment]
+extra-paths = ["../tests"]

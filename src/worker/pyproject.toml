@@ -18,6 +18,9 @@ packages = ["worker"]
 [tool.uv.sources]
 cnc-core = { workspace = true }
 
+[tool.ty.environment]
+extra-paths = ["../tests"]
+
 [dependency-groups]
 dev = [
     "celery-types>=0.22",

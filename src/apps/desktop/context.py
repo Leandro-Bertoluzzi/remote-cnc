@@ -11,16 +11,16 @@ from __future__ import annotations
 
 import logging
 
-from core.adapters.database.base import SessionLocal
-from core.adapters.database.file_repository import FileRepository
-from core.adapters.database.material_repository import MaterialRepository
-from core.adapters.database.task_repository import TaskRepository
-from core.adapters.database.tool_repository import ToolRepository
-from core.adapters.database.user_repository import UserRepository
-from core.adapters.file_storage import FileSystemStorage
-from core.adapters.gateway.gateway_client import GatewayClient
-from core.adapters.logging.logger_factory import setup_stream_logger
-from core.adapters.worker.worker_client import WorkerClient
+from infrastructure.database.base import SessionLocal
+from infrastructure.database.file_repository import FileRepository
+from infrastructure.database.material_repository import MaterialRepository
+from infrastructure.database.task_repository import TaskRepository
+from infrastructure.database.tool_repository import ToolRepository
+from infrastructure.database.user_repository import UserRepository
+from infrastructure.file_storage import FileSystemStorage
+from infrastructure.gateway.gateway_client import GatewayClient
+from infrastructure.logging.logger_factory import setup_stream_logger
+from infrastructure.worker.worker_client import WorkerClient
 from manager.adapters.desktop.context import AppContext
 from manager.application.asset_service import AssetService
 from manager.application.device_service import DeviceService

@@ -16,3 +16,6 @@ packages = ["gateway"]
 
 [tool.uv.sources]
 cnc-core = { workspace = true }
+
+[tool.ty.environment]
+extra-paths = ["../tests"]

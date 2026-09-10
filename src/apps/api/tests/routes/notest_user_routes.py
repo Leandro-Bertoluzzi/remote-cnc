@@ -1,4 +1,4 @@
-from core.adapters.database.base import Base
+from infrastructure.database.base import Base
 
 from apps.api.tests.conftest import TestingSession, engine, test_admin, test_user
 

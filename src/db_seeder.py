@@ -1,6 +1,6 @@
-from core.adapters.database.base import SessionLocal
-from core.adapters.database.models import Material, Tool, User
 from core.utilities.security import hash_password
+from infrastructure.database.base import SessionLocal
+from infrastructure.database.models import Material, Tool, User
 
 # Database initial data
 INITIAL_DATA = [

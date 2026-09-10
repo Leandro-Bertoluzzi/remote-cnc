@@ -1,5 +1,5 @@
-from core.adapters.database.base import Base
-from core.adapters.database.tool_repository import ToolRepository
+from infrastructure.database.base import Base
+from infrastructure.database.tool_repository import ToolRepository
 
 from apps.api.tests.conftest import TestingSession, engine
 
