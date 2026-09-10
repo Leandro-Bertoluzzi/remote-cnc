@@ -23,10 +23,17 @@ class TaskService:
         self._session_factory = session_factory
         self._task_repo_factory = task_repo_factory
 
-    def get_all_tasks(self, user_id: int, status: str = "all") -> list[Task]:
+    def get_all_tasks_from_user(self, user_id: int, status: str = "all") -> list[Task]:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._task_repo_factory(session)
             return repository.get_all_tasks_from_user(user_id, status=status)
+
+    def get_all_tasks(self, user_id: int | None = None, status: str = "all") -> list[Task]:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._task_repo_factory(session)
+            if user_id is not None:
+                return repository.get_all_tasks_from_user(user_id, status=status)
+            return repository.get_all_tasks(status)
 
     def create_task(
         self,
@@ -51,10 +58,10 @@ class TaskService:
         name: Optional[str] = None,
         note: Optional[str] = None,
         priority: int = TASK_DEFAULT_PRIORITY,
-    ) -> None:
+    ) -> Task:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._task_repo_factory(session)
-            repository.update_task(
+            return repository.update_task(
                 task_id, user_id, file_id, tool_id, material_id, name, note, priority
             )
 
@@ -62,12 +69,12 @@ class TaskService:
         self,
         task_id: int,
         new_status: str,
-        admin_id: int,
+        admin_id: int | None,
         cancellation_reason: str = "",
-    ) -> None:
+    ) -> Task:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._task_repo_factory(session)
-            repository.update_task_status(task_id, new_status, admin_id, cancellation_reason)
+            return repository.update_task_status(task_id, new_status, admin_id, cancellation_reason)
 
     def remove_task(self, task_id: int) -> None:
         with self._session_factory(expire_on_commit=False) as session:

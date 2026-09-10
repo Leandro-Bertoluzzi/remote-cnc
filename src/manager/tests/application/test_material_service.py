@@ -29,18 +29,23 @@ class TestMaterialService:
 
     def test_create_material(self):
         service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.create_material.return_value = expected
 
         result = service.create_material("MDF", "desc")
 
         repository.create_material.assert_called_once_with("MDF", "desc")
-        assert result is None
+        assert result == expected
 
     def test_update_material(self):
         service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.update_material.return_value = expected
 
-        service.update_material(3, "MDF Updated", "new desc")
+        result = service.update_material(3, "MDF Updated", "new desc")
 
         repository.update_material.assert_called_once_with(3, "MDF Updated", "new desc")
+        assert result == expected
 
     def test_remove_material(self):
         service, repository = self._make_service_and_repo()

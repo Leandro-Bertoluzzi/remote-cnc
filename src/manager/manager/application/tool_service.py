@@ -31,15 +31,15 @@ class ToolService:
             repository = self._tool_repo_factory(session)
             return repository.get_tool_by_id(tool_id)
 
-    def create_tool(self, name: str, description: str) -> None:
+    def create_tool(self, name: str, description: str) -> Tool:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._tool_repo_factory(session)
-            repository.create_tool(name, description)
+            return repository.create_tool(name, description)
 
-    def update_tool(self, tool_id: int, name: str, description: str) -> None:
+    def update_tool(self, tool_id: int, name: str, description: str) -> Tool:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._tool_repo_factory(session)
-            repository.update_tool(tool_id, name, description)
+            return repository.update_tool(tool_id, name, description)
 
     def remove_tool(self, tool_id: int) -> None:
         with self._session_factory(expire_on_commit=False) as session:

@@ -1,17 +1,15 @@
-"""FastAPI dependency for the WorkerClient singleton."""
+"""FastAPI dependency for the shared WorkerClient."""
 
-from functools import lru_cache
 from typing import Annotated
 
-from core.adapters.worker.worker_client import WorkerClient
 from core.ports.worker_client import IWorkerClient
 from fastapi import Depends
+from manager.adapters.api.context import AppContext
+from manager.adapters.api.middleware.contextMiddleware import get_app_context
 
 
-@lru_cache(maxsize=1)
-def get_worker_client() -> IWorkerClient:
-    """Return a shared WorkerClient instance (created once, cached)."""
-    return WorkerClient.from_config()
+def get_worker_client(context: Annotated[AppContext, Depends(get_app_context)]) -> IWorkerClient:
+    return context.worker
 
 
 # Type alias for FastAPI dependency injection
