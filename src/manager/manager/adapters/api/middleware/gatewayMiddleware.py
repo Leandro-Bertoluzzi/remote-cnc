@@ -1,17 +1,15 @@
-"""FastAPI dependency for the CNC GatewayClient singleton."""
+"""FastAPI dependency for the shared CNC GatewayClient."""
 
-from functools import lru_cache
 from typing import Annotated
 
-from core.adapters.gateway.gateway_client import GatewayClient
 from core.ports.gateway_client import IGatewayClient
 from fastapi import Depends
+from manager.adapters.api.context import AppContext
+from manager.adapters.api.middleware.contextMiddleware import get_app_context
 
 
-@lru_cache(maxsize=1)
-def get_gateway_client() -> IGatewayClient:
-    """Return a shared GatewayClient instance (created once, cached)."""
-    return GatewayClient.from_config()
+def get_gateway_client(context: Annotated[AppContext, Depends(get_app_context)]) -> IGatewayClient:
+    return context.gateway
 
 
 # Type alias for FastAPI dependency injection

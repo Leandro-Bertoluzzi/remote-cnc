@@ -31,6 +31,16 @@ class TestTaskService:
         assert result == expected_tasks
         repository.get_all_tasks_from_user.assert_called_once_with(7, status="on_hold")
 
+    def test_get_all_tasks_for_admin(self):
+        service, repository, _ = self._make_service_and_repo()
+        expected_tasks = [MagicMock(spec=Task)]
+        repository.get_all_tasks.return_value = expected_tasks
+
+        result = service.get_all_tasks(status="approved")
+
+        assert result == expected_tasks
+        repository.get_all_tasks.assert_called_once_with("approved")
+
     def test_create_task(self):
         service, repository, _ = self._make_service_and_repo()
         expected_task = MagicMock(spec=Task)
@@ -43,8 +53,10 @@ class TestTaskService:
 
     def test_update_task_status(self):
         service, repository, _ = self._make_service_and_repo()
+        expected_task = MagicMock(spec=Task)
+        repository.update_task_status.return_value = expected_task
 
-        service.update_task_status(
+        result = service.update_task_status(
             task_id=10,
             new_status=TaskStatus.CANCELLED.value,
             admin_id=99,
@@ -54,6 +66,7 @@ class TestTaskService:
         repository.update_task_status.assert_called_once_with(
             10, TaskStatus.CANCELLED.value, 99, "cancelada"
         )
+        assert result == expected_task
 
     def test_send_task_to_worker(self):
         worker = MagicMock()

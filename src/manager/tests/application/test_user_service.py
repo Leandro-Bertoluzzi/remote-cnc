@@ -19,11 +19,33 @@ class TestUserService:
 
     def test_create_user(self):
         service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.create_user.return_value = expected
 
         result = service.create_user("User", "user@email.com", "pass", "admin")
 
         repository.create_user.assert_called_once_with("User", "user@email.com", "pass", "admin")
-        assert result is None
+        assert result == expected
+
+    def test_get_user_by_id(self):
+        service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.get_user_by_id.return_value = expected
+
+        result = service.get_user_by_id(7)
+
+        assert result == expected
+        repository.get_user_by_id.assert_called_once_with(7)
+
+    def test_get_user_by_email(self):
+        service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.get_user_by_email.return_value = expected
+
+        result = service.get_user_by_email("user@email.com")
+
+        assert result == expected
+        repository.get_user_by_email.assert_called_once_with("user@email.com")
 
     def test_get_all_users(self):
         service, repository = self._make_service_and_repo()
@@ -37,11 +59,13 @@ class TestUserService:
 
     def test_update_user(self):
         service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.update_user.return_value = expected
 
         result = service.update_user(7, "New", "new@email.com", "operator")
 
         repository.update_user.assert_called_once_with(7, "New", "new@email.com", "operator")
-        assert result is None
+        assert result == expected
 
     def test_remove_user(self):
         service, repository = self._make_service_and_repo()

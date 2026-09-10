@@ -20,12 +20,15 @@ from manager.adapters.api.routes.toolRoutes import toolRoutes
 from manager.adapters.api.routes.userRoutes import userRoutes
 from manager.adapters.api.routes.workerRoutes import workerRoutes
 
+from apps.api.context import create_app_context
+
 logger = setup_stream_logger("api", logging.INFO)
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan: runs startup checks and graceful shutdown."""
+    app.state.context = create_app_context()
     # --- Startup ---
     logger.info("Starting up API server...")
 

@@ -23,15 +23,15 @@ class MaterialService:
             repository = self._material_repo_factory(session)
             return repository.get_all_materials()
 
-    def create_material(self, name: str, description: str) -> None:
+    def create_material(self, name: str, description: str) -> Material:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._material_repo_factory(session)
-            repository.create_material(name, description)
+            return repository.create_material(name, description)
 
-    def update_material(self, material_id: int, name: str, description: str) -> None:
+    def update_material(self, material_id: int, name: str, description: str) -> Material:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._material_repo_factory(session)
-            repository.update_material(material_id, name, description)
+            return repository.update_material(material_id, name, description)
 
     def remove_material(self, material_id: int) -> None:
         with self._session_factory(expire_on_commit=False) as session:

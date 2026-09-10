@@ -34,6 +34,22 @@ class FileService:
             repository = self._file_repo_factory(session)
             return repository.get_all_files()
 
+    def get_all_files_from_user(self, user_id: int) -> list[File]:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._file_repo_factory(session)
+            return repository.get_all_files_from_user(user_id)
+
+    def get_file_by_id(self, file_id: int) -> File:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._file_repo_factory(session)
+            return repository.get_file_by_id(file_id)
+
+    def read_file(self, file_id: int) -> str:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._file_repo_factory(session)
+            file_manager = FileManager(repository, self._storage)
+            return file_manager.read_file(file_id)
+
     def upload_file(self, user_id: int, name: str, file: BinaryIO) -> File:
         """Upload a file, then schedule report/thumbnail generation.
 
@@ -94,14 +110,34 @@ class FileService:
 
         return file
 
-    def rename_file(self, user_id: int, file: File, new_name: str) -> None:
+    def rename_file(self, user_id: int, file: File, new_name: str) -> File:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._file_repo_factory(session)
             file_manager = FileManager(repository, self._storage)
-            file_manager.rename_file(user_id, file, new_name)
+            return file_manager.rename_file(user_id, file, new_name)
+
+    def rename_file_by_id(self, user_id: int, file_id: int, new_name: str) -> File:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._file_repo_factory(session)
+            file_manager = FileManager(repository, self._storage)
+            file = repository.get_file_by_id(file_id)
+            return file_manager.rename_file(user_id, file, new_name)
 
     def remove_file(self, file: File) -> None:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._file_repo_factory(session)
             file_manager = FileManager(repository, self._storage)
             file_manager.remove_file(file)
+
+    def remove_file_by_id(self, file_id: int) -> None:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._file_repo_factory(session)
+            file_manager = FileManager(repository, self._storage)
+            file = repository.get_file_by_id(file_id)
+            file_manager.remove_file(file)
+
+    def generate_file_report(self, file_id: int) -> None:
+        self._worker.generate_file_report(file_id)
+
+    def create_thumbnail(self, file_id: int) -> None:
+        self._worker.create_thumbnail(file_id)

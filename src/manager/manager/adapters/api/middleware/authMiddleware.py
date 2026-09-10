@@ -4,10 +4,10 @@ from core.domain.entities import User
 from core.utilities.security import verify_token
 from fastapi import Depends, HTTPException, Request
 from jwt import ExpiredSignatureError, InvalidSignatureError
-from manager.adapters.api.middleware.dbMiddleware import GetUserRepository
+from manager.adapters.api.middleware.contextMiddleware import GetUserService
 
 
-def auth_user(request: Request, repository: GetUserRepository) -> User:
+def auth_user(request: Request, user_service: GetUserService) -> User:
     token = None
 
     if "Authorization" in request.headers:
@@ -19,7 +19,7 @@ def auth_user(request: Request, repository: GetUserRepository) -> User:
         raise HTTPException(401, detail="Unauthorized: Authentication Token is missing!")
     try:
         data = verify_token(token)
-        user = repository.get_user_by_id(data["user_id"])
+        user = user_service.get_user_by_id(data["user_id"])
     except ExpiredSignatureError as error:
         raise HTTPException(401, detail="Expired token, login to generate a new one") from error
     except InvalidSignatureError as error:
@@ -30,8 +30,8 @@ def auth_user(request: Request, repository: GetUserRepository) -> User:
     return user
 
 
-def auth_admin(request: Request, repository: GetUserRepository) -> User:
-    user = auth_user(request, repository)
+def auth_admin(request: Request, user_service: GetUserService) -> User:
+    user = auth_user(request, user_service)
 
     if user.role != "admin":
         raise HTTPException(401, detail="Unauthorized: This endpoint requires admin permission")

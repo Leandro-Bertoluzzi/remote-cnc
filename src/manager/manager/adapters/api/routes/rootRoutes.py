@@ -1,7 +1,7 @@
 from core.domain.types import RoleType
 from core.utilities.security import generate_token, validate_password
 from fastapi import APIRouter, HTTPException
-from manager.adapters.api.middleware.dbMiddleware import GetUserRepository
+from manager.adapters.api.middleware.contextMiddleware import GetUserService
 from pydantic import BaseModel, EmailStr
 
 rootRoutes = APIRouter()
@@ -46,8 +46,8 @@ class UserLoginResponse(BaseModel):
 
 
 @rootRoutes.post("/login", tags=["Login"], summary="User login", response_model=UserLoginResponse)
-def login(request: UserLogin, repository: GetUserRepository):
-    user = repository.get_user_by_email(request.email)
+def login(request: UserLogin, user_service: GetUserService):
+    user = user_service.get_user_by_email(request.email)
 
     if not user:
         raise HTTPException(404, detail="No autorizado: Email inválido")

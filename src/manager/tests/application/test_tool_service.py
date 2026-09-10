@@ -47,18 +47,23 @@ class TestToolService:
 
     def test_create_tool(self):
         service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.create_tool.return_value = expected
 
         result = service.create_tool("Tool", "desc")
 
         repository.create_tool.assert_called_once_with("Tool", "desc")
-        assert result is None
+        assert result == expected
 
     def test_update_tool(self):
         service, repository = self._make_service_and_repo()
+        expected = MagicMock()
+        repository.update_tool.return_value = expected
 
-        service.update_tool(4, "Updated Tool", "new desc")
+        result = service.update_tool(4, "Updated Tool", "new desc")
 
         repository.update_tool.assert_called_once_with(4, "Updated Tool", "new desc")
+        assert result == expected
 
     def test_remove_tool(self):
         service, repository = self._make_service_and_repo()

@@ -23,15 +23,25 @@ class UserService:
             repository = self._user_repo_factory(session)
             return repository.get_all_users()
 
-    def create_user(self, name: str, email: str, password: str, role: str) -> None:
+    def get_user_by_id(self, user_id: int) -> User:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._user_repo_factory(session)
-            repository.create_user(name, email, password, role)
+            return repository.get_user_by_id(user_id)
 
-    def update_user(self, user_id: int, name: str, email: str, role: str) -> None:
+    def get_user_by_email(self, email: str) -> User | None:
         with self._session_factory(expire_on_commit=False) as session:
             repository = self._user_repo_factory(session)
-            repository.update_user(user_id, name, email, role)
+            return repository.get_user_by_email(email)
+
+    def create_user(self, name: str, email: str, password: str, role: str) -> User:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._user_repo_factory(session)
+            return repository.create_user(name, email, password, role)
+
+    def update_user(self, user_id: int, name: str, email: str, role: str) -> User:
+        with self._session_factory(expire_on_commit=False) as session:
+            repository = self._user_repo_factory(session)
+            return repository.update_user(user_id, name, email, role)
 
     def remove_user(self, user_id: int) -> None:
         with self._session_factory(expire_on_commit=False) as session:
