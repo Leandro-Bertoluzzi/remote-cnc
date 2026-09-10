@@ -17,6 +17,8 @@ services:
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
+      - FILES_FOLDER_PATH=/app/gcode_files
+      - LOGS_FOLDER_PATH=/app/logs
     healthcheck:
       test: curl --fail http://localhost:8000/health || exit 1
       interval: 30s
