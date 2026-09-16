@@ -373,13 +373,13 @@ Due to a known problem with Celery's default pool (prefork), it is not as straig
 - **solo**: The solo pool is a simple, single-threaded execution pool. It simply executes incoming tasks in the same process and thread as the worker.
 
 ```bash
-$ cd src && uv run celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=solo
+$ cd src && uv run celery --app apps.worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=solo
 ```
 
 - **threads**: The threads in the threads pool type are managed directly by the operating system kernel. As long as Python's ThreadPoolExecutor supports Windows threads, this pool type will work on Windows.
 
 ```bash
-$ cd src && uv run celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=threads
+$ cd src && uv run celery --app apps.worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=threads
 ```
 
 - **gevent**: The [gevent package](http://www.gevent.org/) officially supports Windows, so it remains a suitable option for IO-bound task processing on Windows. Downside is that you have to install it first.
@@ -389,7 +389,7 @@ $ cd src && uv run celery --app worker.main worker --loglevel=INFO --logfile=log
 $ cd src && uv add gevent
 
 # 2. Start Celery's worker server
-$ cd src && uv run celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
+$ cd src && uv run celery --app apps.worker.main worker --loglevel=INFO --logfile=logs/celery.log --pool=gevent
 ```
 
 ## :wrench: Running tests

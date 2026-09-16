@@ -16,7 +16,8 @@ from infrastructure.file_storage import FileSystemStorage
 from infrastructure.gateway.gateway_client import GatewayClient
 from infrastructure.logging.logger_factory import setup_task_logger
 from worker.application.cnc_handler import execute_cnc_task
-from worker.main import app
+
+from apps.worker.main import app
 
 
 @app.task(name="execute_task", bind=True, ignore_result=True)

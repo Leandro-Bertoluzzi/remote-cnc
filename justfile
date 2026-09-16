@@ -44,7 +44,7 @@ DEPLOYABLE_MODULES := "api|gateway|worker"
 
 # Executable modules in the repo
 [private]
-EXECUTABLE_MODULES := "api|desktop|worker"
+EXECUTABLE_MODULES := "api|desktop|gateway|worker"
 
 # ===========================================================================
 # Setup
@@ -131,7 +131,7 @@ WATCHDOG_COMMAND := "watchmedo auto-restart --directory=./ --pattern=*.py --recu
 [group('run')]
 start module mode="":
     @echo "{{ if module =~ EXECUTABLE_MODULES { "Starting " + module } else { error("Invalid module name. Must be one of: " + EXECUTABLE_MODULES) } }}"
-    @just {{ if module == "api" { "start-api" } else if module == "desktop" { "start-desktop" } else if module == "worker" { "start-worker" } else { "" } }} {{mode}}
+    @just {{ if module == "api" { "start-api" } else if module == "desktop" { "start-desktop" } else if module == "gateway" { "start-gateway" } else if module == "worker" { "start-worker" } else { "" } }} {{mode}}
 
 # Launch the API with uvicorn
 [group('run')]
@@ -147,12 +147,19 @@ start-api mode="":
 start-desktop mode="":
     uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} python -m apps.desktop.main
 
+# Launch the CNC gateway
+[group('run')]
+[working-directory: 'src']
+[private]
+start-gateway mode="":
+    uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} python -m apps.gateway.main
+
 # Launch the Celery worker
 [group('run')]
 [working-directory: 'src']
 [private]
 start-worker mode="":
-    uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} celery --app worker.main worker --loglevel=INFO --logfile=logs/celery.log
+    uv run {{ if mode == "watch" { WATCHDOG_COMMAND } else { "" } }} celery --app apps.worker.main worker --loglevel=INFO --logfile=logs/celery.log
 
 # ===========================================================================
 # Database

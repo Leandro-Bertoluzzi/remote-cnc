@@ -17,17 +17,21 @@ WORKDIR /app
 # ---------- dependency layer (cached while lockfile unchanged) ----------
 COPY pyproject.toml uv.lock ./
 COPY core/pyproject.toml core/pyproject.toml
+COPY infrastructure/pyproject.toml infrastructure/pyproject.toml
 COPY worker/pyproject.toml worker/pyproject.toml
+COPY apps/worker/pyproject.toml apps/worker/pyproject.toml
 
 # Install all deps
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-workspace --package cnc-worker
+    uv sync --frozen --no-install-workspace --package cnc-app-worker
 
 # ---------- source layer ----------
 COPY core/core core/core
-COPY worker/ worker/
+COPY infrastructure/infrastructure infrastructure/infrastructure
+COPY worker/worker worker/worker
+COPY apps/worker/ apps/worker/
 
 # ---------- production target ----------
 FROM base AS production
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-editable --package cnc-worker
+    uv sync --frozen --no-editable --package cnc-app-worker

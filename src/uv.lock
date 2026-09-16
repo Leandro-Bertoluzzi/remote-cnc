@@ -7,6 +7,8 @@ members = [
     "cnc-admin",
     "cnc-app-api",
     "cnc-app-desktop",
+    "cnc-app-gateway",
+    "cnc-app-worker",
     "cnc-core",
     "cnc-gateway",
     "cnc-infrastructure",
@@ -265,6 +267,8 @@ dev = [
     { name = "celery-types" },
     { name = "cnc-app-api" },
     { name = "cnc-app-desktop" },
+    { name = "cnc-app-gateway" },
+    { name = "cnc-app-worker" },
     { name = "cnc-core" },
     { name = "cnc-gateway" },
     { name = "cnc-infrastructure" },
@@ -290,6 +294,8 @@ dev = [
     { name = "celery-types", specifier = ">=0.22" },
     { name = "cnc-app-api", editable = "apps/api" },
     { name = "cnc-app-desktop", editable = "apps/desktop" },
+    { name = "cnc-app-gateway", editable = "apps/gateway" },
+    { name = "cnc-app-worker", editable = "apps/worker" },
     { name = "cnc-core", editable = "core" },
     { name = "cnc-gateway", editable = "gateway" },
     { name = "cnc-infrastructure", editable = "infrastructure" },
@@ -376,6 +382,52 @@ dev = [
     { name = "pyqt5-stubs", specifier = ">=5.15" },
     { name = "pytest-qt", specifier = ">=4.4,<5" },
 ]
+
+[[package]]
+name = "cnc-app-gateway"
+version = "0.1.0"
+source = { editable = "apps/gateway" }
+dependencies = [
+    { name = "cnc-core" },
+    { name = "cnc-gateway" },
+    { name = "cnc-infrastructure" },
+    { name = "redis" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cnc-core", editable = "core" },
+    { name = "cnc-gateway", editable = "gateway" },
+    { name = "cnc-infrastructure", editable = "infrastructure" },
+    { name = "redis", specifier = ">=5.0,<6" },
+]
+
+[[package]]
+name = "cnc-app-worker"
+version = "0.1.0"
+source = { editable = "apps/worker" }
+dependencies = [
+    { name = "celery" },
+    { name = "cnc-core" },
+    { name = "cnc-infrastructure" },
+    { name = "cnc-worker" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "celery-types" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "celery", specifier = ">=5.3,<6" },
+    { name = "cnc-core", editable = "core" },
+    { name = "cnc-infrastructure", editable = "infrastructure" },
+    { name = "cnc-worker", editable = "worker" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "celery-types", specifier = ">=0.22" }]
 
 [[package]]
 name = "cnc-core"
@@ -468,19 +520,11 @@ dependencies = [
     { name = "matplotlib" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "celery-types" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "cnc-core", editable = "core" },
     { name = "matplotlib", specifier = ">=3.10,<4" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "celery-types", specifier = ">=0.22" }]
 
 [[package]]
 name = "colorama"
