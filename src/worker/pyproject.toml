@@ -1,7 +1,7 @@
 [project]
 name = "cnc-worker"
 version = "0.1.0"
-description = "Celery worker for CNC task execution"
+description = "CNC worker core logic: G-code parsing, analysis, rendering and CNC task execution"
 requires-python = ">=3.12"
 dependencies = [
     "cnc-core",
@@ -20,8 +20,3 @@ cnc-core = { workspace = true }
 
 [tool.ty.environment]
 extra-paths = ["../tests"]
-
-[dependency-groups]
-dev = [
-    "celery-types>=0.22",
-]

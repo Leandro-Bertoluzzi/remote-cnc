@@ -15,14 +15,18 @@ WORKDIR /app
 # ---------- dependency layer (cached while lockfile unchanged) ----------
 COPY pyproject.toml uv.lock ./
 COPY core/pyproject.toml core/pyproject.toml
+COPY infrastructure/pyproject.toml infrastructure/pyproject.toml
 COPY gateway/pyproject.toml gateway/pyproject.toml
+COPY apps/gateway/pyproject.toml apps/gateway/pyproject.toml
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-workspace --package cnc-gateway
+    uv sync --frozen --no-install-workspace --package cnc-app-gateway
 
 # ---------- source layer ----------
 COPY core/core core/core
-COPY gateway/ gateway/
+COPY infrastructure/infrastructure infrastructure/infrastructure
+COPY gateway/gateway gateway/gateway
+COPY apps/gateway/ apps/gateway/
 
 # ---------- GRBL simulator build stage ----------
 FROM debian:bookworm-slim AS build
@@ -46,13 +50,13 @@ COPY --from=build /app/grbl/grbl/grbl-sim/*.exe ./
 # ---------- targets ----------
 FROM base AS production
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-editable --package cnc-gateway
-CMD ["uv", "run", "--no-sync", "python", "-m", "gateway.main"]
+    uv sync --frozen --no-editable --package cnc-app-gateway
+CMD ["uv", "run", "--no-sync", "python", "-m", "apps.gateway.main"]
 
 # ---------- development target (with simulator) ----------
 FROM base AS development
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-editable --package cnc-gateway
+    uv sync --frozen --no-editable --package cnc-app-gateway
 
 # Copy GRBL simulator executable from build stage
 COPY --from=build /app/grbl/grbl/grbl-sim/grbl_sim.exe /app/grbl_sim.exe
@@ -64,8 +68,8 @@ RUN apt-get update -y \
 
 # Set up entrypoint that auto-starts the simulator before the gateway
 # Fix line endings and permissions in case of Windows host
-RUN sed -i "s/\r//" /app/gateway/dev-entrypoint.sh \
-    && chmod +x /app/gateway/dev-entrypoint.sh
+RUN sed -i "s/\r//" /app/apps/gateway/dev-entrypoint.sh \
+    && chmod +x /app/apps/gateway/dev-entrypoint.sh
 
-ENTRYPOINT ["/app/gateway/dev-entrypoint.sh"]
-CMD ["uv", "run", "--no-sync", "python", "-m", "gateway.main"]
+ENTRYPOINT ["/app/apps/gateway/dev-entrypoint.sh"]
+CMD ["uv", "run", "--no-sync", "python", "-m", "apps.gateway.main"]

@@ -68,7 +68,7 @@ services:
       context: src
       dockerfile: Dockerfile.worker
       target: production
-    command: uv run --no-sync celery --app worker.main worker --loglevel=INFO --logfile=logs/worker.log
+    command: uv run --no-sync celery --app apps.worker.main worker --loglevel=INFO --logfile=logs/worker.log
     depends_on:
       redis:
         condition: service_started
@@ -79,6 +79,8 @@ services:
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
+      - FILES_FOLDER_PATH=/app/gcode_files
+      - LOGS_FOLDER_PATH=/app/logs
     volumes:
       - ./gcode_files:/app/gcode_files
       - ./thumbnails:/app/thumbnails
@@ -103,6 +105,8 @@ services:
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
+      - FILES_FOLDER_PATH=/app/gcode_files
+      - LOGS_FOLDER_PATH=/app/logs
     volumes:
       - ./gcode_files:/app/gcode_files
       - ./logs:/app/logs
@@ -129,6 +133,8 @@ services:
     environment:
       - REDIS_HOST=redis
       - DB_HOST=postgresql
+      - FILES_FOLDER_PATH=/app/gcode_files
+      - LOGS_FOLDER_PATH=/app/logs
       - GRBL_SIMULATION=TRUE
     volumes:
       - ./gcode_files:/app/gcode_files

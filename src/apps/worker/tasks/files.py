@@ -17,7 +17,8 @@ from worker.application.files_handler import (
     generate_file_report_handler,
 )
 from worker.domain.gcode.constants import GRBL_VALID_GCODES, GRBL_VALID_MCODES
-from worker.main import app
+
+from apps.worker.main import app
 
 
 @app.task(name="create_thumbnail", ignore_result=True)

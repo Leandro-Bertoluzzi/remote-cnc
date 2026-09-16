@@ -1,0 +1,28 @@
+[project]
+name = "cnc-app-worker"
+version = "0.1.0"
+description = "Celery worker application for CNC task execution"
+requires-python = ">=3.12"
+dependencies = [
+    "cnc-core",
+    "cnc-infrastructure",
+    "cnc-worker",
+    "celery>=5.3,<6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["worker-app"]
+
+[tool.uv.sources]
+cnc-core = { workspace = true }
+cnc-infrastructure = { workspace = true }
+cnc-worker = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "celery-types>=0.22",
+]
