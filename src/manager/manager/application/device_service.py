@@ -2,7 +2,8 @@
 
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
 from core.ports.gateway_client import IGatewayClient
-from core.ports.worker_client import IWorkerClient
+
+from manager.ports.worker_client import IWorkerClient
 
 
 class DeviceService:

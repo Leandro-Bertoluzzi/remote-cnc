@@ -9,7 +9,8 @@ No business logic lives here — add it to the handler instead.
 
 import logging
 
-from core.config import FILES_FOLDER_PATH
+import redis
+from core.config import settings
 from infrastructure.database.base import SessionLocal
 from infrastructure.database.task_repository import TaskRepository
 from infrastructure.file_storage import FileSystemStorage
@@ -46,8 +47,14 @@ def executeTask(self, task_id: int) -> None:
         execute_cnc_task(
             task_id=task_id,
             repo=repo,
-            storage=FileSystemStorage(FILES_FOLDER_PATH),
-            gateway=GatewayClient.from_config(),
+            storage=FileSystemStorage(settings.files_folder_path),
+            gateway=GatewayClient(
+                redis.Redis(
+                    host=settings.redis_host,
+                    port=settings.redis_port,
+                    db=settings.redis_db_storage,
+                )
+            ),
             task_logger=task_file_logger,
             task_logger_name=task_file_logger.name,
         )

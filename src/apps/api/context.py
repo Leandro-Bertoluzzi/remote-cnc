@@ -1,5 +1,7 @@
 """Composition root for the API application."""
 
+import redis
+from celery import Celery
 from core.config import settings
 from infrastructure.database.base import SessionLocal
 from infrastructure.database.file_repository import FileRepository
@@ -11,6 +13,7 @@ from infrastructure.file_storage import FileSystemStorage
 from infrastructure.gateway.gateway_client import GatewayClient
 from infrastructure.logging.log_storage import LogStorage
 from infrastructure.logging.logger_factory import setup_stream_logger
+from infrastructure.worker.celery_broker import CeleryTaskBroker
 from infrastructure.worker.worker_client import WorkerClient
 from manager.adapters.api.context import AppContext
 from manager.application.device_service import DeviceService
@@ -24,8 +27,18 @@ from manager.application.user_service import UserService
 
 def create_app_context() -> AppContext:
     """Build the production API context from configured adapters."""
-    gateway = GatewayClient.from_config()
-    worker = WorkerClient.from_config()
+    redis_client = redis.Redis(
+        host=settings.redis_host,
+        port=settings.redis_port,
+        db=settings.redis_db_storage,
+    )
+    gateway = GatewayClient(redis_client)
+    celery_app = Celery(
+        "api_worker",
+        broker=settings.celery_broker_url,
+        backend=settings.celery_broker_url,
+    )
+    worker = WorkerClient(CeleryTaskBroker(celery_app))
     storage = FileSystemStorage(settings.files_folder_path)
     session_factory = SessionLocal
     logger = setup_stream_logger("api", 20, settings.logs_folder_path)

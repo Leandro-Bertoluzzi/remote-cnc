@@ -5,7 +5,6 @@ from functools import reduce
 from core.domain.worker import WorkerStatus
 
 from infrastructure.worker.broker import ITaskBroker
-from infrastructure.worker.celery_broker import CeleryTaskBroker
 
 # ------------------------------------------------------------------
 # Task-name constants (adapter-internal — not part of the domain)
@@ -20,15 +19,6 @@ class WorkerClient:
 
     def __init__(self, broker: ITaskBroker) -> None:
         self._broker = broker
-
-    # ------------------------------------------------------------------
-    # Factory
-    # ------------------------------------------------------------------
-
-    @classmethod
-    def from_config(cls) -> "WorkerClient":
-        """Create a ``WorkerClient`` backed by a Celery broker from ``core.config``."""
-        return cls(broker=CeleryTaskBroker.from_config())
 
     # ------------------------------------------------------------------
     # Inspection helpers

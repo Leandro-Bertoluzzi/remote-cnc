@@ -2,8 +2,8 @@ from unittest.mock import ANY, MagicMock
 
 from core.domain.entities import File
 from core.ports.file_storage import IFileStorage
-from core.ports.worker_client import IWorkerClient
 from manager.application.file_service import FileService
+from manager.ports.worker_client import IWorkerClient
 from pytest_mock.plugin import MockerFixture
 
 

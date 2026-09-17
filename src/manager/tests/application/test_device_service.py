@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from core.ports.gateway_client import IGatewayClient
-from core.ports.worker_client import IWorkerClient
 from manager.application.device_service import DeviceService
+from manager.ports.worker_client import IWorkerClient
 
 
 def _make_service(

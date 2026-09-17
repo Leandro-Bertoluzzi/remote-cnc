@@ -2,10 +2,10 @@
 
 from typing import Annotated
 
-from core.ports.worker_client import IWorkerClient
 from fastapi import Depends
 from manager.adapters.api.context import AppContext
 from manager.adapters.api.middleware.contextMiddleware import get_app_context
+from manager.ports.worker_client import IWorkerClient
 
 
 def get_worker_client(context: Annotated[AppContext, Depends(get_app_context)]) -> IWorkerClient:

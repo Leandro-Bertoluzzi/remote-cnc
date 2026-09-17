@@ -8,9 +8,9 @@ from core.ports.db_session import DbSession, SessionFactory
 from core.ports.file_repository import IFileRepository
 from core.ports.file_storage import IFileStorage
 from core.ports.logger import ILogger
-from core.ports.worker_client import IWorkerClient
 
 from manager.application.file_manager import FileManager
+from manager.ports.worker_client import IWorkerClient
 
 
 class FileService:
