@@ -3,7 +3,6 @@
 from typing import Optional, cast
 
 from celery import Celery
-from core.config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 from core.domain.worker import (
     ActiveTasksResponse,
     PingResponse,
@@ -19,16 +18,6 @@ class CeleryTaskBroker:
 
     def __init__(self, app: Celery) -> None:
         self._app = app
-
-    # ------------------------------------------------------------------
-    # Factory
-    # ------------------------------------------------------------------
-
-    @classmethod
-    def from_config(cls) -> "CeleryTaskBroker":
-        """Create a broker configured from ``core.config``."""
-        app = Celery("worker", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
-        return cls(app)
 
     # ------------------------------------------------------------------
     # ITaskBroker implementation

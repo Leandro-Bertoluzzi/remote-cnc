@@ -2,16 +2,6 @@
 
 Implements ``IGatewayClient`` using Redis as key-value store, command queue and PubSub transport.
 See DR-0001, DR-0002, DR-0003 for design rationale.
-
-Usage
------
-Production (default config from environment)::
-
-    client = GatewayClient.from_config()
-
-Custom / testing (inject a factory)::
-
-    client = GatewayClient(redis=lambda: FakeRedis())
 """
 
 from __future__ import annotations
@@ -22,7 +12,6 @@ import uuid
 from typing import Any, Optional
 
 import redis
-from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from core.domain.gateway import (
     ALL_QUEUES,
     EVENTS_CHANNEL,
@@ -56,17 +45,6 @@ class GatewayClient:
         self._command_queue = redis
         self._pubsub_client = redis
         self._store = redis
-
-    @classmethod
-    def from_config(
-        cls,
-        host: str = REDIS_HOST,
-        port: int = REDIS_PORT,
-        db: int = REDIS_DB_STORAGE,
-    ) -> "GatewayClient":
-        """Build a ``GatewayClient`` backed by a real Redis connection pool."""
-        pool = redis.ConnectionPool(host=host, port=port, db=db)
-        return cls(redis=redis.Redis(connection_pool=pool))
 
     # ------------------------------------------------------------------
     # Internal helpers

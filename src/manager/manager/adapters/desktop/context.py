@@ -15,7 +15,6 @@ from core.ports.db_session import SessionFactory
 from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
 from core.ports.logger import ILogger
-from core.ports.worker_client import IWorkerClient
 from manager.adapters.desktop.ports.config_writer import IConfigWriter
 from manager.adapters.desktop.ports.settings_reader import ISettingsReader
 from manager.application.asset_service import AssetService
@@ -25,6 +24,7 @@ from manager.application.material_service import MaterialService
 from manager.application.task_service import TaskService
 from manager.application.tool_service import ToolService
 from manager.application.user_service import UserService
+from manager.ports.worker_client import IWorkerClient
 
 
 @dataclass

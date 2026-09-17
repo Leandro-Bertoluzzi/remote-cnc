@@ -13,7 +13,6 @@ from core.ports.pubsub_client import IPubSubClient
 from core.ports.task_repository import ITaskRepository
 from core.ports.tool_repository import IToolRepository
 from core.ports.user_repository import IUserRepository
-from core.ports.worker_client import IWorkerClient
 
 __all__ = [
     "DbSession",
@@ -26,5 +25,4 @@ __all__ = [
     "ITaskRepository",
     "IToolRepository",
     "IUserRepository",
-    "IWorkerClient",
 ]

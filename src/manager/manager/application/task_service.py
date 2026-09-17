@@ -7,7 +7,8 @@ from core.domain.entities import Task
 from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
 from core.ports.db_session import DbSession, SessionFactory
 from core.ports.task_repository import ITaskRepository
-from core.ports.worker_client import IWorkerClient
+
+from manager.ports.worker_client import IWorkerClient
 
 
 class TaskService:

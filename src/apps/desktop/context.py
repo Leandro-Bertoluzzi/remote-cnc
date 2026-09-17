@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import logging
 
+import redis
+from celery import Celery
+from core.config import settings as core_settings
 from infrastructure.database.base import SessionLocal
 from infrastructure.database.file_repository import FileRepository
 from infrastructure.database.material_repository import MaterialRepository
@@ -20,6 +23,7 @@ from infrastructure.database.user_repository import UserRepository
 from infrastructure.file_storage import FileSystemStorage
 from infrastructure.gateway.gateway_client import GatewayClient
 from infrastructure.logging.logger_factory import setup_stream_logger
+from infrastructure.worker.celery_broker import CeleryTaskBroker
 from infrastructure.worker.worker_client import WorkerClient
 from manager.adapters.desktop.context import AppContext
 from manager.application.asset_service import AssetService
@@ -40,8 +44,18 @@ def create_app_context() -> AppContext:
     adapter classes. Every other module receives its dependencies through
     ``AppContext`` or a port typed as a Protocol.
     """
-    gateway = GatewayClient.from_config()
-    worker = WorkerClient.from_config()
+    redis_client = redis.Redis(
+        host=core_settings.redis_host,
+        port=core_settings.redis_port,
+        db=core_settings.redis_db_storage,
+    )
+    gateway = GatewayClient(redis_client)
+    celery_app = Celery(
+        "desktop_worker",
+        broker=core_settings.celery_broker_url,
+        backend=core_settings.celery_broker_url,
+    )
+    worker = WorkerClient(CeleryTaskBroker(celery_app))
     storage = FileSystemStorage(settings.files_folder_path)
     session_factory = SessionLocal
     app_logger = setup_stream_logger("desktop", logging.INFO, settings.logs_folder_path)
