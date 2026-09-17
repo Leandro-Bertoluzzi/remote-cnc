@@ -30,7 +30,7 @@ This document outlines best practices for extending the desktop UI while respect
 ### Template
 
 ```python
-# src/desktop/desktop/components/MyCard.py
+# src/manager/manager/adapters/desktop/presentation/components/MyCard.py
 
 from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout
@@ -76,10 +76,10 @@ class MyCard(QWidget):
 Your view (inheriting from `BaseListView`) automatically receives and handles these signals:
 
 ```python
-# src/desktop/desktop/views/MyListView.py
+# src/manager/manager/adapters/desktop/presentation/views/MyListView.py
 
-from desktop.views.BaseListView import BaseListView
-from desktop.components.MyCard import MyCard
+from manager.adapters.desktop.presentation.views.BaseListView import BaseListView
+from manager.adapters.desktop.presentation.components.MyCard import MyCard
 
 class MyListView(BaseListView):
     """List container for MyCard widgets."""
@@ -120,11 +120,11 @@ class MyListView(BaseListView):
 ### Testing Card Signals
 
 ```python
-# src/desktop/tests/test_my_card.py
+# src/apps/desktop/tests/presentation/components/test_my_card.py
 
 import pytest
 from pytestqt.qtbot import QtBot
-from desktop.components.MyCard import MyCard
+from manager.adapters.desktop.presentation.components.MyCard import MyCard
 
 def test_card_emits_update_requested_on_edit_click(qtbot: QtBot):
     """Clicking Edit button emits update_requested signal."""
@@ -162,13 +162,13 @@ def test_card_emits_remove_requested_on_delete_click(qtbot: QtBot):
 ### Template
 
 ```python
-# src/desktop/desktop/views/MyView.py
+# src/manager/manager/adapters/desktop/presentation/views/MyView.py
 
 from PyQt5.QtWidgets import QVBoxLayout
-from desktop.views.BaseListView import BaseListView
-from desktop.components.MyCard import MyCard
-from gateway.GatewayMonitor import GatewayMonitor
-from core.AppContext import AppContext
+from manager.adapters.desktop.presentation.views.BaseListView import BaseListView
+from manager.adapters.desktop.presentation.components.MyCard import MyCard
+from manager.adapters.desktop.presentation.components.gatewayMonitor import GatewayMonitor
+from manager.adapters.desktop.context import AppContext
 
 class MyView(BaseListView):
     """
@@ -207,7 +207,7 @@ class MyView(BaseListView):
 
     def createToolBar(self):
         """Optional: create toolbar with action buttons."""
-        from desktop.components.ToolBar import ToolBar
+        from manager.adapters.desktop.presentation.components.ToolBar import ToolBar
         toolbar = ToolBar(
             options=["Add New", "Export"],
             parent=self
@@ -244,13 +244,13 @@ self._connect_view_signals(view)  # Auto-wires all view signals
 ### Testing View Signals
 
 ```python
-# src/desktop/tests/test_my_view.py
+# src/apps/desktop/tests/presentation/views/test_my_view.py
 
 import pytest
 from pytestqt.qtbot import QtBot
 from unittest.mock import MagicMock
-from desktop.views.MyListView import MyView
-from core.AppContext import AppContext
+from manager.adapters.desktop.presentation.views.MyListView import MyView
+from manager.adapters.desktop.context import AppContext
 
 @pytest.fixture
 def mock_context():
@@ -353,7 +353,7 @@ def _disconnect_view_signals(self, view: BaseView) -> None:
 ### Testing MainWindow Signal Routing
 
 ```python
-# src/desktop/tests/test_main_window.py
+# src/apps/desktop/tests/presentation/test_main_window.py
 
 def test_main_window_connects_view_signals(qtbot: QtBot, main_window_fixture):
     """MainWindow auto-connects all view signals on changeView()."""

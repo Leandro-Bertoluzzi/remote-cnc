@@ -75,7 +75,7 @@ $ docker compose -f docker-compose.yml -f docker-compose.production.yml --profil
 1. Move the `start.sh` bash script to your user's root folder.
 
 ```bash
-$ mv /home/{{username}}/remote-cnc/src/desktop/start.sh /home/{{username}}/start.sh
+$ mv /home/{{username}}/remote-cnc/src/apps/desktop/start.sh /home/{{username}}/start.sh
 ```
 Note: Replace `{{username}}` by your actual user's name.
 

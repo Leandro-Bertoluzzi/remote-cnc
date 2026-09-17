@@ -44,6 +44,26 @@ $ just start api
 
 Open [http://localhost:8000](http://localhost:8000) with your browser to see the result.
 
+## Architecture
+
+The API is an inbound adapter of the Manager application. Its deployment-specific
+composition root lives under `src/apps/api/`:
+
+```text
+src/
+├── apps/api/                 # FastAPI startup, configuration and wiring
+├── manager/
+│   ├── manager/adapters/api/ # Routes, schemas, middleware and API context
+│   └── manager/application/  # CNC Management application services
+├── core/                     # Shared domain model and ports
+└── infrastructure/           # Concrete outbound adapters
+```
+
+`apps.api.context.create_app_context()` selects and injects infrastructure
+implementations. API routes receive the Manager context and delegate business
+operations to application services; they must not instantiate repositories,
+Redis clients or Celery clients directly.
+
 # Run tests
 
 ### Unit tests

@@ -41,6 +41,27 @@ $ just start desktop
 $ just start desktop watch
 ```
 
+## Architecture
+
+The Desktop application is a Qt inbound adapter of the Manager application.
+The deployment composition root is `src/apps/desktop/`; the presentation
+adapter and application services are shared architectural modules:
+
+```text
+src/
+├── apps/desktop/                       # Qt startup, configuration and wiring
+├── manager/
+│   ├── manager/adapters/desktop/       # Qt presentation and Desktop ports
+│   └── manager/application/            # CNC Management application services
+├── core/                               # Shared domain model and ports
+└── infrastructure/                     # Concrete outbound adapters
+```
+
+`apps.desktop.context.create_app_context()` injects the concrete adapters into
+`manager.adapters.desktop.context.AppContext`. Views receive that context and
+call Manager services; they should not create database, Redis, Celery or file
+storage adapters themselves.
+
 ## Start additional services
 
 The desktop app connects to the backend services (API, PostgreSQL, Redis, Worker). Start them with Docker:
