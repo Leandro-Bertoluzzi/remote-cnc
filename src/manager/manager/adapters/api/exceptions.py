@@ -9,6 +9,8 @@ from core.domain.exceptions import (
     DuplicatedFileNameError,
     DuplicatedUserError,
     EntityNotFoundError,
+    FileStorageError,
+    InvalidFile,
     InvalidRole,
     InvalidTaskStatus,
     PersistenceError,
@@ -55,4 +57,12 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def invalid_task_status_handler(
         _request: Request, exc: InvalidTaskStatus
     ) -> JSONResponse:
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+    @app.exception_handler(FileStorageError)
+    async def file_storage_error_handler(_request: Request, exc: FileStorageError) -> JSONResponse:
+        return JSONResponse(status_code=500, content={"detail": "Internal file storage error"})
+
+    @app.exception_handler(InvalidFile)
+    async def invalid_file_handler(_request: Request, exc: InvalidFile) -> JSONResponse:
         return JSONResponse(status_code=400, content={"detail": str(exc)})
