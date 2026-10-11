@@ -1,222 +1,89 @@
-import datetime
+from datetime import datetime, timedelta, timezone
 
-import manager.adapters.api.middleware.dbMiddleware as dbMiddleware
-from core.domain.entities import User
-from fastapi.testclient import TestClient
-from infrastructure.database.base import Base
-from infrastructure.database.user_repository import UserRepository
-from jwt import ExpiredSignatureError, InvalidSignatureError
-from pytest_mock.plugin import MockerFixture
-
-from apps.api.main import app
-
-from .api_db import TestingSession, engine
-
-# Example users
-test_user = User(
-    "User", "user@test.com", "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy", "user"
-)
-test_admin = User(
-    "Admin",
-    "admin@test.com",
-    "$2b$12$4kHVTQCMgWieAvSHUTWFVu11gAY0wXb1SDWtuAbiV2L9hITuxBQxy",
-    "admin",
-)
+import jwt
 
 
-# Override the default dependencies
-def get_test_db():
-    database = TestingSession()
-    try:
-        yield database
-    finally:
-        database.close()
+def test_auth_user_header(client, user_headers, app_context):
+    response = client.get("/tools/", headers=user_headers)
+
+    assert response.status_code == 200
+    app_context.user_service.get_user_by_id.assert_called_once_with(1)
 
 
-app.dependency_overrides[dbMiddleware.get_db] = get_test_db
+def test_auth_user_query_token(client, test_user, app_context):
+    from core.utilities.security import generate_token
+
+    response = client.get("/tools/", params={"token": generate_token(test_user.id)})
+
+    assert response.status_code == 200
+    app_context.user_service.get_user_by_id.assert_called_once_with(test_user.id)
 
 
-# Test HTTP client
-client = TestClient(app)
+def test_auth_token_missing(client):
+    response = client.get("/tools/")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Unauthorized: Authentication Token is missing!"
 
 
-class TestAuthMiddleware:
-    def setup_class(self):
-        # Creates tables in the test database
-        Base.metadata.create_all(bind=engine)
+def test_auth_expired_token(client):
+    token = jwt.encode(
+        {"user_id": 1, "exp": datetime.now(timezone.utc) - timedelta(seconds=1)},
+        "api-tests-secret-key-32-bytes-long",
+        algorithm="HS256",
+    )
 
-        # Seeds the database with test data
-        with TestingSession() as session:
-            repository = UserRepository(session)
-            repository.create_user(test_user.name, test_user.email, "password", test_user.role)
-            repository.create_user(test_admin.name, test_admin.email, "password", test_admin.role)
+    response = client.get("/tools/", headers={"Authorization": f"Bearer {token}"})
 
-    def teardown_class(self):
-        Base.metadata.drop_all(bind=engine)
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Expired token, login to generate a new one"
 
-    # --------------------------------------------------------------------- #
-    # -------------------------------- USER ------------------------------- #
-    # --------------------------------------------------------------------- #
 
-    def test_auth_user_header(self, mocker: MockerFixture):
-        headers = {"Authorization": "Bearer a-valid-token"}
+def test_auth_invalid_signature(client):
+    token = jwt.encode(
+        {"user_id": 1, "exp": datetime.now(timezone.utc) + timedelta(minutes=5)},
+        "wrong-secret-key-that-is-over-32-bytes",
+        algorithm="HS256",
+    )
 
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
-        )
+    response = client.get("/tools/", headers={"Authorization": f"Bearer {token}"})
 
-        # Query endpoint under test
-        response = client.get("/tools/", headers=headers)
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid token, login to generate a new one"
 
-        # Assertions
-        assert response.status_code == 200
-        assert mock_verify_token.call_count == 1
 
-    def test_auth_user_query(self, mocker: MockerFixture):
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
-        )
+def test_auth_unknown_user_returns_bad_request(client, app_context):
+    token = jwt.encode(
+        {"user_id": 500, "exp": datetime.now(timezone.utc) + timedelta(minutes=5)},
+        "api-tests-secret-key-32-bytes-long",
+        algorithm="HS256",
+    )
 
-        # Query endpoint under test
-        response = client.get("/tools?token=a-valid-token")
+    response = client.get("/tools/", headers={"Authorization": f"Bearer {token}"})
 
-        # Assertions
-        assert response.status_code == 200
-        assert mock_verify_token.call_count == 1
+    assert response.status_code == 400
+    assert response.json()["detail"] == "User with ID 500 was not found"
+    app_context.user_service.get_user_by_id.assert_called_once_with(500)
 
-    def test_error_token_missing(self):
-        # Query endpoint under test
-        response = client.get("/tools/")
 
-        # Assertions
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized: Authentication Token is missing!"
+def test_auth_user_service_error_returns_bad_request(client, user_headers, app_context):
+    app_context.user_service.get_user_by_id.side_effect = RuntimeError("service error")
 
-    def test_error_expired_token(self, mocker: MockerFixture):
-        headers = {"Authorization": "Bearer an-expired-token"}
+    response = client.get("/tools/", headers=user_headers)
 
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            side_effect=ExpiredSignatureError(),
-        )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "service error"
 
-        # Query endpoint under test
-        response = client.get("/tools/", headers=headers)
 
-        # Assertions
-        assert mock_verify_token.call_count == 1
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Expired token, please login to generate a new one"
+def test_admin_endpoint_rejects_user(client, user_headers):
+    response = client.get("/users/", headers=user_headers)
 
-    def test_error_invalid_token(self, mocker: MockerFixture):
-        headers = {"Authorization": "Bearer an-expired-token"}
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Unauthorized: This endpoint requires admin permission"
 
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            side_effect=InvalidSignatureError(),
-        )
 
-        # Query endpoint under test
-        response = client.get("/tools/", headers=headers)
+def test_admin_endpoint_accepts_admin(client, admin_headers, app_context):
+    response = client.get("/users/", headers=admin_headers)
 
-        # Assertions
-        assert mock_verify_token.call_count == 1
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Invalid token, please login to generate a new one"
-
-    def test_error_user_not_found(self, mocker: MockerFixture):
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            return_value={"user_id": 500, "exp": datetime.datetime.now() + datetime.timedelta(1)},
-        )
-
-        # Query endpoint under test
-        response = client.get("/tools/", headers=headers)
-
-        # Assertions
-        assert mock_verify_token.call_count == 1
-        assert response.status_code == 400
-        assert response.json()["detail"] == "User with ID 500 was not found"
-
-    def test_db_error(self, mocker: MockerFixture):
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
-        )
-        # Mock DB method to simulate exception
-        mock_get_user = mocker.patch(
-            "api.middleware.authMiddleware.UserRepository.get_user_by_id",
-            side_effect=Exception("There was an error"),
-        )
-
-        # Query endpoint under test
-        response = client.get("/tools/", headers=headers)
-
-        # Assertions
-        assert mock_verify_token.call_count == 1
-        assert mock_get_user.call_count == 1
-        assert response.status_code == 400
-        assert response.json()["detail"] == "There was an error"
-
-    # --------------------------------------------------------------------- #
-    # ------------------------------- ADMIN ------------------------------- #
-    # --------------------------------------------------------------------- #
-
-    def test_auth_admin_header(self, mocker: MockerFixture):
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            return_value={"user_id": 2, "exp": datetime.datetime.now() + datetime.timedelta(1)},
-        )
-
-        # Query endpoint under test
-        response = client.get("/users/", headers=headers)
-
-        # Assertions
-        assert response.status_code == 200
-        assert mock_verify_token.call_count == 1
-
-    def test_auth_admin_query(self, mocker: MockerFixture):
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            return_value={"user_id": 2, "exp": datetime.datetime.now() + datetime.timedelta(1)},
-        )
-
-        # Query endpoint under test
-        response = client.get("/users?token=a-valid-token")
-
-        # Assertions
-        assert response.status_code == 200
-        assert mock_verify_token.call_count == 1
-
-    def test_auth_admin_fails(self, mocker: MockerFixture):
-        headers = {"Authorization": "Bearer a-valid-token"}
-
-        # Mock JWT validation
-        mock_verify_token = mocker.patch(
-            "api.middleware.authMiddleware.verify_token",
-            return_value={"user_id": 1, "exp": datetime.datetime.now() + datetime.timedelta(1)},
-        )
-
-        # Query endpoint under test
-        response = client.get("/users/", headers=headers)
-
-        # Assertions
-        assert response.status_code == 401
-        assert mock_verify_token.call_count == 1
-        assert response.json()["detail"] == "Unauthorized: This endpoint requires admin permission"
+    assert response.status_code == 200
+    app_context.user_service.get_user_by_id.assert_called_once_with(2)
