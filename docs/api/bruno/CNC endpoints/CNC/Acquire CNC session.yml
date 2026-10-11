@@ -1,0 +1,22 @@
+info:
+  name: Acquire CNC session
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/cnc/session"
+  body:
+    type: json
+    data: |-
+      {
+          "client_type": "web"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

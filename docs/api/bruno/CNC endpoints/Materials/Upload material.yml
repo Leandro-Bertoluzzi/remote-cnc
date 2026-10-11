@@ -1,0 +1,25 @@
+info:
+  name: Upload material
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/materials"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Wood\",\r
+
+      \    \"description\": \"It is some kind of wood\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

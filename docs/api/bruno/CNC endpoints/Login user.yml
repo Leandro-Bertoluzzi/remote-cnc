@@ -1,0 +1,32 @@
+info:
+  name: Login user
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{baseUrl}}/login"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"email\": \"admin@test.com\",\r
+
+      \  \"password\": \"password\"\r
+
+      }"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let data = res.body;
+        bru.setEnvVar("jwtToken", data.token);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

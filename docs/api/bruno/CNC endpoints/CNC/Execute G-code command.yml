@@ -1,0 +1,26 @@
+info:
+  name: Execute G-code command
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/cnc/command"
+  headers:
+    - name: x-cnc-session
+      value: ""
+  body:
+    type: json
+    data: "{\r
+
+      \    \"command\": \"G17 G20 G90 G94 G54\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

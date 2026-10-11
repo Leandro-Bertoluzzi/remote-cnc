@@ -1,0 +1,42 @@
+info:
+  name: Execute jog command
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/cnc/jog"
+  headers:
+    - name: x-cnc-session
+      value: ""
+  params:
+    - name: machine
+      value: "0"
+      type: query
+      description: "0: False, 1: True"
+      disabled: true
+  body:
+    type: json
+    data: "{\r
+
+      \    \"x\": 0.25,\r
+
+      \    \"y\": 0.35,\r
+
+      \    \"z\": 0.45,\r
+
+      \    \"feedrate\": 200,\r
+
+      \    \"units\": \"milimeters\",\r
+
+      \    \"mode\": \"distance_incremental\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

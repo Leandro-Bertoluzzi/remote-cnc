@@ -1,0 +1,9 @@
+info:
+  name: Logs
+  type: folder
+  seq: 9
+
+request:
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"

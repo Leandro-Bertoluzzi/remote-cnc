@@ -1,0 +1,23 @@
+info:
+  name: Upload file
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/files/"
+  body:
+    type: multipart-form
+    data:
+      - name: file
+        type: file
+        value:
+          - test.gcode
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

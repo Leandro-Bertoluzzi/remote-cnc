@@ -1,0 +1,25 @@
+info:
+  name: Create tool
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tools"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Tool 1\",\r
+
+      \    \"description\": \"It may be useful for something\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
