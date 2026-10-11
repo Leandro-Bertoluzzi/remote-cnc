@@ -1,0 +1,39 @@
+info:
+  name: Get file content
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{baseUrl}}/files/:file_id/content"
+  params:
+    - name: file_id
+      value: "1"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        // add a template string of the front-end view we want to render
+        let template = `
+            <pre>{{content}}</pre>
+        `;
+
+        // Set visualizer
+        bru.visualize("html", {
+            template: template,
+
+            data: {
+                // Pass the response body parsed as JSON
+                content: res.getBody().content
+            }
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,22 @@
+info:
+  name: Remove user
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/users/:user_id"
+  params:
+    - name: user_id
+      value: "8"
+      type: path
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,6 @@
+name: Local
+variables:
+  - name: baseUrl
+    value: http://127.0.0.1:8000
+  - secret: true
+    name: jwtToken

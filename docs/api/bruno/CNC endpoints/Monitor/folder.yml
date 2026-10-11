@@ -1,0 +1,9 @@
+info:
+  name: Monitor
+  type: folder
+  seq: 8
+
+request:
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"

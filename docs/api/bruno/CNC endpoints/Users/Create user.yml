@@ -1,0 +1,31 @@
+info:
+  name: Create user
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/users"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Test\",\r
+
+      \    \"email\": \"testing@test.com\",\r
+
+      \    \"password\": \"abcABC@123\",\r
+
+      \    \"role\": \"user\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

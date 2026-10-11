@@ -1,0 +1,9 @@
+info:
+  name: Materials
+  type: folder
+  seq: 4
+
+request:
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"

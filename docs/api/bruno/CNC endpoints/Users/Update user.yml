@@ -1,0 +1,33 @@
+info:
+  name: Update user
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/users/:user_id"
+  params:
+    - name: user_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Test update\",\r
+
+      \    \"email\": \"testing-update@test.com\",\r
+
+      \    \"role\": \"admin\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
