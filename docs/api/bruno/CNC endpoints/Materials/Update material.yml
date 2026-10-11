@@ -1,0 +1,29 @@
+info:
+  name: Update material
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/materials/:material_id"
+  params:
+    - name: material_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Cardboard\",\r
+
+      \    \"description\": \"It is cardboard\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

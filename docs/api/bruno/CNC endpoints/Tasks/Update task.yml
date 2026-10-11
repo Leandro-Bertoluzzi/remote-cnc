@@ -1,0 +1,35 @@
+info:
+  name: Update task
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/tasks/:task_id"
+  params:
+    - name: task_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: "{\r
+
+      \    \"file_id\": 1,\r
+
+      \    \"tool_id\": 1,\r
+
+      \    \"material_id\": 1,\r
+
+      \    \"name\": \"My first task updated\",\r
+
+      \    \"priority\": 1\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

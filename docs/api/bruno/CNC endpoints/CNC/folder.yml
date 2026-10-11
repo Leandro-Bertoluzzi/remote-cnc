@@ -1,0 +1,9 @@
+info:
+  name: CNC
+  type: folder
+  seq: 6
+
+request:
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"

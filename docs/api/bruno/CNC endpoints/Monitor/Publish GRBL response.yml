@@ -1,0 +1,43 @@
+info:
+  name: Publish GRBL response
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/monitor/messages/grbl_messages"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"message\": {\r
+
+      \        \"type\": \"received\",\r
+
+      \        \"message\": \"ok\"\r
+
+      \    }\r
+
+      }"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        // Get parsed request body
+        body_raw = JSON.parse(req.getBody().raw)
+
+        // Convert message to string
+        message = JSON.stringify(body_raw.message)
+        body_raw.message = message
+
+        // Update request body
+        req.getBody().raw = body_raw
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,9 @@
+info:
+  name: Tasks
+  type: folder
+  seq: 5
+
+request:
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"

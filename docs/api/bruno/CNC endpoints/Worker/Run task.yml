@@ -1,0 +1,20 @@
+info:
+  name: Run task
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/worker/task/:db_task_id"
+  params:
+    - name: db_task_id
+      value: "1"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

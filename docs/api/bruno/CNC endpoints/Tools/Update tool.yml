@@ -1,0 +1,29 @@
+info:
+  name: Update tool
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/tools/:tool_id"
+  params:
+    - name: tool_id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Tool 2\",\r
+
+      \    \"description\": \"It may also be useful for other stuff\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

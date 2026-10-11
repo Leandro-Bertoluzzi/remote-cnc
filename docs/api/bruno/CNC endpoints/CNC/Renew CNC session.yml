@@ -1,0 +1,19 @@
+info:
+  name: Renew CNC session
+  type: http
+  seq: 11
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/cnc/session/renew"
+  headers:
+    - name: x-cnc-session
+      value: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

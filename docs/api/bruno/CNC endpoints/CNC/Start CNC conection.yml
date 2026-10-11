@@ -1,0 +1,23 @@
+info:
+  name: Start CNC conection
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/cnc/server"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"command\": \"G17 G20 G90 G94 G54\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

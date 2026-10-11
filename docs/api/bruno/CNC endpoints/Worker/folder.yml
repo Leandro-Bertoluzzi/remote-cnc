@@ -1,0 +1,9 @@
+info:
+  name: Worker
+  type: folder
+  seq: 7
+
+request:
+  auth:
+    type: bearer
+    token: "{{jwtToken}}"
