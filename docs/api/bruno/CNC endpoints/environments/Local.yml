@@ -2,5 +2,7 @@ name: Local
 variables:
   - name: baseUrl
     value: http://127.0.0.1:8000
+  - name: username
+    value: admin@test.com
   - secret: true
-    name: jwtToken
+    name: password
