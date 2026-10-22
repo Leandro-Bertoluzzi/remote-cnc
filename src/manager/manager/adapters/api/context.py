@@ -8,6 +8,7 @@ from core.ports.db_session import SessionFactory
 from core.ports.file_storage import IFileStorage
 from core.ports.gateway_client import IGatewayClient
 from core.ports.logger import ILogger
+from core.ports.pubsub_client import IAsyncPubSubClient
 from manager.application.device_service import DeviceService
 from manager.application.file_service import FileService
 from manager.application.log_service import LogService
@@ -27,6 +28,7 @@ class AppContext:
     file_storage: IFileStorage
     session_factory: SessionFactory
     logger: ILogger
+    pubsub: IAsyncPubSubClient
     device_service: DeviceService
     file_service: FileService
     log_service: LogService

@@ -176,3 +176,37 @@ class FakeLogStorage:
         path = self.get_log_path(file_name)
         path.write_text(contents, encoding="utf-8")
         return path
+
+
+class FakeAsyncPubSub:
+    def __init__(self, messages: list[bytes]) -> None:
+        self._messages = list(messages)
+        self.closed = False
+
+    async def subscribe(self, *channels: str, **kwargs) -> None:
+        self.channels = channels
+
+    async def unsubscribe(self, *channels: str) -> None:
+        pass
+
+    async def get_message(self, ignore_subscribe_messages: bool = False, timeout: float = 0.0):
+        if self._messages:
+            return {"type": "message", "channel": "x", "data": self._messages.pop(0)}
+        return None
+
+    async def aclose(self) -> None:
+        self.closed = True
+
+
+class FakeAsyncPubSubClient:
+    def __init__(self, messages: list[bytes] | None = None) -> None:
+        self.messages = messages or []
+        self.handles: list[FakeAsyncPubSub] = []
+
+    def pubsub(self, **kwargs) -> FakeAsyncPubSub:
+        handle = FakeAsyncPubSub(self.messages)
+        self.handles.append(handle)
+        return handle
+
+    async def aclose(self) -> None:
+        pass

@@ -55,3 +55,41 @@ class IPubSubClient(Protocol):
     def pubsub(self, **kwargs: Any) -> IPubSub:
         """Return a PubSub handle for channel subscriptions."""
         ...
+
+
+@runtime_checkable
+class IAsyncPubSub(Protocol):
+    """Asynchronous counterpart of ``IPubSub``."""
+
+    async def subscribe(self, *channels: str, **kwargs: Any) -> None:
+        """Subscribe to one or more channels."""
+        ...
+
+    async def unsubscribe(self, *channels: str) -> None:
+        """Unsubscribe from channels (or all if none given)."""
+        ...
+
+    async def get_message(
+        self,
+        ignore_subscribe_messages: bool = False,
+        timeout: float = 0.0,
+    ) -> Optional[PubSubMessage]:
+        """Return the next available message, or ``None`` if none ready."""
+        ...
+
+    async def aclose(self) -> None:
+        """Release the underlying connection."""
+        ...
+
+
+@runtime_checkable
+class IAsyncPubSubClient(Protocol):
+    """Structural interface for an asynchronous PubSub client."""
+
+    def pubsub(self, **kwargs: Any) -> IAsyncPubSub:
+        """Return a PubSub handle for channel subscriptions."""
+        ...
+
+    async def aclose(self) -> None:
+        """Close the client and its connections."""
+        ...

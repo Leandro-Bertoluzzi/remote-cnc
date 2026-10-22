@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from core.ports.gateway_client import IGatewayClient
+from core.ports.pubsub_client import IAsyncPubSubClient
 from fastapi import Depends, Request
 from manager.adapters.api.context import AppContext
 from manager.application.device_service import DeviceService
@@ -18,7 +19,9 @@ from manager.ports.worker_client import IWorkerClient
 def get_app_context(request: Request) -> AppContext:
     return request.app.state.context
 
+
 ## Services
+
 
 def get_device_service(context: Annotated[AppContext, Depends(get_app_context)]) -> DeviceService:
     return context.device_service
@@ -49,13 +52,23 @@ def get_tool_service(context: Annotated[AppContext, Depends(get_app_context)]) -
 def get_user_service(context: Annotated[AppContext, Depends(get_app_context)]) -> UserService:
     return context.user_service
 
+
 ## Clients
+
 
 def get_gateway_client(context: Annotated[AppContext, Depends(get_app_context)]) -> IGatewayClient:
     return context.gateway
 
+
 def get_worker_client(context: Annotated[AppContext, Depends(get_app_context)]) -> IWorkerClient:
     return context.worker
+
+
+def get_pubsub_client(
+    context: Annotated[AppContext, Depends(get_app_context)],
+) -> IAsyncPubSubClient:
+    return context.pubsub
+
 
 ## Dependency Annotations for FastAPI
 
@@ -68,3 +81,4 @@ GetToolService = Annotated[ToolService, Depends(get_tool_service)]
 GetUserService = Annotated[UserService, Depends(get_user_service)]
 GetGateway = Annotated[IGatewayClient, Depends(get_gateway_client)]
 GetWorker = Annotated[IWorkerClient, Depends(get_worker_client)]
+GetPubSub = Annotated[IAsyncPubSubClient, Depends(get_pubsub_client)]

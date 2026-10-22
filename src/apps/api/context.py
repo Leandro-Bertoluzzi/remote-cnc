@@ -1,6 +1,7 @@
 """Composition root for the API application."""
 
 import redis
+import redis.asyncio as aioredis
 from celery import Celery
 from core.config import settings
 from infrastructure.database.base import SessionLocal
@@ -32,6 +33,11 @@ def create_app_context() -> AppContext:
         port=settings.redis_port,
         db=settings.redis_db_storage,
     )
+    pubsub_client = aioredis.Redis(
+        host=settings.redis_host,
+        port=settings.redis_port,
+        db=settings.redis_db_storage,
+    )
     gateway = GatewayClient(redis_client)
     celery_app = Celery(
         "api_worker",
@@ -49,6 +55,7 @@ def create_app_context() -> AppContext:
         file_storage=storage,
         session_factory=session_factory,
         logger=logger,
+        pubsub=pubsub_client,
         device_service=DeviceService(gateway, worker),
         file_service=FileService(
             worker=worker,

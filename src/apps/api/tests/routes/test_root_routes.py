@@ -4,9 +4,7 @@ from unittest.mock import patch
 def test_login_returns_token(client, app_context, test_admin):
     app_context.user_service.get_user_by_email.return_value = test_admin
     with patch("manager.adapters.api.routes.rootRoutes.validate_password", return_value=True):
-        response = client.post(
-            "/login", json={"email": test_admin.email, "password": "Password1!"}
-        )
+        response = client.post("/login", json={"email": test_admin.email, "password": "Password1!"})
 
     assert response.status_code == 200
     assert response.json()["id"] == test_admin.id
