@@ -8,17 +8,13 @@ def test_gateway_state(client, admin_headers, app_context):
 
 
 def test_acquire_and_release_session(client, admin_headers, app_context):
-    acquired = client.post(
-        "/cnc/session", headers=admin_headers, json={"client_type": "desktop"}
-    )
+    acquired = client.post("/cnc/session", headers=admin_headers, json={"client_type": "desktop"})
 
     assert acquired.status_code == 200
     session_id = acquired.json()["session_id"]
     assert acquired.json()["user_id"] == 2
 
-    released = client.delete(
-        "/cnc/session", headers={**admin_headers, "X-CNC-Session": session_id}
-    )
+    released = client.delete("/cnc/session", headers={**admin_headers, "X-CNC-Session": session_id})
 
     assert released.status_code == 200
     assert app_context.gateway.active_session is None
@@ -27,9 +23,7 @@ def test_acquire_and_release_session(client, admin_headers, app_context):
 def test_acquire_session_rejects_unavailable_gateway(client, admin_headers, app_context):
     app_context.gateway.state = None
 
-    response = client.post(
-        "/cnc/session", headers=admin_headers, json={"client_type": "desktop"}
-    )
+    response = client.post("/cnc/session", headers=admin_headers, json={"client_type": "desktop"})
 
     assert response.status_code == 503
 

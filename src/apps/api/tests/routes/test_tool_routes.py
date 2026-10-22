@@ -13,9 +13,7 @@ def test_list_tools(client, app_context, user_headers, test_tool):
 
 
 def test_create_tool(client, app_context, admin_headers):
-    tool = Tool(
-        id=5, name="New tool", description="New description", added_at=datetime(2000, 1, 1)
-    )
+    tool = Tool(id=5, name="New tool", description="New description", added_at=datetime(2000, 1, 1))
     app_context.tool_service.create_tool.return_value = tool
 
     response = client.post(

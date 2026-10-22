@@ -1,9 +1,8 @@
 import asyncio
 
-import redis.asyncio as aioredis
-from core.config import REDIS_DB_STORAGE, REDIS_HOST, REDIS_PORT
 from fastapi import APIRouter, HTTPException, Request
 from manager.adapters.api.middleware.authMiddleware import GetUserDep
+from manager.adapters.api.middleware.contextMiddleware import GetPubSub
 from sse_starlette.sse import EventSourceResponse
 
 monitorRoutes = APIRouter(prefix="/monitor", tags=["Monitor"])
@@ -13,7 +12,7 @@ _ALLOWED_CHANNELS = {"grbl_status", "grbl_messages", "cnc:events"}
 
 
 @monitorRoutes.get("/stream/{channel}")
-async def stream(channel: str, user: GetUserDep, req: Request):
+async def stream(channel: str, user: GetUserDep, pubsub_client: GetPubSub, req: Request):
     """SSE endpoint — subscribe to a Gateway PubSub channel.
 
     Streams real-time CNC status, GRBL messages, or lifecycle events
@@ -23,13 +22,7 @@ async def stream(channel: str, user: GetUserDep, req: Request):
         raise HTTPException(400, detail=f"Canal no permitido: {channel}")
 
     async def subscribe():
-        conn = aioredis.Redis(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            db=REDIS_DB_STORAGE,
-            auto_close_connection_pool=False,
-        )
-        pubsub = conn.pubsub()
+        pubsub = pubsub_client.pubsub()
         await pubsub.subscribe(channel)
         try:
             while True:
@@ -40,13 +33,13 @@ async def stream(channel: str, user: GetUserDep, req: Request):
                     timeout=1.0,
                 )
                 if message is not None and "data" in message:
-                    data: bytes = message["data"]
-                    yield {"event": channel, "data": data.decode()}
+                    data = message["data"]
+                    text = data.decode() if isinstance(data, bytes) else str(data)
+                    yield {"event": channel, "data": text}
                 else:
                     await asyncio.sleep(0.05)
         finally:
             await pubsub.unsubscribe(channel)
             await pubsub.aclose()
-            await conn.aclose()
 
     return EventSourceResponse(subscribe())

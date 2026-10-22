@@ -43,6 +43,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     # --- Shutdown ---
     logger.info("Shutting down API server...")
+    await app.state.context.pubsub.aclose()
     dispose_db()
     logger.info("Database connections closed")
 

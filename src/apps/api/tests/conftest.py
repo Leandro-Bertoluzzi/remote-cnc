@@ -19,7 +19,12 @@ from manager.application.task_service import TaskService
 from manager.application.tool_service import ToolService
 from manager.application.user_service import UserService
 
-from apps.api.tests.fakes import FakeGatewayClient, FakeLogStorage, FakeWorkerClient
+from apps.api.tests.fakes import (
+    FakeAsyncPubSubClient,
+    FakeGatewayClient,
+    FakeLogStorage,
+    FakeWorkerClient,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -143,6 +148,7 @@ def app_context(
         file_storage=MagicMock(spec=IFileStorage),
         session_factory=MagicMock(),
         logger=MagicMock(spec=ILogger),
+        pubsub=FakeAsyncPubSubClient(),
         device_service=MagicMock(spec=DeviceService),
         file_service=MagicMock(spec=FileService),
         log_service=LogService(log_storage),
