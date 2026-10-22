@@ -8,13 +8,11 @@ http:
   url: "{{baseUrl}}/login"
   body:
     type: json
-    data: "{\r
-
-      \  \"email\": \"admin@test.com\",\r
-
-      \  \"password\": \"password\"\r
-
-      }"
+    data: |-
+      {
+        "email": "{{username}}",
+        "password": "{{password}}"
+      }
   auth: inherit
 
 runtime:
@@ -22,7 +20,7 @@ runtime:
     - type: after-response
       code: |-
         let data = res.body;
-        bru.setEnvVar("jwtToken", data.token);
+        bru.setVar("jwtToken", data.token);
 
 settings:
   encodeUrl: true
