@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/cnc/jog"
   headers:
     - name: x-cnc-session
-      value: ""
+      value: "{{cncSession}}"
   params:
     - name: machine
       value: "0"

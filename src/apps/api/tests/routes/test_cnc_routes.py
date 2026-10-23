@@ -8,7 +8,7 @@ def test_gateway_state(client, admin_headers, app_context):
 
 
 def test_acquire_and_release_session(client, admin_headers, app_context):
-    acquired = client.post("/cnc/session", headers=admin_headers, json={"client_type": "desktop"})
+    acquired = client.post("/cnc/session", headers=admin_headers, json={"client_type": "web"})
 
     assert acquired.status_code == 200
     session_id = acquired.json()["session_id"]
@@ -23,13 +23,13 @@ def test_acquire_and_release_session(client, admin_headers, app_context):
 def test_acquire_session_rejects_unavailable_gateway(client, admin_headers, app_context):
     app_context.gateway.state = None
 
-    response = client.post("/cnc/session", headers=admin_headers, json={"client_type": "desktop"})
+    response = client.post("/cnc/session", headers=admin_headers, json={"client_type": "web"})
 
     assert response.status_code == 503
 
 
 def test_command_is_recorded_by_gateway_fake(client, admin_headers, app_context):
-    session_id = app_context.gateway.acquire_session(2, "desktop")
+    session_id = app_context.gateway.acquire_session(2, "web")
 
     response = client.post(
         "/cnc/command",
@@ -39,3 +39,39 @@ def test_command_is_recorded_by_gateway_fake(client, admin_headers, app_context)
 
     assert response.status_code == 200
     assert app_context.gateway.commands == [(session_id, "G0 X1")]
+
+
+def test_command_is_rejected_without_session_header(client, admin_headers, app_context):
+    _session_id = app_context.gateway.acquire_session(2, "web")
+
+    response = client.post(
+        "/cnc/command",
+        headers={**admin_headers, "X-CNC-Session": ""},
+        json={"command": "G0 X1"},
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Debe iniciar una nueva sesión CNC"}
+
+
+def test_command_is_rejected_with_no_active_session(client, admin_headers):
+    response = client.post(
+        "/cnc/command",
+        headers={**admin_headers, "X-CNC-Session": "invalid_session_id"},
+        json={"command": "G0 X1"},
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Debe iniciar una nueva sesión CNC"}
+
+def test_command_is_rejected_with_invalid_session(client, admin_headers, app_context):
+    _session_id = app_context.gateway.acquire_session(2, "web")
+
+    response = client.post(
+        "/cnc/command",
+        headers={**admin_headers, "X-CNC-Session": "invalid_session_id"},
+        json={"command": "G0 X1"},
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "El CNC ya está en uso por otra sesión"}

@@ -1,14 +1,14 @@
 info:
   name: Renew CNC session
   type: http
-  seq: 11
+  seq: 9
 
 http:
   method: PUT
   url: "{{baseUrl}}/cnc/session/renew"
   headers:
     - name: x-cnc-session
-      value: ""
+      value: "{{cncSession}}"
   auth: inherit
 
 settings:

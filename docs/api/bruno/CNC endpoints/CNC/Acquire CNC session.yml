@@ -1,7 +1,7 @@
 info:
   name: Acquire CNC session
   type: http
-  seq: 9
+  seq: 7
 
 http:
   method: POST
@@ -13,6 +13,15 @@ http:
           "client_type": "web"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let data = res.body;
+        if(!data.session_id) { return; }
+
+        bru.setVar("cncSession", data.session_id);
 
 settings:
   encodeUrl: true

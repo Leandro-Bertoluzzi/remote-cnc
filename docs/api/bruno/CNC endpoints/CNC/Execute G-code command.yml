@@ -8,14 +8,13 @@ http:
   url: "{{baseUrl}}/cnc/command"
   headers:
     - name: x-cnc-session
-      value: ""
+      value: "{{cncSession}}"
   body:
     type: json
-    data: "{\r
-
-      \    \"command\": \"G17 G20 G90 G94 G54\"\r
-
-      }"
+    data: |-
+      {
+          "command": "G17 G20 G90 G94 G54"
+      }
   auth: inherit
 
 settings:

@@ -133,6 +133,12 @@ def send_command(
     x_cnc_session: GetSessionId,
 ):
     """Send a G-code command to the CNC via the Gateway."""
+    if not x_cnc_session or gateway.get_active_session() is None:
+        raise HTTPException(409, detail="Debe iniciar una nueva sesión CNC")
+
+    if x_cnc_session != gateway.get_active_session()["session_id"]:
+        raise HTTPException(409, detail="El CNC ya está en uso por otra sesión")
+
     if not gateway.is_gateway_running():
         raise HTTPException(503, detail="CNC Gateway no está disponible")
 
@@ -149,6 +155,12 @@ def send_jog_command(
     machine: bool = False,
 ):
     """Send a jog command to the CNC via the Gateway."""
+    if not x_cnc_session or gateway.get_active_session() is None:
+        raise HTTPException(409, detail="Debe iniciar una nueva sesión CNC")
+
+    if x_cnc_session != gateway.get_active_session()["session_id"]:
+        raise HTTPException(409, detail="El CNC ya está en uso por otra sesión")
+
     if not gateway.is_gateway_running():
         raise HTTPException(503, detail="CNC Gateway no está disponible")
 
@@ -173,6 +185,12 @@ def send_realtime_command(
     x_cnc_session: GetSessionId,
 ):
     """Send a realtime action (pause / resume / stop / soft_reset) to the CNC."""
+    if not x_cnc_session or gateway.get_active_session() is None:
+        raise HTTPException(409, detail="Debe iniciar una nueva sesión CNC")
+
+    if x_cnc_session != gateway.get_active_session()["session_id"]:
+        raise HTTPException(409, detail="El CNC ya está en uso por otra sesión")
+
     valid_actions = {ACTION_PAUSE, ACTION_RESUME, ACTION_STOP, ACTION_SOFT_RESET}
     if request.action not in valid_actions:
         raise HTTPException(
