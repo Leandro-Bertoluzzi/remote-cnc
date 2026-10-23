@@ -1,7 +1,7 @@
 info:
   name: Get gateway state
   type: http
-  seq: 6
+  seq: 4
 
 http:
   method: GET

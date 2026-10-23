@@ -1,15 +1,24 @@
 info:
   name: Release CNC session
   type: http
-  seq: 12
+  seq: 10
 
 http:
   method: DELETE
   url: "{{baseUrl}}/cnc/session"
   headers:
     - name: x-cnc-session
-      value: ""
+      value: "{{cncSession}}"
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let http_status = res.status;
+        if(http_status != 200) { return; }
+
+        bru.setVar("cncSession", "");
 
 settings:
   encodeUrl: true

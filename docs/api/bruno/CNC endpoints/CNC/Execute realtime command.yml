@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/cnc/realtime"
   headers:
     - name: x-cnc-session
-      value: ""
+      value: "{{cncSession}}"
   body:
     type: json
     data: "{\r\n    \"action\": \"pause\"\r\n}"
