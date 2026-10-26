@@ -1,8 +1,9 @@
 from core.domain.cnc import Status
 from core.domain.entities import Tool
-from manager.adapters.desktop.presentation.components.StyledWidget import StyledWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
+
+from manager.adapters.desktop.presentation.components.StyledWidget import StyledWidget
 
 
 class ControllerStatus(StyledWidget):

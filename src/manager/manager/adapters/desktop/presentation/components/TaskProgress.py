@@ -1,6 +1,7 @@
-from manager.adapters.desktop.presentation.components.StyledWidget import StyledWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFormLayout, QProgressBar
+
+from manager.adapters.desktop.presentation.components.StyledWidget import StyledWidget
 
 
 class TaskProgress(StyledWidget):

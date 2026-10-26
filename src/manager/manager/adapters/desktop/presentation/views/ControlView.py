@@ -16,6 +16,10 @@ from typing import TYPE_CHECKING
 
 from core.domain.cnc import ParserState, Status
 from core.domain.gateway import ACTION_PAUSE, ACTION_RESUME
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QGridLayout
+
 from manager.adapters.desktop.application.connectionErrors import get_friendly_error_message
 from manager.adapters.desktop.context import AppContext
 from manager.adapters.desktop.presentation.components.buttons.MenuButton import MenuButton
@@ -33,9 +37,6 @@ from manager.adapters.desktop.presentation.components.Joystick import Joystick
 from manager.adapters.desktop.presentation.components.Terminal import Terminal
 from manager.adapters.desktop.presentation.components.ToolBar import ToolBar, ToolBarOptionInfo
 from manager.adapters.desktop.presentation.views.BaseView import BaseView
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout
 
 if TYPE_CHECKING:
     from manager.adapters.desktop.presentation.MainWindow import MainWindow  # pragma: no cover

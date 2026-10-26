@@ -1,14 +1,15 @@
 from typing import TYPE_CHECKING
 
 from core.domain.cnc import ParserState, Status
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
+
 from manager.adapters.desktop.presentation.components.buttons.MenuButton import MenuButton
 from manager.adapters.desktop.presentation.components.ControllerStatus import ControllerStatus
 from manager.adapters.desktop.presentation.components.gatewayMonitor import GatewayMonitor
 from manager.adapters.desktop.presentation.components.TaskProgress import TaskProgress
 from manager.adapters.desktop.presentation.views.BaseView import BaseView
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 
 if TYPE_CHECKING:
     from manager.adapters.desktop.presentation.MainWindow import MainWindow  # pragma: no cover

@@ -2,6 +2,10 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Callable
 
 from core.domain.entities import DomainModel
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
+from typing_extensions import TypedDict
+
 from manager.adapters.desktop.application.connectionErrors import get_friendly_error_message
 from manager.adapters.desktop.presentation.components.buttons.MenuButton import MenuButton
 from manager.adapters.desktop.presentation.components.cards.MsgCard import MsgCard
@@ -9,9 +13,6 @@ from manager.adapters.desktop.presentation.components.ConnectionErrorWidget impo
     ConnectionErrorWidget,
 )
 from manager.adapters.desktop.presentation.views.BaseView import BaseView
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
-from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from manager.adapters.desktop.context import AppContext  # pragma: no cover

@@ -1,11 +1,12 @@
 from core.domain.cnc import JogDistanceMode
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+
 from manager.adapters.desktop.ports.config_writer import IConfigWriter
 from manager.adapters.desktop.ports.settings_reader import ISettingsReader
 from manager.adapters.desktop.presentation.components.containers.ButtonGrid import ButtonGrid
 from manager.adapters.desktop.presentation.components.containers.ButtonList import ButtonList
 from manager.adapters.desktop.presentation.components.JogController import JogController
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 
 class Joystick(QWidget, JogController):

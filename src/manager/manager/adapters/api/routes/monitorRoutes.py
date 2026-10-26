@@ -1,9 +1,10 @@
 import asyncio
 
 from fastapi import APIRouter, HTTPException, Request
+from sse_starlette.sse import EventSourceResponse
+
 from manager.adapters.api.middleware.authMiddleware import GetUserDep
 from manager.adapters.api.middleware.contextMiddleware import GetPubSub
-from sse_starlette.sse import EventSourceResponse
 
 monitorRoutes = APIRouter(prefix="/monitor", tags=["Monitor"])
 

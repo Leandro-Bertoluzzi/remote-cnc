@@ -1,6 +1,7 @@
 from core.utilities.files import changeFileExtension
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
+
 from manager.adapters.api.middleware.authMiddleware import GetAdminDep
 from manager.adapters.api.middleware.contextMiddleware import GetLogService
 from manager.adapters.api.schemas.logs import LogsResponse

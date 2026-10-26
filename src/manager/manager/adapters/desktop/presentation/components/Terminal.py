@@ -1,6 +1,7 @@
-from manager.adapters.desktop.presentation.components.StyledWidget import StyledWidget
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout
+
+from manager.adapters.desktop.presentation.components.StyledWidget import StyledWidget
 
 
 class Terminal(StyledWidget):

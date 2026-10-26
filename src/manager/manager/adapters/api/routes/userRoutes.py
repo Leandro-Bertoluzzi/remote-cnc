@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from manager.adapters.api.middleware.authMiddleware import GetAdminDep, GetUserDep
 from manager.adapters.api.middleware.contextMiddleware import GetUserService
 from manager.adapters.api.schemas.general import GenericResponse
