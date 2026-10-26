@@ -1,0 +1,169 @@
+# Import Linter contracts for the cnc-admin uv workspace.
+#
+# Import Linter needs Python import-package names:
+#   core/core       -> core
+#   gateway/gateway -> gateway
+#   manager/manager -> manager
+#   worker/worker   -> worker
+#   infrastructure/infrastructure -> infrastructure
+#   apps/*          -> apps.* (namespace/package root)
+
+[importlinter]
+root_packages =
+    apps
+    core
+    gateway
+    infrastructure
+    manager
+    worker
+include_external_packages = True
+# Include imports made under TYPE_CHECKING: architecture and type dependencies
+# must obey the same dependency direction as runtime imports.
+exclude_type_checking_imports = False
+
+
+[importlinter:contract:shared-kernel-boundary]
+name = Shared Kernel does not depend on applications or deployment details
+type = forbidden
+source_modules =
+    core
+forbidden_modules =
+    apps
+    gateway
+    infrastructure
+    manager
+    worker
+
+
+[importlinter:contract:no-deployment-root-imports]
+name = Application and infrastructure packages do not import deployment entrypoints
+type = forbidden
+source_modules =
+    core
+    gateway
+    infrastructure
+    manager
+    worker
+forbidden_modules =
+    apps
+
+
+[importlinter:contract:applications-do-not-import-shared-infrastructure]
+name = Application packages depend on ports, not reusable infrastructure
+type = forbidden
+source_modules =
+    core
+    gateway
+    manager
+    worker
+forbidden_modules =
+    infrastructure
+
+
+[importlinter:contract:only-composition-roots-import-infrastructure]
+name = Only deployment composition roots import reusable infrastructure
+type = protected
+protected_modules =
+    infrastructure
+allowed_importers =
+    apps
+
+
+[importlinter:contract:deployment-composition-roots-independent]
+name = API, Desktop, Gateway, and Worker entrypoints remain independent
+type = independence
+modules =
+    apps.api
+    apps.desktop
+    apps.gateway
+    apps.worker
+
+
+[importlinter:contract:manager-core-inward-dependencies]
+name = Manager application and ports do not import inbound adapters
+type = forbidden
+source_modules =
+    manager.application
+    manager.ports
+forbidden_modules =
+    manager.adapters
+
+
+[importlinter:contract:manager-inbound-adapters-independent]
+name = Manager API and Desktop inbound adapters are independent
+type = independence
+modules =
+    manager.adapters.api
+    manager.adapters.desktop
+
+
+[importlinter:contract:desktop-components-signals-not-view-imports]
+name = Desktop presentation components do not import Views directly
+type = forbidden
+source_modules =
+    manager.adapters.desktop.presentation.components
+forbidden_modules =
+    manager.adapters.desktop.presentation.views
+
+
+[importlinter:contract:gateway-hexagonal-layers]
+name = Gateway adapters depend inward on Gateway application ports
+type = layers
+layers =
+    gateway.adapters
+    gateway.application
+
+
+[importlinter:contract:worker-hexagonal-layers]
+name = Worker adapters depend on application services, which depend on domain
+type = layers
+layers =
+    worker.adapters
+    worker.application
+    worker.domain
+
+
+[importlinter:contract:manager-hexagonal-layers]
+name = Manager inbound adapters depend on application and ports
+type = layers
+layers =
+    manager.adapters.api | manager.adapters.desktop
+    manager.application
+    manager.ports
+
+
+[importlinter:contract:shared-ports-depend-on-domain]
+name = Shared ports may depend on domain entities, not vice versa
+type = layers
+layers =
+    core.ports
+    core.domain
+
+
+[importlinter:contract:business-code-framework-independent]
+name = Domain, ports, and application services do not import concrete frameworks or clients
+type = forbidden
+source_modules =
+    core.domain
+    core.ports
+    manager.application
+    manager.ports
+    gateway.application
+    worker.application
+    worker.domain
+forbidden_modules =
+    celery
+    fastapi
+    PyQt5
+    redis
+    serial
+    sqlalchemy
+
+
+[importlinter:contract:sqlalchemy-only-in-infrastructure]
+name = SQLAlchemy imports are restricted to reusable infrastructure adapters
+type = protected
+protected_modules =
+    sqlalchemy
+allowed_importers =
+    infrastructure

@@ -41,6 +41,7 @@ dev = [
     "pytest-env>=1.1,<2",
     "pytest-mock>=3.10,<4",
     "pytest-sqlalchemy-mock",
+    "import-linter>=2.15",
     # Desktop test tools
     "pytest-qt>=4.4,<5",
     "pyqt5-stubs>=5.15",

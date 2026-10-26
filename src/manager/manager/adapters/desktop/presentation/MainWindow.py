@@ -1,3 +1,7 @@
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
+
 from manager.adapters.desktop.application.connectionErrors import get_friendly_error_message
 from manager.adapters.desktop.context import AppContext
 from manager.adapters.desktop.presentation.components.ConnectionErrorWidget import (
@@ -7,9 +11,6 @@ from manager.adapters.desktop.presentation.components.gatewayMonitor import Gate
 from manager.adapters.desktop.presentation.components.StatusBar import StatusBar
 from manager.adapters.desktop.presentation.views.BaseView import BaseView
 from manager.adapters.desktop.presentation.views.MainMenu import MainMenu
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCloseEvent, QResizeEvent, QShowEvent
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 
 class MainWindow(QMainWindow):
@@ -27,7 +28,7 @@ class MainWindow(QMainWindow):
         self.gateway_monitor = GatewayMonitor(self._context.gateway, self._context.logger)
 
         # UI components
-        self.status_bar = StatusBar(self)
+        self.status_bar = StatusBar()
         self.setStatusBar(self.status_bar)
         self.initialized = 0
 

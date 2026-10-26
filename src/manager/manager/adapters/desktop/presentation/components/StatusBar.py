@@ -1,9 +1,4 @@
-from typing import TYPE_CHECKING
-
 from PyQt5.QtWidgets import QFrame, QLabel, QStatusBar
-
-if TYPE_CHECKING:
-    from manager.adapters.desktop.presentation.MainWindow import MainWindow  # pragma: no cover
 
 
 class VLine(QFrame):
@@ -15,8 +10,8 @@ class VLine(QFrame):
 
 
 class StatusBar(QStatusBar):
-    def __init__(self, parent: "MainWindow"):
-        super(StatusBar, self).__init__(parent)
+    def __init__(self):
+        super(StatusBar, self).__init__()
 
         # Components
         self.showMessage("Ready...")
