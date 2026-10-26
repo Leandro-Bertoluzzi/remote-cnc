@@ -20,7 +20,7 @@ from manager.adapters.api.routes.toolRoutes import toolRoutes
 from manager.adapters.api.routes.userRoutes import userRoutes
 from manager.adapters.api.routes.workerRoutes import workerRoutes
 
-from apps.api.context import create_app_context
+from apps.api.context import API_ALLOW_ORIGINS, create_app_context
 
 logger = setup_stream_logger("api", logging.INFO)
 
@@ -52,10 +52,10 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,  # type: ignore[arg-type]
-    allow_origins=["*"],
+    allow_origins=API_ALLOW_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 # Exception handlers

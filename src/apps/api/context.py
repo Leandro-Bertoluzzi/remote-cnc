@@ -25,6 +25,8 @@ from manager.application.task_service import TaskService
 from manager.application.tool_service import ToolService
 from manager.application.user_service import UserService
 
+# This is the list of origins that are allowed to make cross-origin requests.
+API_ALLOW_ORIGINS = settings.api_allow_origins
 
 def create_app_context() -> AppContext:
     """Build the production API context from configured adapters."""
