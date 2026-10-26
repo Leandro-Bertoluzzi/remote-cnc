@@ -8,6 +8,7 @@ from core.domain.exceptions import (
     InvalidFile,
     PersistenceError,
 )
+
 from manager.adapters.desktop.application.connectionErrors import get_friendly_error_message
 from manager.adapters.desktop.presentation.components.cards.FileCard import FileCard
 from manager.adapters.desktop.presentation.components.dialogs.FileDataDialog import FileDataDialog

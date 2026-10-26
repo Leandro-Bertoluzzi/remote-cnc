@@ -2,9 +2,10 @@
 
 from typing import Callable
 
-from manager.adapters.desktop.presentation.components.buttons.MenuButton import MenuButton
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+
+from manager.adapters.desktop.presentation.components.buttons.MenuButton import MenuButton
 
 
 class ConnectionErrorWidget(QWidget):

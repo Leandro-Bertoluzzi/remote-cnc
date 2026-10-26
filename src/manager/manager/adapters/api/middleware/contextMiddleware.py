@@ -5,6 +5,7 @@ from typing import Annotated
 from core.ports.gateway_client import IGatewayClient
 from core.ports.pubsub_client import IAsyncPubSubClient
 from fastapi import Depends, Request
+
 from manager.adapters.api.context import AppContext
 from manager.application.device_service import DeviceService
 from manager.application.file_service import FileService

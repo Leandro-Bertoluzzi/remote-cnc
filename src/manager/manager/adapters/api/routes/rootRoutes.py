@@ -1,8 +1,9 @@
 from core.domain.types import RoleType
 from core.utilities.security import generate_token, validate_password
 from fastapi import APIRouter, HTTPException
-from manager.adapters.api.middleware.contextMiddleware import GetUserService
 from pydantic import BaseModel, EmailStr
+
+from manager.adapters.api.middleware.contextMiddleware import GetUserService
 
 rootRoutes = APIRouter()
 

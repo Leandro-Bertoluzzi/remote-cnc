@@ -1,5 +1,8 @@
 from typing import TYPE_CHECKING, cast
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QGridLayout, QWidget
+
 from manager.adapters.desktop.presentation.components.buttons.MainMenuButton import MainMenuButton
 from manager.adapters.desktop.presentation.views.ControlView import ControlView
 from manager.adapters.desktop.presentation.views.FilesView import FilesView
@@ -7,8 +10,6 @@ from manager.adapters.desktop.presentation.views.InventoryView import InventoryV
 from manager.adapters.desktop.presentation.views.MonitorView import MonitorView
 from manager.adapters.desktop.presentation.views.TasksView import TasksView
 from manager.adapters.desktop.presentation.views.UsersView import UsersView
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QGridLayout, QWidget
 
 if TYPE_CHECKING:
     from manager.adapters.desktop.presentation.MainWindow import MainWindow  # pragma: no cover

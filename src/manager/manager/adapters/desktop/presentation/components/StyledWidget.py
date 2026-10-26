@@ -1,7 +1,8 @@
 import inspect
 
-from manager.adapters.desktop.presentation.components.utils import get_file_name_in_folder
 from PyQt5.QtWidgets import QWidget
+
+from manager.adapters.desktop.presentation.components.utils import get_file_name_in_folder
 
 
 class StyledWidget(QWidget):

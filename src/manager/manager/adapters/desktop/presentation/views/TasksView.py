@@ -1,14 +1,15 @@
 from typing import TYPE_CHECKING, cast
 
 from core.domain.task import TASK_DEFAULT_PRIORITY, TaskStatus
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QVBoxLayout
+
 from manager.adapters.desktop.application.connectionErrors import get_friendly_error_message
 from manager.adapters.desktop.presentation.components.cards.TaskCard import TaskCard
 from manager.adapters.desktop.presentation.components.dialogs.TaskDataDialog import TaskDataDialog
 from manager.adapters.desktop.presentation.components.gatewayMonitor import GatewayMonitor
 from manager.adapters.desktop.presentation.components.TaskProgress import TaskProgress
 from manager.adapters.desktop.presentation.views.BaseListView import BaseListView
-from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QVBoxLayout
 
 if TYPE_CHECKING:
     from manager.adapters.desktop.presentation.MainWindow import MainWindow  # pragma: no cover

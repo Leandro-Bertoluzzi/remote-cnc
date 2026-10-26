@@ -1,9 +1,10 @@
 import re
 
-from manager.adapters.desktop.presentation.components.text.IndexedTextEdit import IndexedTextEdit
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextBlock, QTextCharFormat, QTextFormat
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QPlainTextEdit, QPushButton, QTextEdit
+
+from manager.adapters.desktop.presentation.components.text.IndexedTextEdit import IndexedTextEdit
 
 
 class GCodeHighlighter(QSyntaxHighlighter):

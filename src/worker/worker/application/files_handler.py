@@ -6,6 +6,7 @@ are received as ports (``typing.Protocol``).
 
 from core.ports.file_repository import IFileRepository
 from core.ports.file_storage import IFileStorage
+
 from worker.application.ports.renderer import IRenderer
 from worker.domain.gcode.analyser import GcodeAnalyser
 
