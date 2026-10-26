@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     redis_db_celery: int = 0
     redis_db_storage: int = 1
 
+    # REST API
+    api_allow_origins: list[str] = ["*"]
+
     # GRBL
     grbl_simulation: bool = False
 
