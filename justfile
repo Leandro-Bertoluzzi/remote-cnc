@@ -91,6 +91,11 @@ test-pkg package:
 test-app app:
     uv run pytest {{ "apps/" + app + "/tests/" }}
 
+[group('quality')]
+[working-directory: 'src']
+test-arch:
+    uv run lint-imports
+
 # Run linter
 [group('quality')]
 [working-directory: 'src']
