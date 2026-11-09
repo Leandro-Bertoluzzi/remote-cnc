@@ -11,7 +11,7 @@ userRoutes = APIRouter(prefix="/users", tags=["Users"])
 @userRoutes.get("")
 @userRoutes.get("/")
 @userRoutes.get("/all")
-def get_users(admin: GetAdminDep, user_service: GetUserService) -> list[UserResponse]:
+def get_users(_admin: GetAdminDep, user_service: GetUserService) -> list[UserResponse]:
     users = user_service.get_all_users()
 
     return [UserResponse.model_validate(user) for user in users]
@@ -19,20 +19,20 @@ def get_users(admin: GetAdminDep, user_service: GetUserService) -> list[UserResp
 
 @userRoutes.post("", response_model=UserResponse)
 @userRoutes.post("/", response_model=UserResponse)
-def create_new_user(request: UserCreate, admin: GetAdminDep, user_service: GetUserService):
+def create_new_user(request: UserCreate, _admin: GetAdminDep, user_service: GetUserService):
     return user_service.create_user(request.name, request.email, request.password, request.role)
 
 
 @userRoutes.put("/{user_id}", response_model=UserResponse)
 def update_existing_user(
-    user_id: int, request: UserUpdate, admin: GetAdminDep, user_service: GetUserService
+    user_id: int, request: UserUpdate, _admin: GetAdminDep, user_service: GetUserService
 ):
     result = user_service.update_user(user_id, request.name, request.email, request.role)
     return UserResponse.model_validate(result)
 
 
 @userRoutes.delete("/{user_id}", response_model=GenericResponse)
-def remove_existing_user(user_id: int, admin: GetAdminDep, user_service: GetUserService):
+def remove_existing_user(user_id: int, _admin: GetAdminDep, user_service: GetUserService):
     user_service.remove_user(user_id)
     return {"success": "El usuario fue eliminado con éxito"}
 

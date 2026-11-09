@@ -64,6 +64,7 @@ def test_command_is_rejected_with_no_active_session(client, admin_headers):
     assert response.status_code == 409
     assert response.json() == {"detail": "Debe iniciar una nueva sesión CNC"}
 
+
 def test_command_is_rejected_with_invalid_session(client, admin_headers, app_context):
     _session_id = app_context.gateway.acquire_session(2, "web")
 

@@ -75,6 +75,13 @@ class UserRepository(IUserRepository):
             if not user:
                 raise EntityNotFoundError(f"User with ID {id} was not found")
 
+            # If the email is already used by another user, raise an error
+            existing_user = self.session.scalars(select(User).filter_by(email=email)).first()
+            if existing_user and existing_user.id != id:
+                raise DuplicatedUserError(
+                    f"There is already a user registered with the email {email}"
+                )
+
             user.name = name
             user.email = email
             user.role = role

@@ -192,6 +192,16 @@ class TestUserRepository:
             user_repository.update_user(id=5000, name="name", email="test@testing.com", role="user")
         assert str(error.value) == "User with ID 5000 was not found"
 
+    def test_error_update_user_existing_email(self, mocked_session):
+        user_repository = UserRepository(mocked_session)
+
+        # Call the method under test and assert exception
+        with pytest.raises(Exception) as error:
+            user_repository.update_user(
+                id=2, name="name", email="test@testing.com", role="user"
+            )
+        assert "There is already a user registered with the email" in str(error.value)
+
     def test_error_update_user_db_error(self, mocker: MockerFixture, mocked_session):
         # Mock DB method to simulate exception
         mocker.patch.object(mocked_session, "get", side_effect=SQLAlchemyError("mocked error"))

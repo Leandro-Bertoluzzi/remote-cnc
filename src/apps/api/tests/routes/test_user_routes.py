@@ -73,6 +73,23 @@ def test_update_user(client, app_context, admin_headers, test_user):
     )
 
 
+def test_update_user_duplicate_email(client, app_context, admin_headers):
+    app_context.user_service.update_user.side_effect = DuplicatedUserError("email already exists")
+
+    response = client.put(
+        "/users/1",
+        headers=admin_headers,
+        json={
+            "name": "New",
+            "email": "new@test.com",
+            "role": "user",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "email already exists"
+
+
 def test_delete_user(client, app_context, admin_headers):
     response = client.delete("/users/3", headers=admin_headers)
 
